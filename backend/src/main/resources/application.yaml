@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/worklog
+    username: worklog
+    password: worklog
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
