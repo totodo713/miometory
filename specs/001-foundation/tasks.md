@@ -18,13 +18,13 @@
 
 **Purpose**: プロジェクト初期化と基本構造
 
-- [ ] T001 [P] Gradle 依存関係の追加（Testcontainers, Database Rider, Instancio, Kotlin Test）
+- [X] T001 [P] Gradle 依存関係の追加（Testcontainers, Database Rider, Instancio, Kotlin Test）
   - `backend/build.gradle.kts`
 
-- [ ] T002 [P] テスト用ディレクトリ構成の作成
+- [X] T002 [P] テスト用ディレクトリ構成の作成
   - `backend/src/test/kotlin/com/worklog/`
 
-- [ ] T003 [P] src/main パッケージ構成の作成（domain/shared, domain/tenant, eventsourcing, etc.）
+- [X] T003 [P] src/main パッケージ構成の作成（domain/shared, domain/tenant, eventsourcing, etc.）
   - `backend/src/main/kotlin/com/worklog/`
   - `backend/src/main/java/com/worklog/`
 
@@ -38,20 +38,20 @@
 
 ### Implementation for US4
 
-- [ ] T004 [US4] IntegrationTestBase.kt の作成（Testcontainers + Spring Boot）
+- [X] T004 [US4] IntegrationTestBase.kt の作成（Testcontainers + Spring Boot）
   - `backend/src/test/kotlin/com/worklog/IntegrationTestBase.kt`
   - PostgreSQL 16 コンテナ設定
   - `@DynamicPropertySource` で接続情報設定
   - コンテナ再利用設定（`.withReuse(true)`）
 
-- [ ] T005 [US4] Database Rider 設定
+- [X] T005 [US4] Database Rider 設定
   - `backend/src/test/resources/dbunit.yml` 設定ファイル
   - `@DBRider` アノテーション対応
 
-- [ ] T006 [US4] Instancio 基本設定の確認
+- [X] T006 [US4] Instancio 基本設定の確認
   - 簡単なテストで動作確認
 
-- [ ] T007 [US4] テスト実行確認
+- [X] T007 [US4] テスト実行確認
   - `./gradlew test` でコンテナ起動・マイグレーション適用を確認
 
 **Checkpoint**: テスト基盤が動作し、Flyway マイグレーションが自動適用される
@@ -66,72 +66,72 @@
 
 ### Tests (TDD: テスト先行)
 
-- [ ] T008 [US3] JdbcEventStoreTest の作成
+- [X] T008 [US3] JdbcEventStoreTest の作成
   - `backend/src/test/kotlin/com/worklog/eventsourcing/JdbcEventStoreTest.kt`
   - append/load テスト
   - 楽観的ロックテスト
   - Database Rider でデータセット使用
 
-- [ ] T009 [P] [US3] SnapshotStoreTest の作成
+- [X] T009 [P] [US3] SnapshotStoreTest の作成
   - `backend/src/test/kotlin/com/worklog/eventsourcing/SnapshotStoreTest.kt`
   - save/load テスト
 
-- [ ] T010 [P] [US3] AuditLoggerTest の作成
+- [X] T010 [P] [US3] AuditLoggerTest の作成
   - `backend/src/test/kotlin/com/worklog/eventsourcing/AuditLoggerTest.kt`
   - 監査ログ記録テスト
 
 ### Domain Layer
 
-- [ ] T011 [P] [US3] DomainEvent インターフェースの作成
+- [X] T011 [P] [US3] DomainEvent インターフェースの作成
   - `backend/src/main/java/com/worklog/domain/shared/DomainEvent.java`
 
-- [ ] T012 [P] [US3] AggregateRoot 基底クラスの作成
+- [X] T012 [P] [US3] AggregateRoot 基底クラスの作成
   - `backend/src/main/java/com/worklog/domain/shared/AggregateRoot.java`
   - イベント収集機能
   - バージョン管理
 
-- [ ] T013 [P] [US3] EntityId 基底クラスの作成
+- [X] T013 [P] [US3] EntityId 基底クラスの作成
   - `backend/src/main/java/com/worklog/domain/shared/EntityId.java`
   - UUID ラッパー
 
-- [ ] T014 [P] [US3] DomainException の作成
+- [X] T014 [P] [US3] DomainException の作成
   - `backend/src/main/java/com/worklog/domain/shared/DomainException.java`
 
-- [ ] T015 [P] [US3] OptimisticLockException の作成
+- [X] T015 [P] [US3] OptimisticLockException の作成
   - `backend/src/main/java/com/worklog/domain/shared/OptimisticLockException.java`
 
 ### Event Sourcing Infrastructure
 
-- [ ] T016 [US3] StoredEvent クラスの作成
+- [X] T016 [US3] StoredEvent クラスの作成
   - `backend/src/main/java/com/worklog/eventsourcing/StoredEvent.java`
   - id, aggregateType, aggregateId, eventType, payload, version, createdAt
 
-- [ ] T017 [US3] EventStore インターフェースの作成
+- [X] T017 [US3] EventStore インターフェースの作成
   - `backend/src/main/java/com/worklog/eventsourcing/EventStore.java`
   - `append(aggregateId, aggregateType, events, expectedVersion)`
   - `load(aggregateId)`
 
-- [ ] T018 [US3] JdbcEventStore 実装
+- [X] T018 [US3] JdbcEventStore 実装
   - `backend/src/main/java/com/worklog/eventsourcing/JdbcEventStore.java`
   - Spring Data JDBC 使用
   - 楽観的ロック実装
 
-- [ ] T019 [US3] SnapshotStore インターフェースの作成
+- [X] T019 [US3] SnapshotStore インターフェースの作成
   - `backend/src/main/java/com/worklog/eventsourcing/SnapshotStore.java`
   - `save(aggregateId, version, state)`
   - `load(aggregateId)`
 
-- [ ] T020 [US3] JdbcSnapshotStore 実装
+- [X] T020 [US3] JdbcSnapshotStore 実装
   - `backend/src/main/java/com/worklog/eventsourcing/JdbcSnapshotStore.java`
 
-- [ ] T021 [US3] AuditLogger インターフェースの作成
+- [X] T021 [US3] AuditLogger インターフェースの作成
   - `backend/src/main/java/com/worklog/eventsourcing/AuditLogger.java`
   - `log(tenantId, userId, action, resourceType, resourceId, details)`
 
-- [ ] T022 [US3] JdbcAuditLogger 実装
+- [X] T022 [US3] JdbcAuditLogger 実装
   - `backend/src/main/java/com/worklog/eventsourcing/JdbcAuditLogger.java`
 
-- [ ] T023 [P] [US3] JacksonConfig の作成
+- [X] T023 [P] [US3] JacksonConfig の作成
   - `backend/src/main/kotlin/com/worklog/infrastructure/config/JacksonConfig.kt`
   - JSONB シリアライズ設定
 
@@ -147,7 +147,7 @@
 
 ### DB Migration
 
-- [ ] T024 [US1] V2__foundation.sql の作成
+- [X] T024 [US1] V2__foundation.sql の作成
   - `backend/src/main/resources/db/migration/V2__foundation.sql`
   - tenant, organization, fiscal_year_pattern, monthly_period_pattern テーブル
   - es_aggregate, es_event, es_snapshot, audit_log テーブル
@@ -155,17 +155,17 @@
 
 ### Tests (TDD: テスト先行)
 
-- [ ] T025 [P] [US1] TenantFixtures の作成
+- [X] T025 [P] [US1] TenantFixtures の作成
   - `backend/src/test/kotlin/com/worklog/fixtures/TenantFixtures.kt`
 
-- [ ] T026 [P] [US1] OrganizationFixtures の作成
+- [X] T026 [P] [US1] OrganizationFixtures の作成
   - `backend/src/test/kotlin/com/worklog/fixtures/OrganizationFixtures.kt`
 
-- [ ] T027 [US1] TenantTest（ドメイン単体テスト）の作成
+- [X] T027 [US1] TenantTest（ドメイン単体テスト）の作成
   - `backend/src/test/kotlin/com/worklog/domain/tenant/TenantTest.kt`
   - create, update, deactivate, activate テスト
 
-- [ ] T028 [US1] OrganizationTest（ドメイン単体テスト）の作成
+- [X] T028 [US1] OrganizationTest（ドメイン単体テスト）の作成
   - `backend/src/test/kotlin/com/worklog/domain/organization/OrganizationTest.kt`
   - 階層レベル検証テスト（max 6）
   - 循環参照チェックテスト
@@ -186,25 +186,25 @@
 
 ### Domain Layer - Tenant
 
-- [ ] T031 [P] [US1] TenantId ValueObject の作成
+- [X] T031 [P] [US1] TenantId ValueObject の作成
   - `backend/src/main/java/com/worklog/domain/tenant/TenantId.java`
 
-- [ ] T032 [P] [US1] Code ValueObject の作成
+- [X] T032 [P] [US1] Code ValueObject の作成
   - `backend/src/main/java/com/worklog/domain/shared/Code.java`
 
-- [ ] T033 [US1] TenantCreated イベントの作成
+- [X] T033 [US1] TenantCreated イベントの作成
   - `backend/src/main/java/com/worklog/domain/tenant/TenantCreated.java`
 
-- [ ] T034 [US1] TenantUpdated イベントの作成
+- [X] T034 [US1] TenantUpdated イベントの作成
   - `backend/src/main/java/com/worklog/domain/tenant/TenantUpdated.java`
 
-- [ ] T035 [US1] TenantDeactivated イベントの作成
+- [X] T035 [US1] TenantDeactivated イベントの作成
   - `backend/src/main/java/com/worklog/domain/tenant/TenantDeactivated.java`
 
-- [ ] T036 [US1] TenantActivated イベントの作成
+- [X] T036 [US1] TenantActivated イベントの作成
   - `backend/src/main/java/com/worklog/domain/tenant/TenantActivated.java`
 
-- [ ] T037 [US1] Tenant Aggregate の作成
+- [X] T037 [US1] Tenant Aggregate の作成
   - `backend/src/main/java/com/worklog/domain/tenant/Tenant.java`
   - ファクトリメソッド `create(code, name)`
   - `update(name)`, `deactivate()`, `activate()` メソッド
@@ -212,22 +212,22 @@
 
 ### Domain Layer - Organization
 
-- [ ] T038 [P] [US1] OrganizationId ValueObject の作成
+- [X] T038 [P] [US1] OrganizationId ValueObject の作成
   - `backend/src/main/java/com/worklog/domain/organization/OrganizationId.java`
 
-- [ ] T039 [US1] OrganizationCreated イベントの作成
+- [X] T039 [US1] OrganizationCreated イベントの作成
   - `backend/src/main/java/com/worklog/domain/organization/OrganizationCreated.java`
 
-- [ ] T040 [US1] OrganizationUpdated イベントの作成
+- [X] T040 [US1] OrganizationUpdated イベントの作成
   - `backend/src/main/java/com/worklog/domain/organization/OrganizationUpdated.java`
 
-- [ ] T041 [US1] OrganizationDeactivated イベントの作成
+- [X] T041 [US1] OrganizationDeactivated イベントの作成
   - `backend/src/main/java/com/worklog/domain/organization/OrganizationDeactivated.java`
 
-- [ ] T042 [US1] OrganizationActivated イベントの作成
+- [X] T042 [US1] OrganizationActivated イベントの作成
   - `backend/src/main/java/com/worklog/domain/organization/OrganizationActivated.java`
 
-- [ ] T043 [US1] Organization Aggregate の作成
+- [X] T043 [US1] Organization Aggregate の作成
   - `backend/src/main/java/com/worklog/domain/organization/Organization.java`
   - ファクトリメソッド `create(...)`
   - 階層レベル検証（max 6）

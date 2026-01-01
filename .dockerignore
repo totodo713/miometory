@@ -1,0 +1,55 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+specs/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Build artifacts
+backend/build/
+backend/.gradle/
+backend/bin/
+backend/out/
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+
+# Test artifacts
+backend/src/test/
+frontend/coverage/
+
+# Logs
+*.log
+*.log.*
+
+# Environment files
+.env*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Misc
+tmp/
+temp/
+*.tmp
+*.swp
+*.bak
