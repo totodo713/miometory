@@ -237,11 +237,11 @@
 
 ### Infrastructure Layer
 
-- [ ] T044 [P] [US1] TenantRepository の作成
-  - `backend/src/main/java/com/worklog/infrastructure/persistence/TenantRepository.java`
+- [X] T044 [P] [US1] TenantRepository の作成
+  - `backend/src/main/java/com/worklog/infrastructure/repository/TenantRepository.java`
 
-- [ ] T045 [P] [US1] OrganizationRepository の作成
-  - `backend/src/main/java/com/worklog/infrastructure/persistence/OrganizationRepository.java`
+- [X] T045 [P] [US1] OrganizationRepository の作成
+  - `backend/src/main/java/com/worklog/infrastructure/repository/OrganizationRepository.java`
 
 ### Application Layer
 
