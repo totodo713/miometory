@@ -171,14 +171,14 @@
   - 循環参照チェックテスト
   - 自己参照チェックテスト
 
-- [ ] T029 [US1] TenantControllerTest（統合テスト）の作成
+- [X] T029 [US1] TenantControllerTest（統合テスト）の作成
   - `backend/src/test/kotlin/com/worklog/api/TenantControllerTest.kt`
   - POST /api/v1/tenants
   - GET /api/v1/tenants/{id}
   - POST /api/v1/tenants/{id}/deactivate
   - POST /api/v1/tenants/{id}/activate
 
-- [ ] T030 [US1] OrganizationControllerTest（統合テスト）の作成
+- [X] T030 [US1] OrganizationControllerTest（統合テスト）の作成
   - `backend/src/test/kotlin/com/worklog/api/OrganizationControllerTest.kt`
   - POST /api/v1/tenants/{tenantId}/organizations
   - GET /api/v1/tenants/{tenantId}/organizations/{id}
