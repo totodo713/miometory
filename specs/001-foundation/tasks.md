@@ -263,7 +263,7 @@
 
 ### API Layer
 
-- [ ] T050 [US1] TenantController の作成
+- [X] T050 [US1] TenantController の作成
   - `backend/src/main/java/com/worklog/api/TenantController.java`
   - POST /api/v1/tenants
   - GET /api/v1/tenants
@@ -272,7 +272,7 @@
   - POST /api/v1/tenants/{id}/deactivate
   - POST /api/v1/tenants/{id}/activate
 
-- [ ] T051 [US1] OrganizationController の作成
+- [X] T051 [US1] OrganizationController の作成
   - `backend/src/main/java/com/worklog/api/OrganizationController.java`
   - POST /api/v1/tenants/{tenantId}/organizations
   - GET /api/v1/tenants/{tenantId}/organizations
@@ -281,7 +281,7 @@
   - POST .../deactivate
   - POST .../activate
 
-- [ ] T052 [US1] SecurityConfig の更新（新エンドポイント許可）
+- [X] T052 [US1] SecurityConfig の更新（新エンドポイント許可）
   - `backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt`
 
 **Checkpoint**: テナント・組織の CRUD API が正常動作（deactivate/activate 含む）
