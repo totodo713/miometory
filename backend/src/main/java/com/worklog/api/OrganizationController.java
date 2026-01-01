@@ -1,12 +1,15 @@
 package com.worklog.api;
 
 import com.worklog.application.command.CreateOrganizationCommand;
+import com.worklog.application.service.DateInfoService;
 import com.worklog.application.service.OrganizationService;
+import com.worklog.application.service.DateInfo;
 import com.worklog.domain.organization.Organization;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -21,9 +24,11 @@ import java.util.UUID;
 public class OrganizationController {
 
     private final OrganizationService organizationService;
+    private final DateInfoService dateInfoService;
 
-    public OrganizationController(OrganizationService organizationService) {
+    public OrganizationController(OrganizationService organizationService, DateInfoService dateInfoService) {
         this.organizationService = organizationService;
+        this.dateInfoService = dateInfoService;
     }
 
     /**
@@ -151,6 +156,33 @@ public class OrganizationController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Calculates fiscal year and monthly period information for a given date.
+     * 
+     * POST /api/v1/tenants/{tenantId}/organizations/{id}/date-info
+     */
+    @PostMapping("/{id}/date-info")
+    public ResponseEntity<Map<String, Object>> getDateInfo(
+            @PathVariable UUID tenantId,
+            @PathVariable UUID id,
+            @RequestBody DateInfoRequest request) {
+        
+        DateInfo dateInfo = dateInfoService.getDateInfo(id, request.date());
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("date", dateInfo.date().toString());
+        response.put("fiscalYear", dateInfo.fiscalYear());
+        response.put("fiscalYearStart", dateInfo.fiscalYearStart().toString());
+        response.put("fiscalYearEnd", dateInfo.fiscalYearEnd().toString());
+        response.put("monthlyPeriodStart", dateInfo.monthlyPeriodStart().toString());
+        response.put("monthlyPeriodEnd", dateInfo.monthlyPeriodEnd().toString());
+        response.put("fiscalYearPatternId", dateInfo.fiscalYearPatternId().toString());
+        response.put("monthlyPeriodPatternId", dateInfo.monthlyPeriodPatternId().toString());
+        response.put("organizationId", dateInfo.organizationId().toString());
+        
+        return ResponseEntity.ok(response);
+    }
+
     // Request DTOs
     
     public record CreateOrganizationRequest(
@@ -169,5 +201,9 @@ public class OrganizationController {
     public record AssignPatternsRequest(
         UUID fiscalYearPatternId,
         UUID monthlyPeriodPatternId
+    ) {}
+    
+    public record DateInfoRequest(
+        LocalDate date
     ) {}
 }
