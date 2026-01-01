@@ -1,0 +1,88 @@
+package com.worklog.fixtures
+
+import java.util.UUID
+
+/**
+ * Test fixtures for Organization-related entities.
+ */
+object OrganizationFixtures {
+
+    /**
+     * Creates a valid organization code.
+     */
+    fun validCode(prefix: String = "ORG"): String {
+        return "${prefix}_${UUID.randomUUID().toString().take(8).uppercase()}"
+    }
+
+    /**
+     * Creates a valid organization name.
+     */
+    fun validName(suffix: String = ""): String {
+        return "Test Organization${if (suffix.isNotEmpty()) " $suffix" else ""}"
+    }
+
+    /**
+     * Creates a new random organization ID.
+     */
+    fun randomId(): UUID = UUID.randomUUID()
+
+    /**
+     * Creates organization creation request data.
+     */
+    fun createOrganizationRequest(
+        code: String = validCode(),
+        name: String = validName(),
+        parentId: UUID? = null,
+        level: Int = 1
+    ): Map<String, Any?> = mutableMapOf<String, Any?>(
+        "code" to code,
+        "name" to name,
+        "level" to level
+    ).apply {
+        if (parentId != null) {
+            this["parentId"] = parentId.toString()
+        }
+    }
+
+    /**
+     * Creates organization update request data.
+     */
+    fun updateOrganizationRequest(
+        name: String = validName("Updated"),
+        parentId: UUID? = null
+    ): Map<String, Any?> = mutableMapOf<String, Any?>(
+        "name" to name
+    ).apply {
+        if (parentId != null) {
+            this["parentId"] = parentId.toString()
+        }
+    }
+
+    /**
+     * Invalid levels for validation testing (valid range: 1-6).
+     */
+    val invalidLevels = listOf(0, -1, 7, 10, 100)
+
+    /**
+     * Creates a hierarchy of organization requests for testing.
+     */
+    fun createHierarchy(tenantId: UUID, depth: Int = 3): List<Map<String, Any?>> {
+        val organizations = mutableListOf<Map<String, Any?>>()
+        var parentId: UUID? = null
+        
+        for (level in 1..depth) {
+            val orgId = randomId()
+            organizations.add(
+                createOrganizationRequest(
+                    code = validCode("L$level"),
+                    name = validName("Level $level"),
+                    parentId = parentId,
+                    level = level
+                ) + ("id" to orgId)
+            )
+            parentId = orgId
+        }
+        
+        return organizations
+    }
+}
