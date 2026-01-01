@@ -245,17 +245,17 @@
 
 ### Application Layer
 
-- [ ] T046 [P] [US1] CreateTenantCommand の作成
+- [X] T046 [P] [US1] CreateTenantCommand の作成
   - `backend/src/main/java/com/worklog/application/command/CreateTenantCommand.java`
 
-- [ ] T047 [P] [US1] CreateOrganizationCommand の作成
+- [X] T047 [P] [US1] CreateOrganizationCommand の作成
   - `backend/src/main/java/com/worklog/application/command/CreateOrganizationCommand.java`
 
-- [ ] T048 [US1] TenantService の作成
+- [X] T048 [US1] TenantService の作成
   - `backend/src/main/java/com/worklog/application/service/TenantService.java`
   - create, update, deactivate, activate, findById
 
-- [ ] T049 [US1] OrganizationService の作成
+- [X] T049 [US1] OrganizationService の作成
   - `backend/src/main/java/com/worklog/application/service/OrganizationService.java`
   - create, update, deactivate, activate, findById
   - 循環参照バリデーション
