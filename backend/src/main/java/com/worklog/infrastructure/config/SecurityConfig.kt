@@ -14,7 +14,13 @@ class SecurityConfig {
 
         http.csrf { it.disable() }
             .authorizeHttpRequests { auth ->
-                auth.requestMatchers("/api/v1/health", "/api/v1/health/**").permitAll().anyRequest().authenticated()
+                auth.requestMatchers(
+                    "/api/v1/health",
+                    "/api/v1/health/**",
+                    "/actuator/health",
+                    "/actuator/health/**"
+                ).permitAll()
+                .anyRequest().authenticated()
             }
             .httpBasic { }
             .formLogin { it.disable() }
