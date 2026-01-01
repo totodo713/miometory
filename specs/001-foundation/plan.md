@@ -21,7 +21,7 @@ Technical approach: DDD + Event Sourcing with Spring Boot 3.x/Kotlin, PostgreSQL
 **Testing**: JUnit 5, Testcontainers 2.0.2, Database Rider 1.44.0:jakarta, Instancio 5.5.1 (backend)  
 **Target Platform**: Linux server (Docker), Web browser  
 **Project Type**: Web application (frontend + backend)  
-**Performance Goals**: API response time < 100ms, Test suite execution < 60s (SC-001, SC-005)  
+**Performance Goals**: API response time < 100ms (p95), Test suite execution < 60s (SC-001, SC-005)  
 **Constraints**: < 100ms API latency (per spec), 80%+ code coverage on domain layer (SC-007)  
 **Scale/Scope**: Multi-tenant SaaS, 6-level org hierarchy max, indefinite event retention
 
