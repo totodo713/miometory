@@ -2,6 +2,7 @@ package com.worklog.api;
 
 import com.worklog.domain.fiscalyear.FiscalYearPattern;
 import com.worklog.domain.fiscalyear.FiscalYearPatternId;
+import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +40,7 @@ public class FiscalYearPatternController {
         @RequestBody CreateFiscalYearPatternRequest request
     ) {
         FiscalYearPattern pattern = FiscalYearPattern.create(
-            tenantId,
+            TenantId.of(tenantId),
             request.name(),
             request.startMonth(),
             request.startDay()

@@ -344,33 +344,40 @@
   - `backend/src/main/java/com/worklog/domain/fiscalyear/FiscalYearPatternId.java` (35 lines)
   - UUID wrapper with standard ValueObject pattern
 
-- [⚠️] T062 [US2] FiscalYearPatternCreated イベントの作成 ❌ NOT CREATED
-  - `backend/src/main/java/com/worklog/domain/fiscalyear/FiscalYearPatternCreated.java`
-  - **ARCHITECTURAL DECISION:** Pattern implemented as simple entity (not event-sourced)
-  - See PHASE5_GAP_ANALYSIS.md for details
+- [X] T062 [US2] FiscalYearPatternCreated イベントの作成 ✅ COMPLETE (Option A)
+  - `backend/src/main/java/com/worklog/domain/fiscalyear/FiscalYearPatternCreated.java` (59 lines)
+  - Domain event with eventId, occurredAt, aggregateId, tenantId, name, startMonth, startDay
+  - Implements DomainEvent interface with all required methods
+  - Static factory method for event creation
 
-- [X] T063 [US2] FiscalYearPattern エンティティの作成 ✅ VERIFIED (Non-Event-Sourced)
-  - `backend/src/main/java/com/worklog/domain/fiscalyear/FiscalYearPattern.java` (181 lines)
+- [X] T063 [US2] FiscalYearPattern エンティティの作成 ✅ COMPLETE (Event-Sourced)
+  - `backend/src/main/java/com/worklog/domain/fiscalyear/FiscalYearPattern.java` (219 lines)
+  - ✅ Extends AggregateRoot<FiscalYearPatternId>
   - ✅ startMonth (1-12), startDay (1-31) バリデーション実装済み
   - ✅ `getFiscalYear(date)` 計算ロジック実装済み (40 lines)
   - ✅ `getFiscalYearRange(fiscalYear)` 計算ロジック実装済み
-  - ⚠️ Does NOT extend AggregateRoot (simple entity pattern)
+  - ✅ apply(DomainEvent) method handles FiscalYearPatternCreated
+  - ✅ Raises events via raiseEvent() method
 
 ### Domain Layer - MonthlyPeriodPattern
 
 - [X] T064 [P] [US2] MonthlyPeriodPatternId ValueObject の作成 ✅ VERIFIED
   - `backend/src/main/java/com/worklog/domain/monthlyperiod/MonthlyPeriodPatternId.java` (35 lines)
 
-- [⚠️] T065 [US2] MonthlyPeriodPatternCreated イベントの作成 ❌ NOT CREATED
-  - `backend/src/main/java/com/worklog/domain/monthlyperiod/MonthlyPeriodPatternCreated.java`
-  - **ARCHITECTURAL DECISION:** Pattern implemented as simple entity (not event-sourced)
+- [X] T065 [US2] MonthlyPeriodPatternCreated イベントの作成 ✅ COMPLETE (Option A)
+  - `backend/src/main/java/com/worklog/domain/monthlyperiod/MonthlyPeriodPatternCreated.java` (56 lines)
+  - Domain event with eventId, occurredAt, aggregateId, tenantId, name, startDay
+  - Implements DomainEvent interface with all required methods
+  - Static factory method for event creation
 
-- [X] T066 [US2] MonthlyPeriodPattern エンティティの作成 ✅ VERIFIED (Non-Event-Sourced)
-  - `backend/src/main/java/com/worklog/domain/monthlyperiod/MonthlyPeriodPattern.java` (128 lines)
+- [X] T066 [US2] MonthlyPeriodPattern エンティティの作成 ✅ COMPLETE (Event-Sourced)
+  - `backend/src/main/java/com/worklog/domain/monthlyperiod/MonthlyPeriodPattern.java` (161 lines)
+  - ✅ Extends AggregateRoot<MonthlyPeriodPatternId>
   - ✅ startDay のバリデーション（1-28）実装済み
   - ✅ `getMonthlyPeriod(date)` 計算ロジック実装済み
   - ✅ BONUS: MonthlyPeriod.java ValueObject created (31 lines)
-  - ⚠️ Does NOT extend AggregateRoot (simple entity pattern)
+  - ✅ apply(DomainEvent) method handles MonthlyPeriodPatternCreated
+  - ✅ Raises events via raiseEvent() method
 
 ### Application Layer
 

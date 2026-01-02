@@ -1,5 +1,7 @@
 package com.worklog.fixtures
 
+import com.worklog.domain.fiscalyear.FiscalYearPattern
+import com.worklog.domain.tenant.TenantId
 import java.util.UUID
 
 /**
@@ -7,6 +9,18 @@ import java.util.UUID
  * Uses Instancio for generating test data where applicable.
  */
 object FiscalYearPatternFixtures {
+    
+    /**
+     * Kotlin-friendly wrapper for creating FiscalYearPattern with named arguments.
+     */
+    fun createPattern(
+        tenantId: TenantId,
+        name: String,
+        startMonth: Int,
+        startDay: Int
+    ): FiscalYearPattern {
+        return FiscalYearPattern.create(tenantId, name, startMonth, startDay)
+    }
 
     /**
      * Creates a valid fiscal year pattern name.
@@ -94,7 +108,7 @@ object FiscalYearPatternFixtures {
         Triple(mapOf("startMonth" to 11, "startDay" to 1), "2026-01-15", 2025),  // Next calendar year
 
         // January start pattern (1月開始 - calendar year)
-        Triple(mapOf("startMonth" to 1, "startDay" to 1), "2024-12-31", 2023),  // Before start
+        Triple(mapOf("startMonth" to 1, "startDay" to 1), "2024-12-31", 2024),  // End of fiscal year
         Triple(mapOf("startMonth" to 1, "startDay" to 1), "2025-01-01", 2025),  // On start date
         Triple(mapOf("startMonth" to 1, "startDay" to 1), "2025-12-31", 2025),  // End of year
     )

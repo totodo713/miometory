@@ -2,6 +2,7 @@ package com.worklog.api;
 
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +40,7 @@ public class MonthlyPeriodPatternController {
         @RequestBody CreateMonthlyPeriodPatternRequest request
     ) {
         MonthlyPeriodPattern pattern = MonthlyPeriodPattern.create(
-            tenantId,
+            TenantId.of(tenantId),
             request.name(),
             request.startDay()
         );

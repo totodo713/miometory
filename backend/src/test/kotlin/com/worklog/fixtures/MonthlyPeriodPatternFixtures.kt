@@ -1,12 +1,24 @@
 package com.worklog.fixtures
 
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern
+import com.worklog.domain.tenant.TenantId
 import java.util.UUID
 
 /**
  * Test fixtures for MonthlyPeriodPattern-related entities.
- * Uses Instancio for generating test data where applicable.
  */
 object MonthlyPeriodPatternFixtures {
+    
+    /**
+     * Kotlin-friendly wrapper for creating MonthlyPeriodPattern with named arguments.
+     */
+    fun createPattern(
+        tenantId: TenantId,
+        name: String,
+        startDay: Int
+    ): MonthlyPeriodPattern {
+        return MonthlyPeriodPattern.create(tenantId, name, startDay)
+    }
 
     /**
      * Creates a valid monthly period pattern name.

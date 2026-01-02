@@ -3,6 +3,7 @@ package com.worklog.domain.monthlyperiod;
 import com.worklog.domain.shared.AggregateRoot;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.DomainException;
+import com.worklog.domain.tenant.TenantId;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -11,17 +12,15 @@ import java.util.UUID;
  * MonthlyPeriodPattern aggregate root that defines how monthly periods are calculated.
  * 
  * Business Rules:
- * - startDay must be 1-28 (restricted to 28 to handle February in all years)
- * - Monthly periods are calculated based on the start day
- * - If current day >= startDay, period starts on startDay of current month
- * - If current day < startDay, period starts on startDay of previous month
+ * - startDay must be 1-28 (to handle February in non-leap years)
+ * - Periods always span exactly one calendar month
  * 
  * This is an event-sourced aggregate that tracks changes via domain events.
  */
 public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> {
     
     private MonthlyPeriodPatternId id;
-    private UUID tenantId;
+    private TenantId tenantId;
     private String name;
     private int startDay;
     
@@ -39,7 +38,7 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
      * @throws DomainException if validation fails
      */
     public static MonthlyPeriodPattern create(
-        UUID tenantId,
+        TenantId tenantId,
         String name,
         int startDay
     ) {
@@ -51,7 +50,7 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
         
         MonthlyPeriodPatternCreated event = MonthlyPeriodPatternCreated.create(
             patternId.value(),
-            tenantId,
+            tenantId.value(),
             name.trim(),
             startDay
         );
@@ -66,7 +65,7 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
      */
     public static MonthlyPeriodPattern createWithId(
         MonthlyPeriodPatternId id,
-        UUID tenantId,
+        TenantId tenantId,
         String name,
         int startDay
     ) {
@@ -77,7 +76,7 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
         
         MonthlyPeriodPatternCreated event = MonthlyPeriodPatternCreated.create(
             id.value(),
-            tenantId,
+            tenantId.value(),
             name.trim(),
             startDay
         );
@@ -90,7 +89,7 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
      * Calculates the monthly period for a given date.
      * 
      * @param date The date to calculate the monthly period for
-     * @return A MonthlyPeriod with start and end dates
+     * @return A MonthlyPeriod with start and end dates, and display month/year
      */
     public MonthlyPeriod getMonthlyPeriod(LocalDate date) {
         LocalDate periodStart;
@@ -105,14 +104,18 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
         
         LocalDate periodEnd = periodStart.plusMonths(1).minusDays(1);
         
-        return new MonthlyPeriod(periodStart, periodEnd);
+        // Display month/year is based on the end date (when the period closes)
+        int displayMonth = periodEnd.getMonthValue();
+        int displayYear = periodEnd.getYear();
+        
+        return new MonthlyPeriod(periodStart, periodEnd, displayMonth, displayYear);
     }
     
     @Override
     protected void apply(DomainEvent event) {
         if (event instanceof MonthlyPeriodPatternCreated e) {
             this.id = MonthlyPeriodPatternId.of(e.aggregateId());
-            this.tenantId = e.tenantId();
+            this.tenantId = TenantId.of(e.tenantId());
             this.name = e.name();
             this.startDay = e.startDay();
         } else {
@@ -150,7 +153,7 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
         return "MonthlyPeriodPattern";
     }
     
-    public UUID getTenantId() {
+    public TenantId getTenantId() {
         return tenantId;
     }
     

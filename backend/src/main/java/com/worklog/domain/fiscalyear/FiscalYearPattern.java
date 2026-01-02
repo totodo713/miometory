@@ -3,6 +3,7 @@ package com.worklog.domain.fiscalyear;
 import com.worklog.domain.shared.AggregateRoot;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.DomainException;
+import com.worklog.domain.tenant.TenantId;
 
 import java.time.LocalDate;
 import java.time.DateTimeException;
@@ -21,13 +22,13 @@ import java.util.UUID;
 public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
     
     private FiscalYearPatternId id;
-    private UUID tenantId;
+    private TenantId tenantId;
     private String name;
     private int startMonth;
     private int startDay;
     
-    // Private constructor for factory methods
-    private FiscalYearPattern() {
+    // Package-private constructor for factory methods (accessible from Kotlin in same package)
+    FiscalYearPattern() {
     }
     
     /**
@@ -41,7 +42,7 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
      * @throws DomainException if validation fails
      */
     public static FiscalYearPattern create(
-        UUID tenantId,
+        TenantId tenantId,
         String name,
         int startMonth,
         int startDay
@@ -56,7 +57,7 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
         
         FiscalYearPatternCreated event = FiscalYearPatternCreated.create(
             patternId.value(),
-            tenantId,
+            tenantId.value(),
             name.trim(),
             startMonth,
             startDay
@@ -72,7 +73,7 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
      */
     public static FiscalYearPattern createWithId(
         FiscalYearPatternId id,
-        UUID tenantId,
+        TenantId tenantId,
         String name,
         int startMonth,
         int startDay
@@ -86,7 +87,7 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
         
         FiscalYearPatternCreated event = FiscalYearPatternCreated.create(
             id.value(),
-            tenantId,
+            tenantId.value(),
             name.trim(),
             startMonth,
             startDay
@@ -128,7 +129,7 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
     protected void apply(DomainEvent event) {
         if (event instanceof FiscalYearPatternCreated e) {
             this.id = FiscalYearPatternId.of(e.aggregateId());
-            this.tenantId = e.tenantId();
+            this.tenantId = TenantId.of(e.tenantId());
             this.name = e.name();
             this.startMonth = e.startMonth();
             this.startDay = e.startDay();
@@ -188,7 +189,7 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
         return "FiscalYearPattern";
     }
     
-    public UUID getTenantId() {
+    public TenantId getTenantId() {
         return tenantId;
     }
     

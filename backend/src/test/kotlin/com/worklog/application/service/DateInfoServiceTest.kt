@@ -456,7 +456,7 @@ class DateInfoServiceTest : IntegrationTestBase() {
     }
 
     private fun createFiscalYearPattern(tenantId: TenantId, startMonth: Int, startDay: Int): UUID {
-        val pattern = FiscalYearPattern.create(tenantId.value(), "FY Pattern", startMonth, startDay)
+        val pattern = FiscalYearPattern.create(tenantId, "FY Pattern", startMonth, startDay)
         jdbcTemplate.update(
             "INSERT INTO fiscal_year_pattern (id, tenant_id, name, start_month, start_day, created_at) " +
             "VALUES (?, ?, ?, ?, ?, NOW())",
@@ -466,7 +466,7 @@ class DateInfoServiceTest : IntegrationTestBase() {
     }
 
     private fun createMonthlyPeriodPattern(tenantId: TenantId, startDay: Int): UUID {
-        val pattern = MonthlyPeriodPattern.create(tenantId.value(), "MP Pattern", startDay)
+        val pattern = MonthlyPeriodPattern.create(tenantId, "MP Pattern", startDay)
         jdbcTemplate.update(
             "INSERT INTO monthly_period_pattern (id, tenant_id, name, start_day, created_at) " +
             "VALUES (?, ?, ?, ?, NOW())",
