@@ -807,7 +807,7 @@ export function SessionManager({ children }: { children: React.ReactNode }) {
 
 ## Best Practices
 
-### Event Sourcing for Time Entry Domain
+### Event Sourcing for WorkLogEntry Domain
 
 **Event Modeling**:
 - **WorkLogEntryCreated**: Initial time entry creation with project, date, hours
