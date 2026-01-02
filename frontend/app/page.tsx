@@ -1,8 +1,7 @@
 export default async function Home() {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/health`,
-    { cache: "no-store" }
-  ).then(r => r.json());
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/health`, {
+    cache: "no-store",
+  }).then((r) => r.json());
 
   return (
     <main className="p-8">
