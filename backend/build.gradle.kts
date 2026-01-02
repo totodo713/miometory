@@ -22,6 +22,10 @@ java {
 
 repositories {
     mavenCentral()
+    // Shibboleth repository for OpenSAML (required for SAML2 support)
+    maven {
+        url = uri("https://build.shibboleth.net/maven/releases/")
+    }
 }
 
 dependencies {
