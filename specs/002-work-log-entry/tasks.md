@@ -23,13 +23,13 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Verify project structure matches plan.md (backend/, frontend/, infra/docker/)
-- [ ] T002 [P] Update backend/build.gradle.kts with OAuth2/SAML2 dependencies (spring-security-oauth2-client, spring-security-saml2-service-provider)
-- [ ] T003 [P] Update frontend/package.json with Vitest, React Testing Library, Playwright, TanStack Query, date-fns, papaparse, zod
-- [ ] T004 [P] Create frontend/vitest.config.mts and frontend/vitest.setup.ts per research.md
-- [ ] T005 [P] Create frontend/playwright.config.ts per research.md
-- [ ] T006 [P] Update infra/docker/docker-compose.dev.yml with PostgreSQL 16 + Redis 7 services
-- [ ] T007 Create backend/src/main/resources/db/migration/V4__work_log_entry_tables.sql (events table, projections tables)
+- [X] T001 Verify project structure matches plan.md (backend/, frontend/, infra/docker/)
+- [X] T002 [P] Update backend/build.gradle.kts with OAuth2/SAML2 dependencies (spring-security-oauth2-client, spring-security-saml2-service-provider)
+- [X] T003 [P] Update frontend/package.json with Vitest, React Testing Library, Playwright, TanStack Query, date-fns, papaparse, zod
+- [X] T004 [P] Create frontend/vitest.config.mts and frontend/vitest.setup.ts per research.md
+- [X] T005 [P] Create frontend/playwright.config.ts per research.md
+- [X] T006 [P] Update infra/docker/docker-compose.dev.yml with PostgreSQL 16 + Redis 7 services
+- [X] T007 Create backend/src/main/resources/db/migration/V4__work_log_entry_tables.sql (events table, projections tables)
 
 ---
 
@@ -39,18 +39,18 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Implement base Event Sourcing infrastructure in backend/src/main/java/com/worklog/eventsourcing/EventStore.java (if not exists)
-- [ ] T009 [P] Implement TimeAmount value object in backend/src/main/java/com/worklog/domain/shared/TimeAmount.java
-- [ ] T010 [P] Implement FiscalMonthPeriod value object in backend/src/main/java/com/worklog/domain/shared/FiscalMonthPeriod.java
-- [ ] T011 [P] Implement DateRange value object in backend/src/main/java/com/worklog/domain/shared/DateRange.java
+- [X] T008 Implement base Event Sourcing infrastructure in backend/src/main/java/com/worklog/eventsourcing/EventStore.java (if not exists)
+- [X] T009 [P] Implement TimeAmount value object in backend/src/main/java/com/worklog/domain/shared/TimeAmount.java
+- [X] T010 [P] Implement FiscalMonthPeriod value object in backend/src/main/java/com/worklog/domain/shared/FiscalMonthPeriod.java
+- [X] T011 [P] Implement DateRange value object in backend/src/main/java/com/worklog/domain/shared/DateRange.java
 - [ ] T012 [P] Extend Member aggregate with managerId field in backend/src/main/java/com/worklog/domain/member/ (for proxy entry permission)
 - [ ] T013 [P] Extend Project aggregate with isActive, validFrom, validUntil fields in backend/src/main/java/com/worklog/domain/project/
-- [ ] T014 [P] Configure Spring Security OAuth2 client in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
-- [ ] T015 [P] Configure Spring Security SAML2 in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt (add SAML2 provider)
-- [ ] T016 [P] Implement session timeout configuration (30 minutes) in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
-- [ ] T017 [P] Setup frontend Zustand store structure in frontend/app/services/worklogStore.ts
-- [ ] T018 [P] Setup frontend API client with authentication in frontend/app/services/api.ts
-- [ ] T019 Run Flyway migration V4 and verify tables created
+- [X] T014 [P] Configure Spring Security OAuth2 client in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
+- [X] T015 [P] Configure Spring Security SAML2 in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt (add SAML2 provider)
+- [X] T016 [P] Implement session timeout configuration (30 minutes) in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
+- [X] T017 [P] Setup frontend Zustand store structure in frontend/app/services/worklogStore.ts
+- [X] T018 [P] Setup frontend API client with authentication in frontend/app/services/api.ts
+- [X] T019 Run Flyway migration V4 and verify tables created
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -64,21 +64,21 @@
 
 ### Backend - Domain Model (US1)
 
-- [ ] T020 [P] [US1] Create WorkLogEntry aggregate root in backend/src/main/java/com/worklog/domain/worklog/WorkLogEntry.java
-- [ ] T021 [P] [US1] Create WorkLogEntryId value object in backend/src/main/java/com/worklog/domain/worklog/WorkLogEntryId.java
-- [ ] T022 [P] [US1] Create WorkLogStatus enum in backend/src/main/java/com/worklog/domain/worklog/WorkLogStatus.java (DRAFT, SUBMITTED, APPROVED, REJECTED)
-- [ ] T023 [P] [US1] Create WorkLogEntryCreated event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryCreated.java
-- [ ] T024 [P] [US1] Create WorkLogEntryUpdated event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryUpdated.java
-- [ ] T025 [P] [US1] Create WorkLogEntryDeleted event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryDeleted.java
-- [ ] T026 [P] [US1] Create WorkLogEntryStatusChanged event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryStatusChanged.java
+- [X] T020 [P] [US1] Create WorkLogEntry aggregate root in backend/src/main/java/com/worklog/domain/worklog/WorkLogEntry.java
+- [X] T021 [P] [US1] Create WorkLogEntryId value object in backend/src/main/java/com/worklog/domain/worklog/WorkLogEntryId.java
+- [X] T022 [P] [US1] Create WorkLogStatus enum in backend/src/main/java/com/worklog/domain/worklog/WorkLogStatus.java (DRAFT, SUBMITTED, APPROVED, REJECTED)
+- [X] T023 [P] [US1] Create WorkLogEntryCreated event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryCreated.java
+- [X] T024 [P] [US1] Create WorkLogEntryUpdated event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryUpdated.java
+- [X] T025 [P] [US1] Create WorkLogEntryDeleted event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryDeleted.java
+- [X] T026 [P] [US1] Create WorkLogEntryStatusChanged event in backend/src/main/java/com/worklog/domain/worklog/events/WorkLogEntryStatusChanged.java
 
 ### Backend - Application Services (US1)
 
-- [ ] T027 [US1] Create CreateWorkLogEntryCommand in backend/src/main/java/com/worklog/application/command/CreateWorkLogEntryCommand.java
-- [ ] T028 [US1] Create UpdateWorkLogEntryCommand in backend/src/main/java/com/worklog/application/command/UpdateWorkLogEntryCommand.java
-- [ ] T029 [US1] Create DeleteWorkLogEntryCommand in backend/src/main/java/com/worklog/application/command/DeleteWorkLogEntryCommand.java
-- [ ] T030 [US1] Implement WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (validate 24h daily limit)
-- [ ] T031 [US1] Implement JdbcWorkLogRepository in backend/src/main/java/com/worklog/infrastructure/repository/JdbcWorkLogRepository.java
+- [X] T027 [US1] Create CreateWorkLogEntryCommand in backend/src/main/java/com/worklog/application/command/CreateWorkLogEntryCommand.java
+- [X] T028 [US1] Create UpdateWorkLogEntryCommand in backend/src/main/java/com/worklog/application/command/UpdateWorkLogEntryCommand.java
+- [X] T029 [US1] Create DeleteWorkLogEntryCommand in backend/src/main/java/com/worklog/application/command/DeleteWorkLogEntryCommand.java
+- [X] T030 [US1] Implement WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (validate 24h daily limit)
+- [X] T031 [US1] Implement JdbcWorkLogRepository in backend/src/main/java/com/worklog/infrastructure/repository/JdbcWorkLogRepository.java
 
 ### Backend - API Endpoints (US1)
 
