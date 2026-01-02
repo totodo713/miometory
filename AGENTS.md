@@ -122,6 +122,7 @@ _No special Copilot or Cursor agent instructions are present. If present, add th
 ## Active Technologies
 - Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend) (001-foundation)
 - PostgreSQL with JSONB for events (001-foundation)
+- PostgreSQL with JSONB for event sourcing, event store for domain events, projection tables for read models (002-work-log-entry)
 
 ## Recent Changes
 - 001-foundation: Added Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend)

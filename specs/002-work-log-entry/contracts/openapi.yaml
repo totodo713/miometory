@@ -1,0 +1,1237 @@
+openapi: 3.0.3
+info:
+  title: Work-Log Entry System API
+  description: |
+    REST API for the Work-Log Entry System enabling engineers to record daily work hours,
+    manage absences, submit monthly time entries for approval, and perform bulk operations.
+    
+    ## Authentication
+    All endpoints require OAuth2/SAML2 authentication via organizational SSO provider.
+    Bearer token must be included in Authorization header.
+    
+    ## Rate Limiting
+    - Standard endpoints: 1000 requests/hour per user
+    - CSV import: 10 concurrent uploads per user
+    - Streaming endpoints: 100 concurrent connections per user
+    
+    ## Versioning
+    API version is specified in URL path: /api/v1/*
+  version: 1.0.0
+  contact:
+    name: Work-Log System Team
+    
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+  - url: https://api.worklog.example.com/api/v1
+    description: Production
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns service health status
+      tags:
+        - System
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+                
+  /worklog/entries:
+    post:
+      summary: Create or update work log entry
+      description: |
+        Creates a new work log entry or updates an existing one (upsert).
+        Validates:
+        - Time in 0.25h increments
+        - Total daily hours ≤ 24h
+        - Project is active
+        - Entry is in DRAFT status (cannot modify SUBMITTED/APPROVED)
+      tags:
+        - WorkLog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkLogEntryRequest'
+      responses:
+        '201':
+          description: Work log entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkLogEntryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+          
+    get:
+      summary: Get work log entries
+      description: Retrieve work log entries with filtering
+      tags:
+        - WorkLog
+      parameters:
+        - name: memberId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by member (defaults to authenticated user)
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Start date (inclusive)
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: End date (inclusive)
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [DRAFT, SUBMITTED, APPROVED, REJECTED]
+          description: Filter by status
+      responses:
+        '200':
+          description: List of work log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkLogEntryResponse'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+          
+  /worklog/entries/{id}:
+    get:
+      summary: Get single work log entry
+      tags:
+        - WorkLog
+      parameters:
+        - $ref: '#/components/parameters/WorkLogEntryId'
+      responses:
+        '200':
+          description: Work log entry details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkLogEntryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+    patch:
+      summary: Update work log entry (auto-save)
+      description: |
+        Partial update for auto-save functionality.
+        Requires optimistic locking version header.
+      tags:
+        - WorkLog
+      parameters:
+        - $ref: '#/components/parameters/WorkLogEntryId'
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+          description: ETag for optimistic locking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchWorkLogEntryRequest'
+      responses:
+        '200':
+          description: Entry updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkLogEntryResponse'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          description: Precondition failed (version mismatch)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+    delete:
+      summary: Delete work log entry
+      description: Only DRAFT entries can be deleted
+      tags:
+        - WorkLog
+      parameters:
+        - $ref: '#/components/parameters/WorkLogEntryId'
+      responses:
+        '204':
+          description: Entry deleted
+        '400':
+          description: Cannot delete non-draft entry
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+  /worklog/calendar/{year}/{month}:
+    get:
+      summary: Get monthly calendar view
+      description: |
+        Returns calendar projection for a specific fiscal month.
+        Month parameter uses fiscal month start day (e.g., 2026-01 returns 2025-12-21 to 2026-01-20).
+      tags:
+        - WorkLog
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2100
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+        - name: memberId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Member ID (defaults to authenticated user)
+      responses:
+        '200':
+          description: Calendar data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyCalendarResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+          
+  /worklog/summary/{year}/{month}:
+    get:
+      summary: Get monthly summary
+      description: Aggregated summary for monthly submission/approval
+      tags:
+        - WorkLog
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Monthly summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlySummaryResponse'
+                
+  /worklog/submissions:
+    post:
+      summary: Submit month for approval
+      description: |
+        Submits all draft entries for a fiscal month for manager approval.
+        Changes entry status from DRAFT to SUBMITTED.
+      tags:
+        - Approval
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitMonthRequest'
+      responses:
+        '201':
+          description: Month submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyApprovalResponse'
+        '400':
+          description: Cannot submit (incomplete data, already submitted, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+    get:
+      summary: Get submission history
+      description: List of monthly submissions for the authenticated user
+      tags:
+        - Approval
+      parameters:
+        - name: memberId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, SUBMITTED, APPROVED, REJECTED]
+      responses:
+        '200':
+          description: List of submissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submissions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonthlyApprovalResponse'
+                      
+  /worklog/approvals:
+    get:
+      summary: Get pending approvals (manager view)
+      description: Returns list of pending time submissions for direct reports
+      tags:
+        - Approval
+      responses:
+        '200':
+          description: Pending approvals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pendingApprovals:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PendingApprovalResponse'
+                      
+  /worklog/approvals/{approvalId}/approve:
+    post:
+      summary: Approve monthly submission
+      description: Approve a direct report's monthly submission
+      tags:
+        - Approval
+      parameters:
+        - name: approvalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Approval successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyApprovalResponse'
+        '403':
+          description: Not authorized to approve (not direct manager)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+  /worklog/approvals/{approvalId}/reject:
+    post:
+      summary: Reject monthly submission
+      description: Reject a direct report's monthly submission with feedback
+      tags:
+        - Approval
+      parameters:
+        - name: approvalId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  maxLength: 1000
+                  description: Reason for rejection
+      responses:
+        '200':
+          description: Rejection successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyApprovalResponse'
+        '403':
+          description: Not authorized to reject
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+  /worklog/absences:
+    post:
+      summary: Record absence
+      description: Create or update absence entry
+      tags:
+        - Absence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAbsenceRequest'
+      responses:
+        '201':
+          description: Absence recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbsenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+          
+    get:
+      summary: Get absences
+      tags:
+        - Absence
+      parameters:
+        - name: memberId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of absences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  absences:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AbsenceResponse'
+                      
+  /worklog/absences/{id}:
+    delete:
+      summary: Delete absence
+      tags:
+        - Absence
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Absence deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+          
+  /worklog/csv/import:
+    post:
+      summary: Import work log entries from CSV
+      description: |
+        Streaming CSV import with progress feedback.
+        Accepts CSV files up to 100,000 rows (≈10MB) via UI.
+        Larger files should use streaming backend API (future).
+        
+        CSV Format:
+        date,projectCode,hours,comment
+        2026-01-15,PROJ-001,8.00,"Development work"
+      tags:
+        - CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CSV file
+                memberId:
+                  type: string
+                  format: uuid
+                  description: Target member (for proxy entry)
+      responses:
+        '200':
+          description: Import completed with results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsvImportResponse'
+        '400':
+          description: Invalid CSV format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: File too large (>10MB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+  /worklog/csv/import/{importId}/progress:
+    get:
+      summary: Get CSV import progress (SSE)
+      description: Server-Sent Events endpoint for real-time import progress
+      tags:
+        - CSV
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SSE stream of progress updates
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  rowsProcessed:
+                    type: integer
+                  totalRows:
+                    type: integer
+                  percentage:
+                    type: number
+                    format: float
+                  estimatedTimeRemaining:
+                    type: string
+                    format: duration
+                  status:
+                    type: string
+                    enum: [PROCESSING, COMPLETED, FAILED]
+                    
+  /worklog/csv/export/{year}/{month}:
+    get:
+      summary: Export work log entries to CSV
+      description: Download CSV file of work log entries for a fiscal month
+      tags:
+        - CSV
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: memberId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="worklog-2026-01.csv"
+                
+  /worklog/projects:
+    get:
+      summary: Get active projects
+      description: List of projects available for time entry
+      tags:
+        - Projects
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProjectResponse'
+                      
+  /worklog/projects/previous-month:
+    get:
+      summary: Get previous month's projects
+      description: Projects the member worked on in the previous fiscal month (for copying)
+      tags:
+        - Projects
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of projects from previous month
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProjectResponse'
+                  fiscalMonth:
+                    $ref: '#/components/schemas/FiscalMonthPeriod'
+                    
+  /worklog/holidays/{year}:
+    get:
+      summary: Get holidays for a year
+      description: List of organizational holidays
+      tags:
+        - System
+      parameters:
+        - name: year
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of holidays
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  holidays:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HolidayResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: OAuth2/SAML2 access token
+      
+  parameters:
+    WorkLogEntryId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Work log entry ID
+      
+  responses:
+    BadRequest:
+      description: Bad request (invalid parameters)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized (missing or invalid token)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Conflict (concurrent modification)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConflictResponse'
+    ValidationError:
+      description: Validation error (business rule violation)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+            
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, DEGRADED]
+        timestamp:
+          type: string
+          format: date-time
+        components:
+          type: object
+          additionalProperties:
+            type: string
+            
+    CreateWorkLogEntryRequest:
+      type: object
+      required:
+        - date
+        - projectId
+        - hours
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2026-01-15"
+        projectId:
+          type: string
+          format: uuid
+        hours:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 24
+          multipleOf: 0.25
+          example: 8.00
+        comment:
+          type: string
+          maxLength: 500
+        memberId:
+          type: string
+          format: uuid
+          description: Target member (for proxy entry; defaults to authenticated user)
+          
+    PatchWorkLogEntryRequest:
+      type: object
+      properties:
+        hours:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 24
+          multipleOf: 0.25
+        comment:
+          type: string
+          maxLength: 500
+          
+    WorkLogEntryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        memberName:
+          type: string
+        projectId:
+          type: string
+          format: uuid
+        projectCode:
+          type: string
+        projectName:
+          type: string
+        date:
+          type: string
+          format: date
+        hours:
+          type: number
+          format: float
+        comment:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, SUBMITTED, APPROVED, REJECTED]
+        enteredBy:
+          type: string
+          format: uuid
+          description: Who entered the data (for audit trail)
+        enteredByName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int64
+          description: Optimistic locking version
+          
+    CreateAbsenceRequest:
+      type: object
+      required:
+        - date
+        - type
+        - hours
+      properties:
+        date:
+          type: string
+          format: date
+        type:
+          type: string
+          enum: [PAID_LEAVE, SICK_LEAVE, SPECIAL_LEAVE, OTHER]
+        hours:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 24
+          multipleOf: 0.25
+        comment:
+          type: string
+          maxLength: 500
+          
+    AbsenceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        type:
+          type: string
+          enum: [PAID_LEAVE, SICK_LEAVE, SPECIAL_LEAVE, OTHER]
+        hours:
+          type: number
+          format: float
+        comment:
+          type: string
+        status:
+          type: string
+          enum: [DRAFT, SUBMITTED, APPROVED, REJECTED]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          
+    MonthlyCalendarResponse:
+      type: object
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        memberName:
+          type: string
+        fiscalMonth:
+          $ref: '#/components/schemas/FiscalMonthPeriod'
+        dates:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailyCalendarEntry'
+            
+    DailyCalendarEntry:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        totalWorkHours:
+          type: number
+          format: float
+        totalAbsenceHours:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [DRAFT, SUBMITTED, APPROVED, REJECTED, MIXED]
+        isWeekend:
+          type: boolean
+        isHoliday:
+          type: boolean
+        projects:
+          type: array
+          items:
+            type: object
+            properties:
+              projectId:
+                type: string
+                format: uuid
+              projectCode:
+                type: string
+              projectName:
+                type: string
+              hours:
+                type: number
+                format: float
+                
+    MonthlySummaryResponse:
+      type: object
+      properties:
+        memberId:
+          type: string
+          format: uuid
+        memberName:
+          type: string
+        fiscalMonth:
+          $ref: '#/components/schemas/FiscalMonthPeriod'
+        totalWorkHours:
+          type: number
+          format: float
+        totalAbsenceHours:
+          type: number
+          format: float
+        expectedWorkHours:
+          type: number
+          format: float
+        completionPercentage:
+          type: number
+          format: float
+        projectBreakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              projectId:
+                type: string
+                format: uuid
+              projectCode:
+                type: string
+              projectName:
+                type: string
+              totalHours:
+                type: number
+                format: float
+              percentage:
+                type: number
+                format: float
+        absenceBreakdown:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+        approvalStatus:
+          type: string
+          enum: [PENDING, SUBMITTED, APPROVED, REJECTED]
+        draftDaysCount:
+          type: integer
+        submittedDaysCount:
+          type: integer
+        approvedDaysCount:
+          type: integer
+          
+    SubmitMonthRequest:
+      type: object
+      required:
+        - year
+        - month
+      properties:
+        year:
+          type: integer
+        month:
+          type: integer
+        memberId:
+          type: string
+          format: uuid
+          description: Target member (for proxy submission)
+          
+    MonthlyApprovalResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        memberName:
+          type: string
+        fiscalMonth:
+          $ref: '#/components/schemas/FiscalMonthPeriod'
+        status:
+          type: string
+          enum: [PENDING, SUBMITTED, APPROVED, REJECTED]
+        submittedAt:
+          type: string
+          format: date-time
+        submittedBy:
+          type: string
+          format: uuid
+        reviewedAt:
+          type: string
+          format: date-time
+        reviewedBy:
+          type: string
+          format: uuid
+        reviewedByName:
+          type: string
+        rejectionReason:
+          type: string
+        totalWorkHours:
+          type: number
+          format: float
+        totalAbsenceHours:
+          type: number
+          format: float
+        isLateSubmission:
+          type: boolean
+          
+    PendingApprovalResponse:
+      type: object
+      properties:
+        approvalId:
+          type: string
+          format: uuid
+        memberId:
+          type: string
+          format: uuid
+        memberName:
+          type: string
+        fiscalMonth:
+          $ref: '#/components/schemas/FiscalMonthPeriod'
+        submittedAt:
+          type: string
+          format: date-time
+        totalWorkHours:
+          type: number
+          format: float
+        totalAbsenceHours:
+          type: number
+          format: float
+        isLateSubmission:
+          type: boolean
+        summary:
+          $ref: '#/components/schemas/MonthlySummaryResponse'
+          
+    CsvImportResponse:
+      type: object
+      properties:
+        importId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PROCESSING, COMPLETED, FAILED, PARTIAL]
+        totalRows:
+          type: integer
+        successfulRows:
+          type: integer
+        failedRows:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              rowNumber:
+                type: integer
+              error:
+                type: string
+              data:
+                type: string
+        processingTimeMs:
+          type: integer
+          format: int64
+          
+    ProjectResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        isActive:
+          type: boolean
+        validFrom:
+          type: string
+          format: date
+        validUntil:
+          type: string
+          format: date
+          
+    HolidayResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        name:
+          type: string
+        description:
+          type: string
+          
+    FiscalMonthPeriod:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+          example: "2025-12-21"
+        endDate:
+          type: string
+          format: date
+          example: "2026-01-20"
+        displayName:
+          type: string
+          example: "2026-01"
+          
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+          
+    ConflictResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        currentVersion:
+          type: integer
+          format: int64
+        currentState:
+          type: object
+          description: Current state of the resource
+          
+    ValidationErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              rejectedValue:
+                type: string
+
+tags:
+  - name: System
+    description: System health and metadata
+  - name: WorkLog
+    description: Work log entry operations
+  - name: Absence
+    description: Absence recording
+  - name: Approval
+    description: Monthly approval workflow
+  - name: CSV
+    description: Bulk import/export
+  - name: Projects
+    description: Project management
