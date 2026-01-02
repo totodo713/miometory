@@ -322,19 +322,19 @@
   - パターン継承テスト（親組織から継承）
   - ルート組織パターン必須テスト（FR-012a）
 
-- [ ] T058 [US2] FiscalYearPatternControllerTest の作成
+- [X] T058 [US2] FiscalYearPatternControllerTest の作成
   - `backend/src/test/kotlin/com/worklog/api/FiscalYearPatternControllerTest.kt`
   - POST /api/v1/tenants/{tenantId}/fiscal-year-patterns
   - GET /api/v1/tenants/{tenantId}/fiscal-year-patterns
   - GET /api/v1/tenants/{tenantId}/fiscal-year-patterns/{id}
 
-- [ ] T059 [US2] MonthlyPeriodPatternControllerTest の作成
+- [X] T059 [US2] MonthlyPeriodPatternControllerTest の作成
   - `backend/src/test/kotlin/com/worklog/api/MonthlyPeriodPatternControllerTest.kt`
   - POST /api/v1/tenants/{tenantId}/monthly-period-patterns
   - GET /api/v1/tenants/{tenantId}/monthly-period-patterns
   - GET /api/v1/tenants/{tenantId}/monthly-period-patterns/{id}
 
-- [ ] T060 [US2] DateInfoEndpointTest の作成
+- [X] T060 [US2] DateInfoEndpointTest の作成
   - `backend/src/test/kotlin/com/worklog/api/DateInfoEndpointTest.kt`
   - POST /api/v1/tenants/{tenantId}/organizations/{id}/date-info
 
