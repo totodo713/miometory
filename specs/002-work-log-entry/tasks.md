@@ -626,6 +626,169 @@
 
 ---
 
+### T042A-1: 自動保存用API拡張
+- **Priority**: P0
+- **Estimate**: 2h
+- **Dependencies**: T042
+- **Description**:
+  - PATCH /api/worklogs/draft エンドポイント追加（FR-029対応）
+  - 楽観的ロック対応（versionフィールド）
+  - 競合検出時のレスポンス設計
+- **Acceptance**:
+  - [ ] API実装完了
+  - [ ] 競合検出テスト
+  - [ ] 統合テスト 2件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T042A-2: 自動保存Service実装（フロントエンド）
+- **Priority**: P0
+- **Estimate**: 3h
+- **Dependencies**: T042A-1, T042
+- **Description**:
+  - TanStack Query mutation設定
+  - 60秒間隔のタイマー実装
+  - 変更検出ロジック（フォームダーティチェック）
+- **Acceptance**:
+  - [ ] 60秒ごとに自動保存実行
+  - [ ] 変更なし時はスキップ
+  - [ ] 単体テスト 4件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T042A-3: localStorage バックアップ機能
+- **Priority**: P0
+- **Estimate**: 2h
+- **Dependencies**: T042A-2
+- **Description**:
+  - オフライン時のlocalStorage保存
+  - オンライン復帰時の同期処理
+  - 古いデータのクリーンアップ（7日以上前）
+- **Acceptance**:
+  - [ ] オフライン時保存確認
+  - [ ] 同期処理テスト
+  - [ ] 単体テスト 3件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T042A-4: 競合解決UI
+- **Priority**: P0
+- **Estimate**: 2h
+- **Dependencies**: T042A-2, T042A-1
+- **Description**:
+  - 競合検出時のダイアログ表示
+  - 「自分の変更を保持」「サーバーの変更を取得」選択UI
+  - 差分プレビュー表示
+- **Acceptance**:
+  - [ ] ダイアログ表示確認
+  - [ ] 両選択肢の動作テスト
+  - [ ] 単体テスト 3件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T042B-1: アイドル検出ロジック
+- **Priority**: P0
+- **Estimate**: 2h
+- **Dependencies**: T042
+- **Description**:
+  - マウス/キーボード/タッチイベントリスナー（FR-030対応）
+  - APIコール追跡
+  - 最終活動時刻の管理（Zustand state）
+- **Acceptance**:
+  - [ ] 各種イベント検出確認
+  - [ ] 最終活動時刻更新テスト
+  - [ ] 単体テスト 4件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T042B-2: タイムアウト警告ダイアログ
+- **Priority**: P0
+- **Estimate**: 2h
+- **Dependencies**: T042B-1
+- **Description**:
+  - 28分時点での警告モーダル表示
+  - カウントダウンタイマー（残り2分）
+  - 「セッション延長」ボタン
+- **Acceptance**:
+  - [ ] 28分時点で表示確認
+  - [ ] カウントダウン動作確認
+  - [ ] 延長ボタン動作テスト
+  - [ ] 単体テスト 3件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T042B-3: タイムアウト時の処理
+- **Priority**: P0
+- **Estimate**: 1.5h
+- **Dependencies**: T042B-2, T042A-2
+- **Description**:
+  - 30分経過時の自動ログアウト
+  - ログアウト前の自動保存トリガー
+  - ログイン画面へのリダイレクト
+- **Acceptance**:
+  - [ ] 30分時点でログアウト確認
+  - [ ] 自動保存実行確認
+  - [ ] リダイレクト動作テスト
+  - [ ] 単体テスト 3件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T065A-1: インジケーターコンポーネント基本実装
+- **Priority**: P0
+- **Estimate**: 1.5h
+- **Dependencies**: T042A-2, T044
+- **Description**:
+  - ステータス表示コンポーネント（FR-031対応）
+  - 「保存中...」「保存完了」「保存失敗」の状態管理
+  - アイコン + テキスト表示
+- **Acceptance**:
+  - [ ] 3状態表示確認
+  - [ ] 状態遷移テスト
+  - [ ] 単体テスト 3件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T065A-2: タイムスタンプ表示とツールチップ
+- **Priority**: P0
+- **Estimate**: 1h
+- **Dependencies**: T065A-1
+- **Description**:
+  - 最終保存時刻の表示（「HH:MMに保存」）
+  - ホバー時の詳細ツールチップ
+  - 相対時間表示（「3分前に保存」）
+- **Acceptance**:
+  - [ ] タイムスタンプ表示確認
+  - [ ] ツールチップ動作確認
+  - [ ] 相対時間更新テスト
+  - [ ] 単体テスト 2件以上
+- **Status**: ⏳ Pending
+
+---
+
+### T065A-3: アクセシビリティ対応
+- **Priority**: P0
+- **Estimate**: 1h
+- **Dependencies**: T065A-1
+- **Description**:
+  - ARIA live region設定
+  - スクリーンリーダー用の通知
+  - キーボード操作対応
+- **Acceptance**:
+  - [ ] ARIA属性設定確認
+  - [ ] スクリーンリーダーテスト
+  - [ ] キーボード操作テスト
+- **Status**: ⏳ Pending
+
+---
+
 ### T043: API Client 実装
 - **Priority**: P0
 - **Estimate**: 4h

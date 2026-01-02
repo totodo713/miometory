@@ -166,12 +166,10 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - **FR-009**: System MUST allow designated approvers to approve or reject submitted time entries
 - **FR-010**: System MUST change time entry status to "Approved" upon approval, making them permanently read-only
 - **FR-011**: System MUST allow designated approvers to reject entries with feedback, returning status to "Draft" for editing
-- **FR-012**: System MUST provide CSV file import for bulk time entry creation using streaming/chunked processing to handle files of any size
+- **FR-012**: System MUST provide CSV file import for bulk time entry creation using streaming/chunked processing. System accepts CSV files up to 100,000 rows (≈10MB) via UI upload. Larger files must use streaming backend API.
 - **FR-013**: System MUST validate each row of imported CSV data and report specific errors (row number, error description)
 - **FR-014**: System MUST provide CSV file export of time entries for a specified month
 - **FR-015**: System MUST display real-time progress feedback during CSV import operations (percentage complete, rows processed, estimated time remaining)
-- **FR-015**: System MUST display real-time progress feedback during CSV import operations (percentage complete, rows processed, estimated time remaining)
-- **FR-016**: System MUST allow users to copy their previous month's project list (without hours) as a template for the current month
 - **FR-016**: System MUST allow users to copy their previous month's project list (without hours) as a template for the current month
 - **FR-017**: System MUST allow managers to enter time entries on behalf of their direct reports
 - **FR-018**: System MUST record both the attributed user (whose time it is) and the actual user who entered the data (for proxy entries)
@@ -179,12 +177,11 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - **FR-020**: System MUST provide a monthly summary showing total hours per project and percentage distribution
 - **FR-021**: System MUST display expected working hours for the month (based on business days) vs actual hours entered
 - **FR-022**: System MUST maintain a holiday calendar that can be referenced for determining expected working days
-- **FR-023**: System MUST support responsive design for access from desktop computers, tablets, and mobile phones
+- **FR-023**: System MUST support responsive design for access from desktop computers, tablets, and mobile phones. Responsive breakpoints: Mobile 375px-767px, Tablet 768px-1023px, Desktop 1024px+. Touch targets must be ≥44px on mobile.
 - **FR-024**: System MUST display calendar entries with visual indicators for status (draft, submitted, approved, rejected)
 - **FR-025**: System MUST allow users to add optional comments to time entries
 - **FR-026**: System MUST preserve historical time entry data even after employee role changes or termination
-- **FR-026**: System MUST preserve historical time entry data even after employee role changes or termination
-- **FR-027**: System MUST integrate with organizational SSO/SAML/OAuth2 identity provider for user authentication and session management
+- **FR-027**: System MUST support OAuth2 authentication. System SHOULD support SAML2 if organizational infrastructure provides it. Integration with organizational identity provider for user authentication and session management is required.
 - **FR-028**: System MUST retain all time entry data for a minimum of 7 years to comply with legal and audit requirements for payroll and billing records
 - **FR-029**: System MUST automatically save draft time entries every 60 seconds while the entry form is open and has unsaved changes
 - **FR-030**: System MUST terminate idle user sessions after 30 minutes of inactivity for security purposes
@@ -194,7 +191,7 @@ Managers need to enter time on behalf of their direct reports when engineers are
 
 ### Key Entities
 
-- **Time Entry**: Represents hours worked by a person on a specific project on a specific date, including the amount of time (in 0.25h increments), optional comment, entry status (draft/submitted/approved/rejected), and who entered the data
+- **WorkLogEntry**: Represents hours worked by a person on a specific project on a specific date, including the amount of time (in 0.25h increments), optional comment, entry status (draft/submitted/approved/rejected), and who entered the data
 - **Absence**: Represents non-working time (vacation, sick leave, etc.) for a person on a specific date, including absence type and hours
 - **Project**: Represents a billable or trackable work initiative that time can be charged against, having a unique code and name
 - **Organization Member**: Represents a person who enters time, including their reporting structure (manager relationship) and roles (regular member, manager, approver). Roles are synchronized from external HR/SSO system.
@@ -209,7 +206,7 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - **SC-002**: Time entry accuracy improves by 40% compared to paper-based or email-based time tracking (measured by reduction in corrections and resubmissions)
 - **SC-003**: 95% of monthly time submissions are completed by the deadline without manager intervention
 - **SC-004**: Managers can complete approval of 10 team members' monthly time entries in under 10 minutes
-- **SC-005**: CSV import successfully processes files of any size using streaming/chunked processing with real-time progress feedback (target: 100 rows/second processing rate)
+- **SC-005**: CSV import successfully processes files up to 100,000 rows via UI with real-time progress feedback (target: 100 rows/second processing rate). Streaming backend API handles unlimited file size for enterprise bulk operations.
 - **SC-006**: Calendar view loads and displays a full month's data (30 entries) within 1 second
 - **SC-007**: System supports 100 concurrent users entering time without performance degradation
 - **SC-008**: Mobile users can complete time entry for a single day in under 2 minutes using a phone screen

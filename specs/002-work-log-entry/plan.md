@@ -265,30 +265,6 @@ All constitution gates passed without exceptions. The implementation follows exi
 
 All unknowns from Technical Context have been resolved through research. See [research.md](./research.md) for detailed findings.
 
-### Research Tasks
-
-All research tasks completed. See [research.md](./research.md) for:
-- ✅ Frontend testing framework decision
-- ✅ SSO/SAML/OAuth2 integration pattern
-- ✅ Streaming CSV processing implementation
-- ✅ Auto-save implementation pattern
-- ✅ Database encryption at rest approach
-- ✅ Session timeout implementation
-- ✅ Event sourcing best practices
-- ✅ Calendar UI performance patterns
-- ✅ Multi-tenant data isolation
-- ✅ Responsive design patterns
-
-**Output Target**: `research.md` file with decisions, rationale, and rejected alternatives for each research task.
-
----
-
-## Phase 0: Research & Technical Decisions
-
-**Status**: ✅ COMPLETE
-
-All unknowns from Technical Context have been resolved through research. See [research.md](./research.md) for detailed findings.
-
 ### Research Decisions Summary
 
 1. **Frontend Testing Framework**: Vitest + React Testing Library + Playwright
