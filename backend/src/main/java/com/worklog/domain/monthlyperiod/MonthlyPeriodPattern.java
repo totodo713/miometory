@@ -1,36 +1,32 @@
 package com.worklog.domain.monthlyperiod;
 
+import com.worklog.domain.shared.AggregateRoot;
+import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.DomainException;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 /**
- * MonthlyPeriodPattern entity that defines how monthly periods are calculated.
+ * MonthlyPeriodPattern aggregate root that defines how monthly periods are calculated.
  * 
  * Business Rules:
  * - startDay must be 1-28 (restricted to 28 to handle February in all years)
  * - Monthly periods are calculated based on the start day
  * - If current day >= startDay, period starts on startDay of current month
  * - If current day < startDay, period starts on startDay of previous month
+ * 
+ * This is an event-sourced aggregate that tracks changes via domain events.
  */
-public class MonthlyPeriodPattern {
+public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> {
     
-    private final MonthlyPeriodPatternId id;
-    private final UUID tenantId;
-    private final String name;
-    private final int startDay;
+    private MonthlyPeriodPatternId id;
+    private UUID tenantId;
+    private String name;
+    private int startDay;
     
-    private MonthlyPeriodPattern(
-        MonthlyPeriodPatternId id,
-        UUID tenantId,
-        String name,
-        int startDay
-    ) {
-        this.id = id;
-        this.tenantId = tenantId;
-        this.name = name;
-        this.startDay = startDay;
+    // Private constructor for factory methods
+    private MonthlyPeriodPattern() {
     }
     
     /**
@@ -39,7 +35,7 @@ public class MonthlyPeriodPattern {
      * @param tenantId The tenant ID
      * @param name The pattern name
      * @param startDay The starting day (1-28)
-     * @return A new MonthlyPeriodPattern
+     * @return A new MonthlyPeriodPattern with MonthlyPeriodPatternCreated event
      * @throws DomainException if validation fails
      */
     public static MonthlyPeriodPattern create(
@@ -47,14 +43,28 @@ public class MonthlyPeriodPattern {
         String name,
         int startDay
     ) {
-        return create(MonthlyPeriodPatternId.generate(), tenantId, name, startDay);
+        validateName(name);
+        validateStartDay(startDay);
+        
+        MonthlyPeriodPattern pattern = new MonthlyPeriodPattern();
+        MonthlyPeriodPatternId patternId = MonthlyPeriodPatternId.generate();
+        
+        MonthlyPeriodPatternCreated event = MonthlyPeriodPatternCreated.create(
+            patternId.value(),
+            tenantId,
+            name.trim(),
+            startDay
+        );
+        pattern.raiseEvent(event);
+        
+        return pattern;
     }
     
     /**
      * Creates a new MonthlyPeriodPattern with a specific ID.
-     * Used for reconstitution from storage.
+     * Used for reconstitution from event store.
      */
-    public static MonthlyPeriodPattern create(
+    public static MonthlyPeriodPattern createWithId(
         MonthlyPeriodPatternId id,
         UUID tenantId,
         String name,
@@ -63,9 +73,17 @@ public class MonthlyPeriodPattern {
         validateName(name);
         validateStartDay(startDay);
         
-        String trimmedName = name.trim();
+        MonthlyPeriodPattern pattern = new MonthlyPeriodPattern();
         
-        return new MonthlyPeriodPattern(id, tenantId, trimmedName, startDay);
+        MonthlyPeriodPatternCreated event = MonthlyPeriodPatternCreated.create(
+            id.value(),
+            tenantId,
+            name.trim(),
+            startDay
+        );
+        pattern.raiseEvent(event);
+        
+        return pattern;
     }
     
     /**
@@ -90,6 +108,18 @@ public class MonthlyPeriodPattern {
         return new MonthlyPeriod(periodStart, periodEnd);
     }
     
+    @Override
+    protected void apply(DomainEvent event) {
+        if (event instanceof MonthlyPeriodPatternCreated e) {
+            this.id = MonthlyPeriodPatternId.of(e.aggregateId());
+            this.tenantId = e.tenantId();
+            this.name = e.name();
+            this.startDay = e.startDay();
+        } else {
+            throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
+        }
+    }
+    
     private static void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new DomainException("NAME_REQUIRED", "Monthly period pattern name is required");
@@ -109,8 +139,15 @@ public class MonthlyPeriodPattern {
     }
     
     // Getters
+    
+    @Override
     public MonthlyPeriodPatternId getId() {
         return id;
+    }
+    
+    @Override
+    public String getAggregateType() {
+        return "MonthlyPeriodPattern";
     }
     
     public UUID getTenantId() {

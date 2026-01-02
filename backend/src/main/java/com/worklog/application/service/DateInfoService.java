@@ -2,12 +2,15 @@ package com.worklog.application.service;
 
 import com.worklog.domain.fiscalyear.FiscalYearPattern;
 import com.worklog.domain.fiscalyear.FiscalYearPattern.Pair;
+import com.worklog.domain.fiscalyear.FiscalYearPatternId;
 import com.worklog.domain.monthlyperiod.MonthlyPeriod;
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
 import com.worklog.domain.organization.Organization;
 import com.worklog.domain.organization.OrganizationId;
+import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
 import com.worklog.infrastructure.repository.OrganizationRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,14 +31,17 @@ import java.util.UUID;
 public class DateInfoService {
 
     private final OrganizationRepository organizationRepository;
-    private final JdbcTemplate jdbcTemplate;
+    private final FiscalYearPatternRepository fiscalYearPatternRepository;
+    private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
 
     public DateInfoService(
         OrganizationRepository organizationRepository,
-        JdbcTemplate jdbcTemplate
+        FiscalYearPatternRepository fiscalYearPatternRepository,
+        MonthlyPeriodPatternRepository monthlyPeriodPatternRepository
     ) {
         this.organizationRepository = organizationRepository;
-        this.jdbcTemplate = jdbcTemplate;
+        this.fiscalYearPatternRepository = fiscalYearPatternRepository;
+        this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
     }
 
     /**
@@ -152,39 +158,22 @@ public class DateInfoService {
     }
 
     /**
-     * Loads fiscal year pattern from database.
+     * Loads fiscal year pattern from event store via repository.
      */
     private FiscalYearPattern loadFiscalYearPattern(UUID patternId) {
-        return jdbcTemplate.queryForObject(
-            "SELECT id, tenant_id, name, start_month, start_day FROM fiscal_year_pattern WHERE id = ?",
-            (rs, rowNum) -> FiscalYearPattern.create(
-                com.worklog.domain.fiscalyear.FiscalYearPatternId.of(
-                    UUID.fromString(rs.getString("id"))
-                ),
-                UUID.fromString(rs.getString("tenant_id")),
-                rs.getString("name"),
-                rs.getInt("start_month"),
-                rs.getInt("start_day")
-            ),
-            patternId
-        );
+        return fiscalYearPatternRepository.findById(FiscalYearPatternId.of(patternId))
+            .orElseThrow(() -> new IllegalStateException(
+                "Fiscal year pattern not found: " + patternId
+            ));
     }
 
     /**
-     * Loads monthly period pattern from database.
+     * Loads monthly period pattern from event store via repository.
      */
     private MonthlyPeriodPattern loadMonthlyPeriodPattern(UUID patternId) {
-        return jdbcTemplate.queryForObject(
-            "SELECT id, tenant_id, name, start_day FROM monthly_period_pattern WHERE id = ?",
-            (rs, rowNum) -> MonthlyPeriodPattern.create(
-                com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId.of(
-                    UUID.fromString(rs.getString("id"))
-                ),
-                UUID.fromString(rs.getString("tenant_id")),
-                rs.getString("name"),
-                rs.getInt("start_day")
-            ),
-            patternId
-        );
+        return monthlyPeriodPatternRepository.findById(MonthlyPeriodPatternId.of(patternId))
+            .orElseThrow(() -> new IllegalStateException(
+                "Monthly period pattern not found: " + patternId
+            ));
     }
 }

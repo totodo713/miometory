@@ -1,5 +1,7 @@
 package com.worklog.domain.fiscalyear;
 
+import com.worklog.domain.shared.AggregateRoot;
+import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.DomainException;
 
 import java.time.LocalDate;
@@ -7,33 +9,25 @@ import java.time.DateTimeException;
 import java.util.UUID;
 
 /**
- * FiscalYearPattern entity that defines how fiscal years are calculated.
+ * FiscalYearPattern aggregate root that defines how fiscal years are calculated.
  * 
  * Business Rules:
  * - startMonth must be 1-12 (January to December)
  * - startDay must be 1-31 and valid for the specified month
  * - The combination of startMonth and startDay must form a valid date
+ * 
+ * This is an event-sourced aggregate that tracks changes via domain events.
  */
-public class FiscalYearPattern {
+public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
     
-    private final FiscalYearPatternId id;
-    private final UUID tenantId;
-    private final String name;
-    private final int startMonth;
-    private final int startDay;
+    private FiscalYearPatternId id;
+    private UUID tenantId;
+    private String name;
+    private int startMonth;
+    private int startDay;
     
-    private FiscalYearPattern(
-        FiscalYearPatternId id,
-        UUID tenantId,
-        String name,
-        int startMonth,
-        int startDay
-    ) {
-        this.id = id;
-        this.tenantId = tenantId;
-        this.name = name;
-        this.startMonth = startMonth;
-        this.startDay = startDay;
+    // Private constructor for factory methods
+    private FiscalYearPattern() {
     }
     
     /**
@@ -43,7 +37,7 @@ public class FiscalYearPattern {
      * @param name The pattern name
      * @param startMonth The starting month (1-12)
      * @param startDay The starting day (1-31, must be valid for the month)
-     * @return A new FiscalYearPattern
+     * @return A new FiscalYearPattern with FiscalYearPatternCreated event
      * @throws DomainException if validation fails
      */
     public static FiscalYearPattern create(
@@ -52,14 +46,31 @@ public class FiscalYearPattern {
         int startMonth,
         int startDay
     ) {
-        return create(FiscalYearPatternId.generate(), tenantId, name, startMonth, startDay);
+        validateName(name);
+        validateStartMonth(startMonth);
+        validateStartDay(startDay);
+        validateDate(startMonth, startDay);
+        
+        FiscalYearPattern pattern = new FiscalYearPattern();
+        FiscalYearPatternId patternId = FiscalYearPatternId.generate();
+        
+        FiscalYearPatternCreated event = FiscalYearPatternCreated.create(
+            patternId.value(),
+            tenantId,
+            name.trim(),
+            startMonth,
+            startDay
+        );
+        pattern.raiseEvent(event);
+        
+        return pattern;
     }
     
     /**
      * Creates a new FiscalYearPattern with a specific ID.
-     * Used for reconstitution from storage.
+     * Used for reconstitution from event store.
      */
-    public static FiscalYearPattern create(
+    public static FiscalYearPattern createWithId(
         FiscalYearPatternId id,
         UUID tenantId,
         String name,
@@ -71,9 +82,18 @@ public class FiscalYearPattern {
         validateStartDay(startDay);
         validateDate(startMonth, startDay);
         
-        String trimmedName = name.trim();
+        FiscalYearPattern pattern = new FiscalYearPattern();
         
-        return new FiscalYearPattern(id, tenantId, trimmedName, startMonth, startDay);
+        FiscalYearPatternCreated event = FiscalYearPatternCreated.create(
+            id.value(),
+            tenantId,
+            name.trim(),
+            startMonth,
+            startDay
+        );
+        pattern.raiseEvent(event);
+        
+        return pattern;
     }
     
     /**
@@ -102,6 +122,19 @@ public class FiscalYearPattern {
         LocalDate start = LocalDate.of(fiscalYear, startMonth, startDay);
         LocalDate end = start.plusYears(1).minusDays(1);
         return new Pair<>(start, end);
+    }
+    
+    @Override
+    protected void apply(DomainEvent event) {
+        if (event instanceof FiscalYearPatternCreated e) {
+            this.id = FiscalYearPatternId.of(e.aggregateId());
+            this.tenantId = e.tenantId();
+            this.name = e.name();
+            this.startMonth = e.startMonth();
+            this.startDay = e.startDay();
+        } else {
+            throw new IllegalArgumentException("Unknown event type: " + event.getClass().getName());
+        }
     }
     
     private static void validateName(String name) {
@@ -144,8 +177,15 @@ public class FiscalYearPattern {
     }
     
     // Getters
+    
+    @Override
     public FiscalYearPatternId getId() {
         return id;
+    }
+    
+    @Override
+    public String getAggregateType() {
+        return "FiscalYearPattern";
     }
     
     public UUID getTenantId() {
