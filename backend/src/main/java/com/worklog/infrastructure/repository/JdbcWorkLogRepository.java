@@ -117,6 +117,63 @@ public class JdbcWorkLogRepository {
     }
 
     /**
+     * Find work log entries by date range with optional status filter.
+     * Reconstructs aggregates from events.
+     * 
+     * @param memberId Member ID to filter by
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @param status Optional status filter
+     * @return List of work log entries matching criteria
+     */
+    public List<WorkLogEntry> findByDateRange(
+        UUID memberId,
+        LocalDate startDate,
+        LocalDate endDate,
+        com.worklog.domain.worklog.WorkLogStatus status
+    ) {
+        // Query for aggregate IDs matching criteria
+        String sql = """
+            SELECT DISTINCT e.aggregate_id
+            FROM event_store e
+            WHERE e.aggregate_type = 'WorkLogEntry'
+            AND e.event_type = 'WorkLogEntryCreated'
+            AND CAST(e.payload->>'memberId' AS UUID) = ?
+            AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
+            AND e.aggregate_id NOT IN (
+                SELECT aggregate_id 
+                FROM event_store 
+                WHERE aggregate_type = 'WorkLogEntry'
+                AND event_type = 'WorkLogEntryDeleted'
+            )
+            ORDER BY CAST(e.payload->>'date' AS DATE) DESC
+            """;
+
+        List<UUID> aggregateIds = jdbcTemplate.query(
+            sql,
+            (rs, rowNum) -> UUID.fromString(rs.getString("aggregate_id")),
+            memberId,
+            startDate,
+            endDate
+        );
+
+        // Reconstruct each aggregate from events
+        List<WorkLogEntry> entries = new java.util.ArrayList<>();
+        for (UUID aggregateId : aggregateIds) {
+            Optional<WorkLogEntry> entry = findById(WorkLogEntryId.of(aggregateId));
+            
+            // Apply status filter if specified
+            if (entry.isPresent()) {
+                if (status == null || entry.get().getStatus() == status) {
+                    entries.add(entry.get());
+                }
+            }
+        }
+
+        return entries;
+    }
+
+    /**
      * Deserializes a stored event into a domain event.
      */
     private DomainEvent deserializeEvent(StoredEvent storedEvent) {
