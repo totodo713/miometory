@@ -296,23 +296,23 @@
 
 ### Tests (TDD: テスト先行)
 
-- [ ] T053 [P] [US2] FiscalYearPatternFixtures の作成
+- [X] T053 [P] [US2] FiscalYearPatternFixtures の作成
   - `backend/src/test/kotlin/com/worklog/fixtures/FiscalYearPatternFixtures.kt`
 
-- [ ] T054 [P] [US2] MonthlyPeriodPatternFixtures の作成
+- [X] T054 [P] [US2] MonthlyPeriodPatternFixtures の作成
   - `backend/src/test/kotlin/com/worklog/fixtures/MonthlyPeriodPatternFixtures.kt`
 
-- [ ] T055 [US2] FiscalYearPatternTest（ドメイン単体テスト）の作成
+- [X] T055 [US2] FiscalYearPatternTest（ドメイン単体テスト）の作成
   - `backend/src/test/kotlin/com/worklog/domain/fiscalyear/FiscalYearPatternTest.kt`
   - startMonth, startDay バリデーションテスト
   - getFiscalYear() 計算テスト
 
-- [ ] T056 [US2] MonthlyPeriodPatternTest（ドメイン単体テスト）の作成
+- [X] T056 [US2] MonthlyPeriodPatternTest（ドメイン単体テスト）の作成
   - `backend/src/test/kotlin/com/worklog/domain/monthlyperiod/MonthlyPeriodPatternTest.kt`
   - startDay バリデーションテスト（1-28）
   - getMonthlyPeriod() 計算テスト
 
-- [ ] T057 [US2] DateInfoServiceTest の作成（20+ テストケース: SC-002）
+- [X] T057 [US2] DateInfoServiceTest の作成（20+ テストケース: SC-002）
   - `backend/src/test/kotlin/com/worklog/application/service/DateInfoServiceTest.kt`
   - 4月開始パターン（日本標準）
   - 11月開始パターン（年度またぎ）

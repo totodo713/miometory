@@ -1,102 +1,63 @@
 package com.worklog.domain.monthlyperiod
 
 import com.worklog.domain.shared.DomainException
+import com.worklog.domain.tenant.TenantId
 import com.worklog.fixtures.MonthlyPeriodPatternFixtures
-import com.worklog.fixtures.TenantFixtures
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for MonthlyPeriodPattern entity.
- * Tests domain logic for monthly period calculation without any infrastructure dependencies.
+ * Tests domain logic for monthly period calculation without infrastructure dependencies.
  */
 class MonthlyPeriodPatternTest {
 
+    private val tenantId = TenantId(UUID.randomUUID())
+
     @Test
-    fun `create should generate valid monthly period pattern`() {
-        val tenantId = TenantFixtures.randomId()
+    fun `create should generate valid pattern with MonthlyPeriodPatternCreated event`() {
         val pattern = MonthlyPeriodPattern.create(
-            tenantId,
-            "Month-End",
-            1
+            tenantId = tenantId,
+            name = "21日締め",
+            startDay = 21
         )
 
         assertNotNull(pattern.id)
-        assertEquals(tenantId, pattern.tenantId)
-        assertEquals("Month-End", pattern.name)
-        assertEquals(1, pattern.startDay)
+        assertEquals(tenantId.value(), pattern.tenantId.value())
+        assertEquals("21日締め", pattern.name)
+        assertEquals(21, pattern.startDay)
+
+        val events = pattern.uncommittedEvents
+        assertEquals(1, events.size)
+        assertTrue(events[0] is MonthlyPeriodPatternCreated)
+
+        val event = events[0] as MonthlyPeriodPatternCreated
+        assertEquals(pattern.id.value(), event.aggregateId())
+        assertEquals("21日締め", event.name)
+        assertEquals(21, event.startDay)
     }
 
     @Test
     fun `create should trim whitespace from name`() {
         val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "  Test Pattern  ",
-            1
+            tenantId = tenantId,
+            name = "  21st Day Close  ",
+            startDay = 21
         )
 
-        assertEquals("Test Pattern", pattern.name)
+        assertEquals("21st Day Close", pattern.name)
     }
 
-    @Test
-    fun `create should fail with empty name`() {
-        val exception = assertFailsWith<DomainException> {
-            MonthlyPeriodPattern.create(
-                TenantFixtures.randomId(),
-                "",
-                1
-            )
-        }
-        assertEquals("NAME_REQUIRED", exception.errorCode)
-    }
-
-    @Test
-    fun `create should fail with blank name`() {
-        val exception = assertFailsWith<DomainException> {
-            MonthlyPeriodPattern.create(
-                TenantFixtures.randomId(),
-                "   ",
-                1
-            )
-        }
-        assertEquals("NAME_REQUIRED", exception.errorCode)
-    }
-
-    @Test
-    fun `create should fail with name too long`() {
-        val exception = assertFailsWith<DomainException> {
-            MonthlyPeriodPattern.create(
-                TenantFixtures.randomId(),
-                "a".repeat(101),
-                1
-            )
-        }
-        assertEquals("NAME_TOO_LONG", exception.errorCode)
-    }
-
+    // Validation tests for startDay
     @Test
     fun `create should fail with startDay less than 1`() {
         val exception = assertFailsWith<DomainException> {
-            MonthlyPeriodPattern.create(
-                TenantFixtures.randomId(),
-                "Test",
-                0
-            )
-        }
-        assertEquals("INVALID_START_DAY", exception.errorCode)
-    }
-
-    @Test
-    fun `create should fail with startDay equal to 29`() {
-        val exception = assertFailsWith<DomainException> {
-            MonthlyPeriodPattern.create(
-                TenantFixtures.randomId(),
-                "Test",
-                29
-            )
+            MonthlyPeriodPattern.create(tenantId, "Invalid", 0)
         }
         assertEquals("INVALID_START_DAY", exception.errorCode)
     }
@@ -104,188 +65,235 @@ class MonthlyPeriodPatternTest {
     @Test
     fun `create should fail with startDay greater than 28`() {
         val exception = assertFailsWith<DomainException> {
-            MonthlyPeriodPattern.create(
-                TenantFixtures.randomId(),
-                "Test",
-                30
-            )
+            MonthlyPeriodPattern.create(tenantId, "Invalid", 29)
         }
         assertEquals("INVALID_START_DAY", exception.errorCode)
     }
 
     @Test
-    fun `create should succeed with startDay 28 (boundary)`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "Test",
-            28
-        )
+    fun `create should fail with negative startDay`() {
+        val exception = assertFailsWith<DomainException> {
+            MonthlyPeriodPattern.create(tenantId, "Invalid", -1)
+        }
+        assertEquals("INVALID_START_DAY", exception.errorCode)
+    }
 
+    @Test
+    fun `create should allow startDay of 28`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "28日締め", 28)
+        
         assertEquals(28, pattern.startDay)
     }
 
+    // Validation tests for name
     @Test
-    fun `getMonthlyPeriod should return correct period for 1st start - same month`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "Month-End",
-            1
-        )
-
-        // January 15, 2024 -> Period starts Jan 1
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 1, 15))
-        
-        assertEquals(LocalDate.of(2024, 1, 1), period.start)
-        assertEquals(LocalDate.of(2024, 1, 31), period.end)
+    fun `create should fail with empty name`() {
+        val exception = assertFailsWith<DomainException> {
+            MonthlyPeriodPattern.create(tenantId, "", 21)
+        }
+        assertEquals("NAME_REQUIRED", exception.errorCode)
     }
 
     @Test
-    fun `getMonthlyPeriod should return correct period for 1st start - exactly on start`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "Month-End",
-            1
-        )
+    fun `create should fail with name too long`() {
+        val longName = "a".repeat(101)
+        val exception = assertFailsWith<DomainException> {
+            MonthlyPeriodPattern.create(tenantId, longName, 21)
+        }
+        assertEquals("NAME_TOO_LONG", exception.errorCode)
+    }
 
-        // January 1, 2024 -> Period starts Jan 1
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 1, 1))
+    // Monthly period calculation tests - 21日締め pattern (startDay = 21)
+    @Test
+    fun `getMonthlyPeriod should return correct period for 21st day pattern - date within period`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "21日締め", 21)
+        val date = LocalDate.of(2025, 1, 15)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2024, 1, 1), period.start)
-        assertEquals(LocalDate.of(2024, 1, 31), period.end)
+        assertEquals(LocalDate.of(2024, 12, 21), period.startDate)
+        assertEquals(LocalDate.of(2025, 1, 20), period.endDate)
+        assertEquals(1, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should return correct period for 21st cutoff - after cutoff`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "21st Cutoff",
-            21
-        )
-
-        // January 25, 2024 -> Period starts Jan 21
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 1, 25))
+    fun `getMonthlyPeriod should return correct period for 21st day pattern - date at period start`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "21日締め", 21)
+        val date = LocalDate.of(2025, 1, 21)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2024, 1, 21), period.start)
-        assertEquals(LocalDate.of(2024, 2, 20), period.end)
+        assertEquals(LocalDate.of(2025, 1, 21), period.startDate)
+        assertEquals(LocalDate.of(2025, 2, 20), period.endDate)
+        assertEquals(2, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should return correct period for 21st cutoff - before cutoff`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "21st Cutoff",
-            21
-        )
-
-        // January 15, 2024 -> Period starts Dec 21
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 1, 15))
+    fun `getMonthlyPeriod should return correct period for 21st day pattern - date after period start`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "21日締め", 21)
+        val date = LocalDate.of(2025, 1, 25)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2023, 12, 21), period.start)
-        assertEquals(LocalDate.of(2024, 1, 20), period.end)
+        assertEquals(LocalDate.of(2025, 1, 21), period.startDate)
+        assertEquals(LocalDate.of(2025, 2, 20), period.endDate)
+        assertEquals(2, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should return correct period for 21st cutoff - exactly on cutoff`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "21st Cutoff",
-            21
-        )
-
-        // January 21, 2024 -> Period starts Jan 21
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 1, 21))
+    fun `getMonthlyPeriod should handle year boundary crossing for 21st day pattern`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "21日締め", 21)
+        val date = LocalDate.of(2025, 12, 25)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2024, 1, 21), period.start)
-        assertEquals(LocalDate.of(2024, 2, 20), period.end)
+        assertEquals(LocalDate.of(2025, 12, 21), period.startDate)
+        assertEquals(LocalDate.of(2026, 1, 20), period.endDate)
+        assertEquals(1, period.displayMonth)
+        assertEquals(2026, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should handle February correctly for 1st start`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "Month-End",
-            1
-        )
-
-        // February 15, 2024 (leap year) -> Period ends Feb 29
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 2, 15))
+    fun `getMonthlyPeriod should handle February correctly for 21st day pattern`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "21日締め", 21)
+        val date = LocalDate.of(2025, 2, 15)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2024, 2, 1), period.start)
-        assertEquals(LocalDate.of(2024, 2, 29), period.end)
+        assertEquals(LocalDate.of(2025, 1, 21), period.startDate)
+        assertEquals(LocalDate.of(2025, 2, 20), period.endDate)
+        assertEquals(2, period.displayMonth)
+        assertEquals(2025, period.displayYear)
+    }
+
+    // Monthly period calculation tests - 1日締め pattern (startDay = 1) - month-end close
+    @Test
+    fun `getMonthlyPeriod should return correct period for 1st day pattern - date at month start`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "1日締め", 1)
+        val date = LocalDate.of(2025, 1, 1)
+        val period = pattern.getMonthlyPeriod(date)
+        
+        assertEquals(LocalDate.of(2025, 1, 1), period.startDate)
+        assertEquals(LocalDate.of(2025, 1, 31), period.endDate)
+        assertEquals(1, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should handle February correctly for non-leap year`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "Month-End",
-            1
-        )
-
-        // February 15, 2023 (non-leap year) -> Period ends Feb 28
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2023, 2, 15))
+    fun `getMonthlyPeriod should return correct period for 1st day pattern - date in middle of month`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "1日締め", 1)
+        val date = LocalDate.of(2025, 1, 15)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2023, 2, 1), period.start)
-        assertEquals(LocalDate.of(2023, 2, 28), period.end)
+        assertEquals(LocalDate.of(2025, 1, 1), period.startDate)
+        assertEquals(LocalDate.of(2025, 1, 31), period.endDate)
+        assertEquals(1, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should handle year boundary for 25th cutoff`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "25th Cutoff",
-            25
-        )
-
-        // December 30, 2023 -> Period starts Dec 25
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2023, 12, 30))
+    fun `getMonthlyPeriod should return correct period for 1st day pattern - date at month end`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "1日締め", 1)
+        val date = LocalDate.of(2025, 1, 31)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2023, 12, 25), period.start)
-        assertEquals(LocalDate.of(2024, 1, 24), period.end)
+        assertEquals(LocalDate.of(2025, 1, 1), period.startDate)
+        assertEquals(LocalDate.of(2025, 1, 31), period.endDate)
+        assertEquals(1, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should handle year boundary for 25th cutoff - early January`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "25th Cutoff",
-            25
-        )
-
-        // January 10, 2024 -> Period starts Dec 25, 2023
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 1, 10))
+    fun `getMonthlyPeriod should handle February with 28 days for 1st day pattern`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "1日締め", 1)
+        val date = LocalDate.of(2025, 2, 15)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2023, 12, 25), period.start)
-        assertEquals(LocalDate.of(2024, 1, 24), period.end)
+        assertEquals(LocalDate.of(2025, 2, 1), period.startDate)
+        assertEquals(LocalDate.of(2025, 2, 28), period.endDate)
+        assertEquals(2, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should handle 28th cutoff in February`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "28th Cutoff",
-            28
-        )
-
-        // February 28, 2024 (leap year) -> Period starts Feb 28
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 2, 28))
+    fun `getMonthlyPeriod should handle February with 29 days in leap year for 1st day pattern`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "1日締め", 1)
+        val date = LocalDate.of(2024, 2, 15)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2024, 2, 28), period.start)
-        assertEquals(LocalDate.of(2024, 3, 27), period.end)
+        assertEquals(LocalDate.of(2024, 2, 1), period.startDate)
+        assertEquals(LocalDate.of(2024, 2, 29), period.endDate)
+        assertEquals(2, period.displayMonth)
+        assertEquals(2024, period.displayYear)
+    }
+
+    // Monthly period calculation tests - 15日締め pattern (startDay = 15)
+    @Test
+    fun `getMonthlyPeriod should return correct period for 15th day pattern - before period start`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "15日締め", 15)
+        val date = LocalDate.of(2025, 1, 10)
+        val period = pattern.getMonthlyPeriod(date)
+        
+        assertEquals(LocalDate.of(2024, 12, 15), period.startDate)
+        assertEquals(LocalDate.of(2025, 1, 14), period.endDate)
+        assertEquals(1, period.displayMonth)
+        assertEquals(2025, period.displayYear)
     }
 
     @Test
-    fun `getMonthlyPeriod should handle month with 30 days for day 15 cutoff`() {
-        val pattern = MonthlyPeriodPattern.create(
-            TenantFixtures.randomId(),
-            "15th Cutoff",
-            15
-        )
-
-        // April 20, 2024 (April has 30 days) -> Period starts April 15
-        val period = pattern.getMonthlyPeriod(LocalDate.of(2024, 4, 20))
+    fun `getMonthlyPeriod should return correct period for 15th day pattern - at period start`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "15日締め", 15)
+        val date = LocalDate.of(2025, 1, 15)
+        val period = pattern.getMonthlyPeriod(date)
         
-        assertEquals(LocalDate.of(2024, 4, 15), period.start)
-        assertEquals(LocalDate.of(2024, 5, 14), period.end)
+        assertEquals(LocalDate.of(2025, 1, 15), period.startDate)
+        assertEquals(LocalDate.of(2025, 2, 14), period.endDate)
+        assertEquals(2, period.displayMonth)
+        assertEquals(2025, period.displayYear)
+    }
+
+    @Test
+    fun `getMonthlyPeriod should return correct period for 15th day pattern - after period start`() {
+        val pattern = MonthlyPeriodPattern.create(tenantId, "15日締め", 15)
+        val date = LocalDate.of(2025, 1, 20)
+        val period = pattern.getMonthlyPeriod(date)
+        
+        assertEquals(LocalDate.of(2025, 1, 15), period.startDate)
+        assertEquals(LocalDate.of(2025, 2, 14), period.endDate)
+        assertEquals(2, period.displayMonth)
+        assertEquals(2025, period.displayYear)
+    }
+
+    // Comprehensive test using fixtures
+    @Test
+    fun `getMonthlyPeriod should match all test cases from fixtures`() {
+        MonthlyPeriodPatternFixtures.monthlyPeriodCalculationTestCases.forEach { testCase ->
+            val pattern = MonthlyPeriodPattern.create(
+                tenantId = tenantId,
+                name = "Test Pattern",
+                startDay = testCase.first
+            )
+            val date = LocalDate.parse(testCase.second)
+            val period = pattern.getMonthlyPeriod(date)
+            
+            assertEquals(
+                LocalDate.parse(testCase.third),
+                period.startDate,
+                "Failed start date for startDay=${testCase.first} with date ${testCase.second}"
+            )
+            assertEquals(
+                LocalDate.parse(testCase.fourth),
+                period.endDate,
+                "Failed end date for startDay=${testCase.first} with date ${testCase.second}"
+            )
+            assertEquals(
+                testCase.fifth,
+                period.displayMonth,
+                "Failed display month for startDay=${testCase.first} with date ${testCase.second}"
+            )
+            assertEquals(
+                testCase.sixth,
+                period.displayYear,
+                "Failed display year for startDay=${testCase.first} with date ${testCase.second}"
+            )
+        }
     }
 }

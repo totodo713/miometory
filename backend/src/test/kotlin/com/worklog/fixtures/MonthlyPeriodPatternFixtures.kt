@@ -4,7 +4,7 @@ import java.util.UUID
 
 /**
  * Test fixtures for MonthlyPeriodPattern-related entities.
- * Provides common monthly period patterns used in testing.
+ * Uses Instancio for generating test data where applicable.
  */
 object MonthlyPeriodPatternFixtures {
 
@@ -16,123 +16,112 @@ object MonthlyPeriodPatternFixtures {
     }
 
     /**
-     * Creates a new random monthly period pattern ID.
+     * Creates a new random pattern ID.
      */
     fun randomId(): UUID = UUID.randomUUID()
 
     /**
-     * Month-End Pattern (1st start).
-     * Standard calendar month pattern.
+     * Creates a monthly period pattern request with 21st day start (21日締め).
      */
-    fun monthEnd(
-        id: UUID = randomId(),
-        tenantId: UUID = TenantFixtures.randomId(),
-        name: String = "Month-End (1st)"
+    fun create21stDayStartRequest(
+        name: String = "21日締め"
     ): Map<String, Any> = mapOf(
-        "id" to id,
-        "tenantId" to tenantId,
-        "name" to name,
-        "startDay" to 1
-    )
-
-    /**
-     * 21st Cutoff Pattern.
-     * Common salary calculation period (21st to 20th).
-     */
-    fun twentyFirstCutoff(
-        id: UUID = randomId(),
-        tenantId: UUID = TenantFixtures.randomId(),
-        name: String = "21st Cutoff"
-    ): Map<String, Any> = mapOf(
-        "id" to id,
-        "tenantId" to tenantId,
         "name" to name,
         "startDay" to 21
     )
 
     /**
-     * 25th Cutoff Pattern.
-     * Another common salary calculation period (25th to 24th).
+     * Creates a monthly period pattern request with 1st day start (1日締め - month-end close).
      */
-    fun twentyFifthCutoff(
-        id: UUID = randomId(),
-        tenantId: UUID = TenantFixtures.randomId(),
-        name: String = "25th Cutoff"
+    fun create1stDayStartRequest(
+        name: String = "1日締め"
     ): Map<String, Any> = mapOf(
-        "id" to id,
-        "tenantId" to tenantId,
         "name" to name,
-        "startDay" to 25
+        "startDay" to 1
     )
 
     /**
-     * 15th Cutoff Pattern (Bi-monthly).
-     * Used for semi-monthly periods.
+     * Creates a monthly period pattern request with 15th day start (15日締め).
      */
-    fun fifteenthCutoff(
-        id: UUID = randomId(),
-        tenantId: UUID = TenantFixtures.randomId(),
-        name: String = "15th Cutoff"
+    fun create15thDayStartRequest(
+        name: String = "15日締め"
     ): Map<String, Any> = mapOf(
-        "id" to id,
-        "tenantId" to tenantId,
         "name" to name,
         "startDay" to 15
     )
 
     /**
-     * 10th Cutoff Pattern.
-     * Early month cutoff period.
+     * Creates a monthly period pattern creation request with custom start day.
      */
-    fun tenthCutoff(
-        id: UUID = randomId(),
-        tenantId: UUID = TenantFixtures.randomId(),
-        name: String = "10th Cutoff"
-    ): Map<String, Any> = mapOf(
-        "id" to id,
-        "tenantId" to tenantId,
-        "name" to name,
-        "startDay" to 10
-    )
-
-    /**
-     * Creates a monthly period pattern creation request.
-     */
-    fun createRequest(
+    fun createPatternRequest(
         name: String = validName(),
-        startDay: Int = 1
+        startDay: Int = 21
     ): Map<String, Any> = mapOf(
         "name" to name,
         "startDay" to startDay
     )
 
     /**
-     * Invalid start days for validation testing.
-     * Note: startDay must be 1-28 to handle February.
+     * Invalid start days for validation testing (valid range: 1-28).
      */
-    val invalidStartDays = listOf(
-        0,      // Too low
-        -1,     // Negative
-        29,     // Too high (February can't handle)
-        30,     // Too high
-        31,     // Too high
-        100     // Way too high
+    val invalidStartDays = listOf(0, -1, 29, 30, 31, 100)
+
+    /**
+     * Test cases for monthly period calculation.
+     * Each entry: (patternStartDay, testDate, expectedPeriodStart, expectedPeriodEnd, expectedDisplayMonth, expectedDisplayYear)
+     */
+    val monthlyPeriodCalculationTestCases = listOf(
+        // 21日締め pattern (startDay = 21)
+        // Date within period: 2025-01-15 → period: 2024-12-21 to 2025-01-20, display: 2025-01
+        Tuple6(21, "2025-01-15", "2024-12-21", "2025-01-20", 1, 2025),
+        // Date at period start: 2025-01-21 → period: 2025-01-21 to 2025-02-20, display: 2025-02
+        Tuple6(21, "2025-01-21", "2025-01-21", "2025-02-20", 2, 2025),
+        // Date after period start: 2025-01-25 → period: 2025-01-21 to 2025-02-20, display: 2025-02
+        Tuple6(21, "2025-01-25", "2025-01-21", "2025-02-20", 2, 2025),
+        // Year boundary crossing: 2025-12-25 → period: 2025-12-21 to 2026-01-20, display: 2026-01
+        Tuple6(21, "2025-12-25", "2025-12-21", "2026-01-20", 1, 2026),
+        // February handling: 2025-02-15 → period: 2025-01-21 to 2025-02-20, display: 2025-02
+        Tuple6(21, "2025-02-15", "2025-01-21", "2025-02-20", 2, 2025),
+
+        // 1日締め pattern (startDay = 1) - month-end close
+        // Date at month start: 2025-01-01 → period: 2025-01-01 to 2025-01-31, display: 2025-01
+        Tuple6(1, "2025-01-01", "2025-01-01", "2025-01-31", 1, 2025),
+        // Date in middle of month: 2025-01-15 → period: 2025-01-01 to 2025-01-31, display: 2025-01
+        Tuple6(1, "2025-01-15", "2025-01-01", "2025-01-31", 1, 2025),
+        // Date at month end: 2025-01-31 → period: 2025-01-01 to 2025-01-31, display: 2025-01
+        Tuple6(1, "2025-01-31", "2025-01-01", "2025-01-31", 1, 2025),
+        // February (28 days): 2025-02-15 → period: 2025-02-01 to 2025-02-28, display: 2025-02
+        Tuple6(1, "2025-02-15", "2025-02-01", "2025-02-28", 2, 2025),
+        // February (leap year, 29 days): 2024-02-15 → period: 2024-02-01 to 2024-02-29, display: 2024-02
+        Tuple6(1, "2024-02-15", "2024-02-01", "2024-02-29", 2, 2024),
+
+        // 15日締め pattern (startDay = 15)
+        // Before period start: 2025-01-10 → period: 2024-12-15 to 2025-01-14, display: 2025-01
+        Tuple6(15, "2025-01-10", "2024-12-15", "2025-01-14", 1, 2025),
+        // At period start: 2025-01-15 → period: 2025-01-15 to 2025-02-14, display: 2025-02
+        Tuple6(15, "2025-01-15", "2025-01-15", "2025-02-14", 2, 2025),
+        // After period start: 2025-01-20 → period: 2025-01-15 to 2025-02-14, display: 2025-02
+        Tuple6(15, "2025-01-20", "2025-01-15", "2025-02-14", 2, 2025),
     )
 
     /**
-     * Valid boundary start days for edge case testing.
-     */
-    val validBoundaryStartDays = listOf(
-        1,      // First day (standard month-end)
-        28      // Last valid day (handles February)
-    )
-
-    /**
-     * Invalid names for validation testing.
+     * Invalid pattern names for validation testing.
      */
     val invalidNames = listOf(
-        "",                     // Empty
-        "   ",                  // Whitespace only
-        "a".repeat(101)        // Too long (max 100)
+        "",                             // Empty
+        "   ",                          // Whitespace only
+        "a".repeat(101),                // Too long (max 100)
+    )
+
+    /**
+     * Helper data class for test cases with 6 values.
+     */
+    data class Tuple6<A, B, C, D, E, F>(
+        val first: A,
+        val second: B,
+        val third: C,
+        val fourth: D,
+        val fifth: E,
+        val sixth: F
     )
 }
