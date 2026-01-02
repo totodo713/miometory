@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "specs/002-work-log-entry を読んで仕様定義して"
 
+## Clarifications
+
+### Session 2026-01-02
+
+- Q: What authentication method should the system use for user login and session management? → A: Integration with existing organizational SSO/SAML/OAuth2 for authentication; roles derived from HR system
+- Q: How long must time entry data be retained in the system before it can be archived or deleted? → A: 7 years minimum retention (legal/audit compliance standard for payroll/billing records)
+- Q: What is the maximum CSV file size (number of rows) that the system should accept for bulk import? → A: No hard limit - accept any size file with streaming processing and progress indicator
+- Q: What should be the session timeout policy and auto-save behavior for draft time entries? → A: 30-minute idle timeout with automatic draft save every 60 seconds
+- Q: What encryption requirements should the system implement for protecting time entry data? → A: TLS for data in transit + database encryption at rest (industry standard)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Daily Time Entry (Priority: P1)
@@ -156,27 +166,38 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - **FR-009**: System MUST allow designated approvers to approve or reject submitted time entries
 - **FR-010**: System MUST change time entry status to "Approved" upon approval, making them permanently read-only
 - **FR-011**: System MUST allow designated approvers to reject entries with feedback, returning status to "Draft" for editing
-- **FR-012**: System MUST provide CSV file import for bulk time entry creation
+- **FR-012**: System MUST provide CSV file import for bulk time entry creation using streaming/chunked processing to handle files of any size
 - **FR-013**: System MUST validate each row of imported CSV data and report specific errors (row number, error description)
 - **FR-014**: System MUST provide CSV file export of time entries for a specified month
-- **FR-015**: System MUST allow users to copy their previous month's project list (without hours) as a template for the current month
-- **FR-016**: System MUST allow managers to enter time entries on behalf of their direct reports
-- **FR-017**: System MUST record both the attributed user (whose time it is) and the actual user who entered the data (for proxy entries)
-- **FR-018**: System MUST restrict proxy entry permission to only direct reporting relationships
-- **FR-019**: System MUST provide a monthly summary showing total hours per project and percentage distribution
-- **FR-020**: System MUST display expected working hours for the month (based on business days) vs actual hours entered
-- **FR-021**: System MUST maintain a holiday calendar that can be referenced for determining expected working days
-- **FR-022**: System MUST support responsive design for access from desktop computers, tablets, and mobile phones
-- **FR-023**: System MUST display calendar entries with visual indicators for status (draft, submitted, approved, rejected)
-- **FR-024**: System MUST allow users to add optional comments to time entries
-- **FR-025**: System MUST preserve historical time entry data even after employee role changes or termination
+- **FR-015**: System MUST display real-time progress feedback during CSV import operations (percentage complete, rows processed, estimated time remaining)
+- **FR-015**: System MUST display real-time progress feedback during CSV import operations (percentage complete, rows processed, estimated time remaining)
+- **FR-016**: System MUST allow users to copy their previous month's project list (without hours) as a template for the current month
+- **FR-016**: System MUST allow users to copy their previous month's project list (without hours) as a template for the current month
+- **FR-017**: System MUST allow managers to enter time entries on behalf of their direct reports
+- **FR-018**: System MUST record both the attributed user (whose time it is) and the actual user who entered the data (for proxy entries)
+- **FR-019**: System MUST restrict proxy entry permission to only direct reporting relationships
+- **FR-020**: System MUST provide a monthly summary showing total hours per project and percentage distribution
+- **FR-021**: System MUST display expected working hours for the month (based on business days) vs actual hours entered
+- **FR-022**: System MUST maintain a holiday calendar that can be referenced for determining expected working days
+- **FR-023**: System MUST support responsive design for access from desktop computers, tablets, and mobile phones
+- **FR-024**: System MUST display calendar entries with visual indicators for status (draft, submitted, approved, rejected)
+- **FR-025**: System MUST allow users to add optional comments to time entries
+- **FR-026**: System MUST preserve historical time entry data even after employee role changes or termination
+- **FR-026**: System MUST preserve historical time entry data even after employee role changes or termination
+- **FR-027**: System MUST integrate with organizational SSO/SAML/OAuth2 identity provider for user authentication and session management
+- **FR-028**: System MUST retain all time entry data for a minimum of 7 years to comply with legal and audit requirements for payroll and billing records
+- **FR-029**: System MUST automatically save draft time entries every 60 seconds while the entry form is open and has unsaved changes
+- **FR-030**: System MUST terminate idle user sessions after 30 minutes of inactivity for security purposes
+- **FR-031**: System MUST display a visual indicator when draft entries are being auto-saved and when the last auto-save occurred
+- **FR-032**: System MUST use TLS/HTTPS for all client-server communications to encrypt data in transit
+- **FR-033**: System MUST implement database encryption at rest for all time entry data, absence records, and personal information
 
 ### Key Entities
 
 - **Time Entry**: Represents hours worked by a person on a specific project on a specific date, including the amount of time (in 0.25h increments), optional comment, entry status (draft/submitted/approved/rejected), and who entered the data
 - **Absence**: Represents non-working time (vacation, sick leave, etc.) for a person on a specific date, including absence type and hours
 - **Project**: Represents a billable or trackable work initiative that time can be charged against, having a unique code and name
-- **Organization Member**: Represents a person who enters time, including their reporting structure (manager relationship) and roles (regular member, manager, approver)
+- **Organization Member**: Represents a person who enters time, including their reporting structure (manager relationship) and roles (regular member, manager, approver). Roles are synchronized from external HR/SSO system.
 - **Fiscal Month Period**: Represents the organization's definition of monthly periods, which may not align with calendar months (e.g., 21st to 20th)
 - **Holiday**: Represents a non-working day in the organization's calendar, used for calculating expected working hours
 
@@ -188,16 +209,18 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - **SC-002**: Time entry accuracy improves by 40% compared to paper-based or email-based time tracking (measured by reduction in corrections and resubmissions)
 - **SC-003**: 95% of monthly time submissions are completed by the deadline without manager intervention
 - **SC-004**: Managers can complete approval of 10 team members' monthly time entries in under 10 minutes
-- **SC-005**: CSV import successfully processes 100 time entries in under 10 seconds with clear error reporting for any invalid data
+- **SC-005**: CSV import successfully processes files of any size using streaming/chunked processing with real-time progress feedback (target: 100 rows/second processing rate)
 - **SC-006**: Calendar view loads and displays a full month's data (30 entries) within 1 second
 - **SC-007**: System supports 100 concurrent users entering time without performance degradation
 - **SC-008**: Mobile users can complete time entry for a single day in under 2 minutes using a phone screen
 - **SC-009**: Zero approved time entries are accidentally modified (read-only enforcement works 100% of the time)
 - **SC-010**: Audit reports can trace 100% of proxy-entered data back to the manager who entered it
+- **SC-011**: Auto-save successfully preserves draft entries within 60 seconds of changes, preventing data loss during network interruptions or browser crashes (99.9% reliability)
 
 ## Assumptions *(optional)*
 
 - Engineers have access to devices with modern web browsers (desktop, tablet, or mobile)
+- Organizations have an existing SSO/SAML/OAuth2 identity provider infrastructure for authentication
 - Organizations have already defined their fiscal year pattern and monthly period structure
 - Project codes are pre-configured and managed by administrators before engineers start entering time
 - Approval hierarchy (who reports to whom) is maintained in the system or integrated from an external HR system
@@ -206,6 +229,9 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - Managers have time to review and approve entries within a reasonable period (e.g., 5 business days after month end)
 - CSV files for import follow a documented template format
 - Users have basic familiarity with calendar interfaces and spreadsheet software
+- Organizations require 7-year data retention for compliance with legal and audit requirements
+- Users expect modern web application behavior including auto-save functionality to prevent data loss
+- Organizations have infrastructure to support TLS/HTTPS and database encryption capabilities
 
 ## Out of Scope *(optional)*
 
