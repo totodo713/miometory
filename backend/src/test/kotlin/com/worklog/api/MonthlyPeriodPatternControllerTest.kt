@@ -14,10 +14,9 @@ import kotlin.test.assertNotNull
  * Integration tests for MonthlyPeriodPatternController.
  */
 class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
-
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
-    
+
     @Autowired
     private lateinit var jdbcTemplate: org.springframework.jdbc.core.JdbcTemplate
 
@@ -27,20 +26,22 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
         val tenantId = createTenant()
 
         // Create monthly period pattern
-        val request = mapOf(
-            "name" to "21st Cutoff",
-            "startDay" to 21
-        )
+        val request =
+            mapOf(
+                "name" to "21st Cutoff",
+                "startDay" to 21,
+            )
 
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns",
-            request,
-            Map::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns",
+                request,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.CREATED, response.statusCode)
         assertNotNull(response.body)
-        
+
         val body = response.body as Map<*, *>
         assertNotNull(body["id"])
         assertEquals(tenantId.toString(), body["tenantId"])
@@ -52,16 +53,18 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
     fun `POST should reject invalid start day below 1`() {
         val tenantId = createTenant()
 
-        val request = mapOf(
-            "name" to "Invalid Pattern",
-            "startDay" to 0 // Invalid - must be 1-28
-        )
+        val request =
+            mapOf(
+                "name" to "Invalid Pattern",
+                "startDay" to 0, // Invalid - must be 1-28
+            )
 
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns",
-            request,
-            Map::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns",
+                request,
+                Map::class.java,
+            )
 
         // Should fail (not return 201)
         assertNotEquals(HttpStatus.CREATED, response.statusCode)
@@ -71,16 +74,18 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
     fun `POST should reject invalid start day above 28`() {
         val tenantId = createTenant()
 
-        val request = mapOf(
-            "name" to "Invalid Date",
-            "startDay" to 29  // Invalid - must be 1-28 to handle February
-        )
+        val request =
+            mapOf(
+                "name" to "Invalid Date",
+                "startDay" to 29, // Invalid - must be 1-28 to handle February
+            )
 
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns",
-            request,
-            Map::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns",
+                request,
+                Map::class.java,
+            )
 
         // Should fail (not return 201)
         assertNotEquals(HttpStatus.CREATED, response.statusCode)
@@ -91,28 +96,31 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
         val tenantId = createTenant()
 
         // Create pattern
-        val createRequest = mapOf(
-            "name" to "15th Cutoff",
-            "startDay" to 15
-        )
+        val createRequest =
+            mapOf(
+                "name" to "15th Cutoff",
+                "startDay" to 15,
+            )
 
-        val createResponse = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns",
-            createRequest,
-            Map::class.java
-        )
+        val createResponse =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns",
+                createRequest,
+                Map::class.java,
+            )
 
         val patternId = (createResponse.body as Map<*, *>)["id"] as String
 
         // Get pattern by ID
-        val response = restTemplate.getForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns/$patternId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns/$patternId",
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertNotNull(response.body)
-        
+
         val body = response.body as Map<*, *>
         assertEquals(patternId, body["id"])
         assertEquals("15th Cutoff", body["name"])
@@ -124,10 +132,11 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
         val tenantId = createTenant()
         val nonExistentId = UUID.randomUUID()
 
-        val response = restTemplate.getForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns/$nonExistentId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns/$nonExistentId",
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
@@ -136,10 +145,11 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
     fun `GET list should return empty list when no patterns exist`() {
         val tenantId = createTenant()
 
-        val response = restTemplate.getForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns",
-            List::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns",
+                List::class.java,
+            )
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertNotNull(response.body)
@@ -151,33 +161,36 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
         val tenantId = createTenant()
 
         // Create multiple patterns
-        val pattern1 = mapOf(
-            "name" to "1st Cutoff",
-            "startDay" to 1
-        )
+        val pattern1 =
+            mapOf(
+                "name" to "1st Cutoff",
+                "startDay" to 1,
+            )
 
-        val pattern2 = mapOf(
-            "name" to "21st Cutoff",
-            "startDay" to 21
-        )
+        val pattern2 =
+            mapOf(
+                "name" to "21st Cutoff",
+                "startDay" to 21,
+            )
 
         restTemplate.postForEntity(
             "/api/v1/tenants/$tenantId/monthly-period-patterns",
             pattern1,
-            Map::class.java
+            Map::class.java,
         )
 
         restTemplate.postForEntity(
             "/api/v1/tenants/$tenantId/monthly-period-patterns",
             pattern2,
-            Map::class.java
+            Map::class.java,
         )
 
         // Get list
-        val response = restTemplate.getForEntity(
-            "/api/v1/tenants/$tenantId/monthly-period-patterns",
-            List::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/tenants/$tenantId/monthly-period-patterns",
+                List::class.java,
+            )
 
         assertEquals(HttpStatus.OK, response.statusCode)
         assertNotNull(response.body)
@@ -190,34 +203,37 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
         val tenant2Id = createTenant()
 
         // Create pattern for tenant1
-        val pattern1 = mapOf(
-            "name" to "Tenant1 Pattern",
-            "startDay" to 1
-        )
+        val pattern1 =
+            mapOf(
+                "name" to "Tenant1 Pattern",
+                "startDay" to 1,
+            )
 
         restTemplate.postForEntity(
             "/api/v1/tenants/$tenant1Id/monthly-period-patterns",
             pattern1,
-            Map::class.java
+            Map::class.java,
         )
 
         // Create pattern for tenant2
-        val pattern2 = mapOf(
-            "name" to "Tenant2 Pattern",
-            "startDay" to 15
-        )
+        val pattern2 =
+            mapOf(
+                "name" to "Tenant2 Pattern",
+                "startDay" to 15,
+            )
 
         restTemplate.postForEntity(
             "/api/v1/tenants/$tenant2Id/monthly-period-patterns",
             pattern2,
-            Map::class.java
+            Map::class.java,
         )
 
         // Get list for tenant1
-        val response = restTemplate.getForEntity(
-            "/api/v1/tenants/$tenant1Id/monthly-period-patterns",
-            List::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/tenants/$tenant1Id/monthly-period-patterns",
+                List::class.java,
+            )
 
         assertEquals(HttpStatus.OK, response.statusCode)
         val patterns = response.body as List<*>
@@ -228,28 +244,30 @@ class MonthlyPeriodPatternControllerTest : IntegrationTestBase() {
     private fun createTenant(): UUID {
         // Generate a unique short code (max 32 chars)
         val shortCode = "T${System.nanoTime()}"
-        val request = mapOf(
-            "code" to shortCode,
-            "name" to "Test Tenant"
-        )
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants",
-            request,
-            Map::class.java
-        )
+        val request =
+            mapOf(
+                "code" to shortCode,
+                "name" to "Test Tenant",
+            )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants",
+                request,
+                Map::class.java,
+            )
         assertEquals(HttpStatus.CREATED, response.statusCode, "Tenant creation should return 201")
         assertNotNull(response.body, "Tenant creation response body should not be null")
         val tenantId = UUID.fromString((response.body as Map<*, *>)["id"] as String)
-        
+
         // WORKAROUND: Create tenant projection manually
         // In future, this should be handled by an event listener/projector
         jdbcTemplate.update(
             "INSERT INTO tenant (id, code, name, status, created_at) VALUES (?, ?, ?, 'ACTIVE', NOW()) ON CONFLICT (id) DO NOTHING",
             tenantId,
             shortCode,
-            "Test Tenant"
+            "Test Tenant",
         )
-        
+
         return tenantId
     }
 }

@@ -1,7 +1,6 @@
 package com.worklog.domain.tenant
 
 import com.worklog.domain.shared.DomainException
-import com.worklog.fixtures.TenantFixtures
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -13,7 +12,6 @@ import kotlin.test.assertTrue
  * Tests domain logic without any infrastructure dependencies.
  */
 class TenantTest {
-
     @Test
     fun `create should generate valid tenant with TenantCreated event`() {
         val tenant = Tenant.create("TEST_CODE", "Test Tenant")
@@ -43,43 +41,48 @@ class TenantTest {
 
     @Test
     fun `create should fail with empty code`() {
-        val exception = assertFailsWith<DomainException> {
-            Tenant.create("", "Name")
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                Tenant.create("", "Name")
+            }
         assertEquals("CODE_REQUIRED", exception.errorCode)
     }
 
     @Test
     fun `create should fail with invalid code format`() {
-        val exception = assertFailsWith<DomainException> {
-            Tenant.create("invalid code!", "Name")
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                Tenant.create("invalid code!", "Name")
+            }
         assertEquals("CODE_FORMAT", exception.errorCode)
     }
 
     @Test
     fun `create should fail with code too long`() {
         val longCode = "a".repeat(33)
-        val exception = assertFailsWith<DomainException> {
-            Tenant.create(longCode, "Name")
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                Tenant.create(longCode, "Name")
+            }
         assertEquals("CODE_LENGTH", exception.errorCode)
     }
 
     @Test
     fun `create should fail with empty name`() {
-        val exception = assertFailsWith<DomainException> {
-            Tenant.create("CODE", "")
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                Tenant.create("CODE", "")
+            }
         assertEquals("NAME_REQUIRED", exception.errorCode)
     }
 
     @Test
     fun `create should fail with name too long`() {
         val longName = "a".repeat(257)
-        val exception = assertFailsWith<DomainException> {
-            Tenant.create("CODE", longName)
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                Tenant.create("CODE", longName)
+            }
         assertEquals("NAME_TOO_LONG", exception.errorCode)
     }
 
@@ -91,7 +94,7 @@ class TenantTest {
         tenant.update("New Name")
 
         assertEquals("New Name", tenant.name)
-        
+
         val events = tenant.uncommittedEvents
         assertEquals(1, events.size)
         assertTrue(events[0] is TenantUpdated)
@@ -105,9 +108,10 @@ class TenantTest {
         val tenant = Tenant.create("CODE", "Name")
         tenant.clearUncommittedEvents()
 
-        val exception = assertFailsWith<DomainException> {
-            tenant.update("")
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                tenant.update("")
+            }
         assertEquals("NAME_REQUIRED", exception.errorCode)
     }
 
@@ -117,9 +121,10 @@ class TenantTest {
         tenant.deactivate()
         tenant.clearUncommittedEvents()
 
-        val exception = assertFailsWith<DomainException> {
-            tenant.update("New Name")
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                tenant.update("New Name")
+            }
         assertEquals("TENANT_INACTIVE", exception.errorCode)
     }
 
@@ -132,7 +137,7 @@ class TenantTest {
 
         assertEquals(Tenant.Status.INACTIVE, tenant.status)
         assertTrue(!tenant.isActive)
-        
+
         val events = tenant.uncommittedEvents
         assertEquals(1, events.size)
         assertTrue(events[0] is TenantDeactivated)
@@ -157,9 +162,10 @@ class TenantTest {
         tenant.deactivate()
         tenant.clearUncommittedEvents()
 
-        val exception = assertFailsWith<DomainException> {
-            tenant.deactivate()
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                tenant.deactivate()
+            }
         assertEquals("TENANT_ALREADY_INACTIVE", exception.errorCode)
     }
 
@@ -173,7 +179,7 @@ class TenantTest {
 
         assertEquals(Tenant.Status.ACTIVE, tenant.status)
         assertTrue(tenant.isActive)
-        
+
         val events = tenant.uncommittedEvents
         assertEquals(1, events.size)
         assertTrue(events[0] is TenantActivated)
@@ -184,9 +190,10 @@ class TenantTest {
         val tenant = Tenant.create("CODE", "Name")
         tenant.clearUncommittedEvents()
 
-        val exception = assertFailsWith<DomainException> {
-            tenant.activate()
-        }
+        val exception =
+            assertFailsWith<DomainException> {
+                tenant.activate()
+            }
         assertEquals("TENANT_ALREADY_ACTIVE", exception.errorCode)
     }
 
@@ -195,23 +202,23 @@ class TenantTest {
         // Create
         val tenant = Tenant.create("LIFECYCLE", "Lifecycle Test")
         assertTrue(tenant.isActive)
-        
+
         // Update
         tenant.update("Updated Name")
         assertEquals("Updated Name", tenant.name)
-        
+
         // Deactivate
         tenant.deactivate("Closing business")
         assertTrue(!tenant.isActive)
-        
+
         // Reactivate
         tenant.activate()
         assertTrue(tenant.isActive)
-        
+
         // Update again
         tenant.update("Reopened Business")
         assertEquals("Reopened Business", tenant.name)
-        
+
         // Total events: Created, Updated, Deactivated, Activated, Updated
         assertEquals(5, tenant.uncommittedEvents.size)
     }

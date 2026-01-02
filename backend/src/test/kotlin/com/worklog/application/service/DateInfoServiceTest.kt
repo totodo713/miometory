@@ -32,7 +32,6 @@ import kotlin.test.assertNotNull
  * - Root organization pattern requirement
  */
 class DateInfoServiceTest : IntegrationTestBase() {
-
     @Autowired
     private lateinit var dateInfoService: DateInfoService
 
@@ -58,16 +57,16 @@ class DateInfoServiceTest : IntegrationTestBase() {
         // Assert
         assertNotNull(dateInfo)
         assertEquals(testDate, dateInfo.date)
-        
+
         // FY 2023 (April 1, 2023 - March 31, 2024)
         assertEquals(2023, dateInfo.fiscalYear)
         assertEquals(LocalDate.of(2023, 4, 1), dateInfo.fiscalYearStart)
         assertEquals(LocalDate.of(2024, 3, 31), dateInfo.fiscalYearEnd)
-        
+
         // Period: Jan 21 - Feb 20
         assertEquals(LocalDate.of(2024, 1, 21), dateInfo.monthlyPeriodStart)
         assertEquals(LocalDate.of(2024, 2, 20), dateInfo.monthlyPeriodEnd)
-        
+
         assertEquals(fyPatternId, dateInfo.fiscalYearPatternId)
         assertEquals(mpPatternId, dateInfo.monthlyPeriodPatternId)
     }
@@ -450,27 +449,41 @@ class DateInfoServiceTest : IntegrationTestBase() {
             tenant.id.value(),
             tenant.code.value(),
             tenant.name,
-            tenant.status.name
+            tenant.status.name,
         )
         return tenant.id
     }
 
-    private fun createFiscalYearPattern(tenantId: TenantId, startMonth: Int, startDay: Int): UUID {
+    private fun createFiscalYearPattern(
+        tenantId: TenantId,
+        startMonth: Int,
+        startDay: Int,
+    ): UUID {
         val pattern = FiscalYearPattern.create(tenantId, "FY Pattern", startMonth, startDay)
         jdbcTemplate.update(
             "INSERT INTO fiscal_year_pattern (id, tenant_id, name, start_month, start_day, created_at) " +
-            "VALUES (?, ?, ?, ?, ?, NOW())",
-            pattern.id.value(), tenantId.value(), pattern.name, pattern.startMonth, pattern.startDay
+                "VALUES (?, ?, ?, ?, ?, NOW())",
+            pattern.id.value(),
+            tenantId.value(),
+            pattern.name,
+            pattern.startMonth,
+            pattern.startDay,
         )
         return pattern.id.value()
     }
 
-    private fun createMonthlyPeriodPattern(tenantId: TenantId, startDay: Int): UUID {
+    private fun createMonthlyPeriodPattern(
+        tenantId: TenantId,
+        startDay: Int,
+    ): UUID {
         val pattern = MonthlyPeriodPattern.create(tenantId, "MP Pattern", startDay)
         jdbcTemplate.update(
             "INSERT INTO monthly_period_pattern (id, tenant_id, name, start_day, created_at) " +
-            "VALUES (?, ?, ?, ?, NOW())",
-            pattern.id.value(), tenantId.value(), pattern.name, pattern.startDay
+                "VALUES (?, ?, ?, ?, NOW())",
+            pattern.id.value(),
+            tenantId.value(),
+            pattern.name,
+            pattern.startDay,
         )
         return pattern.id.value()
     }
@@ -480,17 +493,18 @@ class DateInfoServiceTest : IntegrationTestBase() {
         parentId: OrganizationId?,
         code: String,
         fiscalYearPatternId: UUID?,
-        monthlyPeriodPatternId: UUID?
+        monthlyPeriodPatternId: UUID?,
     ): Organization {
         val level = if (parentId == null) 1 else 2
-        val org = Organization.create(
-            OrganizationId.generate(),
-            tenantId,
-            parentId,
-            Code.of("${code}_${UUID.randomUUID().toString().take(8)}"),
-            "Org $code",
-            level
-        )
+        val org =
+            Organization.create(
+                OrganizationId.generate(),
+                tenantId,
+                parentId,
+                Code.of("${code}_${UUID.randomUUID().toString().take(8)}"),
+                "Org $code",
+                level,
+            )
         org.assignPatterns(fiscalYearPatternId, monthlyPeriodPatternId)
         organizationRepository.save(org)
         return org

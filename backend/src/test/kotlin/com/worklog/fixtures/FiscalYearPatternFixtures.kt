@@ -9,7 +9,6 @@ import java.util.UUID
  * Uses Instancio for generating test data where applicable.
  */
 object FiscalYearPatternFixtures {
-    
     /**
      * Kotlin-friendly wrapper for creating FiscalYearPattern with named arguments.
      */
@@ -17,17 +16,13 @@ object FiscalYearPatternFixtures {
         tenantId: TenantId,
         name: String,
         startMonth: Int,
-        startDay: Int
-    ): FiscalYearPattern {
-        return FiscalYearPattern.create(tenantId, name, startMonth, startDay)
-    }
+        startDay: Int,
+    ): FiscalYearPattern = FiscalYearPattern.create(tenantId, name, startMonth, startDay)
 
     /**
      * Creates a valid fiscal year pattern name.
      */
-    fun validName(suffix: String = ""): String {
-        return "Fiscal Year Pattern${if (suffix.isNotEmpty()) " $suffix" else ""}"
-    }
+    fun validName(suffix: String = ""): String = "Fiscal Year Pattern${if (suffix.isNotEmpty()) " $suffix" else ""}"
 
     /**
      * Creates a new random pattern ID.
@@ -37,35 +32,32 @@ object FiscalYearPatternFixtures {
     /**
      * Creates a fiscal year pattern creation request with April 1st start (Japanese standard).
      */
-    fun createAprilStartRequest(
-        name: String = "4月開始"
-    ): Map<String, Any> = mapOf(
-        "name" to name,
-        "startMonth" to 4,
-        "startDay" to 1
-    )
+    fun createAprilStartRequest(name: String = "4月開始"): Map<String, Any> =
+        mapOf(
+            "name" to name,
+            "startMonth" to 4,
+            "startDay" to 1,
+        )
 
     /**
      * Creates a fiscal year pattern creation request with November 1st start (year boundary crossing).
      */
-    fun createNovemberStartRequest(
-        name: String = "11月開始"
-    ): Map<String, Any> = mapOf(
-        "name" to name,
-        "startMonth" to 11,
-        "startDay" to 1
-    )
+    fun createNovemberStartRequest(name: String = "11月開始"): Map<String, Any> =
+        mapOf(
+            "name" to name,
+            "startMonth" to 11,
+            "startDay" to 1,
+        )
 
     /**
      * Creates a fiscal year pattern creation request with January 1st start (calendar year).
      */
-    fun createJanuaryStartRequest(
-        name: String = "1月開始"
-    ): Map<String, Any> = mapOf(
-        "name" to name,
-        "startMonth" to 1,
-        "startDay" to 1
-    )
+    fun createJanuaryStartRequest(name: String = "1月開始"): Map<String, Any> =
+        mapOf(
+            "name" to name,
+            "startMonth" to 1,
+            "startDay" to 1,
+        )
 
     /**
      * Creates a fiscal year pattern creation request with custom start date.
@@ -73,12 +65,13 @@ object FiscalYearPatternFixtures {
     fun createPatternRequest(
         name: String = validName(),
         startMonth: Int = 4,
-        startDay: Int = 1
-    ): Map<String, Any> = mapOf(
-        "name" to name,
-        "startMonth" to startMonth,
-        "startDay" to startDay
-    )
+        startDay: Int = 1,
+    ): Map<String, Any> =
+        mapOf(
+            "name" to name,
+            "startMonth" to startMonth,
+            "startDay" to startDay,
+        )
 
     /**
      * Invalid start months for validation testing (valid range: 1-12).
@@ -94,47 +87,46 @@ object FiscalYearPatternFixtures {
      * Test cases for fiscal year calculation.
      * Each entry: (pattern, testDate, expectedFiscalYear)
      */
-    val fiscalYearCalculationTestCases = listOf(
-        // April start pattern (4月開始)
-        Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-03-31", 2024),  // Before start
-        Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-04-01", 2025),  // On start date
-        Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-04-02", 2025),  // After start
-        Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-12-31", 2025),  // End of year
-
-        // November start pattern (11月開始 - year boundary crossing)
-        Triple(mapOf("startMonth" to 11, "startDay" to 1), "2025-10-31", 2024),  // Before start
-        Triple(mapOf("startMonth" to 11, "startDay" to 1), "2025-11-01", 2025),  // On start date
-        Triple(mapOf("startMonth" to 11, "startDay" to 1), "2025-11-02", 2025),  // After start
-        Triple(mapOf("startMonth" to 11, "startDay" to 1), "2026-01-15", 2025),  // Next calendar year
-
-        // January start pattern (1月開始 - calendar year)
-        Triple(mapOf("startMonth" to 1, "startDay" to 1), "2024-12-31", 2024),  // End of fiscal year
-        Triple(mapOf("startMonth" to 1, "startDay" to 1), "2025-01-01", 2025),  // On start date
-        Triple(mapOf("startMonth" to 1, "startDay" to 1), "2025-12-31", 2025),  // End of year
-    )
+    val fiscalYearCalculationTestCases =
+        listOf(
+            // April start pattern (4月開始)
+            Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-03-31", 2024), // Before start
+            Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-04-01", 2025), // On start date
+            Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-04-02", 2025), // After start
+            Triple(mapOf("startMonth" to 4, "startDay" to 1), "2025-12-31", 2025), // End of year
+            // November start pattern (11月開始 - year boundary crossing)
+            Triple(mapOf("startMonth" to 11, "startDay" to 1), "2025-10-31", 2024), // Before start
+            Triple(mapOf("startMonth" to 11, "startDay" to 1), "2025-11-01", 2025), // On start date
+            Triple(mapOf("startMonth" to 11, "startDay" to 1), "2025-11-02", 2025), // After start
+            Triple(mapOf("startMonth" to 11, "startDay" to 1), "2026-01-15", 2025), // Next calendar year
+            // January start pattern (1月開始 - calendar year)
+            Triple(mapOf("startMonth" to 1, "startDay" to 1), "2024-12-31", 2024), // End of fiscal year
+            Triple(mapOf("startMonth" to 1, "startDay" to 1), "2025-01-01", 2025), // On start date
+            Triple(mapOf("startMonth" to 1, "startDay" to 1), "2025-12-31", 2025), // End of year
+        )
 
     /**
      * Test cases for fiscal year range calculation.
      * Each entry: (pattern, fiscalYear, expectedStart, expectedEnd)
      */
-    val fiscalYearRangeTestCases = listOf(
-        // April start pattern (4月開始)
-        Triple(mapOf("startMonth" to 4, "startDay" to 1), 2025, Pair("2025-04-01", "2026-03-31")),
-        Triple(mapOf("startMonth" to 4, "startDay" to 1), 2024, Pair("2024-04-01", "2025-03-31")),
-
-        // November start pattern (11月開始)
-        Triple(mapOf("startMonth" to 11, "startDay" to 1), 2025, Pair("2025-11-01", "2026-10-31")),
-
-        // January start pattern (1月開始)
-        Triple(mapOf("startMonth" to 1, "startDay" to 1), 2025, Pair("2025-01-01", "2025-12-31")),
-    )
+    val fiscalYearRangeTestCases =
+        listOf(
+            // April start pattern (4月開始)
+            Triple(mapOf("startMonth" to 4, "startDay" to 1), 2025, Pair("2025-04-01", "2026-03-31")),
+            Triple(mapOf("startMonth" to 4, "startDay" to 1), 2024, Pair("2024-04-01", "2025-03-31")),
+            // November start pattern (11月開始)
+            Triple(mapOf("startMonth" to 11, "startDay" to 1), 2025, Pair("2025-11-01", "2026-10-31")),
+            // January start pattern (1月開始)
+            Triple(mapOf("startMonth" to 1, "startDay" to 1), 2025, Pair("2025-01-01", "2025-12-31")),
+        )
 
     /**
      * Invalid pattern names for validation testing.
      */
-    val invalidNames = listOf(
-        "",                             // Empty
-        "   ",                          // Whitespace only
-        "a".repeat(101),                // Too long (max 100)
-    )
+    val invalidNames =
+        listOf(
+            "", // Empty
+            "   ", // Whitespace only
+            "a".repeat(101), // Too long (max 100)
+        )
 }

@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
  * - Instancio generates test data
  */
 class InfrastructureVerificationTest : IntegrationTestBase() {
-
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
 
@@ -34,11 +33,16 @@ class InfrastructureVerificationTest : IntegrationTestBase() {
     @Test
     fun `Instancio generates test data correctly`() {
         // Test Instancio with a simple data class
-        data class TestData(val name: String, val value: Int)
+        data class TestData(
+            val name: String,
+            val value: Int,
+        )
 
-        val generated = Instancio.of(TestData::class.java)
-            .set(Select.field("name"), "test-name")
-            .create()
+        val generated =
+            Instancio
+                .of(TestData::class.java)
+                .set(Select.field("name"), "test-name")
+                .create()
 
         assertEquals("test-name", generated.name)
         assertTrue(generated.value != 0) // Instancio generates non-default values
@@ -46,11 +50,16 @@ class InfrastructureVerificationTest : IntegrationTestBase() {
 
     @Test
     fun `Instancio generates list of test data`() {
-        data class Item(val id: String, val description: String)
+        data class Item(
+            val id: String,
+            val description: String,
+        )
 
-        val items = Instancio.ofList(Item::class.java)
-            .size(5)
-            .create()
+        val items =
+            Instancio
+                .ofList(Item::class.java)
+                .size(5)
+                .create()
 
         assertEquals(5, items.size)
         items.forEach { item ->

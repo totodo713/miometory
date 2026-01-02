@@ -14,7 +14,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class DateInfoEndpointTest : IntegrationTestBase() {
-
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
 
@@ -34,11 +33,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for January 25, 2024
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-01-25"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should return 200 with correct calculations
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -62,11 +62,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for June 15, 2024 (end of FY2023)
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-06-15"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should be in FY2023 (Jul 2023 - Jun 2024)
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -88,11 +89,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for December 31, 2023
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2023-12-31"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should be in FY2023
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -119,11 +121,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for child org
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-01-25"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$childOrgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$childOrgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should inherit fiscal year from parent, use own monthly period
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -148,11 +151,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for child org
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-01-25"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$childOrgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$childOrgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should inherit fiscal year from parent, monthly period from grandparent
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -177,11 +181,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for child org
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-01-25"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$childOrgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$childOrgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should use child's own patterns, not parent's
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -202,11 +207,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for non-existent org
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-01-25"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$nonExistentOrgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$nonExistentOrgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should return 404
         assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
@@ -223,11 +229,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info without date
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should return 400
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -242,11 +249,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-01-25"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should return error (500 or 400)
         assert(response.statusCode.is4xxClientError || response.statusCode.is5xxServerError)
@@ -265,11 +273,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for Feb 29, 2024 (leap year)
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-02-29"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should handle leap year correctly
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -290,11 +299,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // When: request date info for December 15, 2024
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
         val requestBody = """{"date": "2024-12-15"}"""
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
-            HttpEntity(requestBody, headers),
-            String::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations/$orgId/date-info",
+                HttpEntity(requestBody, headers),
+                String::class.java,
+            )
 
         // Then: should be in FY2024 (Oct 2024 - Sep 2025)
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -309,26 +319,28 @@ class DateInfoEndpointTest : IntegrationTestBase() {
 
     private fun createTenantWithProjection(): UUID {
         val shortCode = "T${System.nanoTime()}".take(32)
-        
+
         // Create tenant using REST API to trigger event sourcing
-        val requestBody = mapOf(
-            "code" to shortCode,
-            "name" to "Test Tenant"
-        )
-        
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants",
-            requestBody,
-            Map::class.java
-        )
-        
+        val requestBody =
+            mapOf(
+                "code" to shortCode,
+                "name" to "Test Tenant",
+            )
+
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants",
+                requestBody,
+                Map::class.java,
+            )
+
         if (response.statusCode != HttpStatus.CREATED) {
             throw IllegalStateException("Failed to create tenant: ${response.statusCode}")
         }
-        
+
         val tenantIdStr = (response.body as Map<*, *>)["id"] as String
         val tenantId = UUID.fromString(tenantIdStr)
-        
+
         // Workaround: Also create tenant in projection table for FK constraints
         // (until proper event projections are implemented)
         jdbcTemplate.update(
@@ -337,34 +349,50 @@ class DateInfoEndpointTest : IntegrationTestBase() {
             VALUES (?, ?, ?, 'ACTIVE', NOW()) 
             ON CONFLICT (id) DO NOTHING
             """,
-            tenantId, shortCode, "Test Tenant"
+            tenantId,
+            shortCode,
+            "Test Tenant",
         )
-        
+
         return tenantId
     }
 
-    private fun createFiscalYearPattern(tenantId: UUID, startMonth: Int, startDay: Int): UUID {
+    private fun createFiscalYearPattern(
+        tenantId: UUID,
+        startMonth: Int,
+        startDay: Int,
+    ): UUID {
         val patternId = UUID.randomUUID()
-        val patternName = "FY-${startMonth}-${startDay}-${System.nanoTime()}"
+        val patternName = "FY-$startMonth-$startDay-${System.nanoTime()}"
         jdbcTemplate.update(
             """
             INSERT INTO fiscal_year_pattern (id, tenant_id, name, start_month, start_day, created_at) 
             VALUES (?, ?, ?, ?, ?, NOW())
             """,
-            patternId, tenantId, patternName, startMonth, startDay
+            patternId,
+            tenantId,
+            patternName,
+            startMonth,
+            startDay,
         )
         return patternId
     }
 
-    private fun createMonthlyPeriodPattern(tenantId: UUID, startDay: Int): UUID {
+    private fun createMonthlyPeriodPattern(
+        tenantId: UUID,
+        startDay: Int,
+    ): UUID {
         val patternId = UUID.randomUUID()
-        val patternName = "MP-${startDay}-${System.nanoTime()}"
+        val patternName = "MP-$startDay-${System.nanoTime()}"
         jdbcTemplate.update(
             """
             INSERT INTO monthly_period_pattern (id, tenant_id, name, start_day, created_at) 
             VALUES (?, ?, ?, ?, NOW())
             """,
-            patternId, tenantId, patternName, startDay
+            patternId,
+            tenantId,
+            patternName,
+            startDay,
         )
         return patternId
     }
@@ -374,28 +402,30 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         parentId: UUID?,
         fiscalYearPatternId: UUID?,
         monthlyPeriodPatternId: UUID?,
-        level: Int = if (parentId == null) 1 else 2
+        level: Int = if (parentId == null) 1 else 2,
     ): UUID {
         // Create organization using REST API to trigger event sourcing
-        val requestBody = mapOf(
-            "code" to "ORG_${System.nanoTime()}",
-            "name" to "Test Organization",
-            "level" to level,
-            "parentId" to parentId?.toString(),
-            "fiscalYearPatternId" to fiscalYearPatternId?.toString(),
-            "monthlyPeriodPatternId" to monthlyPeriodPatternId?.toString()
-        )
-        
-        val response = restTemplate.postForEntity(
-            "/api/v1/tenants/$tenantId/organizations",
-            requestBody,
-            Map::class.java
-        )
-        
+        val requestBody =
+            mapOf(
+                "code" to "ORG_${System.nanoTime()}",
+                "name" to "Test Organization",
+                "level" to level,
+                "parentId" to parentId?.toString(),
+                "fiscalYearPatternId" to fiscalYearPatternId?.toString(),
+                "monthlyPeriodPatternId" to monthlyPeriodPatternId?.toString(),
+            )
+
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations",
+                requestBody,
+                Map::class.java,
+            )
+
         if (response.statusCode != HttpStatus.CREATED) {
             throw IllegalStateException("Failed to create organization: ${response.statusCode}")
         }
-        
+
         val orgIdStr = (response.body as Map<*, *>)["id"] as String
         return UUID.fromString(orgIdStr)
     }

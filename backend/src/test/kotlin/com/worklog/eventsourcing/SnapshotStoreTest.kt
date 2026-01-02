@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.jdbc.core.JdbcTemplate
 import java.util.UUID
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -16,7 +15,6 @@ import kotlin.test.assertTrue
  * Tests snapshot save/load operations and upsert behavior.
  */
 class SnapshotStoreTest : IntegrationTestBase() {
-
     @Autowired
     private lateinit var snapshotStore: SnapshotStore
 
@@ -39,7 +37,7 @@ class SnapshotStoreTest : IntegrationTestBase() {
         snapshotStore.save(aggregateId, aggregateType, version, state)
 
         val snapshot = snapshotStore.load(aggregateId)
-        
+
         assertTrue(snapshot.isPresent)
         assertEquals(aggregateId, snapshot.get().aggregateId)
         assertEquals(aggregateType, snapshot.get().aggregateType)
@@ -54,31 +52,32 @@ class SnapshotStoreTest : IntegrationTestBase() {
 
         // Save initial snapshot
         snapshotStore.save(aggregateId, aggregateType, 5L, """{"name": "Initial"}""")
-        
+
         // Save updated snapshot (should overwrite)
         snapshotStore.save(aggregateId, aggregateType, 10L, """{"name": "Updated"}""")
 
         val snapshot = snapshotStore.load(aggregateId)
-        
+
         assertTrue(snapshot.isPresent)
         assertEquals(10L, snapshot.get().version)
         assertTrue(snapshot.get().state.contains("Updated"))
-        
+
         // Verify only one record exists
-        val count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM snapshot_store WHERE aggregate_id = ?",
-            Long::class.java,
-            aggregateId
-        )
+        val count =
+            jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM snapshot_store WHERE aggregate_id = ?",
+                Long::class.java,
+                aggregateId,
+            )
         assertEquals(1L, count)
     }
 
     @Test
     fun `load should return empty for non-existent aggregate`() {
         val nonExistentId = UUID.randomUUID()
-        
+
         val snapshot = snapshotStore.load(nonExistentId)
-        
+
         assertTrue(snapshot.isEmpty)
     }
 
@@ -86,7 +85,8 @@ class SnapshotStoreTest : IntegrationTestBase() {
     fun `save should handle complex JSON state`() {
         val aggregateId = UUID.randomUUID()
         val aggregateType = "Organization"
-        val complexState = """
+        val complexState =
+            """
             {
                 "id": "${UUID.randomUUID()}",
                 "name": "Tech Department",
@@ -99,12 +99,12 @@ class SnapshotStoreTest : IntegrationTestBase() {
                     "level": 2
                 }
             }
-        """.trimIndent()
+            """.trimIndent()
 
         snapshotStore.save(aggregateId, aggregateType, 15L, complexState)
 
         val snapshot = snapshotStore.load(aggregateId)
-        
+
         assertTrue(snapshot.isPresent)
         assertTrue(snapshot.get().state.contains("Tech Department"))
         assertTrue(snapshot.get().state.contains("Dev Team"))
@@ -120,7 +120,7 @@ class SnapshotStoreTest : IntegrationTestBase() {
 
         val snapshot1 = snapshotStore.load(aggregateId1)
         val snapshot2 = snapshotStore.load(aggregateId2)
-        
+
         assertTrue(snapshot1.isPresent)
         assertTrue(snapshot2.isPresent)
         assertEquals(5L, snapshot1.get().version)

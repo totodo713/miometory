@@ -16,7 +16,6 @@ import java.util.*
  * Tests business rules and invariants according to FR-002, FR-003, FR-004, FR-006.
  */
 class OrganizationTest {
-
     @Test
     fun `create should return new Organization with level 1 when parentId is null`() {
         // Arrange
@@ -64,7 +63,7 @@ class OrganizationTest {
         // Assert
         assertEquals(2, organization.level)
         assertEquals(parentId, organization.parentId)
-        
+
         val event = organization.uncommittedEvents[0] as OrganizationCreated
         assertEquals(parentId.value, event.parentId)
         assertEquals(2, event.level)
@@ -79,9 +78,10 @@ class OrganizationTest {
         val name = "Invalid Organization"
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            Organization.create(id, tenantId, null, code, name, 0)
-        }
+        val exception =
+            assertThrows<DomainException> {
+                Organization.create(id, tenantId, null, code, name, 0)
+            }
         assertTrue(exception.message!!.contains("level must be between 1 and 6"))
     }
 
@@ -95,9 +95,10 @@ class OrganizationTest {
         val name = "Invalid Organization"
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            Organization.create(id, tenantId, parentId, code, name, 7)
-        }
+        val exception =
+            assertThrows<DomainException> {
+                Organization.create(id, tenantId, parentId, code, name, 7)
+            }
         assertTrue(exception.message!!.contains("level must be between 1 and 6"))
     }
 
@@ -111,9 +112,10 @@ class OrganizationTest {
         val name = "Invalid Organization"
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            Organization.create(id, tenantId, parentId, code, name, 1)
-        }
+        val exception =
+            assertThrows<DomainException> {
+                Organization.create(id, tenantId, parentId, code, name, 1)
+            }
         assertTrue(exception.message!!.contains("Root organization") && exception.message!!.contains("cannot have a parent"))
     }
 
@@ -126,9 +128,10 @@ class OrganizationTest {
         val name = "Invalid Organization"
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            Organization.create(id, tenantId, null, code, name, 2)
-        }
+        val exception =
+            assertThrows<DomainException> {
+                Organization.create(id, tenantId, null, code, name, 2)
+            }
         assertTrue(exception.message!!.contains("Non-root organization must have a parent"))
     }
 
@@ -152,9 +155,10 @@ class OrganizationTest {
         val code = randomCode("test")
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            Organization.create(id, tenantId, null, code, "")
-        }
+        val exception =
+            assertThrows<DomainException> {
+                Organization.create(id, tenantId, null, code, "")
+            }
         assertTrue(exception.message!!.contains("Name cannot be empty"))
     }
 
@@ -184,9 +188,10 @@ class OrganizationTest {
         val organization = createOrganization()
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            organization.update("")
-        }
+        val exception =
+            assertThrows<DomainException> {
+                organization.update("")
+            }
         assertTrue(exception.message!!.contains("Name cannot be empty"))
     }
 
@@ -215,9 +220,10 @@ class OrganizationTest {
         organization.deactivate()
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            organization.deactivate()
-        }
+        val exception =
+            assertThrows<DomainException> {
+                organization.deactivate()
+            }
         assertTrue(exception.message!!.contains("Organization is already inactive"))
     }
 
@@ -246,9 +252,10 @@ class OrganizationTest {
         val organization = createOrganization()
 
         // Act & Assert
-        val exception = assertThrows<DomainException> {
-            organization.activate()
-        }
+        val exception =
+            assertThrows<DomainException> {
+                organization.activate()
+            }
         assertTrue(exception.message!!.contains("Organization is already active"))
     }
 

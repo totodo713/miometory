@@ -30,15 +30,15 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @ActiveProfiles("test")
 @Testcontainers
 abstract class IntegrationTestBase {
-
     companion object {
         @JvmStatic
-        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16-alpine")
-            .withDatabaseName("worklog_test")
-            .withUsername("test")
-            .withPassword("test")
-            .withReuse(true)
-            .apply { start() }
+        private val postgres: PostgreSQLContainer<*> =
+            PostgreSQLContainer("postgres:16-alpine")
+                .withDatabaseName("worklog_test")
+                .withUsername("test")
+                .withPassword("test")
+                .withReuse(true)
+                .apply { start() }
 
         @JvmStatic
         @DynamicPropertySource

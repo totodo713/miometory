@@ -14,23 +14,17 @@ class OrganizationFixtures {
         /**
          * Creates a valid organization code.
          */
-        fun validCode(prefix: String = "ORG"): String {
-            return "${prefix}_${UUID.randomUUID().toString().replace("-", "").take(8).uppercase()}"
-        }
+        fun validCode(prefix: String = "ORG"): String = "${prefix}_${UUID.randomUUID().toString().replace("-", "").take(8).uppercase()}"
 
         /**
          * Creates a random Code value object.
          */
-        fun randomCode(prefix: String = "ORG"): Code {
-            return Code(validCode(prefix))
-        }
+        fun randomCode(prefix: String = "ORG"): Code = Code(validCode(prefix))
 
         /**
          * Creates a valid organization name.
          */
-        fun validName(suffix: String = ""): String {
-            return "Test Organization${if (suffix.isNotEmpty()) " $suffix" else ""}"
-        }
+        fun validName(suffix: String = ""): String = "Test Organization${if (suffix.isNotEmpty()) " $suffix" else ""}"
 
         /**
          * Creates a new random organization ID.
@@ -51,42 +45,42 @@ class OrganizationFixtures {
             parentId: OrganizationId? = null,
             code: Code = randomCode(),
             name: String = validName(),
-            level: Int = 1
-        ): Organization {
-            return Organization.create(id, tenantId, parentId, code, name, level)
-        }
+            level: Int = 1,
+        ): Organization = Organization.create(id, tenantId, parentId, code, name, level)
 
         /**
          * Creates organization creation request data.
          */
         fun createOrganizationRequest(
-        code: String = validCode(),
-        name: String = validName(),
-        parentId: UUID? = null,
-        level: Int = 1
-    ): Map<String, Any?> = mutableMapOf<String, Any?>(
-        "code" to code,
-        "name" to name,
-        "level" to level
-    ).apply {
-        if (parentId != null) {
-            this["parentId"] = parentId.toString()
-        }
-    }
+            code: String = validCode(),
+            name: String = validName(),
+            parentId: UUID? = null,
+            level: Int = 1,
+        ): Map<String, Any?> =
+            mutableMapOf<String, Any?>(
+                "code" to code,
+                "name" to name,
+                "level" to level,
+            ).apply {
+                if (parentId != null) {
+                    this["parentId"] = parentId.toString()
+                }
+            }
 
         /**
          * Creates organization update request data.
          */
         fun updateOrganizationRequest(
-        name: String = validName("Updated"),
-        parentId: UUID? = null
-    ): Map<String, Any?> = mutableMapOf<String, Any?>(
-        "name" to name
-    ).apply {
-        if (parentId != null) {
-            this["parentId"] = parentId.toString()
-        }
-    }
+            name: String = validName("Updated"),
+            parentId: UUID? = null,
+        ): Map<String, Any?> =
+            mutableMapOf<String, Any?>(
+                "name" to name,
+            ).apply {
+                if (parentId != null) {
+                    this["parentId"] = parentId.toString()
+                }
+            }
 
         /**
          * Invalid levels for validation testing (valid range: 1-6).
@@ -96,10 +90,13 @@ class OrganizationFixtures {
         /**
          * Creates a hierarchy of organization requests for testing.
          */
-        fun createHierarchy(tenantId: UUID, depth: Int = 3): List<Map<String, Any?>> {
+        fun createHierarchy(
+            tenantId: UUID,
+            depth: Int = 3,
+        ): List<Map<String, Any?>> {
             val organizations = mutableListOf<Map<String, Any?>>()
             var parentId: UUID? = null
-            
+
             for (level in 1..depth) {
                 val orgId = randomId()
                 organizations.add(
@@ -107,12 +104,12 @@ class OrganizationFixtures {
                         code = validCode("L$level"),
                         name = validName("Level $level"),
                         parentId = parentId,
-                        level = level
-                    ) + ("id" to orgId)
+                        level = level,
+                    ) + ("id" to orgId),
                 )
                 parentId = orgId
             }
-            
+
             return organizations
         }
     }
