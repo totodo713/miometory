@@ -167,20 +167,30 @@ public class OrganizationController {
             @PathVariable UUID id,
             @RequestBody DateInfoRequest request) {
         
-        DateInfo dateInfo = dateInfoService.getDateInfo(id, request.date());
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("date", dateInfo.date().toString());
-        response.put("fiscalYear", dateInfo.fiscalYear());
-        response.put("fiscalYearStart", dateInfo.fiscalYearStart().toString());
-        response.put("fiscalYearEnd", dateInfo.fiscalYearEnd().toString());
-        response.put("monthlyPeriodStart", dateInfo.monthlyPeriodStart().toString());
-        response.put("monthlyPeriodEnd", dateInfo.monthlyPeriodEnd().toString());
-        response.put("fiscalYearPatternId", dateInfo.fiscalYearPatternId().toString());
-        response.put("monthlyPeriodPatternId", dateInfo.monthlyPeriodPatternId().toString());
-        response.put("organizationId", dateInfo.organizationId().toString());
-        
-        return ResponseEntity.ok(response);
+        try {
+            DateInfo dateInfo = dateInfoService.getDateInfo(id, request.date());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("date", dateInfo.date().toString());
+            response.put("fiscalYear", dateInfo.fiscalYear());
+            response.put("fiscalYearStart", dateInfo.fiscalYearStart().toString());
+            response.put("fiscalYearEnd", dateInfo.fiscalYearEnd().toString());
+            response.put("monthlyPeriodStart", dateInfo.monthlyPeriodStart().toString());
+            response.put("monthlyPeriodEnd", dateInfo.monthlyPeriodEnd().toString());
+            response.put("fiscalYearPatternId", dateInfo.fiscalYearPatternId().toString());
+            response.put("monthlyPeriodPatternId", dateInfo.monthlyPeriodPatternId().toString());
+            response.put("organizationId", dateInfo.organizationId().toString());
+            
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            // Organization not found
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            // Missing patterns in hierarchy
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
     }
 
     // Request DTOs
