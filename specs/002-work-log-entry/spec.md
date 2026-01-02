@@ -184,7 +184,7 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - **FR-027**: System MUST support OAuth2 authentication. System SHOULD support SAML2 if organizational infrastructure provides it. Integration with organizational identity provider for user authentication and session management is required.
 - **FR-028**: System MUST retain all time entry data for a minimum of 7 years to comply with legal and audit requirements for payroll and billing records
 - **FR-029**: System MUST automatically save draft time entries every 60 seconds while the entry form is open and has unsaved changes
-- **FR-030**: System MUST terminate idle user sessions after 30 minutes of inactivity for security purposes
+- **FR-030**: System MUST terminate idle user sessions after 30 minutes of inactivity for security purposes. The system MUST display a warning dialog at 28 minutes (2 minutes before timeout) with a countdown timer, allowing users to extend the session by clicking "Continue"
 - **FR-031**: System MUST display a visual indicator when draft entries are being auto-saved and when the last auto-save occurred
 - **FR-032**: System MUST use TLS/HTTPS for all client-server communications to encrypt data in transit
 - **FR-033**: System MUST implement database encryption at rest for all time entry data, absence records, and personal information
@@ -212,7 +212,7 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - **SC-008**: Mobile users can complete time entry for a single day in under 2 minutes using a phone screen
 - **SC-009**: Zero approved time entries are accidentally modified (read-only enforcement works 100% of the time)
 - **SC-010**: Audit reports can trace 100% of proxy-entered data back to the manager who entered it
-- **SC-011**: Auto-save successfully preserves draft entries within 60 seconds of changes, preventing data loss during network interruptions or browser crashes (99.9% reliability)
+- **SC-011**: Auto-save successfully preserves draft entries within 60 seconds of changes, preventing data loss during network interruptions or browser crashes (99.9% reliability). Measurement: (successful auto-saves / total auto-save attempts) × 100% over a 30-day period with simulated network failures and browser crashes in test environment
 
 ## Assumptions *(optional)*
 
@@ -224,7 +224,7 @@ Managers need to enter time on behalf of their direct reports when engineers are
 - Holiday calendar is maintained by administrators and updated at least annually
 - Time entry is typically done daily or weekly, not months in arrears
 - Managers have time to review and approve entries within a reasonable period (e.g., 5 business days after month end)
-- CSV files for import follow a documented template format
+- CSV files for import follow a documented template format with required columns: Date (YYYY-MM-DD), Project Code, Hours (0.25h increments), Notes (optional). UTF-8 encoding is required. Maximum 100,000 rows via UI; unlimited via API with streaming
 - Users have basic familiarity with calendar interfaces and spreadsheet software
 - Organizations require 7-year data retention for compliance with legal and audit requirements
 - Users expect modern web application behavior including auto-save functionality to prevent data loss
