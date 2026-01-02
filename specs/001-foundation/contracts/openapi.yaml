@@ -1,0 +1,969 @@
+openapi: 3.1.0
+info:
+  title: Work-Log Foundation API
+  description: |
+    Foundation Infrastructure API for Engineer Management System.
+    Provides tenant, organization, and fiscal/monthly period pattern management.
+  version: 1.0.0
+  contact:
+    name: Work-Log Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+security:
+  - basicAuth: []
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Basic authentication (FR-023)
+
+  schemas:
+    # Common
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Organization code already exists in tenant"
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          additionalProperties: true
+
+    # Tenant
+    TenantCreateRequest:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: "^[a-zA-Z0-9-]+$"
+          example: "acme"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "ACME Corporation"
+
+    TenantUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: "ACME Corp Updated"
+
+    TenantResponse:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - isActive
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # Organization
+    OrganizationCreateRequest:
+      type: object
+      required:
+        - code
+        - name
+      properties:
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: "Parent organization ID (null for root)"
+        code:
+          type: string
+          minLength: 1
+          maxLength: 50
+          pattern: "^[a-zA-Z0-9-]+$"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        fiscalYearPatternId:
+          type: string
+          format: uuid
+          nullable: true
+        monthlyPeriodPatternId:
+          type: string
+          format: uuid
+          nullable: true
+
+    OrganizationUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        fiscalYearPatternId:
+          type: string
+          format: uuid
+          nullable: true
+        monthlyPeriodPatternId:
+          type: string
+          format: uuid
+          nullable: true
+
+    OrganizationResponse:
+      type: object
+      required:
+        - id
+        - tenantId
+        - code
+        - name
+        - level
+        - isActive
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        parentId:
+          type: string
+          format: uuid
+          nullable: true
+        code:
+          type: string
+        name:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+          maximum: 6
+        fiscalYearPatternId:
+          type: string
+          format: uuid
+          nullable: true
+        monthlyPeriodPatternId:
+          type: string
+          format: uuid
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    OrganizationListResponse:
+      type: object
+      required:
+        - organizations
+      properties:
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationResponse'
+
+    # Fiscal Year Pattern
+    FiscalYearPatternCreateRequest:
+      type: object
+      required:
+        - name
+        - startMonth
+        - startDay
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "4月開始"
+        startMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+          example: 4
+        startDay:
+          type: integer
+          minimum: 1
+          maximum: 31
+          example: 1
+
+    FiscalYearPatternResponse:
+      type: object
+      required:
+        - id
+        - tenantId
+        - name
+        - startMonth
+        - startDay
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        startMonth:
+          type: integer
+        startDay:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # Monthly Period Pattern
+    MonthlyPeriodPatternCreateRequest:
+      type: object
+      required:
+        - name
+        - startDay
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "21日締め"
+        startDay:
+          type: integer
+          minimum: 1
+          maximum: 28
+          example: 21
+
+    MonthlyPeriodPatternResponse:
+      type: object
+      required:
+        - id
+        - tenantId
+        - name
+        - startDay
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        startDay:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # Date Info
+    DateInfoRequest:
+      type: object
+      required:
+        - date
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2026-05-15"
+
+    DateInfoResponse:
+      type: object
+      required:
+        - date
+        - fiscalYear
+        - fiscalYearStart
+        - fiscalYearEnd
+        - monthlyPeriodStart
+        - monthlyPeriodEnd
+        - displayMonth
+        - displayYear
+      properties:
+        date:
+          type: string
+          format: date
+        fiscalYear:
+          type: integer
+          example: 2026
+        fiscalYearStart:
+          type: string
+          format: date
+        fiscalYearEnd:
+          type: string
+          format: date
+        monthlyPeriodStart:
+          type: string
+          format: date
+        monthlyPeriodEnd:
+          type: string
+          format: date
+        displayMonth:
+          type: integer
+          minimum: 1
+          maximum: 12
+        displayYear:
+          type: integer
+
+paths:
+  # Health (no auth required)
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      security: []
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  # Tenants
+  /api/v1/tenants:
+    post:
+      summary: Create a new tenant
+      operationId: createTenant
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreateRequest'
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '409':
+          description: Tenant code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List all tenants
+      operationId: listTenants
+      tags:
+        - Tenants
+      parameters:
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenants:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantResponse'
+        '401':
+          description: Unauthorized
+
+  /api/v1/tenants/{tenantId}:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get tenant by ID
+      operationId: getTenant
+      tags:
+        - Tenants
+      responses:
+        '200':
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+
+    patch:
+      summary: Update tenant
+      operationId: updateTenant
+      tags:
+        - Tenants
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdateRequest'
+      responses:
+        '200':
+          description: Tenant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+
+  /api/v1/tenants/{tenantId}/deactivate:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Deactivate tenant
+      operationId: deactivateTenant
+      tags:
+        - Tenants
+      responses:
+        '200':
+          description: Tenant deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+
+  /api/v1/tenants/{tenantId}/activate:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Activate tenant
+      operationId: activateTenant
+      tags:
+        - Tenants
+      responses:
+        '200':
+          description: Tenant activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+
+  # Organizations
+  /api/v1/tenants/{tenantId}/organizations:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Create organization
+      operationId: createOrganization
+      tags:
+        - Organizations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationCreateRequest'
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationResponse'
+        '400':
+          description: Validation error (e.g., max hierarchy exceeded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant or parent organization not found
+        '409':
+          description: Organization code already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List organizations in tenant
+      operationId: listOrganizations
+      tags:
+        - Organizations
+      parameters:
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: parentId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by parent (null for root orgs)
+      responses:
+        '200':
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationListResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+
+  /api/v1/tenants/{tenantId}/organizations/{organizationId}:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get organization by ID
+      operationId: getOrganization
+      tags:
+        - Organizations
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+
+    patch:
+      summary: Update organization
+      operationId: updateOrganization
+      tags:
+        - Organizations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrganizationUpdateRequest'
+      responses:
+        '200':
+          description: Organization updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+
+  /api/v1/tenants/{tenantId}/organizations/{organizationId}/deactivate:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Deactivate organization
+      operationId: deactivateOrganization
+      tags:
+        - Organizations
+      responses:
+        '200':
+          description: Organization deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+
+  /api/v1/tenants/{tenantId}/organizations/{organizationId}/activate:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Activate organization
+      operationId: activateOrganization
+      tags:
+        - Organizations
+      responses:
+        '200':
+          description: Organization activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+
+  /api/v1/tenants/{tenantId}/organizations/{organizationId}/date-info:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Calculate fiscal year and monthly period for a date
+      operationId: getDateInfo
+      tags:
+        - Organizations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DateInfoRequest'
+      responses:
+        '200':
+          description: Date information calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DateInfoResponse'
+        '400':
+          description: No pattern configured for organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Organization not found
+
+  # Fiscal Year Patterns
+  /api/v1/tenants/{tenantId}/fiscal-year-patterns:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Create fiscal year pattern
+      operationId: createFiscalYearPattern
+      tags:
+        - Patterns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FiscalYearPatternCreateRequest'
+      responses:
+        '201':
+          description: Pattern created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalYearPatternResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+        '409':
+          description: Pattern name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List fiscal year patterns
+      operationId: listFiscalYearPatterns
+      tags:
+        - Patterns
+      responses:
+        '200':
+          description: List of patterns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patterns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FiscalYearPatternResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+
+  /api/v1/tenants/{tenantId}/fiscal-year-patterns/{patternId}:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: patternId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get fiscal year pattern
+      operationId: getFiscalYearPattern
+      tags:
+        - Patterns
+      responses:
+        '200':
+          description: Pattern details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FiscalYearPatternResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Pattern not found
+
+  # Monthly Period Patterns
+  /api/v1/tenants/{tenantId}/monthly-period-patterns:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      summary: Create monthly period pattern
+      operationId: createMonthlyPeriodPattern
+      tags:
+        - Patterns
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MonthlyPeriodPatternCreateRequest'
+      responses:
+        '201':
+          description: Pattern created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyPeriodPatternResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+        '409':
+          description: Pattern name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List monthly period patterns
+      operationId: listMonthlyPeriodPatterns
+      tags:
+        - Patterns
+      responses:
+        '200':
+          description: List of patterns
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  patterns:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonthlyPeriodPatternResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tenant not found
+
+  /api/v1/tenants/{tenantId}/monthly-period-patterns/{patternId}:
+    parameters:
+      - name: tenantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: patternId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get monthly period pattern
+      operationId: getMonthlyPeriodPattern
+      tags:
+        - Patterns
+      responses:
+        '200':
+          description: Pattern details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyPeriodPatternResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Pattern not found
+
+tags:
+  - name: System
+    description: System health and status
+  - name: Tenants
+    description: Tenant management
+  - name: Organizations
+    description: Organization hierarchy management
+  - name: Patterns
+    description: Fiscal year and monthly period patterns

@@ -1,0 +1,9 @@
+# Database Rider configuration
+# See: https://github.com/database-rider/database-rider
+
+cacheConnection: true
+cacheTableNames: true
+leakHunter: false
+caseInsensitiveStr: true
+expectedDbType: POSTGRESQL
+caseSensitiveTableNames: false
