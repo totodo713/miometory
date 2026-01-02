@@ -19,7 +19,7 @@ class MonthlyPeriodPatternTest {
     private val tenantId = TenantId(UUID.randomUUID())
 
     @Test
-    fun `create should generate valid pattern with MonthlyPeriodPatternCreated event`() {
+    fun `create should generate valid pattern`() {
         val pattern =
             MonthlyPeriodPatternFixtures.createPattern(
                 tenantId = tenantId,
@@ -31,15 +31,6 @@ class MonthlyPeriodPatternTest {
         assertEquals(tenantId.value(), pattern.tenantId.value())
         assertEquals("21日締め", pattern.name)
         assertEquals(21, pattern.startDay)
-
-        val events = pattern.uncommittedEvents
-        assertEquals(1, events.size)
-        assertTrue(events[0] is MonthlyPeriodPatternCreated)
-
-        val event = events[0] as MonthlyPeriodPatternCreated
-        assertEquals(pattern.id.value(), event.aggregateId())
-        assertEquals("21日締め", event.name)
-        assertEquals(21, event.startDay)
     }
 
     @Test

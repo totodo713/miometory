@@ -120,14 +120,15 @@ public class FiscalYearPatternRepository {
      */
     private void updateProjection(FiscalYearPattern pattern) {
         jdbcTemplate.update(
-            "INSERT INTO fiscal_year_pattern (id, tenant_id, name, start_month, start_day, created_at) " +
-            "VALUES (?, ?, ?, ?, ?, NOW()) " +
+            "INSERT INTO fiscal_year_pattern (id, tenant_id, organization_id, name, start_month, start_day, created_at) " +
+            "VALUES (?, ?, ?, ?, ?, ?, NOW()) " +
             "ON CONFLICT (id) DO UPDATE SET " +
             "name = EXCLUDED.name, " +
             "start_month = EXCLUDED.start_month, " +
             "start_day = EXCLUDED.start_day",
             pattern.getId().value(),
-            pattern.getTenantId(),
+            pattern.getTenantId().value(), // Extract UUID from TenantId
+            null, // organization_id - not used in current implementation
             pattern.getName(),
             pattern.getStartMonth(),
             pattern.getStartDay()

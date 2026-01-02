@@ -5,6 +5,8 @@ import com.worklog.application.service.DateInfoService;
 import com.worklog.application.service.OrganizationService;
 import com.worklog.application.service.DateInfo;
 import com.worklog.domain.organization.Organization;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -165,7 +167,7 @@ public class OrganizationController {
     public ResponseEntity<Map<String, Object>> getDateInfo(
             @PathVariable UUID tenantId,
             @PathVariable UUID id,
-            @RequestBody DateInfoRequest request) {
+            @Valid @RequestBody DateInfoRequest request) {
         
         try {
             DateInfo dateInfo = dateInfoService.getDateInfo(id, request.date());
@@ -214,6 +216,6 @@ public class OrganizationController {
     ) {}
     
     public record DateInfoRequest(
-        LocalDate date
+        @NotNull(message = "Date is required") LocalDate date
     ) {}
 }

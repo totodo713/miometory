@@ -120,13 +120,14 @@ public class MonthlyPeriodPatternRepository {
      */
     private void updateProjection(MonthlyPeriodPattern pattern) {
         jdbcTemplate.update(
-            "INSERT INTO monthly_period_pattern (id, tenant_id, name, start_day, created_at) " +
-            "VALUES (?, ?, ?, ?, NOW()) " +
+            "INSERT INTO monthly_period_pattern (id, tenant_id, organization_id, name, start_day, created_at) " +
+            "VALUES (?, ?, ?, ?, ?, NOW()) " +
             "ON CONFLICT (id) DO UPDATE SET " +
             "name = EXCLUDED.name, " +
             "start_day = EXCLUDED.start_day",
             pattern.getId().value(),
-            pattern.getTenantId(),
+            pattern.getTenantId().value(), // Extract UUID from TenantId
+            null, // organization_id - not used in current implementation
             pattern.getName(),
             pattern.getStartDay()
         );

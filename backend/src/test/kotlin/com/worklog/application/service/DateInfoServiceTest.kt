@@ -2,12 +2,16 @@ package com.worklog.application.service
 
 import com.worklog.IntegrationTestBase
 import com.worklog.domain.fiscalyear.FiscalYearPattern
+import com.worklog.domain.fiscalyear.FiscalYearPatternId
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId
 import com.worklog.domain.organization.Organization
 import com.worklog.domain.organization.OrganizationId
 import com.worklog.domain.shared.Code
 import com.worklog.domain.tenant.Tenant
 import com.worklog.domain.tenant.TenantId
+import com.worklog.infrastructure.repository.FiscalYearPatternRepository
+import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository
 import com.worklog.infrastructure.repository.OrganizationRepository
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,6 +41,12 @@ class DateInfoServiceTest : IntegrationTestBase() {
 
     @Autowired
     private lateinit var organizationRepository: OrganizationRepository
+
+    @Autowired
+    private lateinit var fiscalYearPatternRepository: FiscalYearPatternRepository
+
+    @Autowired
+    private lateinit var monthlyPeriodPatternRepository: MonthlyPeriodPatternRepository
 
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
@@ -460,15 +470,8 @@ class DateInfoServiceTest : IntegrationTestBase() {
         startDay: Int,
     ): UUID {
         val pattern = FiscalYearPattern.create(tenantId, "FY Pattern", startMonth, startDay)
-        jdbcTemplate.update(
-            "INSERT INTO fiscal_year_pattern (id, tenant_id, name, start_month, start_day, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, NOW())",
-            pattern.id.value(),
-            tenantId.value(),
-            pattern.name,
-            pattern.startMonth,
-            pattern.startDay,
-        )
+        // Save using repository to persist in event store
+        fiscalYearPatternRepository.save(pattern)
         return pattern.id.value()
     }
 
@@ -477,14 +480,8 @@ class DateInfoServiceTest : IntegrationTestBase() {
         startDay: Int,
     ): UUID {
         val pattern = MonthlyPeriodPattern.create(tenantId, "MP Pattern", startDay)
-        jdbcTemplate.update(
-            "INSERT INTO monthly_period_pattern (id, tenant_id, name, start_day, created_at) " +
-                "VALUES (?, ?, ?, ?, NOW())",
-            pattern.id.value(),
-            tenantId.value(),
-            pattern.name,
-            pattern.startDay,
-        )
+        // Save using repository to persist in event store
+        monthlyPeriodPatternRepository.save(pattern)
         return pattern.id.value()
     }
 

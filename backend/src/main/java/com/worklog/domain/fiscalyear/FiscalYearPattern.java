@@ -115,12 +115,23 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
     
     /**
      * Gets the start and end dates for a given fiscal year.
+     * Handles edge case where fiscal year starts on Feb 29 but target year is not a leap year.
      * 
      * @param fiscalYear The fiscal year
      * @return A pair of (start date, end date)
      */
     public Pair<LocalDate, LocalDate> getFiscalYearRange(int fiscalYear) {
-        LocalDate start = LocalDate.of(fiscalYear, startMonth, startDay);
+        LocalDate start;
+        try {
+            start = LocalDate.of(fiscalYear, startMonth, startDay);
+        } catch (java.time.DateTimeException e) {
+            // Handle Feb 29 in non-leap years - adjust to Feb 28
+            if (startMonth == 2 && startDay == 29) {
+                start = LocalDate.of(fiscalYear, 2, 28);
+            } else {
+                throw e;
+            }
+        }
         LocalDate end = start.plusYears(1).minusDays(1);
         return new Pair<>(start, end);
     }

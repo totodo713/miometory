@@ -1,6 +1,13 @@
 package com.worklog.api
 
 import com.worklog.IntegrationTestBase
+import com.worklog.domain.fiscalyear.FiscalYearPattern
+import com.worklog.domain.fiscalyear.FiscalYearPatternId
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId
+import com.worklog.domain.tenant.TenantId
+import com.worklog.infrastructure.repository.FiscalYearPatternRepository
+import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -19,6 +26,12 @@ class DateInfoEndpointTest : IntegrationTestBase() {
 
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
+
+    @Autowired
+    private lateinit var fiscalYearPatternRepository: FiscalYearPatternRepository
+
+    @Autowired
+    private lateinit var monthlyPeriodPatternRepository: MonthlyPeriodPatternRepository
 
     // ========== Basic Calculation Tests ==========
 
@@ -362,39 +375,20 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         startMonth: Int,
         startDay: Int,
     ): UUID {
-        val patternId = UUID.randomUUID()
-        val patternName = "FY-$startMonth-$startDay-${System.nanoTime()}"
-        jdbcTemplate.update(
-            """
-            INSERT INTO fiscal_year_pattern (id, tenant_id, name, start_month, start_day, created_at) 
-            VALUES (?, ?, ?, ?, ?, NOW())
-            """,
-            patternId,
-            tenantId,
-            patternName,
-            startMonth,
-            startDay,
-        )
-        return patternId
+        val pattern = FiscalYearPattern.create(TenantId.of(tenantId), "FY-$startMonth-$startDay-${System.nanoTime()}", startMonth, startDay)
+        // Save using repository to persist in event store
+        fiscalYearPatternRepository.save(pattern)
+        return pattern.id.value()
     }
 
     private fun createMonthlyPeriodPattern(
         tenantId: UUID,
         startDay: Int,
     ): UUID {
-        val patternId = UUID.randomUUID()
-        val patternName = "MP-$startDay-${System.nanoTime()}"
-        jdbcTemplate.update(
-            """
-            INSERT INTO monthly_period_pattern (id, tenant_id, name, start_day, created_at) 
-            VALUES (?, ?, ?, ?, NOW())
-            """,
-            patternId,
-            tenantId,
-            patternName,
-            startDay,
-        )
-        return patternId
+        val pattern = MonthlyPeriodPattern.create(TenantId.of(tenantId), "MP-$startDay-${System.nanoTime()}", startDay)
+        // Save using repository to persist in event store
+        monthlyPeriodPatternRepository.save(pattern)
+        return pattern.id.value()
     }
 
     private fun createOrganization(
