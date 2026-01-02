@@ -298,4 +298,71 @@ class FiscalYearPatternTest {
             )
         }
     }
+
+    // FiscalYearPatternId tests for coverage improvement
+    @Test
+    fun `FiscalYearPatternId of(String) should create ID from string`() {
+        val uuidStr = UUID.randomUUID().toString()
+        val id = FiscalYearPatternId.of(uuidStr)
+
+        assertEquals(uuidStr, id.value().toString())
+    }
+
+    @Test
+    fun `FiscalYearPatternId of(UUID) should create ID from UUID`() {
+        val uuid = UUID.randomUUID()
+        val id = FiscalYearPatternId.of(uuid)
+
+        assertEquals(uuid, id.value())
+    }
+
+    @Test
+    fun `FiscalYearPatternId toString should return UUID string`() {
+        val uuid = UUID.randomUUID()
+        val id = FiscalYearPatternId.of(uuid)
+
+        assertEquals(uuid.toString(), id.toString())
+    }
+
+    @Test
+    fun `createWithId should create pattern with specific ID`() {
+        val id = FiscalYearPatternId.generate()
+        val pattern =
+            FiscalYearPattern.createWithId(
+                id,
+                tenantId,
+                "Specific ID Pattern",
+                4,
+                1,
+            )
+
+        assertEquals(id.value(), pattern.id.value())
+        assertEquals("Specific ID Pattern", pattern.name)
+    }
+
+    @Test
+    fun `getFiscalYearRange should handle February 29 in non-leap year`() {
+        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "2月29日開始", 2, 29)
+        val range = pattern.getFiscalYearRange(2025) // 2025 is not a leap year
+
+        // Should adjust to Feb 28 for non-leap years
+        assertEquals(LocalDate.of(2025, 2, 28), range.first)
+        assertEquals(LocalDate.of(2026, 2, 27), range.second)
+    }
+
+    @Test
+    fun `Pair component1 should return first value`() {
+        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "Test", 4, 1)
+        val range = pattern.getFiscalYearRange(2025)
+
+        assertEquals(range.first, range.component1())
+    }
+
+    @Test
+    fun `Pair component2 should return second value`() {
+        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "Test", 4, 1)
+        val range = pattern.getFiscalYearRange(2025)
+
+        assertEquals(range.second, range.component2())
+    }
 }

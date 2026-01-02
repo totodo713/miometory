@@ -294,4 +294,114 @@ class MonthlyPeriodPatternTest {
             )
         }
     }
+
+    // MonthlyPeriodPatternId tests for coverage improvement
+    @Test
+    fun `MonthlyPeriodPatternId of(String) should create ID from string`() {
+        val uuidStr = UUID.randomUUID().toString()
+        val id = MonthlyPeriodPatternId.of(uuidStr)
+
+        assertEquals(uuidStr, id.value().toString())
+    }
+
+    @Test
+    fun `MonthlyPeriodPatternId of(UUID) should create ID from UUID`() {
+        val uuid = UUID.randomUUID()
+        val id = MonthlyPeriodPatternId.of(uuid)
+
+        assertEquals(uuid, id.value())
+    }
+
+    @Test
+    fun `MonthlyPeriodPatternId toString should return UUID string`() {
+        val uuid = UUID.randomUUID()
+        val id = MonthlyPeriodPatternId.of(uuid)
+
+        assertEquals(uuid.toString(), id.toString())
+    }
+
+    @Test
+    fun `createWithId should create pattern with specific ID`() {
+        val id = MonthlyPeriodPatternId.generate()
+        val pattern =
+            MonthlyPeriodPattern.createWithId(
+                id,
+                tenantId,
+                "Specific ID Pattern",
+                15,
+            )
+
+        assertEquals(id.value(), pattern.id.value())
+        assertEquals("Specific ID Pattern", pattern.name)
+    }
+
+    // MonthlyPeriod value object tests
+    @Test
+    fun `MonthlyPeriod start() should return startDate`() {
+        val period = MonthlyPeriod(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), 1, 2025)
+
+        assertEquals(period.startDate, period.start())
+    }
+
+    @Test
+    fun `MonthlyPeriod end() should return endDate`() {
+        val period = MonthlyPeriod(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), 1, 2025)
+
+        assertEquals(period.endDate, period.end())
+    }
+
+    @Test
+    fun `MonthlyPeriod component1 should return startDate`() {
+        val period = MonthlyPeriod(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), 1, 2025)
+
+        assertEquals(period.startDate, period.component1())
+    }
+
+    @Test
+    fun `MonthlyPeriod component2 should return endDate`() {
+        val period = MonthlyPeriod(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), 1, 2025)
+
+        assertEquals(period.endDate, period.component2())
+    }
+
+    @Test
+    fun `MonthlyPeriod component3 should return displayMonth`() {
+        val period = MonthlyPeriod(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), 1, 2025)
+
+        assertEquals(period.displayMonth, period.component3())
+    }
+
+    @Test
+    fun `MonthlyPeriod component4 should return displayYear`() {
+        val period = MonthlyPeriod(LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31), 1, 2025)
+
+        assertEquals(period.displayYear, period.component4())
+    }
+
+    @Test
+    fun `MonthlyPeriod should fail with null startDate`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                MonthlyPeriod(null as LocalDate?, LocalDate.of(2025, 1, 31), 1, 2025)
+            }
+        assertTrue(exception.message!!.contains("Start date cannot be null"))
+    }
+
+    @Test
+    fun `MonthlyPeriod should fail with null endDate`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                MonthlyPeriod(LocalDate.of(2025, 1, 1), null as LocalDate?, 1, 2025)
+            }
+        assertTrue(exception.message!!.contains("End date cannot be null"))
+    }
+
+    @Test
+    fun `MonthlyPeriod should fail when endDate is before startDate`() {
+        val exception =
+            assertFailsWith<IllegalArgumentException> {
+                MonthlyPeriod(LocalDate.of(2025, 1, 31), LocalDate.of(2025, 1, 1), 1, 2025)
+            }
+        assertTrue(exception.message!!.contains("End date must be after or equal to start date"))
+    }
 }
