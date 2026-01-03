@@ -7,18 +7,19 @@
  * Handles routing from calendar view (/worklog -> /worklog/2026-01-15)
  */
 
+import { use } from "react";
 import { useRouter } from "next/navigation";
 import { DailyEntryForm } from "@/components/worklog/DailyEntryForm";
 
 interface PageProps {
-	params: {
+	params: Promise<{
 		date: string; // Format: YYYY-MM-DD
-	};
+	}>;
 }
 
 export default function DailyEntryPage({ params }: PageProps) {
 	const router = useRouter();
-	const { date } = params;
+	const { date } = use(params);
 
 	// Parse date string to Date object
 	let parsedDate: Date;
