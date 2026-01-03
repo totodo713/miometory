@@ -42,7 +42,7 @@ export function DailyEntryForm({
 	const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 	const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
 
-	const initialDataRef = useRef<string>("");
+	const initialDataRef = useRef<string>(JSON.stringify([{ projectId: "", hours: 0, comment: "", errors: {} }]));
 	const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 	// Calculate if read-only (submitted or approved)
@@ -335,7 +335,7 @@ export function DailyEntryForm({
 
 	// Render status badge
 	const renderStatusBadge = (status?: WorkLogStatus) => {
-		if (!status || status === "DRAFT") return null;
+		if (!status) return null;
 
 		const colors: Record<WorkLogStatus, string> = {
 			DRAFT: "bg-gray-200 text-gray-800",
