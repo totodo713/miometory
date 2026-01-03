@@ -84,6 +84,12 @@ public class JdbcWorkLogRepository {
         }
 
         entry.clearUncommittedEvents();
+        
+        // Return empty if the aggregate is marked as deleted
+        if (entry.isDeleted()) {
+            return Optional.empty();
+        }
+        
         return Optional.of(entry);
     }
 

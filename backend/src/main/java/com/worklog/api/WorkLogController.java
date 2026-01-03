@@ -210,12 +210,31 @@ public class WorkLogController {
     public ResponseEntity<ErrorResponse> handleDomainException(DomainException ex) {
         ErrorResponse error = ErrorResponse.of(ex.getErrorCode(), ex.getMessage());
         
-        // Use 422 for validation errors like daily limit exceeded
-        HttpStatus status = ex.getErrorCode().contains("LIMIT") || 
-                           ex.getErrorCode().contains("VALIDATION") ||
-                           ex.getErrorCode().contains("INVALID")
-            ? HttpStatus.UNPROCESSABLE_ENTITY
-            : HttpStatus.BAD_REQUEST;
+        // Use 422 for validation/business rule errors
+        // Use 409 for conflict errors (version mismatch)
+        // Use 404 for not found errors
+        // Use 400 for other domain errors
+        HttpStatus status;
+        String errorCode = ex.getErrorCode();
+        
+        if (errorCode.contains("OPTIMISTIC_LOCK") || errorCode.contains("VERSION_MISMATCH")) {
+            status = HttpStatus.CONFLICT;
+        } else if (errorCode.contains("NOT_FOUND")) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (errorCode.contains("LIMIT") || 
+                   errorCode.contains("VALIDATION") ||
+                   errorCode.contains("INVALID") ||
+                   errorCode.contains("NEGATIVE") ||
+                   errorCode.contains("EXCEEDS") ||
+                   errorCode.contains("FUTURE") ||
+                   errorCode.contains("TOO_LONG") ||
+                   errorCode.contains("NOT_EDITABLE") ||
+                   errorCode.contains("NOT_DELETABLE") ||
+                   errorCode.contains("INCREMENT")) {
+            status = HttpStatus.UNPROCESSABLE_ENTITY;
+        } else {
+            status = HttpStatus.BAD_REQUEST;
+        }
 
         return ResponseEntity.status(status).body(error);
     }

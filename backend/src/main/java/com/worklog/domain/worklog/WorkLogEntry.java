@@ -48,6 +48,7 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
     private MemberId enteredBy;
     private Instant createdAt;
     private Instant updatedAt;
+    private boolean deleted;
     
     // Private constructor for factory methods
     private WorkLogEntry() {
@@ -211,9 +212,8 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
                 this.updatedAt = e.occurredAt();
             }
             case WorkLogEntryDeleted e -> {
-                // For soft delete, we could mark as deleted
-                // For event sourcing, the deleted event is stored
-                // The projection layer will handle removing from read models
+                // Mark as deleted - repository will filter out deleted aggregates
+                this.deleted = true;
                 this.updatedAt = e.occurredAt();
             }
             default -> throw new IllegalArgumentException(
@@ -287,5 +287,9 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
     
     public Instant getUpdatedAt() {
         return updatedAt;
+    }
+    
+    public boolean isDeleted() {
+        return deleted;
     }
 }
