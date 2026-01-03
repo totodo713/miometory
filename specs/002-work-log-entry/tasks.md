@@ -115,11 +115,11 @@
 
 ### Frontend - Auto-Save (US1)
 
-- [ ] T050 [P] [US1] Implement useAutoSave hook in frontend/app/hooks/useAutoSave.ts (60-second interval with change detection)
-- [ ] T051 [P] [US1] Implement localStorage backup service in frontend/app/services/autoSaveService.ts (offline support)
-- [ ] T052 [US1] Integrate auto-save into DailyEntryForm with TanStack Query optimistic updates
-- [ ] T053 [US1] Implement conflict resolution dialog in frontend/app/components/worklog/ConflictDialog.tsx (409 Conflict handling)
-- [ ] T054 [P] [US1] Create AutoSaveIndicator component in frontend/app/components/worklog/AutoSaveIndicator.tsx (FR-031: show status + timestamp)
+- [X] T050 [P] [US1] Implement useAutoSave hook in frontend/app/hooks/useAutoSave.ts (60-second interval with change detection)
+- [X] T051 [P] [US1] Implement localStorage backup service in frontend/app/services/autoSaveService.ts (offline support)
+- [X] T052 [US1] Integrate auto-save into DailyEntryForm with TanStack Query optimistic updates
+- [X] T053 [US1] Implement conflict resolution dialog in frontend/app/components/worklog/ConflictDialog.tsx (409 Conflict handling)
+- [X] T054 [P] [US1] Create AutoSaveIndicator component in frontend/app/components/worklog/AutoSaveIndicator.tsx (FR-031: show status + timestamp)
 
 ### Frontend - Session Timeout (US1)
 
