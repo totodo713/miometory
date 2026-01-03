@@ -134,8 +134,8 @@
 - [X] T060 [P] [US1] Write integration tests for POST /api/v1/worklog/entries in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
 - [X] T061 [P] [US1] Write component tests for Calendar in frontend/tests/unit/components/Calendar.test.tsx
 - [X] T062 [P] [US1] Write component tests for DailyEntryForm in frontend/tests/unit/components/DailyEntryForm.test.tsx
-- [ ] T063 [P] [US1] Write E2E test for daily entry workflow in frontend/e2e/daily-entry.spec.ts (login → select date → enter time → save → verify calendar)
-- [ ] T064 [US1] Write E2E test for auto-save reliability in frontend/e2e/auto-save.spec.ts (SC-011: 99.9% reliability)
+- [x] T063 [P] [US1] Write E2E test for daily entry workflow in frontend/tests/e2e/daily-entry.spec.ts (login → select date → enter time → save → verify calendar)
+- [x] T064 [US1] Write E2E test for auto-save reliability in frontend/tests/e2e/auto-save.spec.ts (SC-011: 99.9% reliability)
 
 **Checkpoint**: User Story 1 (Daily Time Entry) is fully functional and independently testable
 
