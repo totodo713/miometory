@@ -82,31 +82,31 @@
 
 ### Backend - API Endpoints (US1)
 
-- [ ] T032 [US1] Implement POST /api/v1/worklog/entries in backend/src/main/java/com/worklog/api/WorkLogController.java
-- [ ] T033 [US1] Implement GET /api/v1/worklog/entries in backend/src/main/java/com/worklog/api/WorkLogController.java (with date range filter)
-- [ ] T034 [US1] Implement GET /api/v1/worklog/entries/{id} in backend/src/main/java/com/worklog/api/WorkLogController.java
-- [ ] T035 [US1] Implement PATCH /api/v1/worklog/entries/{id} in backend/src/main/java/com/worklog/api/WorkLogController.java (for auto-save with optimistic locking)
-- [ ] T036 [US1] Implement DELETE /api/v1/worklog/entries/{id} in backend/src/main/java/com/worklog/api/WorkLogController.java
-- [ ] T037 [US1] Add validation handling for 24h daily limit in WorkLogController
+- [X] T032 [US1] Implement POST /api/v1/worklog/entries in backend/src/main/java/com/worklog/api/WorkLogController.java
+- [X] T033 [US1] Implement GET /api/v1/worklog/entries in backend/src/main/java/com/worklog/api/WorkLogController.java (with date range filter)
+- [X] T034 [US1] Implement GET /api/v1/worklog/entries/{id} in backend/src/main/java/com/worklog/api/WorkLogController.java
+- [X] T035 [US1] Implement PATCH /api/v1/worklog/entries/{id} in backend/src/main/java/com/worklog/api/WorkLogController.java (for auto-save with optimistic locking)
+- [X] T036 [US1] Implement DELETE /api/v1/worklog/entries/{id} in backend/src/main/java/com/worklog/api/WorkLogController.java
+- [X] T037 [US1] Add validation handling for 24h daily limit in WorkLogController
 
 ### Backend - Projections (US1)
 
-- [ ] T038 [P] [US1] Create MonthlyCalendarProjection in backend/src/main/java/com/worklog/infrastructure/projection/MonthlyCalendarProjection.java
-- [ ] T039 [US1] Implement GET /api/v1/worklog/calendar/{year}/{month} in backend/src/main/java/com/worklog/api/CalendarController.java
+- [X] T038 [P] [US1] Create MonthlyCalendarProjection in backend/src/main/java/com/worklog/infrastructure/projection/MonthlyCalendarProjection.java
+- [X] T039 [US1] Implement GET /api/v1/worklog/calendar/{year}/{month} in backend/src/main/java/com/worklog/api/CalendarController.java
 
 ### Frontend - State Management (US1)
 
-- [ ] T040 [P] [US1] Define WorkLogEntry types in frontend/app/types/worklog.ts
-- [ ] T041 [US1] Implement worklogStore with fetchEntries, createEntry, updateEntry, deleteEntry actions in frontend/app/services/worklogStore.ts
+- [X] T040 [P] [US1] Define WorkLogEntry types in frontend/app/types/worklog.ts
+- [X] T041 [US1] Implement worklogStore with fetchEntries, createEntry, updateEntry, deleteEntry actions in frontend/app/services/worklogStore.ts
 
 ### Frontend - Components (US1)
 
-- [ ] T042 [P] [US1] Create Calendar component in frontend/app/components/worklog/Calendar.tsx (monthly view with fiscal period support)
-- [ ] T043 [P] [US1] Create DailyEntryForm component in frontend/app/components/worklog/DailyEntryForm.tsx (multi-project input)
-- [ ] T044 [P] [US1] Create ProjectSelector component in frontend/app/components/worklog/ProjectSelector.tsx
-- [ ] T045 [US1] Implement date click handler in Calendar to open DailyEntryForm
-- [ ] T046 [US1] Implement hours validation (0.25h increments, max 24h) in DailyEntryForm with Zod schema
-- [ ] T047 [US1] Implement multi-project row addition/removal in DailyEntryForm
+- [X] T042 [P] [US1] Create Calendar component in frontend/app/components/worklog/Calendar.tsx (monthly view with fiscal period support)
+- [X] T043 [P] [US1] Create DailyEntryForm component in frontend/app/components/worklog/DailyEntryForm.tsx (multi-project input)
+- [X] T044 [P] [US1] Create ProjectSelector component in frontend/app/components/worklog/ProjectSelector.tsx
+- [X] T045 [US1] Implement date click handler in Calendar to open DailyEntryForm
+- [X] T046 [US1] Implement hours validation (0.25h increments, max 24h) in DailyEntryForm with Zod schema
+- [X] T047 [US1] Implement multi-project row addition/removal in DailyEntryForm
 
 ### Frontend - Pages (US1)
 
@@ -129,11 +129,11 @@
 
 ### Testing (US1)
 
-- [ ] T058 [P] [US1] Write unit tests for WorkLogEntry aggregate in backend/src/test/java/com/worklog/domain/worklog/WorkLogEntryTest.java
-- [ ] T059 [P] [US1] Write unit tests for TimeAmount validation in backend/src/test/java/com/worklog/domain/shared/TimeAmountTest.java
-- [ ] T060 [P] [US1] Write integration tests for POST /api/v1/worklog/entries in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
-- [ ] T061 [P] [US1] Write component tests for Calendar in frontend/tests/unit/components/Calendar.test.tsx
-- [ ] T062 [P] [US1] Write component tests for DailyEntryForm in frontend/tests/unit/components/DailyEntryForm.test.tsx
+- [X] T058 [P] [US1] Write unit tests for WorkLogEntry aggregate in backend/src/test/java/com/worklog/domain/worklog/WorkLogEntryTest.java
+- [X] T059 [P] [US1] Write unit tests for TimeAmount validation in backend/src/test/java/com/worklog/domain/shared/TimeAmountTest.java
+- [X] T060 [P] [US1] Write integration tests for POST /api/v1/worklog/entries in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
+- [X] T061 [P] [US1] Write component tests for Calendar in frontend/tests/unit/components/Calendar.test.tsx
+- [X] T062 [P] [US1] Write component tests for DailyEntryForm in frontend/tests/unit/components/DailyEntryForm.test.tsx
 - [ ] T063 [P] [US1] Write E2E test for daily entry workflow in frontend/e2e/daily-entry.spec.ts (login → select date → enter time → save → verify calendar)
 - [ ] T064 [US1] Write E2E test for auto-save reliability in frontend/e2e/auto-save.spec.ts (SC-011: 99.9% reliability)
 
