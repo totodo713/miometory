@@ -13,7 +13,7 @@ import java.util.*;
 /**
  * Projection for monthly summary view.
  * 
- * Provides aggregated statistics for a member's work entries within a month,
+ * Provides aggregated statistics for a member's work entries and absences within a month,
  * including project-level breakdown with hours and percentages.
  */
 @Component
@@ -49,8 +49,8 @@ public class MonthlySummaryProjection {
         // Calculate business days (excluding weekends)
         int totalBusinessDays = countBusinessDays(startDate, endDate);
 
-        // Absence hours - not implemented yet
-        BigDecimal totalAbsenceHours = BigDecimal.ZERO;
+        // Get total absence hours for the month
+        BigDecimal totalAbsenceHours = getTotalAbsenceHours(memberId, startDate, endDate);
 
         return new MonthlySummaryData(
             year,
@@ -143,6 +143,45 @@ public class MonthlySummaryProjection {
         }
 
         return summaries;
+    }
+
+    /**
+     * Gets total absence hours for a member within a date range.
+     * 
+     * @param memberId Member ID
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return Total absence hours
+     */
+    private BigDecimal getTotalAbsenceHours(
+        UUID memberId,
+        LocalDate startDate,
+        LocalDate endDate
+    ) {
+        String sql = """
+            SELECT COALESCE(SUM(CAST(e.payload->>'hours' AS DECIMAL)), 0) as total_hours
+            FROM event_store e
+            WHERE e.aggregate_type = 'Absence'
+            AND e.event_type = 'AbsenceRecorded'
+            AND CAST(e.payload->>'memberId' AS UUID) = ?
+            AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
+            AND e.aggregate_id NOT IN (
+                SELECT aggregate_id 
+                FROM event_store 
+                WHERE aggregate_type = 'Absence'
+                AND event_type = 'AbsenceDeleted'
+            )
+            """;
+
+        BigDecimal total = jdbcTemplate.queryForObject(
+            sql,
+            BigDecimal.class,
+            memberId,
+            startDate,
+            endDate
+        );
+
+        return total != null ? total : BigDecimal.ZERO;
     }
 
     /**

@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  * Projection for monthly calendar view.
  * 
  * Queries the event store to build a read model showing daily totals
- * for work log entries within a fiscal month period.
+ * for work log entries and absences within a fiscal month period.
  */
 @Component
 public class MonthlyCalendarProjection {
@@ -77,6 +77,58 @@ public class MonthlyCalendarProjection {
     }
 
     /**
+     * Gets daily absence totals for a member within a date range.
+     * 
+     * This method aggregates absence hours from AbsenceRecorded events,
+     * excluding deleted absences. It returns a map of date to total absence hours.
+     * 
+     * @param memberId Member ID
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return Map of date to total absence hours
+     */
+    public Map<LocalDate, BigDecimal> getAbsenceTotals(
+        UUID memberId,
+        LocalDate startDate,
+        LocalDate endDate
+    ) {
+        String sql = """
+            SELECT 
+                CAST(payload->>'date' AS DATE) as absence_date,
+                SUM(CAST(payload->>'hours' AS DECIMAL)) as total_hours
+            FROM event_store
+            WHERE aggregate_type = 'Absence'
+            AND event_type = 'AbsenceRecorded'
+            AND CAST(payload->>'memberId' AS UUID) = ?
+            AND CAST(payload->>'date' AS DATE) BETWEEN ? AND ?
+            AND aggregate_id NOT IN (
+                SELECT aggregate_id 
+                FROM event_store 
+                WHERE aggregate_type = 'Absence'
+                AND event_type = 'AbsenceDeleted'
+            )
+            GROUP BY absence_date
+            ORDER BY absence_date
+            """;
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(
+            sql,
+            memberId,
+            startDate,
+            endDate
+        );
+
+        Map<LocalDate, BigDecimal> absenceTotals = new HashMap<>();
+        for (Map<String, Object> row : results) {
+            LocalDate date = ((java.sql.Date) row.get("absence_date")).toLocalDate();
+            BigDecimal hours = (BigDecimal) row.get("total_hours");
+            absenceTotals.put(date, hours);
+        }
+
+        return absenceTotals;
+    }
+
+    /**
      * Gets daily calendar entries for a member within a date range.
      * 
      * This includes days with no entries (showing zero hours).
@@ -92,6 +144,7 @@ public class MonthlyCalendarProjection {
         LocalDate endDate
     ) {
         Map<LocalDate, BigDecimal> dailyTotals = getDailyTotals(memberId, startDate, endDate);
+        Map<LocalDate, BigDecimal> absenceTotals = getAbsenceTotals(memberId, startDate, endDate);
         Map<LocalDate, String> dailyStatuses = getDailyStatuses(memberId, startDate, endDate);
 
         List<DailyEntryProjection> entries = new ArrayList<>();
@@ -102,12 +155,13 @@ public class MonthlyCalendarProjection {
                              || current.getDayOfWeek() == DayOfWeek.SUNDAY;
             
             BigDecimal totalHours = dailyTotals.getOrDefault(current, BigDecimal.ZERO);
+            BigDecimal absenceHours = absenceTotals.getOrDefault(current, BigDecimal.ZERO);
             String status = dailyStatuses.getOrDefault(current, "DRAFT");
             
             entries.add(new DailyEntryProjection(
                 current,
                 totalHours,
-                BigDecimal.ZERO, // Absence hours - not implemented yet
+                absenceHours,
                 status,
                 isWeekend,
                 false // Holiday detection - not implemented yet
