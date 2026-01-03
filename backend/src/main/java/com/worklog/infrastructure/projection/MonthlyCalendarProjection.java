@@ -146,7 +146,7 @@ public class MonthlyCalendarProjection {
                          FROM event_store e2
                          WHERE e2.aggregate_id = e1.aggregate_id
                          AND e2.event_type = 'WorkLogEntryStatusChanged'
-                         ORDER BY e2.sequence_number DESC
+                         ORDER BY e2.version DESC
                          LIMIT 1),
                         'DRAFT'
                     ) as status
