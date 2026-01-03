@@ -59,7 +59,7 @@ public enum WorkLogStatus {
     public boolean canTransitionTo(WorkLogStatus target) {
         return switch (this) {
             case DRAFT -> target == SUBMITTED;
-            case SUBMITTED -> target == APPROVED || target == REJECTED;
+            case SUBMITTED -> target == APPROVED || target == REJECTED || target == DRAFT; // Allow direct to DRAFT on rejection
             case REJECTED -> target == DRAFT;
             case APPROVED -> false; // Approved entries cannot transition
         };

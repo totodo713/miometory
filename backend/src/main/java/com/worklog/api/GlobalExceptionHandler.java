@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles domain-level business rule violations.
-     * Returns 400 Bad Request with error code and message.
+     * Returns 400 Bad Request for validation errors, 422 Unprocessable Entity for state violations.
      */
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ErrorResponse> handleDomainException(
@@ -42,9 +42,33 @@ public class GlobalExceptionHandler {
             Map.of("path", getRequestPath(request))
         );
 
+        // State violations return 422 UNPROCESSABLE_ENTITY
+        // These are cases where the request is valid but the current state doesn't allow the operation
+        HttpStatus status = isStateViolation(ex.getErrorCode()) 
+            ? HttpStatus.UNPROCESSABLE_ENTITY 
+            : HttpStatus.BAD_REQUEST;
+
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(status)
                 .body(error);
+    }
+
+    /**
+     * Determines if an error code represents a state violation (422) vs validation error (400).
+     */
+    private boolean isStateViolation(String errorCode) {
+        return errorCode != null && (
+            errorCode.contains("ALREADY_SUBMITTED") ||
+            errorCode.contains("ALREADY_APPROVED") ||
+            errorCode.contains("ALREADY_REJECTED") ||
+            errorCode.contains("NOT_SUBMITTED") ||
+            errorCode.contains("NOT_PENDING") ||
+            errorCode.contains("INVALID_STATUS_TRANSITION") ||
+            errorCode.contains("CANNOT_MODIFY") ||
+            errorCode.contains("CANNOT_SUBMIT") ||
+            errorCode.contains("CANNOT_APPROVE") ||
+            errorCode.contains("CANNOT_REJECT")
+        );
     }
 
     /**

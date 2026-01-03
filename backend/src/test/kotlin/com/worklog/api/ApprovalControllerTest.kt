@@ -478,7 +478,7 @@ class ApprovalControllerTest : IntegrationTestBase() {
             Map::class.java
         )
 
-        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, rejectResponse.statusCode)
+        assertEquals(HttpStatus.BAD_REQUEST, rejectResponse.statusCode)
     }
 
     // =========================================================================

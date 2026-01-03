@@ -87,14 +87,12 @@ public class ApprovalQueueProjection {
             SELECT 
                 pa.aggregate_id,
                 pa.member_id,
-                COALESCE(m.name, 'Unknown Member') as member_name,
+                pa.member_id::text as member_name,
                 pa.fiscal_month_start,
                 pa.fiscal_month_end,
                 pa.submitted_at,
-                COALESCE(sm.name, 'Unknown') as submitted_by_name
+                pa.submitted_by::text as submitted_by_name
             FROM pending_approvals pa
-            LEFT JOIN members m ON pa.member_id = m.id
-            LEFT JOIN members sm ON pa.submitted_by = sm.id
             ORDER BY pa.submitted_at ASC
             """;
 
