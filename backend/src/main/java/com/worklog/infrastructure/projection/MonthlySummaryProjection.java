@@ -52,13 +52,18 @@ public class MonthlySummaryProjection {
         // Get total absence hours for the month
         BigDecimal totalAbsenceHours = getTotalAbsenceHours(memberId, startDate, endDate);
 
+        // Get approval status for the month
+        ApprovalStatusData approvalStatus = getApprovalStatus(memberId, startDate, endDate);
+
         return new MonthlySummaryData(
             year,
             month,
             totalWorkHours,
             totalAbsenceHours,
             totalBusinessDays,
-            projects
+            projects,
+            approvalStatus.status(),
+            approvalStatus.rejectionReason()
         );
     }
 
@@ -183,6 +188,82 @@ public class MonthlySummaryProjection {
 
         return total != null ? total : BigDecimal.ZERO;
     }
+
+    /**
+     * Gets approval status for a member's month.
+     * 
+     * @param memberId Member ID
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return Approval status data (status and rejection reason)
+     */
+    private ApprovalStatusData getApprovalStatus(
+        UUID memberId,
+        LocalDate startDate,
+        LocalDate endDate
+    ) {
+        String sql = """
+            WITH latest_approval AS (
+                SELECT 
+                    aggregate_id,
+                    occurred_at
+                FROM event_store
+                WHERE aggregate_type = 'MonthlyApproval'
+                AND event_type = 'MonthlyApprovalCreated'
+                AND CAST(payload->>'memberId' AS UUID) = ?
+                AND CAST(payload->>'fiscalMonthStart' AS DATE) = ?
+                AND CAST(payload->>'fiscalMonthEnd' AS DATE) = ?
+                ORDER BY occurred_at DESC
+                LIMIT 1
+            ),
+            latest_status AS (
+                SELECT 
+                    e.event_type,
+                    e.payload,
+                    e.occurred_at
+                FROM event_store e
+                INNER JOIN latest_approval la ON e.aggregate_id = la.aggregate_id
+                WHERE e.aggregate_type = 'MonthlyApproval'
+                AND e.event_type IN ('MonthlyApprovalCreated', 'MonthSubmittedForApproval', 'MonthApproved', 'MonthRejected')
+                ORDER BY e.occurred_at DESC
+                LIMIT 1
+            )
+            SELECT 
+                event_type,
+                payload->>'rejectionReason' as rejection_reason
+            FROM latest_status
+            """;
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(
+            sql,
+            memberId,
+            startDate,
+            endDate
+        );
+
+        if (results.isEmpty()) {
+            return new ApprovalStatusData(null, null);
+        }
+
+        Map<String, Object> row = results.get(0);
+        String eventType = (String) row.get("event_type");
+        String rejectionReason = (String) row.get("rejection_reason");
+
+        String status = switch (eventType) {
+            case "MonthlyApprovalCreated" -> "PENDING";
+            case "MonthSubmittedForApproval" -> "SUBMITTED";
+            case "MonthApproved" -> "APPROVED";
+            case "MonthRejected" -> "REJECTED";
+            default -> null;
+        };
+
+        return new ApprovalStatusData(status, rejectionReason);
+    }
+
+    /**
+     * Helper record for approval status data.
+     */
+    private record ApprovalStatusData(String status, String rejectionReason) {}
 
     /**
      * Counts business days (Monday-Friday) in a date range.
