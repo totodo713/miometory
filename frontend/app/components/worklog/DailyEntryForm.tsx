@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
 import type { WorkLogEntry, WorkLogStatus } from "../../types/worklog";
+import { AbsenceForm } from "./AbsenceForm";
 
 interface DailyEntryFormProps {
   date: Date;
@@ -31,6 +32,7 @@ export function DailyEntryForm({
   onClose,
   onSave,
 }: DailyEntryFormProps) {
+  const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
   const [projectRows, setProjectRows] = useState<ProjectRow[]>([
     { projectId: "", hours: 0, comment: "", errors: {} },
   ]);
@@ -41,6 +43,7 @@ export function DailyEntryForm({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
+  const [absenceHours, setAbsenceHours] = useState<number>(0);
 
   const initialDataRef = useRef<string>(
     JSON.stringify([{ projectId: "", hours: 0, comment: "", errors: {} }]),
@@ -53,7 +56,8 @@ export function DailyEntryForm({
   );
 
   // Calculate total hours
-  const totalHours = projectRows.reduce((sum, row) => sum + row.hours, 0);
+  const totalWorkHours = projectRows.reduce((sum, row) => sum + row.hours, 0);
+  const totalHours = totalWorkHours + absenceHours;
   const totalExceeds24 = totalHours > 24;
 
   // Load existing entries
@@ -63,14 +67,16 @@ export function DailyEntryForm({
         setIsLoading(true);
         setLoadError(null);
         const dateStr = date.toISOString().split("T")[0]; // Format as YYYY-MM-DD
-        const response = await api.worklog.getEntries({
+
+        // Load work log entries
+        const workLogResponse = await api.worklog.getEntries({
           memberId,
           startDate: dateStr,
           endDate: dateStr,
         });
 
-        if (response.entries.length > 0) {
-          const rows = response.entries.map((entry) => ({
+        if (workLogResponse.entries.length > 0) {
+          const rows = workLogResponse.entries.map((entry) => ({
             id: entry.id,
             projectId: entry.projectId,
             hours: entry.hours,
@@ -84,6 +90,20 @@ export function DailyEntryForm({
         } else {
           initialDataRef.current = JSON.stringify(projectRows);
         }
+
+        // Load absence entries for the date to calculate total absence hours
+        const absenceResponse = await api.absence.getAbsences({
+          memberId,
+          startDate: dateStr,
+          endDate: dateStr,
+        });
+
+        // Sum up all absence hours for the day (excluding deleted absences)
+        const totalAbsence = absenceResponse.absences.reduce(
+          (sum, absence) => sum + absence.hours,
+          0,
+        );
+        setAbsenceHours(totalAbsence);
       } catch (error) {
         setLoadError(
           error instanceof Error
@@ -334,6 +354,11 @@ export function DailyEntryForm({
     onClose();
   };
 
+  // Handle absence save - refresh data
+  const handleAbsenceSave = () => {
+    onSave(); // Trigger parent refresh which will reload this form
+  };
+
   // Render status badge
   const renderStatusBadge = (status?: WorkLogStatus) => {
     if (!status) return null;
@@ -387,6 +412,34 @@ export function DailyEntryForm({
             </button>
           </div>
 
+          {/* Tab Switcher */}
+          <div className="mb-6 border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                type="button"
+                onClick={() => setActiveTab("work")}
+                className={`${
+                  activeTab === "work"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              >
+                Work Hours
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("absence")}
+                className={`${
+                  activeTab === "absence"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+              >
+                Absence
+              </button>
+            </nav>
+          </div>
+
           {/* Load Error */}
           {loadError && (
             <div
@@ -414,154 +467,11 @@ export function DailyEntryForm({
             </div>
           )}
 
-          {/* Total Hours */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">Total Hours:</span>
-              <span
-                className={`text-lg font-bold ${totalExceeds24 ? "text-red-600" : ""}`}
-              >
-                {totalHours.toFixed(2)}h
-              </span>
-            </div>
-            {totalExceeds24 && (
-              <div className="text-red-600 text-sm mt-1">
-                Total hours cannot exceed 24 hours per day
-              </div>
-            )}
-          </div>
-
-          {/* Project Rows */}
-          <div className="space-y-4 mb-6">
-            {projectRows.map((row, index) => (
-              <div key={row.id || index} className="border rounded-lg p-4">
-                <div className="flex items-start gap-4">
-                  {/* Project Selection */}
-                  <div className="flex-1">
-                    <label
-                      htmlFor={`project-${index}`}
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Project {renderStatusBadge(row.status)}
-                    </label>
-                    <input
-                      id={`project-${index}`}
-                      type="text"
-                      value={row.projectId}
-                      onChange={(e) =>
-                        updateProjectRow(index, "projectId", e.target.value)
-                      }
-                      disabled={
-                        row.status !== "DRAFT" && row.status !== undefined
-                      }
-                      className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
-                      placeholder="Enter project ID"
-                    />
-                    {row.errors.project && (
-                      <div className="text-red-600 text-sm mt-1">
-                        {row.errors.project}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Hours Input */}
-                  <div className="w-32">
-                    <label
-                      htmlFor={`hours-${index}`}
-                      className="block text-sm font-medium mb-1"
-                    >
-                      Hours
-                    </label>
-                    <input
-                      id={`hours-${index}`}
-                      type="number"
-                      value={row.hours}
-                      onChange={(e) =>
-                        updateProjectRow(
-                          index,
-                          "hours",
-                          Number.parseFloat(e.target.value) || 0,
-                        )
-                      }
-                      disabled={
-                        row.status !== "DRAFT" && row.status !== undefined
-                      }
-                      step="0.25"
-                      min="0"
-                      max="24"
-                      className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
-                    />
-                    {row.errors.hours && (
-                      <div className="text-red-600 text-sm mt-1">
-                        {row.errors.hours}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Remove Button */}
-                  <div className="pt-6">
-                    {projectRows.length > 1 &&
-                      (row.status === "DRAFT" || !row.status) && (
-                        <button
-                          type="button"
-                          onClick={() => removeProjectRow(index)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          Remove
-                        </button>
-                      )}
-                  </div>
-                </div>
-
-                {/* Comment */}
-                <div className="mt-4">
-                  <label
-                    htmlFor={`comment-${index}`}
-                    className="block text-sm font-medium mb-1"
-                  >
-                    Comment
-                  </label>
-                  <textarea
-                    id={`comment-${index}`}
-                    value={row.comment}
-                    onChange={(e) =>
-                      updateProjectRow(index, "comment", e.target.value)
-                    }
-                    disabled={
-                      row.status !== "DRAFT" && row.status !== undefined
-                    }
-                    rows={2}
-                    className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
-                    placeholder="Optional comment..."
-                  />
-                  {row.errors.comment && (
-                    <div className="text-red-600 text-sm mt-1">
-                      {row.errors.comment}
-                    </div>
-                  )}
-                </div>
-
-                {/* Delete Button (for existing entries) */}
-                {row.id && row.status === "DRAFT" && (
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      onClick={() => setDeleteConfirmId(row.id!)}
-                      className="text-red-600 hover:text-red-800 text-sm"
-                    >
-                      Delete Entry
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Running Total Display (US2: T067) */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-700">
-                Total Hours:
+          {/* Combined Total Hours Display */}
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-semibold text-gray-700">
+                Total Daily Hours:
               </span>
               <span
                 className={`text-2xl font-bold ${
@@ -575,75 +485,207 @@ export function DailyEntryForm({
                 {totalHours.toFixed(2)}h
               </span>
             </div>
-            <div className="mt-1 text-xs text-gray-500">
-              {totalHours > 0 &&
-                `${projectRows.filter((r) => r.projectId && r.hours > 0).length} project(s)`}
-            </div>
+            {(totalWorkHours > 0 || absenceHours > 0) && (
+              <div className="text-sm text-gray-600 space-y-1">
+                {totalWorkHours > 0 && (
+                  <div className="flex justify-between">
+                    <span>Work Hours:</span>
+                    <span className="font-medium">
+                      {totalWorkHours.toFixed(2)}h
+                    </span>
+                  </div>
+                )}
+                {absenceHours > 0 && (
+                  <div className="flex justify-between">
+                    <span>Absence Hours:</span>
+                    <span className="font-medium text-blue-600">
+                      {absenceHours.toFixed(2)}h
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+            {totalExceeds24 && (
+              <div className="mt-2 text-sm text-red-600 font-medium">
+                ⚠ Combined hours cannot exceed 24 hours per day
+              </div>
+            )}
           </div>
 
-          {/* 24-Hour Validation Warning (US2: T068) */}
-          {totalExceeds24 && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <svg
-                  className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  aria-label="Warning icon"
+          {/* Work Hours Tab */}
+          {activeTab === "work" && (
+            <div>
+              {/* Project Rows */}
+              <div className="space-y-4 mb-6">
+                {projectRows.map((row, index) => (
+                  <div key={row.id || index} className="border rounded-lg p-4">
+                    <div className="flex items-start gap-4">
+                      {/* Project Selection */}
+                      <div className="flex-1">
+                        <label
+                          htmlFor={`project-${index}`}
+                          className="block text-sm font-medium mb-1"
+                        >
+                          Project {renderStatusBadge(row.status)}
+                        </label>
+                        <input
+                          id={`project-${index}`}
+                          type="text"
+                          value={row.projectId}
+                          onChange={(e) =>
+                            updateProjectRow(index, "projectId", e.target.value)
+                          }
+                          disabled={
+                            row.status !== "DRAFT" && row.status !== undefined
+                          }
+                          className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+                          placeholder="Enter project ID"
+                        />
+                        {row.errors.project && (
+                          <div className="text-red-600 text-sm mt-1">
+                            {row.errors.project}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Hours Input */}
+                      <div className="w-32">
+                        <label
+                          htmlFor={`hours-${index}`}
+                          className="block text-sm font-medium mb-1"
+                        >
+                          Hours
+                        </label>
+                        <input
+                          id={`hours-${index}`}
+                          type="number"
+                          value={row.hours}
+                          onChange={(e) =>
+                            updateProjectRow(
+                              index,
+                              "hours",
+                              Number.parseFloat(e.target.value) || 0,
+                            )
+                          }
+                          disabled={
+                            row.status !== "DRAFT" && row.status !== undefined
+                          }
+                          step="0.25"
+                          min="0"
+                          max="24"
+                          className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+                        />
+                        {row.errors.hours && (
+                          <div className="text-red-600 text-sm mt-1">
+                            {row.errors.hours}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Remove Button */}
+                      <div className="pt-6">
+                        {projectRows.length > 1 &&
+                          (row.status === "DRAFT" || !row.status) && (
+                            <button
+                              type="button"
+                              onClick={() => removeProjectRow(index)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              Remove
+                            </button>
+                          )}
+                      </div>
+                    </div>
+
+                    {/* Comment */}
+                    <div className="mt-4">
+                      <label
+                        htmlFor={`comment-${index}`}
+                        className="block text-sm font-medium mb-1"
+                      >
+                        Comment
+                      </label>
+                      <textarea
+                        id={`comment-${index}`}
+                        value={row.comment}
+                        onChange={(e) =>
+                          updateProjectRow(index, "comment", e.target.value)
+                        }
+                        disabled={
+                          row.status !== "DRAFT" && row.status !== undefined
+                        }
+                        rows={2}
+                        className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+                        placeholder="Optional comment..."
+                      />
+                      {row.errors.comment && (
+                        <div className="text-red-600 text-sm mt-1">
+                          {row.errors.comment}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Delete Button (for existing entries) */}
+                    {row.id && row.status === "DRAFT" && (
+                      <div className="mt-4">
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmId(row.id!)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          Delete Entry
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Add Project Button */}
+              {!isReadOnly && (
+                <button
+                  type="button"
+                  onClick={addProjectRow}
+                  className="mb-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  <title>Warning</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-                <div>
-                  <p className="text-sm font-medium text-red-800">
-                    Total exceeds 24 hours
-                  </p>
-                  <p className="text-sm text-red-700 mt-1">
-                    The total time logged for this day cannot exceed 24 hours.
-                    Please reduce the hours before saving.
-                  </p>
-                </div>
+                  + Add Project
+                </button>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-4">
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                {!isReadOnly && (
+                  <button
+                    type="button"
+                    onClick={() => handleSave(false)}
+                    disabled={
+                      isSaving || hasValidationErrors() || totalExceeds24
+                    }
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    {isSaving ? "Saving..." : "Save"}
+                  </button>
+                )}
               </div>
             </div>
           )}
 
-          {/* Add Project Button */}
-          {!isReadOnly && (
-            <button
-              type="button"
-              onClick={addProjectRow}
-              className="mb-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              + Add Project
-            </button>
+          {/* Absence Tab */}
+          {activeTab === "absence" && (
+            <AbsenceForm
+              date={date}
+              memberId={memberId}
+              onSave={handleAbsenceSave}
+              onCancel={handleClose}
+            />
           )}
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-4">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            {!isReadOnly && (
-              <button
-                type="button"
-                onClick={() => handleSave(false)}
-                disabled={isSaving || hasValidationErrors() || totalExceeds24}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
