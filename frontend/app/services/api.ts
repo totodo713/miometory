@@ -487,10 +487,64 @@ export const api = {
   },
 
   /**
-   * Approval endpoints (to be implemented in Phase 6)
+   * Approval endpoints
    */
   approval: {
-    // Placeholder - will be implemented in Phase 6 (US4)
+    /**
+     * Submit a fiscal month for approval
+     */
+    submitMonth: (data: {
+      memberId: string;
+      fiscalMonthStart: string;
+      fiscalMonthEnd: string;
+      submittedBy?: string;
+    }) =>
+      apiClient.post<{ approvalId: string }>(
+        "/api/v1/worklog/submissions",
+        data,
+      ),
+
+    /**
+     * Get manager's approval queue
+     */
+    getApprovalQueue: (managerId: string) => {
+      const query = new URLSearchParams({ managerId });
+      return apiClient.get<{
+        pendingApprovals: Array<{
+          approvalId: string;
+          memberId: string;
+          memberName: string;
+          fiscalMonthStart: string;
+          fiscalMonthEnd: string;
+          totalWorkHours: number;
+          totalAbsenceHours: number;
+          submittedAt: string;
+          submittedByName: string;
+        }>;
+        totalCount: number;
+      }>(`/api/v1/worklog/approvals/queue?${query}`);
+    },
+
+    /**
+     * Approve a submitted month
+     */
+    approveMonth: (approvalId: string, reviewedBy: string) =>
+      apiClient.post<void>(
+        `/api/v1/worklog/approvals/${approvalId}/approve`,
+        { reviewedBy },
+      ),
+
+    /**
+     * Reject a submitted month with reason
+     */
+    rejectMonth: (
+      approvalId: string,
+      data: { reviewedBy: string; rejectionReason: string },
+    ) =>
+      apiClient.post<void>(
+        `/api/v1/worklog/approvals/${approvalId}/reject`,
+        data,
+      ),
   },
 };
 

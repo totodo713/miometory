@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "../../services/api";
+import { SubmitButton } from "./SubmitButton";
 
 export interface ProjectSummary {
   projectId: string;
@@ -17,6 +18,8 @@ export interface MonthlySummaryData {
   totalAbsenceHours: number;
   totalBusinessDays: number;
   projects: ProjectSummary[];
+  approvalStatus: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | null;
+  rejectionReason: string | null;
 }
 
 export interface MonthlySummaryProps {
@@ -35,29 +38,29 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadSummary() {
-      try {
-        setIsLoading(true);
-        setError(null);
+  const loadSummary = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        // Call real API (T072)
-        const data = await api.worklog.getMonthlySummary({
-          year,
-          month,
-          memberId,
-        });
+      // Call real API (T072)
+      const data = await api.worklog.getMonthlySummary({
+        year,
+        month,
+        memberId,
+      });
 
-        setSummary(data);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load monthly summary",
-        );
-      } finally {
-        setIsLoading(false);
-      }
+      setSummary(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load monthly summary",
+      );
+    } finally {
+      setIsLoading(false);
     }
+  };
 
+  useEffect(() => {
     loadSummary();
   }, [year, month, memberId]);
 
@@ -93,15 +96,55 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      {/* Header */}
+      {/* Header with Approval Status */}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Monthly Summary</h2>
+          <p className="text-sm text-gray-600 mt-1">
+            {new Date(year, month - 1).toLocaleString("en-US", {
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+        
+        {/* Approval Status Badge */}
+        {summary.approvalStatus && (
+          <div className="flex flex-col items-end gap-2">
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                summary.approvalStatus === "APPROVED"
+                  ? "bg-green-100 text-green-800"
+                  : summary.approvalStatus === "SUBMITTED"
+                    ? "bg-blue-100 text-blue-800"
+                    : summary.approvalStatus === "REJECTED"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {summary.approvalStatus}
+            </span>
+            {summary.rejectionReason && (
+              <p className="text-xs text-red-600 max-w-xs text-right">
+                Reason: {summary.rejectionReason}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Submit Button */}
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Monthly Summary</h2>
-        <p className="text-sm text-gray-600 mt-1">
-          {new Date(year, month - 1).toLocaleString("en-US", {
-            month: "long",
-            year: "numeric",
-          })}
-        </p>
+        <SubmitButton
+          memberId={memberId}
+          fiscalMonthStart={`${year}-${String(month).padStart(2, "0")}-01`}
+          fiscalMonthEnd={new Date(year, month, 0).toISOString().split("T")[0]}
+          approvalStatus={summary.approvalStatus}
+          onSubmitSuccess={() => {
+            // Reload summary to get updated approval status
+            loadSummary();
+          }}
+        />
       </div>
 
       {/* Overall Stats */}
