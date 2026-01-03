@@ -8,42 +8,41 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
-  # OAuth2/OIDC Configuration (for modern SSO providers)
-  # Configure via environment variables or override in application-{profile}.yaml
-  security:
-    oauth2:
-      client:
-        registration:
-          # Azure AD example (configure via environment variables)
-          azure:
-            provider: azure
-            client-id: ${AZURE_CLIENT_ID:changeme}
-            client-secret: ${AZURE_CLIENT_SECRET:changeme}
-            authorization-grant-type: authorization_code
-            scope: openid,profile,email
-        provider:
-          azure:
-            issuer-uri: ${AZURE_ISSUER_URI:https://login.microsoftonline.com/common/v2.0}
+  # OAuth2/OIDC Configuration - DISABLED FOR DEVELOPMENT
+  # Configure via environment variables or override in application-{profile}.yaml when needed
+  # security:
+  #   oauth2:
+  #     client:
+  #       registration:
+  #         azure:
+  #           provider: azure
+  #           client-id: ${AZURE_CLIENT_ID:changeme}
+  #           client-secret: ${AZURE_CLIENT_SECRET:changeme}
+  #           authorization-grant-type: authorization_code
+  #           scope: openid,profile,email
+  #       provider:
+  #         azure:
+  #           issuer-uri: ${AZURE_ISSUER_URI:https://login.microsoftonline.com/common/v2.0}
     
-    # SAML2 Configuration (for enterprise SAML providers)
-    # Configure via environment variables or override in application-{profile}.yaml
-    saml2:
-      relyingparty:
-        registration:
-          # Okta example (configure via environment variables)
-          okta:
-            signing:
-              credentials:
-                - private-key-location: ${SAML_PRIVATE_KEY_LOCATION:classpath:saml-rp.key}
-                  certificate-location: ${SAML_CERTIFICATE_LOCATION:classpath:saml-rp.crt}
-            assertingparty:
-              entity-id: ${OKTA_ISSUER:changeme}
-              verification:
-                credentials:
-                  - certificate-location: ${OKTA_CERTIFICATE_LOCATION:classpath:okta-idp.crt}
-              singlesignon:
-                url: ${OKTA_SSO_URL:changeme}
-                sign-request: true
+  # SAML2 Configuration - DISABLED FOR DEVELOPMENT
+  # Configure via environment variables or override in application-{profile}.yaml when needed
+  # security:
+  #   saml2:
+  #     relyingparty:
+  #       registration:
+  #         okta:
+  #           signing:
+  #             credentials:
+  #               - private-key-location: ${SAML_PRIVATE_KEY_LOCATION:classpath:saml-rp.key}
+  #                 certificate-location: ${SAML_CERTIFICATE_LOCATION:classpath:saml-rp.crt}
+  #           assertingparty:
+  #             entity-id: ${OKTA_ISSUER:changeme}
+  #             verification:
+  #               credentials:
+  #                 - certificate-location: ${OKTA_CERTIFICATE_LOCATION:classpath:okta-idp.crt}
+  #             singlesignon:
+  #               url: ${OKTA_SSO_URL:changeme}
+  #               sign-request: true
 
 # Session Management
 server:
