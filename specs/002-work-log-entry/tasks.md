@@ -123,9 +123,9 @@
 
 ### Frontend - Session Timeout (US1)
 
-- [ ] T055 [P] [US1] Implement idle detection logic in frontend/app/hooks/useSessionTimeout.ts (mouse/keyboard/touch events)
-- [ ] T056 [US1] Create session timeout warning dialog in frontend/app/components/shared/SessionTimeoutDialog.tsx (28-minute warning + 2-minute countdown)
-- [ ] T057 [US1] Implement auto-logout after 30 minutes in useSessionTimeout hook
+- [x] T055 [P] [US1] Implement idle detection logic in frontend/app/hooks/useSessionTimeout.ts (mouse/keyboard/touch events)
+- [x] T056 [US1] Create session timeout warning dialog in frontend/app/components/shared/SessionTimeoutDialog.tsx (28-minute warning + 2-minute countdown)
+- [x] T057 [US1] Implement auto-logout after 30 minutes in useSessionTimeout hook
 
 ### Testing (US1)
 
