@@ -111,7 +111,9 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
 
             const date = new Date(dateEntry.date);
             const dayNum = date.getDate();
-            const hasHours = dateEntry.totalWorkHours > 0;
+            const hasWorkHours = dateEntry.totalWorkHours > 0;
+            const hasAbsenceHours = dateEntry.totalAbsenceHours > 0;
+            const hasAnyHours = hasWorkHours || hasAbsenceHours;
             const statusColor =
               STATUS_COLORS[dateEntry.status as keyof typeof STATUS_COLORS] ||
               STATUS_COLORS.DRAFT;
@@ -127,6 +129,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                   focus:outline-none focus:ring-2 focus:ring-blue-500
                   ${dateEntry.isWeekend ? "bg-gray-50" : ""}
                   ${dateEntry.isHoliday ? "bg-red-50" : ""}
+                  ${hasAbsenceHours && !dateEntry.isHoliday ? "bg-blue-50" : ""}
                 `}
               >
                 {/* Day number */}
@@ -145,11 +148,27 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                 </div>
 
                 {/* Hours display */}
-                {hasHours && (
-                  <div className="mt-1">
-                    <div className="text-lg font-semibold text-gray-900">
-                      {dateEntry.totalWorkHours}h
-                    </div>
+                {hasAnyHours && (
+                  <div className="mt-1 space-y-1">
+                    {/* Work hours */}
+                    {hasWorkHours && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-600">Work:</span>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {dateEntry.totalWorkHours}h
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Absence hours */}
+                    {hasAbsenceHours && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-blue-600">🏖️</span>
+                        <span className="text-sm font-semibold text-blue-600">
+                          {dateEntry.totalAbsenceHours}h
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -164,13 +183,6 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                     >
                       {dateEntry.status}
                     </span>
-                  </div>
-                )}
-
-                {/* Absence indicator */}
-                {dateEntry.totalAbsenceHours > 0 && (
-                  <div className="mt-1 text-xs text-gray-600">
-                    Abs: {dateEntry.totalAbsenceHours}h
                   </div>
                 )}
               </button>
