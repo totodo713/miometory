@@ -43,8 +43,8 @@
 - [X] T009 [P] Implement TimeAmount value object in backend/src/main/java/com/worklog/domain/shared/TimeAmount.java
 - [X] T010 [P] Implement FiscalMonthPeriod value object in backend/src/main/java/com/worklog/domain/shared/FiscalMonthPeriod.java
 - [X] T011 [P] Implement DateRange value object in backend/src/main/java/com/worklog/domain/shared/DateRange.java
-- [ ] T012 [P] Extend Member aggregate with managerId field in backend/src/main/java/com/worklog/domain/member/ (for proxy entry permission)
-- [ ] T013 [P] Extend Project aggregate with isActive, validFrom, validUntil fields in backend/src/main/java/com/worklog/domain/project/
+- [x] T012 [P] Extend Member aggregate with managerId field in backend/src/main/java/com/worklog/domain/member/ (for proxy entry permission)
+- [x] T013 [P] Extend Project aggregate with isActive, validFrom, validUntil fields in backend/src/main/java/com/worklog/domain/project/
 - [X] T014 [P] Configure Spring Security OAuth2 client in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
 - [X] T015 [P] Configure Spring Security SAML2 in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt (add SAML2 provider)
 - [X] T016 [P] Implement session timeout configuration (30 minutes) in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
