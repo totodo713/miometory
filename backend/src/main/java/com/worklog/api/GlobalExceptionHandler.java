@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -134,6 +135,50 @@ public class GlobalExceptionHandler {
             String.format("Invalid value for parameter '%s': expected %s",
                     ex.getName(), expectedType),
             details
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    /**
+     * Handles HttpMessageNotReadableException (JSON parsing errors).
+     * This includes validation errors thrown in record constructors.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(
+            HttpMessageNotReadableException ex,
+            WebRequest request
+    ) {
+        logger.warn("JSON parsing failed: {}", ex.getMessage());
+
+        // Extract root cause for better error message
+        Throwable rootCause = ex.getRootCause();
+        String message = rootCause != null ? rootCause.getMessage() : ex.getMessage();
+        
+        // Try to extract error code from validation message
+        String errorCode = "INVALID_REQUEST_BODY";
+        if (message != null) {
+            if (message.contains("memberId is required")) {
+                errorCode = "MEMBER_ID_REQUIRED";
+            } else if (message.contains("fiscalMonthStart is required") || 
+                       message.contains("fiscalMonthEnd is required")) {
+                errorCode = "FISCAL_MONTH_REQUIRED";
+            } else if (message.contains("reviewedBy is required")) {
+                errorCode = "REVIEWED_BY_REQUIRED";
+            } else if (message.contains("rejectionReason is required")) {
+                errorCode = "REJECTION_REASON_REQUIRED";
+            } else if (message.contains("rejectionReason must not exceed")) {
+                errorCode = "REJECTION_REASON_TOO_LONG";
+            }
+        }
+
+        ErrorResponse error = ErrorResponse.of(
+            errorCode,
+            message != null ? message : "Invalid request body",
+            Map.of("path", getRequestPath(request))
         );
 
         return ResponseEntity

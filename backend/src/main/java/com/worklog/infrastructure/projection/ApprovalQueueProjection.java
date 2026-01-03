@@ -52,7 +52,7 @@ public class ApprovalQueueProjection {
                     CAST(payload->>'memberId' AS UUID) as member_id,
                     CAST(payload->>'fiscalMonthStart' AS DATE) as fiscal_month_start,
                     CAST(payload->>'fiscalMonthEnd' AS DATE) as fiscal_month_end,
-                    occurred_at
+                    created_at
                 FROM event_store
                 WHERE aggregate_type = 'MonthlyApproval'
                 AND event_type = 'MonthlyApprovalCreated'
