@@ -5,6 +5,8 @@ import com.worklog.api.dto.MonthlyCalendarResponse;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.infrastructure.projection.DailyEntryProjection;
 import com.worklog.infrastructure.projection.MonthlyCalendarProjection;
+import com.worklog.infrastructure.projection.MonthlySummaryData;
+import com.worklog.infrastructure.projection.MonthlySummaryProjection;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,9 +26,14 @@ import java.util.stream.Collectors;
 public class CalendarController {
 
     private final MonthlyCalendarProjection calendarProjection;
+    private final MonthlySummaryProjection summaryProjection;
 
-    public CalendarController(MonthlyCalendarProjection calendarProjection) {
+    public CalendarController(
+        MonthlyCalendarProjection calendarProjection,
+        MonthlySummaryProjection summaryProjection
+    ) {
         this.calendarProjection = calendarProjection;
+        this.summaryProjection = summaryProjection;
     }
 
     /**
@@ -95,5 +102,42 @@ public class CalendarController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get monthly summary for a member.
+     * 
+     * GET /api/v1/worklog/calendar/{year}/{month}/summary?memberId=...
+     * 
+     * Returns aggregated statistics including project breakdown with hours and percentages.
+     * 
+     * @param year Year (2020-2100)
+     * @param month Month (1-12)
+     * @param memberId Member ID (required for now, will default to authenticated user)
+     * @return Monthly summary with project breakdown
+     */
+    @GetMapping("/{year}/{month}/summary")
+    public ResponseEntity<MonthlySummaryData> getMonthlySummary(
+        @PathVariable int year,
+        @PathVariable int month,
+        @RequestParam(required = false) UUID memberId
+    ) {
+        // Validate year and month
+        if (year < 2020 || year > 2100) {
+            throw new DomainException("INVALID_YEAR", "Year must be between 2020 and 2100");
+        }
+        if (month < 1 || month > 12) {
+            throw new DomainException("INVALID_MONTH", "Month must be between 1 and 12");
+        }
+
+        // For now, require memberId. In production, get from SecurityContext
+        if (memberId == null) {
+            throw new DomainException("MEMBER_ID_REQUIRED", "memberId parameter is required");
+        }
+
+        // Get summary data from projection
+        MonthlySummaryData summary = summaryProjection.getMonthlySummary(memberId, year, month);
+
+        return ResponseEntity.ok(summary);
     }
 }

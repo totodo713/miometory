@@ -359,6 +359,32 @@ export const api = {
         }>;
       }>(`/api/v1/worklog/calendar/${params.year}/${params.month}?${query}`);
     },
+
+    /**
+     * Get monthly summary with project breakdown
+     */
+    getMonthlySummary: (params: {
+      year: number;
+      month: number;
+      memberId: string;
+    }) => {
+      const query = new URLSearchParams({ memberId: params.memberId });
+      return apiClient.get<{
+        year: number;
+        month: number;
+        totalWorkHours: number;
+        totalAbsenceHours: number;
+        totalBusinessDays: number;
+        projects: Array<{
+          projectId: string;
+          projectName: string;
+          totalHours: number;
+          percentage: number;
+        }>;
+      }>(
+        `/api/v1/worklog/calendar/${params.year}/${params.month}/summary?${query}`,
+      );
+    },
   },
 
   /**

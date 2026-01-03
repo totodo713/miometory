@@ -716,4 +716,236 @@ class WorkLogControllerTest : IntegrationTestBase() {
             )
         assertEquals(HttpStatus.NOT_FOUND, getAfterDeleteResponse.statusCode)
     }
+
+    /**
+     * T073: Multi-project validation tests
+     * Verifies that total daily hours across all projects cannot exceed 24 hours
+     */
+    @Test
+    fun `POST entries should succeed when total daily hours is exactly 24`() {
+        // Arrange
+        val testDate = LocalDate.now().minusDays(1)
+        val project1 = UUID.randomUUID()
+        val project2 = UUID.randomUUID()
+        val project3 = UUID.randomUUID()
+
+        // Act: Create 3 entries totaling 24 hours
+        val request1 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project1.toString(),
+                "date" to testDate.toString(),
+                "hours" to 10.0,
+                "comment" to "Project 1",
+            )
+        val response1 =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/entries",
+                request1,
+                Map::class.java,
+            )
+
+        val request2 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project2.toString(),
+                "date" to testDate.toString(),
+                "hours" to 10.0,
+                "comment" to "Project 2",
+            )
+        val response2 =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/entries",
+                request2,
+                Map::class.java,
+            )
+
+        val request3 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project3.toString(),
+                "date" to testDate.toString(),
+                "hours" to 4.0,
+                "comment" to "Project 3",
+            )
+        val response3 =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/entries",
+                request3,
+                Map::class.java,
+            )
+
+        // Assert
+        assertEquals(HttpStatus.CREATED, response1.statusCode)
+        assertEquals(HttpStatus.CREATED, response2.statusCode)
+        assertEquals(HttpStatus.CREATED, response3.statusCode)
+    }
+
+    @Test
+    fun `POST entries should fail when total daily hours exceeds 24`() {
+        // Arrange
+        val testDate = LocalDate.now().minusDays(2)
+        val project1 = UUID.randomUUID()
+        val project2 = UUID.randomUUID()
+        val project3 = UUID.randomUUID()
+
+        // Create 2 entries totaling 20 hours
+        val request1 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project1.toString(),
+                "date" to testDate.toString(),
+                "hours" to 10.0,
+                "comment" to "Project 1",
+            )
+        restTemplate.postForEntity(
+            "/api/v1/worklog/entries",
+            request1,
+            Map::class.java,
+        )
+
+        val request2 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project2.toString(),
+                "date" to testDate.toString(),
+                "hours" to 10.0,
+                "comment" to "Project 2",
+            )
+        restTemplate.postForEntity(
+            "/api/v1/worklog/entries",
+            request2,
+            Map::class.java,
+        )
+
+        // Act: Try to create a third entry with 5 hours (total would be 25)
+        val request3 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project3.toString(),
+                "date" to testDate.toString(),
+                "hours" to 5.0,
+                "comment" to "Project 3 - should fail",
+            )
+        val response3 =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/entries",
+                request3,
+                Map::class.java,
+            )
+
+        // Assert
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response3.statusCode)
+        val body = response3.body as Map<*, *>
+        assertEquals("DAILY_LIMIT_EXCEEDED", body["errorCode"])
+        assertTrue(body["message"].toString().contains("24"))
+    }
+
+    @Test
+    fun `PATCH entry should fail when update causes daily total to exceed 24`() {
+        // Arrange
+        val testDate = LocalDate.now().minusDays(3)
+        val project1 = UUID.randomUUID()
+        val project2 = UUID.randomUUID()
+
+        // Create entry 1 with 12 hours
+        val request1 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project1.toString(),
+                "date" to testDate.toString(),
+                "hours" to 12.0,
+                "comment" to "Project 1",
+            )
+        val response1 =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/entries",
+                request1,
+                Map::class.java,
+            )
+        val entry1Id = (response1.body as Map<*, *>)["id"] as String
+
+        // Create entry 2 with 10 hours (total = 22)
+        val request2 =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to project2.toString(),
+                "date" to testDate.toString(),
+                "hours" to 10.0,
+                "comment" to "Project 2",
+            )
+        restTemplate.postForEntity(
+            "/api/v1/worklog/entries",
+            request2,
+            Map::class.java,
+        )
+
+        // Act: Try to update entry1 from 12 to 15 hours (total would be 25)
+        val updateRequest =
+            mapOf(
+                "hours" to 15.0,
+                "comment" to "Updated - should fail",
+            )
+
+        val headers = HttpHeaders()
+        headers.set("If-Match", "1")
+
+        val updateResponse =
+            restTemplate.exchange(
+                "/api/v1/worklog/entries/$entry1Id",
+                HttpMethod.PATCH,
+                HttpEntity(updateRequest, headers),
+                Map::class.java,
+            )
+
+        // Assert
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, updateResponse.statusCode)
+        val body = updateResponse.body as Map<*, *>
+        assertEquals("DAILY_LIMIT_EXCEEDED", body["errorCode"])
+    }
+
+    @Test
+    fun `Multiple projects on same day should aggregate correctly in validation`() {
+        // Arrange
+        val testDate = LocalDate.now().minusDays(4)
+        val projects = List(4) { UUID.randomUUID() }
+
+        // Act: Create 4 entries with 6 hours each (total = 24)
+        projects.forEach { projectId ->
+            val request =
+                mapOf(
+                    "memberId" to testMemberId.toString(),
+                    "projectId" to projectId.toString(),
+                    "date" to testDate.toString(),
+                    "hours" to 6.0,
+                    "comment" to "6 hours on $projectId",
+                )
+            val response =
+                restTemplate.postForEntity(
+                    "/api/v1/worklog/entries",
+                    request,
+                    Map::class.java,
+                )
+            assertEquals(HttpStatus.CREATED, response.statusCode)
+        }
+
+        // Try to add one more entry (should fail)
+        val extraRequest =
+            mapOf(
+                "memberId" to testMemberId.toString(),
+                "projectId" to UUID.randomUUID().toString(),
+                "date" to testDate.toString(),
+                "hours" to 0.25,
+                "comment" to "Extra entry - should fail",
+            )
+        val extraResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/entries",
+                extraRequest,
+                Map::class.java,
+            )
+
+        // Assert
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, extraResponse.statusCode)
+    }
 }

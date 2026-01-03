@@ -9,6 +9,7 @@
 
 import { useEffect, useState } from "react";
 import { Calendar } from "@/components/worklog/Calendar";
+import { MonthlySummary } from "@/components/worklog/MonthlySummary";
 import { api } from "@/services/api";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 
@@ -133,7 +134,14 @@ export default function WorkLogPage() {
         )}
 
         {!isLoading && !error && calendarData && (
-          <Calendar year={year} month={month} dates={calendarData.dates} />
+          <>
+            <Calendar year={year} month={month} dates={calendarData.dates} />
+            
+            {/* Monthly Summary (T072) */}
+            <div className="mt-6">
+              <MonthlySummary year={year} month={month} memberId={memberId} />
+            </div>
+          </>
         )}
 
         {!isLoading && !error && !calendarData && (

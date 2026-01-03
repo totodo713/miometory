@@ -41,39 +41,10 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
         setIsLoading(true);
         setError(null);
 
-        // TODO: Replace with actual API call when backend is ready (T071)
-        // const data = await api.worklog.getMonthlySummary({ year, month, memberId });
+        // Call real API (T072)
+        const data = await api.worklog.getMonthlySummary({ year, month, memberId });
 
-        // Mock data for now
-        const mockData: MonthlySummaryData = {
-          year,
-          month,
-          totalWorkHours: 160,
-          totalAbsenceHours: 8,
-          totalBusinessDays: 21,
-          projects: [
-            {
-              projectId: "proj-001",
-              projectName: "Project Alpha",
-              totalHours: 80,
-              percentage: 50,
-            },
-            {
-              projectId: "proj-002",
-              projectName: "Project Beta",
-              totalHours: 60,
-              percentage: 37.5,
-            },
-            {
-              projectId: "proj-003",
-              projectName: "Internal Tasks",
-              totalHours: 20,
-              percentage: 12.5,
-            },
-          ],
-        };
-
-        setSummary(mockData);
+        setSummary(data);
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load monthly summary",
