@@ -42,7 +42,11 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
         setError(null);
 
         // Call real API (T072)
-        const data = await api.worklog.getMonthlySummary({ year, month, memberId });
+        const data = await api.worklog.getMonthlySummary({
+          year,
+          month,
+          memberId,
+        });
 
         setSummary(data);
       } catch (err) {
@@ -102,27 +106,85 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
 
       {/* Overall Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="text-sm text-blue-600 font-medium">Work Hours</div>
+        <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+          <div className="text-sm text-blue-600 font-medium">
+            Total Work Hours
+          </div>
           <div className="text-2xl font-bold text-blue-900 mt-1">
             {summary.totalWorkHours}h
           </div>
+          <div className="text-xs text-blue-600 mt-1">
+            {summary.projects.length} project
+            {summary.projects.length !== 1 ? "s" : ""}
+          </div>
         </div>
-        <div className="bg-green-50 rounded-lg p-4">
+        <div className="bg-sky-50 rounded-lg p-4 border border-sky-200">
+          <div className="flex items-center gap-1 text-sm text-sky-700 font-medium">
+            <span>🏖️</span>
+            <span>Absence Hours</span>
+          </div>
+          <div className="text-2xl font-bold text-sky-900 mt-1">
+            {summary.totalAbsenceHours}h
+          </div>
+          <div className="text-xs text-sky-600 mt-1">Time away from work</div>
+        </div>
+        <div className="bg-green-50 rounded-lg p-4 border border-green-100">
           <div className="text-sm text-green-600 font-medium">
             Business Days
           </div>
           <div className="text-2xl font-bold text-green-900 mt-1">
             {summary.totalBusinessDays}
           </div>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="text-sm text-gray-600 font-medium">Absence Hours</div>
-          <div className="text-2xl font-bold text-gray-900 mt-1">
-            {summary.totalAbsenceHours}h
-          </div>
+          <div className="text-xs text-green-600 mt-1">In this period</div>
         </div>
       </div>
+
+      {/* Combined Hours Summary */}
+      {(summary.totalWorkHours > 0 || summary.totalAbsenceHours > 0) && (
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700">
+                Total Hours Recorded
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Work + Absence combined
+              </p>
+            </div>
+            <div className="text-2xl font-bold text-gray-900">
+              {(summary.totalWorkHours + summary.totalAbsenceHours).toFixed(2)}h
+            </div>
+          </div>
+          {summary.totalWorkHours > 0 && summary.totalAbsenceHours > 0 && (
+            <div className="mt-3 flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                <span className="text-gray-600">
+                  Work: {summary.totalWorkHours}h (
+                  {(
+                    (summary.totalWorkHours /
+                      (summary.totalWorkHours + summary.totalAbsenceHours)) *
+                    100
+                  ).toFixed(1)}
+                  %)
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-sky-500 rounded-full" />
+                <span className="text-gray-600">
+                  Absence: {summary.totalAbsenceHours}h (
+                  {(
+                    (summary.totalAbsenceHours /
+                      (summary.totalWorkHours + summary.totalAbsenceHours)) *
+                    100
+                  ).toFixed(1)}
+                  %)
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Project Breakdown Table */}
       <div className="overflow-x-auto">
