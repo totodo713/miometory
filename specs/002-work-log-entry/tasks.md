@@ -149,25 +149,25 @@
 
 ### Backend - Multi-Project Support (US2)
 
-- [ ] T065 [US2] Add multi-project daily aggregation logic to WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (ensure sum ≤ 24h)
-- [ ] T066 [US2] Update MonthlyCalendarProjection to group entries by date in backend/src/main/java/com/worklog/infrastructure/projection/MonthlyCalendarProjection.java
+- [X] T065 [US2] Add multi-project daily aggregation logic to WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (ensure sum ≤ 24h) - Already implemented
+- [X] T066 [US2] Update MonthlyCalendarProjection to group entries by date in backend/src/main/java/com/worklog/infrastructure/projection/MonthlyCalendarProjection.java - Already implemented
 
 ### Frontend - Multi-Project UI (US2)
 
-- [ ] T067 [US2] Enhance DailyEntryForm to display running total across all project rows in frontend/app/components/worklog/DailyEntryForm.tsx
-- [ ] T068 [US2] Add real-time validation warning when total exceeds 24h in DailyEntryForm
+- [X] T067 [US2] Enhance DailyEntryForm to display running total across all project rows in frontend/app/components/worklog/DailyEntryForm.tsx - Done in Session 5
+- [X] T068 [US2] Add real-time validation warning when total exceeds 24h in DailyEntryForm - Done in Session 5
 
 ### Frontend - Summary View (US2)
 
-- [ ] T069 [P] [US2] Create MonthlySummary component in frontend/app/components/worklog/MonthlySummary.tsx (project breakdown table with hours + percentage)
-- [ ] T070 [US2] Implement MonthlySummaryProjection backend in backend/src/main/java/com/worklog/infrastructure/projection/MonthlySummaryProjection.java
-- [ ] T071 [US2] Implement GET /api/v1/worklog/summary/{year}/{month} in backend/src/main/java/com/worklog/api/CalendarController.java
-- [ ] T072 [US2] Integrate MonthlySummary component into /app/worklog/page.tsx
+- [X] T069 [P] [US2] Create MonthlySummary component in frontend/app/components/worklog/MonthlySummary.tsx (project breakdown table with hours + percentage) - Done in Session 5
+- [X] T070 [US2] Implement MonthlySummaryProjection backend in backend/src/main/java/com/worklog/infrastructure/projection/MonthlySummaryProjection.java
+- [X] T071 [US2] Implement GET /api/v1/worklog/calendar/{year}/{month}/summary in backend/src/main/java/com/worklog/api/CalendarController.java
+- [X] T072 [US2] Integrate MonthlySummary component into /app/worklog/page.tsx
 
 ### Testing (US2)
 
-- [ ] T073 [P] [US2] Write integration test for multi-project 24h validation in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
-- [ ] T074 [P] [US2] Write E2E test for multi-project allocation in frontend/e2e/multi-project-entry.spec.ts (3 projects, verify total)
+- [X] T073 [P] [US2] Write integration test for multi-project 24h validation in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
+- [X] T074 [P] [US2] Write E2E test for multi-project allocation in frontend/tests/e2e/multi-project-entry.spec.ts (3 projects, verify total)
 
 **Checkpoint**: User Stories 1 AND 2 both work independently
 
