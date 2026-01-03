@@ -110,8 +110,8 @@
 
 ### Frontend - Pages (US1)
 
-- [ ] T048 [US1] Create /app/worklog/page.tsx (dashboard with Calendar and fiscal month selector)
-- [ ] T049 [US1] Create /app/worklog/[date]/page.tsx (daily entry form route)
+- [X] T048 [US1] Create /app/worklog/page.tsx (dashboard with Calendar and fiscal month selector)
+- [X] T049 [US1] Create /app/worklog/[date]/page.tsx (daily entry form route)
 
 ### Frontend - Auto-Save (US1)
 
