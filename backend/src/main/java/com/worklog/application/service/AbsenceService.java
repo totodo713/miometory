@@ -8,6 +8,7 @@ import com.worklog.domain.absence.AbsenceId;
 import com.worklog.domain.absence.AbsenceType;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainException;
+import com.worklog.domain.shared.OptimisticLockException;
 import com.worklog.domain.shared.TimeAmount;
 import com.worklog.infrastructure.repository.JdbcAbsenceRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
@@ -109,9 +110,11 @@ public class AbsenceService {
 
         // Check version for optimistic locking
         if (absence.getVersion() != command.version()) {
-            throw new DomainException(
-                "OPTIMISTIC_LOCK_FAILURE",
-                "Absence has been modified by another user. Please refresh and try again."
+            throw new OptimisticLockException(
+                "Absence",
+                command.id().toString(),
+                command.version(),
+                absence.getVersion()
             );
         }
 

@@ -156,14 +156,21 @@ public class AbsenceController {
             throw new DomainException("VERSION_REQUIRED", "If-Match header with version is required");
         }
 
+        // Fetch existing absence to fill in null values from PATCH request
+        Absence existingAbsence = absenceService.findById(id);
+        if (existingAbsence == null) {
+            return ResponseEntity.notFound().build();
+        }
+
         // For now, use a stub user. In production, get from SecurityContext
         UUID updatedBy = UUID.randomUUID(); // TODO: Get from SecurityContext
 
+        // Use existing values for fields not provided in the request
         UpdateAbsenceCommand command = new UpdateAbsenceCommand(
             id,
-            request.hours(),
-            request.absenceType(),
-            request.reason(),
+            request.hours() != null ? request.hours() : existingAbsence.getHours().hours(),
+            request.absenceType() != null ? request.absenceType() : existingAbsence.getAbsenceType().name(),
+            request.reason() != null ? request.reason() : existingAbsence.getReason(),
             updatedBy,
             version
         );
