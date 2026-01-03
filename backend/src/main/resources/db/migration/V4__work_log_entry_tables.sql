@@ -33,14 +33,14 @@ COMMENT ON COLUMN work_log_events.version IS 'Optimistic locking version (starts
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS work_log_entries_projection (
     id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id),
-    organization_id UUID NOT NULL REFERENCES organizations(id),
-    project_id UUID NOT NULL REFERENCES projects(id),
+    member_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
+    project_id UUID NOT NULL,
     work_date DATE NOT NULL,
     hours DECIMAL(4,2) NOT NULL CHECK (hours >= 0.25 AND hours <= 24.0 AND MOD(hours * 4, 1) = 0),
     notes TEXT,
     status VARCHAR(20) NOT NULL CHECK (status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED')),
-    entered_by UUID REFERENCES members(id),
+    entered_by UUID,
     version INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -63,8 +63,8 @@ COMMENT ON COLUMN work_log_entries_projection.version IS 'Optimistic locking ver
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS absences_projection (
     id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id),
-    organization_id UUID NOT NULL REFERENCES organizations(id),
+    member_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
     absence_type VARCHAR(20) NOT NULL CHECK (absence_type IN ('PAID_LEAVE', 'SICK_LEAVE', 'SPECIAL_LEAVE', 'OTHER')),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL CHECK (end_date >= start_date),
@@ -89,14 +89,14 @@ COMMENT ON COLUMN absences_projection.absence_type IS 'Type of absence: PAID_LEA
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS monthly_approvals_projection (
     id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id),
-    organization_id UUID NOT NULL REFERENCES organizations(id),
-    fiscal_year INTEGER NOT NULL CHECK (fiscal_year >= 2000 AND fiscal_year <= 2100),
+    member_id UUID NOT NULL,
+    organization_id UUID NOT NULL,
+    fiscal_year INTEGER NOT NULL CHECK (fiscal_year >= 2000 AND fiscal_year >= 2000 AND fiscal_year <= 2100),
     fiscal_month INTEGER NOT NULL CHECK (fiscal_month >= 1 AND fiscal_month <= 12),
     status VARCHAR(20) NOT NULL CHECK (status IN ('PENDING', 'SUBMITTED', 'APPROVED', 'REJECTED')),
     submitted_at TIMESTAMP,
     reviewed_at TIMESTAMP,
-    reviewed_by UUID REFERENCES members(id),
+    reviewed_by UUID,
     rejection_reason TEXT,
     version INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -121,7 +121,7 @@ COMMENT ON COLUMN monthly_approvals_projection.status IS 'PENDING: Not submitted
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS monthly_calendar_projection (
     id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id),
+    member_id UUID NOT NULL,
     fiscal_year INTEGER NOT NULL CHECK (fiscal_year >= 2000 AND fiscal_year <= 2100),
     fiscal_month INTEGER NOT NULL CHECK (fiscal_month >= 1 AND fiscal_month <= 12),
     calendar_data JSONB NOT NULL,
@@ -141,7 +141,7 @@ COMMENT ON COLUMN monthly_calendar_projection.total_hours IS 'Total hours for th
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS monthly_summary_projection (
     id UUID PRIMARY KEY,
-    member_id UUID NOT NULL REFERENCES members(id),
+    member_id UUID NOT NULL,
     fiscal_year INTEGER NOT NULL CHECK (fiscal_year >= 2000 AND fiscal_year <= 2100),
     fiscal_month INTEGER NOT NULL CHECK (fiscal_month >= 1 AND fiscal_month <= 12),
     project_summaries JSONB NOT NULL,
