@@ -134,7 +134,7 @@ public class JdbcWorkLogRepository {
     ) {
         // Query for aggregate IDs matching criteria
         String sql = """
-            SELECT DISTINCT e.aggregate_id
+            SELECT DISTINCT e.aggregate_id, CAST(e.payload->>'date' AS DATE) as entry_date
             FROM event_store e
             WHERE e.aggregate_type = 'WorkLogEntry'
             AND e.event_type = 'WorkLogEntryCreated'
@@ -146,7 +146,7 @@ public class JdbcWorkLogRepository {
                 WHERE aggregate_type = 'WorkLogEntry'
                 AND event_type = 'WorkLogEntryDeleted'
             )
-            ORDER BY CAST(e.payload->>'date' AS DATE) DESC
+            ORDER BY entry_date DESC
             """;
 
         List<UUID> aggregateIds = jdbcTemplate.query(
