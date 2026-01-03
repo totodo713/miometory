@@ -432,10 +432,11 @@ export function DailyEntryForm({
 								<div className="flex items-start gap-4">
 									{/* Project Selection */}
 									<div className="flex-1">
-										<label className="block text-sm font-medium mb-1">
+										<label htmlFor={`project-${index}`} className="block text-sm font-medium mb-1">
 											Project {renderStatusBadge(row.status)}
 										</label>
 										<input
+											id={`project-${index}`}
 											type="text"
 											value={row.projectId}
 											onChange={(e) =>
@@ -454,10 +455,11 @@ export function DailyEntryForm({
 
 									{/* Hours Input */}
 									<div className="w-32">
-										<label className="block text-sm font-medium mb-1">
+										<label htmlFor={`hours-${index}`} className="block text-sm font-medium mb-1">
 											Hours
 										</label>
 										<input
+											id={`hours-${index}`}
 											type="number"
 											value={row.hours}
 											onChange={(e) =>
@@ -497,10 +499,11 @@ export function DailyEntryForm({
 
 								{/* Comment */}
 								<div className="mt-4">
-									<label className="block text-sm font-medium mb-1">
+									<label htmlFor={`comment-${index}`} className="block text-sm font-medium mb-1">
 										Comment
 									</label>
 									<textarea
+										id={`comment-${index}`}
 										value={row.comment}
 										onChange={(e) =>
 											updateProjectRow(index, "comment", e.target.value)
