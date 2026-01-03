@@ -388,10 +388,102 @@ export const api = {
   },
 
   /**
-   * Absence endpoints (to be implemented in Phase 5)
+   * Absence endpoints
    */
   absence: {
-    // Placeholder - will be implemented in Phase 5 (US3)
+    /**
+     * Create a new absence record
+     */
+    createAbsence: (data: {
+      memberId: string;
+      date: string;
+      hours: number;
+      absenceType: string;
+      reason?: string;
+      recordedBy?: string;
+    }) =>
+      apiClient.post<{
+        id: string;
+        memberId: string;
+        date: string;
+        hours: number;
+        absenceType: string;
+        reason: string | null;
+        status: string;
+        recordedBy: string;
+        createdAt: string;
+        updatedAt: string;
+        version: number;
+      }>("/api/v1/absences", data),
+
+    /**
+     * Get absences by date range
+     */
+    getAbsences: (params: {
+      memberId: string;
+      startDate: string;
+      endDate: string;
+      status?: string;
+    }) => {
+      const query = new URLSearchParams({
+        memberId: params.memberId,
+        startDate: params.startDate,
+        endDate: params.endDate,
+        ...(params.status && { status: params.status }),
+      });
+      return apiClient.get<{
+        absences: Array<{
+          id: string;
+          memberId: string;
+          date: string;
+          hours: number;
+          absenceType: string;
+          reason: string | null;
+          status: string;
+          recordedBy: string;
+          createdAt: string;
+          updatedAt: string;
+          version: number;
+        }>;
+        total: number;
+      }>(`/api/v1/absences?${query}`);
+    },
+
+    /**
+     * Get a single absence by ID
+     */
+    getAbsence: (id: string) =>
+      apiClient.get<{
+        id: string;
+        memberId: string;
+        date: string;
+        hours: number;
+        absenceType: string;
+        reason: string | null;
+        status: string;
+        recordedBy: string;
+        createdAt: string;
+        updatedAt: string;
+        version: number;
+      }>(`/api/v1/absences/${id}`),
+
+    /**
+     * Update an absence (PATCH)
+     */
+    updateAbsence: (
+      id: string,
+      data: { hours: number; absenceType: string; reason?: string },
+      options: { version: number },
+    ) =>
+      apiClient.patch<void>(`/api/v1/absences/${id}`, data, {
+        version: options.version,
+      }),
+
+    /**
+     * Delete an absence
+     */
+    deleteAbsence: (id: string) =>
+      apiClient.delete<void>(`/api/v1/absences/${id}`),
   },
 
   /**
