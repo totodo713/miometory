@@ -316,10 +316,10 @@
 
 ### Testing (US5)
 
-- [ ] T142 [P] [US5] Write unit tests for CsvValidationService in backend/src/test/java/com/worklog/infrastructure/csv/CsvValidationServiceTest.java
-- [ ] T143 [P] [US5] Write integration test for CSV import (100 rows) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt
+- [x] T142 [P] [US5] Write unit tests for CsvValidationService in backend/src/test/java/com/worklog/infrastructure/csv/CsvValidationServiceTest.java ✅
+- [x] T143 [P] [US5] Write integration test for CSV import (100 rows) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt ✅
 - [ ] T144 [P] [US5] Write performance test for CSV import (100K rows in <1000s, SC-005) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt
-- [ ] T145 [P] [US5] Write E2E test for CSV import/export roundtrip in frontend/e2e/csv-operations.spec.ts
+- [x] T145 [P] [US5] Write E2E test for CSV import/export roundtrip in frontend/e2e/csv-operations.spec.ts ✅
 
 **Checkpoint**: CSV operations complete with progress feedback and validation
 
