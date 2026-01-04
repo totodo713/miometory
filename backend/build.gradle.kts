@@ -41,6 +41,7 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.apache.commons:commons-csv:1.11.0")
     runtimeOnly("org.postgresql:postgresql")
 
     // Test dependencies
