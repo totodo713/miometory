@@ -543,17 +543,17 @@ class AbsenceTest {
         }
         
         @Test
-        @DisplayName("should throw exception for invalid transition: SUBMITTED to DRAFT")
-        void shouldRejectSubmittedToDraft() {
+        @DisplayName("should allow transition: SUBMITTED to DRAFT (for rejection workflow)")
+        void shouldAllowSubmittedToDraft() {
             absence.changeStatus(AbsenceStatus.SUBMITTED, statusChanger);
             absence.clearUncommittedEvents();
             
-            DomainException exception = assertThrows(
-                DomainException.class,
-                () -> absence.changeStatus(AbsenceStatus.DRAFT, statusChanger)
-            );
+            // Should allow transition back to DRAFT (e.g., when manager rejects)
+            absence.changeStatus(AbsenceStatus.DRAFT, statusChanger);
             
-            assertEquals("INVALID_STATUS_TRANSITION", exception.getErrorCode());
+            assertEquals(AbsenceStatus.DRAFT, absence.getStatus());
+            assertEquals(1, absence.getUncommittedEvents().size());
+            assertInstanceOf(AbsenceStatusChanged.class, absence.getUncommittedEvents().get(0));
         }
         
         @Test

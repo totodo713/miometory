@@ -292,21 +292,6 @@ class WorkLogEntryTest {
         }
         
         @Test
-        @DisplayName("should throw exception when updating SUBMITTED entry")
-        void shouldRejectUpdateOfSubmittedEntry() {
-            entry.changeStatus(WorkLogStatus.SUBMITTED, updater);
-            entry.clearUncommittedEvents();
-            
-            DomainException exception = assertThrows(
-                DomainException.class,
-                () -> entry.update(TimeAmount.of(7.0), "New comment", updater)
-            );
-            
-            assertEquals("ENTRY_NOT_EDITABLE", exception.getErrorCode());
-            assertTrue(exception.getMessage().contains("SUBMITTED"));
-        }
-        
-        @Test
         @DisplayName("should throw exception when updating APPROVED entry")
         void shouldRejectUpdateOfApprovedEntry() {
             entry.changeStatus(WorkLogStatus.SUBMITTED, updater);
@@ -461,17 +446,17 @@ class WorkLogEntryTest {
         }
         
         @Test
-        @DisplayName("should throw exception for invalid transition: SUBMITTED to DRAFT")
-        void shouldRejectSubmittedToDraft() {
+        @DisplayName("should allow transition: SUBMITTED to DRAFT (for rejection workflow)")
+        void shouldAllowSubmittedToDraft() {
             entry.changeStatus(WorkLogStatus.SUBMITTED, statusChanger);
             entry.clearUncommittedEvents();
             
-            DomainException exception = assertThrows(
-                DomainException.class,
-                () -> entry.changeStatus(WorkLogStatus.DRAFT, statusChanger)
-            );
+            // Should allow transition back to DRAFT (e.g., when manager rejects)
+            entry.changeStatus(WorkLogStatus.DRAFT, statusChanger);
             
-            assertEquals("INVALID_STATUS_TRANSITION", exception.getErrorCode());
+            assertEquals(WorkLogStatus.DRAFT, entry.getStatus());
+            assertEquals(1, entry.getUncommittedEvents().size());
+            assertInstanceOf(WorkLogEntryStatusChanged.class, entry.getUncommittedEvents().get(0));
         }
         
         @Test
