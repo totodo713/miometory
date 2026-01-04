@@ -307,12 +307,12 @@
 
 ### Frontend - CSV UI (US5)
 
-- [ ] T136 [P] [US5] Create /app/worklog/import/page.tsx (CSV import page)
-- [ ] T137 [P] [US5] Create CsvUploader component in frontend/app/components/worklog/CsvUploader.tsx (drag-drop + file input)
-- [ ] T138 [US5] Implement progress bar with SSE connection in CsvUploader (rows processed, percentage, ETA)
-- [ ] T139 [US5] Implement row-level error display in CsvUploader (show specific validation errors)
-- [ ] T140 [US5] Add export button to /app/worklog/page.tsx with month selection
-- [ ] T141 [US5] Implement CSV download trigger in frontend/app/services/csvService.ts
+- [x] T136 [P] [US5] Create /app/worklog/import/page.tsx (CSV import page) ✅
+- [x] T137 [P] [US5] Create CsvUploader component in frontend/app/components/worklog/CsvUploader.tsx (drag-drop + file input) ✅
+- [x] T138 [US5] Implement progress bar with SSE connection in CsvUploader (rows processed, percentage, ETA) ✅
+- [x] T139 [US5] Implement row-level error display in CsvUploader (show specific validation errors) ✅
+- [x] T140 [US5] Add export button to /app/worklog/page.tsx with month selection ✅
+- [x] T141 [US5] Implement CSV download trigger in frontend/app/services/csvService.ts ✅
 
 ### Testing (US5)
 
