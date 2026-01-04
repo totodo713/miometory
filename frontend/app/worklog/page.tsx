@@ -8,9 +8,11 @@
  */
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Calendar } from "@/components/worklog/Calendar";
 import { MonthlySummary } from "@/components/worklog/MonthlySummary";
 import { api } from "@/services/api";
+import { exportCsv } from "@/services/csvService";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 
 export default function WorkLogPage() {
@@ -18,6 +20,7 @@ export default function WorkLogPage() {
     useState<MonthlyCalendarResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Get current year and month
   const now = new Date();
@@ -71,15 +74,46 @@ export default function WorkLogPage() {
     setMonth(today.getMonth() + 1);
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      await exportCsv(year, month, memberId);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to export CSV",
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Work Log</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Track and manage your daily work hours
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Work Log</h1>
+            <p className="mt-1 text-sm text-gray-600">
+              Track and manage your daily work hours
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Link
+              href="/worklog/import"
+              className="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-green-700"
+            >
+              Import CSV
+            </Link>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={isExporting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            >
+              {isExporting ? "Exporting..." : "Export CSV"}
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
