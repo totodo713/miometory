@@ -181,45 +181,45 @@
 
 ### Backend - Absence Domain (US3)
 
-- [ ] T075 [P] [US3] Create Absence aggregate root in backend/src/main/java/com/worklog/domain/absence/Absence.java
-- [ ] T076 [P] [US3] Create AbsenceId value object in backend/src/main/java/com/worklog/domain/absence/AbsenceId.java
-- [ ] T077 [P] [US3] Create AbsenceType enum in backend/src/main/java/com/worklog/domain/absence/AbsenceType.java (PAID_LEAVE, SICK_LEAVE, SPECIAL_LEAVE, OTHER)
-- [ ] T078 [P] [US3] Create AbsenceStatus enum in backend/src/main/java/com/worklog/domain/absence/AbsenceStatus.java
-- [ ] T079 [P] [US3] Create AbsenceRecorded event in backend/src/main/java/com/worklog/domain/absence/events/AbsenceRecorded.java
-- [ ] T080 [P] [US3] Create AbsenceUpdated event in backend/src/main/java/com/worklog/domain/absence/events/AbsenceUpdated.java
-- [ ] T081 [P] [US3] Create AbsenceDeleted event in backend/src/main/java/com/worklog/domain/absence/events/AbsenceDeleted.java
+- [X] T075 [P] [US3] Create Absence aggregate root in backend/src/main/java/com/worklog/domain/absence/Absence.java
+- [X] T076 [P] [US3] Create AbsenceId value object in backend/src/main/java/com/worklog/domain/absence/AbsenceId.java
+- [X] T077 [P] [US3] Create AbsenceType enum in backend/src/main/java/com/worklog/domain/absence/AbsenceType.java (PAID_LEAVE, SICK_LEAVE, SPECIAL_LEAVE, OTHER)
+- [X] T078 [P] [US3] Create AbsenceStatus enum in backend/src/main/java/com/worklog/domain/absence/AbsenceStatus.java
+- [X] T079 [P] [US3] Create AbsenceRecorded event in backend/src/main/java/com/worklog/domain/absence/events/AbsenceRecorded.java
+- [X] T080 [P] [US3] Create AbsenceUpdated event in backend/src/main/java/com/worklog/domain/absence/events/AbsenceUpdated.java
+- [X] T081 [P] [US3] Create AbsenceDeleted event in backend/src/main/java/com/worklog/domain/absence/events/AbsenceDeleted.java
 
 ### Backend - Absence Services (US3)
 
-- [ ] T082 [US3] Create CreateAbsenceCommand in backend/src/main/java/com/worklog/application/command/CreateAbsenceCommand.java
-- [ ] T083 [US3] Implement AbsenceService in backend/src/main/java/com/worklog/application/service/AbsenceService.java (validate absence + work hours ≤ 24h)
-- [ ] T084 [US3] Implement JdbcAbsenceRepository in backend/src/main/java/com/worklog/infrastructure/repository/JdbcAbsenceRepository.java
+- [X] T082 [US3] Create CreateAbsenceCommand in backend/src/main/java/com/worklog/application/command/CreateAbsenceCommand.java
+- [X] T083 [US3] Implement AbsenceService in backend/src/main/java/com/worklog/application/service/AbsenceService.java (validate absence + work hours ≤ 24h)
+- [X] T084 [US3] Implement JdbcAbsenceRepository in backend/src/main/java/com/worklog/infrastructure/repository/JdbcAbsenceRepository.java
 
 ### Backend - Absence API (US3)
 
-- [ ] T085 [P] [US3] Implement POST /api/v1/absences in backend/src/main/java/com/worklog/api/AbsenceController.java
-- [ ] T086 [P] [US3] Implement GET /api/v1/absences in backend/src/main/java/com/worklog/api/AbsenceController.java
-- [ ] T087 [P] [US3] Implement PATCH /api/v1/absences/{id} in backend/src/main/java/com/worklog/api/AbsenceController.java
-- [ ] T088 [P] [US3] Implement DELETE /api/v1/absences/{id} in backend/src/main/java/com/worklog/api/AbsenceController.java
+- [X] T085 [P] [US3] Implement POST /api/v1/absences in backend/src/main/java/com/worklog/api/AbsenceController.java
+- [X] T086 [P] [US3] Implement GET /api/v1/absences in backend/src/main/java/com/worklog/api/AbsenceController.java
+- [X] T087 [P] [US3] Implement PATCH /api/v1/absences/{id} in backend/src/main/java/com/worklog/api/AbsenceController.java
+- [X] T088 [P] [US3] Implement DELETE /api/v1/absences/{id} in backend/src/main/java/com/worklog/api/AbsenceController.java
 
 ### Backend - Calendar Integration (US3)
 
-- [ ] T089 [US3] Update MonthlyCalendarProjection to include absence hours in backend/src/main/java/com/worklog/infrastructure/projection/MonthlyCalendarProjection.java
-- [ ] T090 [US3] Update MonthlySummaryProjection to calculate absence hours separately in backend/src/main/java/com/worklog/infrastructure/projection/MonthlySummaryProjection.java
+- [X] T089 [US3] Update MonthlyCalendarProjection to include absence hours in backend/src/main/java/com/worklog/infrastructure/projection/MonthlyCalendarProjection.java
+- [X] T090 [US3] Update MonthlySummaryProjection to calculate absence hours separately in backend/src/main/java/com/worklog/infrastructure/projection/MonthlySummaryProjection.java
 
 ### Frontend - Absence UI (US3)
 
-- [ ] T091 [P] [US3] Define Absence types in frontend/app/types/absence.ts
-- [ ] T092 [P] [US3] Create AbsenceForm component in frontend/app/components/worklog/AbsenceForm.tsx (absence type selector + hours input)
-- [ ] T093 [US3] Integrate AbsenceForm into DailyEntryForm (tab or section) in frontend/app/components/worklog/DailyEntryForm.tsx
-- [ ] T094 [US3] Add absence type color coding to Calendar component in frontend/app/components/worklog/Calendar.tsx
-- [ ] T095 [US3] Update MonthlySummary to show absence breakdown by type in frontend/app/components/worklog/MonthlySummary.tsx
+- [X] T091 [P] [US3] Define Absence types in frontend/app/types/absence.ts
+- [X] T092 [P] [US3] Create AbsenceForm component in frontend/app/components/worklog/AbsenceForm.tsx (absence type selector + hours input)
+- [X] T093 [US3] Integrate AbsenceForm into DailyEntryForm (tab or section) in frontend/app/components/worklog/DailyEntryForm.tsx
+- [X] T094 [US3] Add absence type color coding to Calendar component in frontend/app/components/worklog/Calendar.tsx
+- [X] T095 [US3] Update MonthlySummary to show absence breakdown by type in frontend/app/components/worklog/MonthlySummary.tsx
 
 ### Testing (US3)
 
-- [ ] T096 [P] [US3] Write unit tests for Absence aggregate in backend/src/test/java/com/worklog/domain/absence/AbsenceTest.java
-- [ ] T097 [P] [US3] Write integration tests for POST /api/v1/absences in backend/src/test/kotlin/com/worklog/api/AbsenceControllerTest.kt
-- [ ] T098 [P] [US3] Write E2E test for absence recording in frontend/e2e/absence-entry.spec.ts (full day paid leave + partial sick leave)
+- [X] T096 [P] [US3] Write unit tests for Absence aggregate in backend/src/test/java/com/worklog/domain/absence/AbsenceTest.java
+- [X] T097 [P] [US3] Write integration tests for POST /api/v1/absences in backend/src/test/kotlin/com/worklog/api/AbsenceControllerTest.kt
+- [X] T098 [P] [US3] Write E2E test for absence recording in frontend/e2e/absence-entry.spec.ts (full day paid leave + partial sick leave)
 
 **Checkpoint**: User Stories 1, 2, AND 3 all work independently
 
@@ -233,54 +233,54 @@
 
 ### Backend - Approval Domain (US4)
 
-- [ ] T099 [P] [US4] Create MonthlyApproval aggregate root in backend/src/main/java/com/worklog/domain/approval/MonthlyApproval.java
-- [ ] T100 [P] [US4] Create MonthlyApprovalId value object in backend/src/main/java/com/worklog/domain/approval/MonthlyApprovalId.java
-- [ ] T101 [P] [US4] Create ApprovalStatus enum in backend/src/main/java/com/worklog/domain/approval/ApprovalStatus.java (PENDING, SUBMITTED, APPROVED, REJECTED)
-- [ ] T102 [P] [US4] Create MonthlyApprovalCreated event in backend/src/main/java/com/worklog/domain/approval/events/MonthlyApprovalCreated.java
-- [ ] T103 [P] [US4] Create MonthSubmittedForApproval event in backend/src/main/java/com/worklog/domain/approval/events/MonthSubmittedForApproval.java
-- [ ] T104 [P] [US4] Create MonthApproved event in backend/src/main/java/com/worklog/domain/approval/events/MonthApproved.java
-- [ ] T105 [P] [US4] Create MonthRejected event in backend/src/main/java/com/worklog/domain/approval/events/MonthRejected.java
+- [X] T099 [P] [US4] Create MonthlyApproval aggregate root in backend/src/main/java/com/worklog/domain/approval/MonthlyApproval.java
+- [X] T100 [P] [US4] Create MonthlyApprovalId value object in backend/src/main/java/com/worklog/domain/approval/MonthlyApprovalId.java
+- [X] T101 [P] [US4] Create ApprovalStatus enum in backend/src/main/java/com/worklog/domain/approval/ApprovalStatus.java (PENDING, SUBMITTED, APPROVED, REJECTED)
+- [X] T102 [P] [US4] Create MonthlyApprovalCreated event in backend/src/main/java/com/worklog/domain/approval/events/MonthlyApprovalCreated.java
+- [X] T103 [P] [US4] Create MonthSubmittedForApproval event in backend/src/main/java/com/worklog/domain/approval/events/MonthSubmittedForApproval.java
+- [X] T104 [P] [US4] Create MonthApproved event in backend/src/main/java/com/worklog/domain/approval/events/MonthApproved.java
+- [X] T105 [P] [US4] Create MonthRejected event in backend/src/main/java/com/worklog/domain/approval/events/MonthRejected.java
 
 ### Backend - Approval Services (US4)
 
-- [ ] T106 [US4] Create SubmitMonthForApprovalCommand in backend/src/main/java/com/worklog/application/command/SubmitMonthForApprovalCommand.java
-- [ ] T107 [US4] Create ApproveMonthCommand in backend/src/main/java/com/worklog/application/command/ApproveMonthCommand.java
-- [ ] T108 [US4] Create RejectMonthCommand in backend/src/main/java/com/worklog/application/command/RejectMonthCommand.java
-- [ ] T109 [US4] Implement ApprovalService in backend/src/main/java/com/worklog/application/service/ApprovalService.java (validate manager permission)
-- [ ] T110 [US4] Implement JdbcApprovalRepository in backend/src/main/java/com/worklog/infrastructure/repository/JdbcApprovalRepository.java
+- [X] T106 [US4] Create SubmitMonthForApprovalCommand in backend/src/main/java/com/worklog/application/approval/SubmitMonthForApprovalCommand.java
+- [X] T107 [US4] Create ApproveMonthCommand in backend/src/main/java/com/worklog/application/approval/ApproveMonthCommand.java
+- [X] T108 [US4] Create RejectMonthCommand in backend/src/main/java/com/worklog/application/approval/RejectMonthCommand.java
+- [X] T109 [US4] Implement ApprovalService in backend/src/main/java/com/worklog/application/approval/ApprovalService.java (validate manager permission)
+- [X] T110 [US4] Implement JdbcApprovalRepository in backend/src/main/java/com/worklog/infrastructure/repository/JdbcApprovalRepository.java
 
 ### Backend - Approval Projections (US4)
 
-- [ ] T111 [P] [US4] Create ApprovalQueueProjection in backend/src/main/java/com/worklog/infrastructure/projection/ApprovalQueueProjection.java (manager's pending approvals)
-- [ ] T112 [US4] Update MonthlySummaryProjection to include approval status in backend/src/main/java/com/worklog/infrastructure/projection/MonthlySummaryProjection.java
+- [X] T111 [P] [US4] Create ApprovalQueueProjection in backend/src/main/java/com/worklog/infrastructure/projection/ApprovalQueueProjection.java (manager's pending approvals)
+- [X] T112 [US4] Update MonthlySummaryProjection to include approval status in backend/src/main/java/com/worklog/infrastructure/projection/MonthlySummaryProjection.java
 
 ### Backend - Approval API (US4)
 
-- [ ] T113 [P] [US4] Implement POST /api/v1/worklog/submissions in backend/src/main/java/com/worklog/api/ApprovalController.java
-- [ ] T114 [P] [US4] Implement GET /api/v1/worklog/approvals/queue in backend/src/main/java/com/worklog/api/ApprovalController.java (manager's pending approvals)
-- [ ] T115 [P] [US4] Implement POST /api/v1/worklog/approvals/{id}/approve in backend/src/main/java/com/worklog/api/ApprovalController.java
-- [ ] T116 [P] [US4] Implement POST /api/v1/worklog/approvals/{id}/reject in backend/src/main/java/com/worklog/api/ApprovalController.java
+- [X] T113 [P] [US4] Implement POST /api/v1/worklog/submissions in backend/src/main/java/com/worklog/api/ApprovalController.java
+- [X] T114 [P] [US4] Implement GET /api/v1/worklog/approvals/queue in backend/src/main/java/com/worklog/api/ApprovalController.java (manager's pending approvals)
+- [X] T115 [P] [US4] Implement POST /api/v1/worklog/approvals/{id}/approve in backend/src/main/java/com/worklog/api/ApprovalController.java
+- [X] T116 [P] [US4] Implement POST /api/v1/worklog/approvals/{id}/reject in backend/src/main/java/com/worklog/api/ApprovalController.java
 
 ### Frontend - Approval UI (Engineer) (US4)
 
-- [ ] T117 [P] [US4] Define Approval types in frontend/app/types/approval.ts
-- [ ] T118 [US4] Create SubmitButton component in frontend/app/components/worklog/SubmitButton.tsx (with confirmation dialog)
-- [ ] T119 [US4] Add submit button to /app/worklog/page.tsx with monthly completion check
-- [ ] T120 [US4] Implement read-only state for SUBMITTED/APPROVED entries in DailyEntryForm
-- [ ] T121 [US4] Add status badge to Calendar component (draft/submitted/approved) in frontend/app/components/worklog/Calendar.tsx
+- [X] T117 [P] [US4] Define Approval types in frontend/app/types/approval.ts
+- [X] T118 [US4] Create SubmitButton component in frontend/app/components/worklog/SubmitButton.tsx (with confirmation dialog)
+- [X] T119 [US4] Add submit button to /app/worklog/page.tsx with monthly completion check
+- [X] T120 [US4] Implement read-only state for SUBMITTED/APPROVED entries in DailyEntryForm
+- [X] T121 [US4] Add status badge to Calendar component (draft/submitted/approved) in frontend/app/components/worklog/Calendar.tsx
 
 ### Frontend - Approval UI (Manager) (US4)
 
-- [ ] T122 [P] [US4] Create /app/worklog/approval/page.tsx (manager approval queue)
-- [ ] T123 [P] [US4] Create ApprovalPanel component in frontend/app/components/worklog/ApprovalPanel.tsx (pending submissions list)
-- [ ] T124 [US4] Implement approve/reject actions in ApprovalPanel with rejection reason textarea
+- [X] T122 [P] [US4] Create /app/worklog/approval/page.tsx (manager approval queue)
+- [X] T123 [P] [US4] Create ApprovalPanel component in frontend/app/components/worklog/ApprovalPanel.tsx (pending submissions list)
+- [X] T124 [US4] Implement approve/reject actions in ApprovalPanel with rejection reason textarea
 
 ### Testing (US4)
 
-- [ ] T125 [P] [US4] Write unit tests for MonthlyApproval aggregate in backend/src/test/java/com/worklog/domain/approval/MonthlyApprovalTest.java
-- [ ] T126 [P] [US4] Write integration tests for approval workflow in backend/src/test/kotlin/com/worklog/api/ApprovalControllerTest.kt
-- [ ] T127 [P] [US4] Write E2E test for approval workflow in frontend/e2e/approval-workflow.spec.ts (submit → approve → verify read-only)
-- [ ] T128 [P] [US4] Write E2E test for rejection workflow in frontend/e2e/approval-workflow.spec.ts (submit → reject → verify editable)
+- [X] T125 [P] [US4] Write unit tests for MonthlyApproval aggregate in backend/src/test/java/com/worklog/domain/approval/MonthlyApprovalTest.java
+- [X] T126 [P] [US4] Write integration tests for approval workflow in backend/src/test/kotlin/com/worklog/api/ApprovalControllerTest.kt
+- [X] T127 [P] [US4] Write E2E test for approval workflow in frontend/e2e/approval-workflow.spec.ts (submit → approve → verify read-only)
+- [X] T128 [P] [US4] Write E2E test for rejection workflow in frontend/e2e/approval-workflow.spec.ts (submit → reject → verify editable)
 
 **Checkpoint**: Approval workflow complete, entries become read-only after approval (SC-009 verification)
 
