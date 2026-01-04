@@ -294,16 +294,16 @@
 
 ### Backend - CSV Domain (US5)
 
-- [ ] T129 [P] [US5] Create CSV template definition in backend/src/main/resources/csv-templates/worklog-template.csv
-- [ ] T130 [P] [US5] Create CsvValidationService in backend/src/main/java/com/worklog/infrastructure/csv/CsvValidationService.java (row validation)
-- [ ] T131 [US5] Implement StreamingCsvProcessor in backend/src/main/java/com/worklog/infrastructure/csv/StreamingCsvProcessor.java (Apache Commons CSV)
+- [x] T129 [P] [US5] Create CSV template definition in backend/src/main/resources/csv-templates/worklog-template.csv ✅
+- [x] T130 [P] [US5] Create CsvValidationService in backend/src/main/java/com/worklog/infrastructure/csv/CsvValidationService.java (row validation) ✅
+- [x] T131 [US5] Implement StreamingCsvProcessor in backend/src/main/java/com/worklog/infrastructure/csv/StreamingCsvProcessor.java (Apache Commons CSV) ✅
 
 ### Backend - CSV API (US5)
 
-- [ ] T132 [US5] Implement POST /api/v1/worklog/csv/import in backend/src/main/java/com/worklog/api/CsvImportController.java (streaming upload, max 100K rows UI)
-- [ ] T133 [US5] Implement Server-Sent Events for import progress in backend/src/main/java/com/worklog/api/CsvImportController.java (SC-005: real-time progress)
-- [ ] T134 [US5] Implement GET /api/v1/worklog/csv/export/{year}/{month} in backend/src/main/java/com/worklog/api/CsvExportController.java (streaming download)
-- [ ] T135 [US5] Implement GET /api/v1/worklog/csv/template in backend/src/main/java/com/worklog/api/CsvImportController.java (download template)
+- [x] T132 [US5] Implement POST /api/v1/worklog/csv/import in backend/src/main/java/com/worklog/api/CsvImportController.java (streaming upload, max 100K rows UI) ✅
+- [x] T133 [US5] Implement Server-Sent Events for import progress in backend/src/main/java/com/worklog/api/CsvImportController.java (SC-005: real-time progress) ✅
+- [x] T134 [US5] Implement GET /api/v1/worklog/csv/export/{year}/{month} in backend/src/main/java/com/worklog/api/CsvExportController.java (streaming download) ✅
+- [x] T135 [US5] Implement GET /api/v1/worklog/csv/template in backend/src/main/java/com/worklog/api/CsvImportController.java (download template) ✅
 
 ### Frontend - CSV UI (US5)
 
