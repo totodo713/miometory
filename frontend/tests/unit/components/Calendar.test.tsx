@@ -142,9 +142,10 @@ describe("Calendar Component", () => {
     it("should display total work hours when present", () => {
       render(<Calendar year={2026} month={1} dates={mockDates} />);
 
-      // Use getAllByText since "8h" appears twice in mockDates (21st and 26th)
+      // Use getAllByText since "8h" appears multiple times in mockDates
+      // 21st (work: 8h), 25th (absence: 8h), 26th (work: 8h) = 3 total
       const eightHours = screen.getAllByText("8h");
-      expect(eightHours.length).toBe(2);
+      expect(eightHours.length).toBe(3);
 
       expect(screen.getByText("7.5h")).toBeInTheDocument();
       expect(screen.getByText("6h")).toBeInTheDocument();
@@ -162,15 +163,19 @@ describe("Calendar Component", () => {
     it("should display absence hours when present", () => {
       render(<Calendar year={2026} month={1} dates={mockDates} />);
 
-      expect(screen.getByText(/Abs: 8h/i)).toBeInTheDocument();
+      // Absence hours are now displayed with emoji and hours, check for the emoji
+      expect(screen.getByText("🏖️")).toBeInTheDocument();
+      // Also check that 8h (absence hours) is displayed
+      const eightHours = screen.getAllByText("8h");
+      expect(eightHours.length).toBeGreaterThan(0);
     });
 
     it("should not display absence hours when zero", () => {
       render(<Calendar year={2026} month={1} dates={mockDates} />);
 
-      // Only one entry has absence hours
-      const absenceTexts = screen.queryAllByText(/Abs:/i);
-      expect(absenceTexts).toHaveLength(1);
+      // Only one entry has absence hours (25th), so emoji should appear once
+      const absenceEmojis = screen.queryAllByText("🏖️");
+      expect(absenceEmojis).toHaveLength(1);
     });
   });
 

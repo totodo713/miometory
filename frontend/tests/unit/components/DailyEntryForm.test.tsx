@@ -12,6 +12,12 @@ vi.mock("../../../app/services/api", () => ({
 			updateEntry: vi.fn(),
 			deleteEntry: vi.fn(),
 		},
+		absence: {
+			getAbsences: vi.fn(),
+			createAbsence: vi.fn(),
+			updateAbsence: vi.fn(),
+			deleteAbsence: vi.fn(),
+		},
 	},
 }));
 
@@ -22,6 +28,10 @@ const mockGetEntries = api.worklog.getEntries as any;
 const mockCreateEntry = api.worklog.createEntry as any;
 const mockUpdateEntry = api.worklog.updateEntry as any;
 const mockDeleteEntry = api.worklog.deleteEntry as any;
+const mockGetAbsences = api.absence.getAbsences as any;
+const mockCreateAbsence = api.absence.createAbsence as any;
+const mockUpdateAbsence = api.absence.updateAbsence as any;
+const mockDeleteAbsence = api.absence.deleteAbsence as any;
 
 describe("DailyEntryForm", () => {
 	const mockDate = new Date("2026-01-15");
@@ -41,6 +51,7 @@ describe("DailyEntryForm", () => {
 		vi.clearAllMocks();
 		// Mock successful API responses by default
 		(mockGetEntries as any).mockResolvedValue({ entries: [], total: 0 });
+		(mockGetAbsences as any).mockResolvedValue({ absences: [], total: 0 });
 		(mockCreateEntry as any).mockResolvedValue({
 			id: "new-entry-id",
 			status: "DRAFT",
@@ -48,6 +59,13 @@ describe("DailyEntryForm", () => {
 		});
 		(mockUpdateEntry as any).mockResolvedValue(undefined); // PATCH returns void
 		(mockDeleteEntry as any).mockResolvedValue(undefined); // DELETE returns void
+		(mockCreateAbsence as any).mockResolvedValue({
+			id: "new-absence-id",
+			status: "DRAFT",
+			version: 1,
+		});
+		(mockUpdateAbsence as any).mockResolvedValue(undefined); // PATCH returns void
+		(mockDeleteAbsence as any).mockResolvedValue(undefined); // DELETE returns void
 	});
 
 	afterEach(() => {
@@ -132,8 +150,8 @@ describe("DailyEntryForm", () => {
 			);
 
 			await waitForLoading();
-			// Check for Total Hours text (split across elements)
-			expect(screen.getByText("Total Hours:")).toBeInTheDocument();
+			// Check for Total Daily Hours text (split across elements)
+			expect(screen.getByText("Total Daily Hours:")).toBeInTheDocument();
 			expect(screen.getByText("0.00h")).toBeInTheDocument();
 		});
 	});
@@ -201,8 +219,10 @@ describe("DailyEntryForm", () => {
 			);
 
 			await waitFor(() => {
-				expect(screen.getByText("Total Hours:")).toBeInTheDocument();
-				expect(screen.getByText("8.00h")).toBeInTheDocument();
+				expect(screen.getByText("Total Daily Hours:")).toBeInTheDocument();
+				// Multiple "8.00h" elements exist (total and breakdown), so use getAllByText
+				const hourDisplays = screen.getAllByText("8.00h");
+				expect(hourDisplays.length).toBeGreaterThan(0);
 			});
 		});
 
@@ -347,11 +367,11 @@ describe("DailyEntryForm", () => {
 			await user.clear(updatedInputs[1]);
 			await user.type(updatedInputs[1], "10");
 
-			await waitFor(() => {
-				expect(
-					screen.getByText(/total hours cannot exceed 24 hours per day/i),
-				).toBeInTheDocument();
-			});
+		await waitFor(() => {
+			expect(
+				screen.getByText(/combined hours cannot exceed 24 hours per day/i),
+			).toBeInTheDocument();
+		});
 		});
 
 	it("should enforce comment max length of 500 characters", async () => {
@@ -470,8 +490,10 @@ describe("DailyEntryForm", () => {
 			await user.type(hoursInputs[1], "3.5");
 
 		await waitFor(() => {
-			expect(screen.getByText("Total Hours:")).toBeInTheDocument();
-			expect(screen.getByText("8.00h")).toBeInTheDocument();
+			expect(screen.getByText("Total Daily Hours:")).toBeInTheDocument();
+			// Multiple "8.00h" elements exist (total and breakdown), so use getAllByText
+			const hourDisplays = screen.getAllByText("8.00h");
+			expect(hourDisplays.length).toBeGreaterThan(0);
 		});
 		});
 
