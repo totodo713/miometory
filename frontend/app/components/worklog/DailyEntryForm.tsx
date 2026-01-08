@@ -589,6 +589,7 @@ export function DailyEntryForm({
                             <button
                               type="button"
                               onClick={() => removeProjectRow(index)}
+                              aria-label={`Remove project entry ${index + 1}`}
                               className="text-red-600 hover:text-red-800"
                             >
                               Remove

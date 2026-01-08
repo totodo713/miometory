@@ -117,12 +117,17 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
             const statusColor =
               STATUS_COLORS[dateEntry.status as keyof typeof STATUS_COLORS] ||
               STATUS_COLORS.DRAFT;
+            const monthName = date.toLocaleDateString("en-US", {
+              month: "long",
+            });
+            const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;
 
             return (
               <button
                 type="button"
                 key={dateEntry.date}
                 onClick={() => handleDateClick(dateEntry.date)}
+                aria-label={ariaLabel}
                 className={`
                   bg-white p-2 min-h-24 text-left
                   hover:bg-gray-50 transition-colors
