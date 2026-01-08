@@ -257,7 +257,7 @@ test.describe("Approval Workflow", () => {
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Step 2: Navigate to test date and create entry
-    await page.click(`button:has-text("25")`);
+    await page.click(`button[aria-label*="January 25"]`);
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
@@ -286,7 +286,7 @@ test.describe("Approval Workflow", () => {
     await expect(page.locator('button:has-text("Submitted")')).toBeVisible();
 
     // Step 6: Navigate back to the entry
-    await page.click(`button:has-text("25")`);
+    await page.click(`button[aria-label*="January 25"]`);
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
@@ -318,7 +318,7 @@ test.describe("Approval Workflow", () => {
     await page.goto(`${baseURL}/worklog`);
     await expect(page).toHaveURL(/\/worklog$/);
 
-    await page.click(`button:has-text("25")`);
+    await page.click(`button[aria-label*="January 25"]`);
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
@@ -356,7 +356,7 @@ test.describe("Approval Workflow", () => {
     ).toBeVisible();
 
     // Step 5: Navigate to entry and verify it's editable again
-    await page.click(`button:has-text("25")`);
+    await page.click(`button[aria-label*="January 25"]`);
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
@@ -396,7 +396,7 @@ test.describe("Approval Workflow", () => {
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Step 2: Create entry
-    await page.click(`button:has-text("25")`);
+    await page.click(`button[aria-label*="January 25"]`);
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
@@ -428,7 +428,7 @@ test.describe("Approval Workflow", () => {
   test("should hide delete button for submitted entries", async ({ page }) => {
     // Step 1: Create entry
     await page.goto(`${baseURL}/worklog`);
-    await page.click(`button:has-text("25")`);
+    await page.click(`button[aria-label*="January 25"]`);
     await page.waitForLoadState("networkidle");
 
     await page.fill('input[placeholder="Project ID"]', projectId);
@@ -444,7 +444,7 @@ test.describe("Approval Workflow", () => {
     await page.waitForTimeout(1000);
 
     // Step 3: Go back to entry
-    await page.click(`button:has-text("25")`);
+    await page.click(`button[aria-label*="January 25"]`);
     await page.waitForLoadState("networkidle");
 
     // Verify delete button is hidden for SUBMITTED
