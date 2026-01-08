@@ -104,7 +104,7 @@ test.describe("Daily Entry Workflow", () => {
 
 		// Step 2: Click on a specific date (15th)
 		// The calendar should have clickable date cells
-		await page.click('button:has-text("15")');
+		await page.click('button[aria-label*="January 15"]');
 
 		// Step 3: Verify navigation to daily entry form
 		await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
@@ -170,7 +170,7 @@ test.describe("Daily Entry Workflow", () => {
 
 		// Verify validation error appears (global error message)
 		await expect(
-			page.locator("text=/Total hours cannot exceed 24/i"),
+			page.locator("text=/Combined hours cannot exceed 24 hours/i"),
 		).toBeVisible();
 
 		// Save button should be disabled

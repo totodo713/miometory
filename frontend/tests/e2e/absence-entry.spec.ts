@@ -135,7 +135,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Step 2: Click on date (20th)
-    await page.click('button:has-text("20")');
+    await page.click('button[aria-label*="January 20"]');
 
     // Step 3: Verify navigation to daily entry form
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
@@ -192,7 +192,7 @@ test.describe("Absence Entry Workflow", () => {
     // Step 5: Verify combined total is shown (8h)
     // This depends on UI implementation - might show in tab or summary
     await expect(
-      page.locator("text=/Total.*8/i, text=/Combined.*8/i"),
+      page.locator("text=/Total Daily Hours.*8/i"),
     ).toBeVisible();
 
     // Step 6: Save absence
@@ -227,9 +227,7 @@ test.describe("Absence Entry Workflow", () => {
 
     // Step 5: Verify error message appears
     await expect(
-      page.locator(
-        "text=/Combined hours cannot exceed 24/i, text=/Total.*24/i, text=/exceeds.*24/i",
-      ),
+      page.locator("text=/Combined hours cannot exceed 24/i"),
     ).toBeVisible();
 
     // Step 6: Save button should be disabled
@@ -260,7 +258,7 @@ test.describe("Absence Entry Workflow", () => {
 
     // Step 4: Verify total shows 24h
     await expect(
-      page.locator("text=/Total.*24/i, text=/Combined.*24/i"),
+      page.locator("text=/Total Daily Hours.*24/i"),
     ).toBeVisible();
 
     // Step 5: Save button should be enabled
@@ -358,7 +356,7 @@ test.describe("Absence Entry Workflow", () => {
 
     // Should show validation error
     await expect(
-      page.locator("text=/Reason.*500/i, text=/too long/i, text=/maximum/i"),
+      page.locator("text=/Reason cannot exceed 500 characters/i"),
     ).toBeVisible();
 
     // Save button should be disabled
@@ -387,7 +385,7 @@ test.describe("Absence Entry Workflow", () => {
 
     // Should NOT show validation error
     await expect(
-      page.locator("text=/Reason.*500/i, text=/too long/i"),
+      page.locator("text=/Reason cannot exceed 500 characters/i"),
     ).not.toBeVisible();
 
     // Save button should be enabled
@@ -503,7 +501,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Find the date button (20th)
-    const dateButton = page.locator('button:has-text("20")');
+    const dateButton = page.locator('button[aria-label*="January 20"]');
 
     // Verify absence indicator is visible (🏖️ emoji or absence hours)
     await expect(dateButton.locator("text=/🏖️|8.*h|Absence/i")).toBeVisible();
@@ -568,13 +566,13 @@ test.describe("Absence Entry Workflow", () => {
     // - Combined hours: 24h
 
     await expect(
-      page.locator("text=/Work.*12/i, text=/Total Work.*12/i"),
+      page.locator("text=/Work Hours:.*12/i"),
     ).toBeVisible();
     await expect(
-      page.locator("text=/Absence.*12/i, text=/Total Absence.*12/i"),
+      page.locator("text=/Absence Hours:.*12/i"),
     ).toBeVisible();
     await expect(
-      page.locator("text=/Combined.*24/i, text=/Total.*24/i"),
+      page.locator("text=/Total Daily Hours:.*24/i"),
     ).toBeVisible();
   });
 });
