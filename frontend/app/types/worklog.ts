@@ -63,6 +63,7 @@ export interface DailyCalendarEntry {
   status: DailyStatus;
   isWeekend: boolean;
   isHoliday: boolean;
+  hasProxyEntries: boolean;
 }
 
 /**

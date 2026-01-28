@@ -129,11 +129,11 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                 onClick={() => handleDateClick(dateEntry.date)}
                 aria-label={ariaLabel}
                 className={`
-                  bg-white p-2 min-h-24 text-left
+                  bg-white p-2 min-h-24 text-left calendar-day
                   hover:bg-gray-50 transition-colors
                   focus:outline-none focus:ring-2 focus:ring-blue-500
-                  ${dateEntry.isWeekend ? "bg-gray-50" : ""}
-                  ${dateEntry.isHoliday ? "bg-red-50" : ""}
+                  ${dateEntry.isWeekend ? "bg-weekend-100" : ""}
+                  ${dateEntry.isHoliday ? "bg-holiday-100" : ""}
                   ${hasAbsenceHours && !dateEntry.isHoliday ? "bg-blue-50" : ""}
                 `}
               >
@@ -147,9 +147,19 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                   >
                     {dayNum}
                   </span>
-                  {dateEntry.isHoliday && (
-                    <span className="text-xs text-red-600">H</span>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {dateEntry.hasProxyEntries && (
+                      <span
+                        className="text-xs text-amber-600"
+                        title="Contains entries made by manager"
+                      >
+                        👤
+                      </span>
+                    )}
+                    {dateEntry.isHoliday && (
+                      <span className="text-xs text-holiday-600">H</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Hours display */}

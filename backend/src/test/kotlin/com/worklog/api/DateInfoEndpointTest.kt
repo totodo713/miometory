@@ -2,9 +2,7 @@ package com.worklog.api
 
 import com.worklog.IntegrationTestBase
 import com.worklog.domain.fiscalyear.FiscalYearPattern
-import com.worklog.domain.fiscalyear.FiscalYearPatternId
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId
 import com.worklog.domain.tenant.TenantId
 import com.worklog.infrastructure.repository.FiscalYearPatternRepository
 import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository
@@ -16,7 +14,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
-import java.util.*
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 

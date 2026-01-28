@@ -1,6 +1,6 @@
 /**
  * Unit tests for Calendar component
- * 
+ *
  * Tests rendering, date selection, hour display, and status indicators.
  * Task: T061 - Calendar component tests
  */

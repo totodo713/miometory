@@ -12,6 +12,7 @@ public record DailyCalendarEntry(
     BigDecimal totalAbsenceHours,
     String status,
     boolean isWeekend,
-    boolean isHoliday
+    boolean isHoliday,
+    boolean hasProxyEntries
 ) {
 }

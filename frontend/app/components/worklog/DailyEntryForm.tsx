@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
+import { useProxyMode } from "../../services/worklogStore";
 import type { WorkLogEntry, WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
 
@@ -32,6 +33,7 @@ export function DailyEntryForm({
   onClose,
   onSave,
 }: DailyEntryFormProps) {
+  const { isProxyMode, targetMember } = useProxyMode();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
   const [projectRows, setProjectRows] = useState<ProjectRow[]>([
     { projectId: "", hours: 0, comment: "", errors: {} },
@@ -406,11 +408,31 @@ export function DailyEntryForm({
             <button
               type="button"
               onClick={handleClose}
+              aria-label="Close daily entry form"
               className="text-gray-500 hover:text-gray-700"
             >
               ✕
             </button>
           </div>
+
+          {/* Proxy Mode Banner */}
+          {isProxyMode && targetMember && (
+            <div className="mb-6 p-4 bg-amber-100 border border-amber-300 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-800 font-medium">
+                  Entering time as:{" "}
+                  <span className="font-bold">
+                    {targetMember.displayName}
+                  </span>
+                </span>
+              </div>
+              <p className="text-sm text-amber-700 mt-1">
+                This entry will be recorded on behalf of{" "}
+                {targetMember.displayName}. You will be logged as the person
+                who entered this data.
+              </p>
+            </div>
+          )}
 
           {/* Tab Switcher */}
           <div className="mb-6 border-b border-gray-200">

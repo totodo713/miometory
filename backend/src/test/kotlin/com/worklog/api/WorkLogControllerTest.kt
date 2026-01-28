@@ -59,7 +59,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         assertEquals("Test work entry", body["comment"])
         assertEquals("DRAFT", body["status"])
         assertNotNull(body["version"])
-        
+
         // Verify ETag header
         assertNotNull(response.headers[HttpHeaders.ETAG])
     }
@@ -285,7 +285,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         assertEquals(7.0, body["hours"])
         assertEquals("Get test entry", body["comment"])
         assertEquals("DRAFT", body["status"])
-        
+
         // Verify ETag header
         assertNotNull(response.headers[HttpHeaders.ETAG])
     }
@@ -348,7 +348,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         val body = response.body as Map<*, *>
         val entries = body["entries"] as List<*>
         assertEquals(1, entries.size)
-        
+
         val entry = entries[0] as Map<*, *>
         assertEquals(yesterday.toString(), entry["date"])
         assertEquals(8.0, entry["hours"])
@@ -384,7 +384,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         val body = response.body as Map<*, *>
         val entries = body["entries"] as List<*>
         assertTrue(entries.isNotEmpty())
-        
+
         // All entries should be DRAFT
         entries.forEach { entry ->
             val entryMap = entry as Map<*, *>
@@ -435,11 +435,11 @@ class WorkLogControllerTest : IntegrationTestBase() {
                 "hours" to 6.5,
                 "comment" to "Updated comment",
             )
-        
+
         val headers = HttpHeaders()
         headers.set(HttpHeaders.IF_MATCH, version.toString())
         val requestEntity = HttpEntity(updateRequest, headers)
-        
+
         val response =
             restTemplate.exchange(
                 "/api/v1/worklog/entries/$entryId",
@@ -450,7 +450,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
 
         // Assert
         assertEquals(HttpStatus.NO_CONTENT, response.statusCode)
-        
+
         // Verify new ETag header
         assertNotNull(response.headers[HttpHeaders.ETAG])
         val newVersion = response.headers[HttpHeaders.ETAG]?.first()?.toInt()
@@ -492,9 +492,9 @@ class WorkLogControllerTest : IntegrationTestBase() {
                 "hours" to 7.0,
                 "comment" to "Should fail",
             )
-        
+
         val requestEntity = HttpEntity(updateRequest)
-        
+
         val response =
             restTemplate.exchange(
                 "/api/v1/worklog/entries/$entryId",
@@ -542,7 +542,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         // Act - Try to update with stale version
         val headers2 = HttpHeaders()
         headers2.set(HttpHeaders.IF_MATCH, version.toString()) // Using original version (stale)
-        
+
         val response =
             restTemplate.exchange(
                 "/api/v1/worklog/entries/$entryId",
@@ -610,7 +610,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         // The service throws DomainException which becomes 400
         assertTrue(
             response.statusCode == HttpStatus.BAD_REQUEST ||
-            response.statusCode == HttpStatus.NOT_FOUND
+                response.statusCode == HttpStatus.NOT_FOUND,
         )
     }
 
@@ -642,7 +642,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
                 "hours" to 0.33, // Invalid increment
                 "comment" to "Invalid",
             )
-        
+
         val response =
             restTemplate.exchange(
                 "/api/v1/worklog/entries/$entryId",

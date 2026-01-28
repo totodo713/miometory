@@ -6,14 +6,22 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * Projection for monthly calendar view.
  * 
- * Queries the event store to build a read model showing daily totals
- * for work log entries and absences within a fiscal month period.
+ * Queries the read model tables (work_log_entries_projection, absences_projection)
+ * to build a calendar view showing daily totals within a fiscal month period.
+ * 
+ * Optimized for performance using projection tables instead of event replay.
+ * Uses the covering index idx_work_log_entries_calendar_covering for efficient queries.
  */
 @Component
 public class MonthlyCalendarProjection {
@@ -27,8 +35,7 @@ public class MonthlyCalendarProjection {
     /**
      * Gets daily totals for a member within a date range.
      * 
-     * This method aggregates work hours from WorkLogEntryCreated events,
-     * excluding deleted entries. It returns a map of date to total hours.
+     * This method aggregates work hours from the work_log_entries_projection table.
      * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
@@ -40,23 +47,16 @@ public class MonthlyCalendarProjection {
         LocalDate startDate,
         LocalDate endDate
     ) {
+        // Uses idx_work_log_entries_calendar_covering for efficient query
         String sql = """
             SELECT 
-                CAST(payload->>'date' AS DATE) as entry_date,
-                SUM(CAST(payload->>'hours' AS DECIMAL)) as total_hours
-            FROM event_store
-            WHERE aggregate_type = 'WorkLogEntry'
-            AND event_type = 'WorkLogEntryCreated'
-            AND CAST(payload->>'memberId' AS UUID) = ?
-            AND CAST(payload->>'date' AS DATE) BETWEEN ? AND ?
-            AND aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
-                WHERE aggregate_type = 'WorkLogEntry'
-                AND event_type = 'WorkLogEntryDeleted'
-            )
-            GROUP BY entry_date
-            ORDER BY entry_date
+                work_date,
+                SUM(hours) as total_hours
+            FROM work_log_entries_projection
+            WHERE member_id = ?
+            AND work_date BETWEEN ? AND ?
+            GROUP BY work_date
+            ORDER BY work_date
             """;
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
@@ -68,7 +68,7 @@ public class MonthlyCalendarProjection {
 
         Map<LocalDate, BigDecimal> dailyTotals = new HashMap<>();
         for (Map<String, Object> row : results) {
-            LocalDate date = ((java.sql.Date) row.get("entry_date")).toLocalDate();
+            LocalDate date = ((java.sql.Date) row.get("work_date")).toLocalDate();
             BigDecimal hours = (BigDecimal) row.get("total_hours");
             dailyTotals.put(date, hours);
         }
@@ -79,8 +79,8 @@ public class MonthlyCalendarProjection {
     /**
      * Gets daily absence totals for a member within a date range.
      * 
-     * This method aggregates absence hours from AbsenceRecorded events,
-     * excluding deleted absences. It returns a map of date to total absence hours.
+     * This method aggregates absence hours from the absences_projection table.
+     * Since absences span date ranges, we need to expand them into daily hours.
      * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
@@ -92,23 +92,69 @@ public class MonthlyCalendarProjection {
         LocalDate startDate,
         LocalDate endDate
     ) {
+        // Uses idx_absences_overlap for efficient overlap detection
         String sql = """
             SELECT 
-                CAST(payload->>'date' AS DATE) as absence_date,
-                SUM(CAST(payload->>'hours' AS DECIMAL)) as total_hours
-            FROM event_store
-            WHERE aggregate_type = 'Absence'
-            AND event_type = 'AbsenceRecorded'
-            AND CAST(payload->>'memberId' AS UUID) = ?
-            AND CAST(payload->>'date' AS DATE) BETWEEN ? AND ?
-            AND aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
-                WHERE aggregate_type = 'Absence'
-                AND event_type = 'AbsenceDeleted'
-            )
-            GROUP BY absence_date
-            ORDER BY absence_date
+                id,
+                start_date,
+                end_date,
+                hours_per_day
+            FROM absences_projection
+            WHERE member_id = ?
+            AND start_date <= ?
+            AND end_date >= ?
+            """;
+
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(
+            sql,
+            memberId,
+            endDate,
+            startDate
+        );
+
+        Map<LocalDate, BigDecimal> absenceTotals = new HashMap<>();
+        
+        for (Map<String, Object> row : results) {
+            LocalDate absenceStart = ((java.sql.Date) row.get("start_date")).toLocalDate();
+            LocalDate absenceEnd = ((java.sql.Date) row.get("end_date")).toLocalDate();
+            BigDecimal hoursPerDay = (BigDecimal) row.get("hours_per_day");
+            
+            // Calculate intersection with requested date range
+            LocalDate effectiveStart = absenceStart.isBefore(startDate) ? startDate : absenceStart;
+            LocalDate effectiveEnd = absenceEnd.isAfter(endDate) ? endDate : absenceEnd;
+            
+            // Add hours for each day in the effective range
+            LocalDate current = effectiveStart;
+            while (!current.isAfter(effectiveEnd)) {
+                absenceTotals.merge(current, hoursPerDay, BigDecimal::add);
+                current = current.plusDays(1);
+            }
+        }
+
+        return absenceTotals;
+    }
+
+    /**
+     * Gets dates that have proxy entries (where entered_by != member_id) for a member.
+     * 
+     * @param memberId Member ID
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return Set of dates that have at least one proxy entry
+     */
+    public Set<LocalDate> getProxyEntryDates(
+        UUID memberId,
+        LocalDate startDate,
+        LocalDate endDate
+    ) {
+        // Uses idx_work_log_entries_entered_by and idx_work_log_entries_member_date
+        String sql = """
+            SELECT DISTINCT work_date
+            FROM work_log_entries_projection
+            WHERE member_id = ?
+            AND work_date BETWEEN ? AND ?
+            AND entered_by IS NOT NULL
+            AND entered_by != member_id
             """;
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
@@ -118,14 +164,13 @@ public class MonthlyCalendarProjection {
             endDate
         );
 
-        Map<LocalDate, BigDecimal> absenceTotals = new HashMap<>();
+        Set<LocalDate> proxyDates = new HashSet<>();
         for (Map<String, Object> row : results) {
-            LocalDate date = ((java.sql.Date) row.get("absence_date")).toLocalDate();
-            BigDecimal hours = (BigDecimal) row.get("total_hours");
-            absenceTotals.put(date, hours);
+            LocalDate date = ((java.sql.Date) row.get("work_date")).toLocalDate();
+            proxyDates.add(date);
         }
 
-        return absenceTotals;
+        return proxyDates;
     }
 
     /**
@@ -146,6 +191,7 @@ public class MonthlyCalendarProjection {
         Map<LocalDate, BigDecimal> dailyTotals = getDailyTotals(memberId, startDate, endDate);
         Map<LocalDate, BigDecimal> absenceTotals = getAbsenceTotals(memberId, startDate, endDate);
         Map<LocalDate, String> dailyStatuses = getDailyStatuses(memberId, startDate, endDate);
+        Set<LocalDate> proxyDates = getProxyEntryDates(memberId, startDate, endDate);
 
         List<DailyEntryProjection> entries = new ArrayList<>();
         LocalDate current = startDate;
@@ -157,6 +203,7 @@ public class MonthlyCalendarProjection {
             BigDecimal totalHours = dailyTotals.getOrDefault(current, BigDecimal.ZERO);
             BigDecimal absenceHours = absenceTotals.getOrDefault(current, BigDecimal.ZERO);
             String status = dailyStatuses.getOrDefault(current, "DRAFT");
+            boolean hasProxyEntries = proxyDates.contains(current);
             
             entries.add(new DailyEntryProjection(
                 current,
@@ -164,7 +211,8 @@ public class MonthlyCalendarProjection {
                 absenceHours,
                 status,
                 isWeekend,
-                false // Holiday detection - not implemented yet
+                false, // Holiday detection - not implemented yet
+                hasProxyEntries
             ));
             
             current = current.plusDays(1);
@@ -190,40 +238,18 @@ public class MonthlyCalendarProjection {
         LocalDate startDate,
         LocalDate endDate
     ) {
+        // Uses idx_work_log_entries_calendar_covering which includes status
         String sql = """
-            WITH latest_status AS (
-                SELECT 
-                    e1.aggregate_id,
-                    CAST(e1.payload->>'date' AS DATE) as entry_date,
-                    COALESCE(
-                        (SELECT e2.payload->>'toStatus'
-                         FROM event_store e2
-                         WHERE e2.aggregate_id = e1.aggregate_id
-                         AND e2.event_type = 'WorkLogEntryStatusChanged'
-                         ORDER BY e2.version DESC
-                         LIMIT 1),
-                        'DRAFT'
-                    ) as status
-                FROM event_store e1
-                WHERE e1.aggregate_type = 'WorkLogEntry'
-                AND e1.event_type = 'WorkLogEntryCreated'
-                AND CAST(e1.payload->>'memberId' AS UUID) = ?
-                AND CAST(e1.payload->>'date' AS DATE) BETWEEN ? AND ?
-                AND e1.aggregate_id NOT IN (
-                    SELECT aggregate_id 
-                    FROM event_store 
-                    WHERE aggregate_type = 'WorkLogEntry'
-                    AND event_type = 'WorkLogEntryDeleted'
-                )
-            )
             SELECT 
-                entry_date,
+                work_date,
                 CASE 
                     WHEN COUNT(DISTINCT status) > 1 THEN 'MIXED'
                     ELSE MAX(status)
                 END as status
-            FROM latest_status
-            GROUP BY entry_date
+            FROM work_log_entries_projection
+            WHERE member_id = ?
+            AND work_date BETWEEN ? AND ?
+            GROUP BY work_date
             """;
 
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
@@ -235,7 +261,7 @@ public class MonthlyCalendarProjection {
 
         Map<LocalDate, String> dailyStatuses = new HashMap<>();
         for (Map<String, Object> row : results) {
-            LocalDate date = ((java.sql.Date) row.get("entry_date")).toLocalDate();
+            LocalDate date = ((java.sql.Date) row.get("work_date")).toLocalDate();
             String status = (String) row.get("status");
             dailyStatuses.put(date, status);
         }

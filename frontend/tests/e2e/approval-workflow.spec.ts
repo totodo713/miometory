@@ -253,18 +253,26 @@ test.describe("Approval Workflow", () => {
     page,
   }) => {
     // Step 1: Navigate to calendar
-    await page.goto(`${baseURL}/worklog`);
+    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
+    // Wait for calendar to be fully rendered with data
+    await expect(
+      page.locator(`button[aria-label*="January 25"]`),
+    ).toBeVisible();
+
     // Step 2: Navigate to test date and create entry
-    await page.click(`button[aria-label*="January 25"]`);
+    await page.locator(`button[aria-label*="January 25"]`).click();
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Step 3: Add work log entry
     await page.fill('input[placeholder="Project ID"]', projectId);
     await page.fill('input[type="number"]', "8");
-    await page.fill('textarea[placeholder="Optional notes"]', "Test work entry");
+    await page.fill(
+      'textarea[placeholder="Optional notes"]',
+      "Test work entry",
+    );
 
     // Wait for auto-save to complete
     await page.waitForTimeout(2000);
@@ -286,14 +294,18 @@ test.describe("Approval Workflow", () => {
     await expect(page.locator('button:has-text("Submitted")')).toBeVisible();
 
     // Step 6: Navigate back to the entry
-    await page.click(`button[aria-label*="January 25"]`);
+    await page.locator(`button[aria-label*="January 25"]`).click();
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Step 7: Verify entry is read-only (inputs should be disabled)
-    await expect(page.locator('input[placeholder="Project ID"]')).toBeDisabled();
+    await expect(
+      page.locator('input[placeholder="Project ID"]'),
+    ).toBeDisabled();
     await expect(page.locator('input[type="number"]')).toBeDisabled();
-    await expect(page.locator('textarea[placeholder="Optional notes"]')).toBeDisabled();
+    await expect(
+      page.locator('textarea[placeholder="Optional notes"]'),
+    ).toBeDisabled();
 
     // Verify Save button is hidden (read-only mode)
     await expect(page.locator('button:has-text("Save")')).not.toBeVisible();
@@ -304,7 +316,9 @@ test.describe("Approval Workflow", () => {
     // Step 9: Simulate manager approval (in real app, manager would do this)
     // For E2E test, we just verify the read-only state is maintained
 
-    console.log("✅ SC-009 verified: Entries become read-only after submission");
+    console.log(
+      "✅ SC-009 verified: Entries become read-only after submission",
+    );
   });
 
   /**
@@ -315,10 +329,15 @@ test.describe("Approval Workflow", () => {
     page,
   }) => {
     // Step 1: Navigate to calendar and create entry
-    await page.goto(`${baseURL}/worklog`);
+    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
-    await page.click(`button[aria-label*="January 25"]`);
+    // Wait for calendar to be fully rendered with data
+    await expect(
+      page.locator(`button[aria-label*="January 25"]`),
+    ).toBeVisible();
+
+    await page.locator(`button[aria-label*="January 25"]`).click();
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
@@ -356,17 +375,22 @@ test.describe("Approval Workflow", () => {
     ).toBeVisible();
 
     // Step 5: Navigate to entry and verify it's editable again
-    await page.click(`button[aria-label*="January 25"]`);
+    await page.locator(`button[aria-label*="January 25"]`).click();
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Verify inputs are enabled (editable)
     await expect(page.locator('input[placeholder="Project ID"]')).toBeEnabled();
     await expect(page.locator('input[type="number"]')).toBeEnabled();
-    await expect(page.locator('textarea[placeholder="Optional notes"]')).toBeEnabled();
+    await expect(
+      page.locator('textarea[placeholder="Optional notes"]'),
+    ).toBeEnabled();
 
     // Step 6: Edit the entry
-    await page.fill('textarea[placeholder="Optional notes"]', "Updated after rejection");
+    await page.fill(
+      'textarea[placeholder="Optional notes"]',
+      "Updated after rejection",
+    );
     await page.waitForTimeout(2000); // Wait for auto-save
 
     // Step 7: Go back to calendar and resubmit
@@ -392,11 +416,16 @@ test.describe("Approval Workflow", () => {
    */
   test("should display correct status badges in calendar", async ({ page }) => {
     // Step 1: Navigate to calendar
-    await page.goto(`${baseURL}/worklog`);
+    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
+    // Wait for calendar to be fully rendered with data
+    await expect(
+      page.locator(`button[aria-label*="January 25"]`),
+    ).toBeVisible();
+
     // Step 2: Create entry
-    await page.click(`button[aria-label*="January 25"]`);
+    await page.locator(`button[aria-label*="January 25"]`).click();
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
@@ -427,8 +456,11 @@ test.describe("Approval Workflow", () => {
    */
   test("should hide delete button for submitted entries", async ({ page }) => {
     // Step 1: Create entry
-    await page.goto(`${baseURL}/worklog`);
-    await page.click(`button[aria-label*="January 25"]`);
+    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
+    await expect(
+      page.locator(`button[aria-label*="January 25"]`),
+    ).toBeVisible();
+    await page.locator(`button[aria-label*="January 25"]`).click();
     await page.waitForLoadState("networkidle");
 
     await page.fill('input[placeholder="Project ID"]', projectId);
@@ -436,7 +468,9 @@ test.describe("Approval Workflow", () => {
     await page.waitForTimeout(2000);
 
     // Verify delete button is visible for DRAFT
-    await expect(page.locator('button[aria-label="Remove entry"]')).toBeVisible();
+    await expect(
+      page.locator('button[aria-label="Remove entry"]'),
+    ).toBeVisible();
 
     // Step 2: Submit month
     await page.click('a[href="/worklog"]');
@@ -444,7 +478,10 @@ test.describe("Approval Workflow", () => {
     await page.waitForTimeout(1000);
 
     // Step 3: Go back to entry
-    await page.click(`button[aria-label*="January 25"]`);
+    await expect(
+      page.locator(`button[aria-label*="January 25"]`),
+    ).toBeVisible();
+    await page.locator(`button[aria-label*="January 25"]`).click();
     await page.waitForLoadState("networkidle");
 
     // Verify delete button is hidden for SUBMITTED

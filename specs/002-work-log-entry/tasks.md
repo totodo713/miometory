@@ -318,7 +318,7 @@
 
 - [x] T142 [P] [US5] Write unit tests for CsvValidationService in backend/src/test/java/com/worklog/infrastructure/csv/CsvValidationServiceTest.java ✅
 - [x] T143 [P] [US5] Write integration test for CSV import (100 rows) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt ✅
-- [ ] T144 [P] [US5] Write performance test for CSV import (100K rows in <1000s, SC-005) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt
+- [x] T144 [P] [US5] Write performance test for CSV import (100K rows in <1000s, SC-005) in backend/src/test/java/com/worklog/infrastructure/csv/StreamingCsvProcessorPerformanceTest.java
 - [x] T145 [P] [US5] Write E2E test for CSV import/export roundtrip in frontend/e2e/csv-operations.spec.ts ✅
 
 **Checkpoint**: CSV operations complete with progress feedback and validation
@@ -333,23 +333,23 @@
 
 ### Backend - Copy Service (US6)
 
-- [ ] T146 [US6] Create CopyFromPreviousMonthCommand in backend/src/main/java/com/worklog/application/command/CopyFromPreviousMonthCommand.java
-- [ ] T147 [US6] Implement project list extraction logic in WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java
+- [x] T146 [US6] Create CopyFromPreviousMonthCommand in backend/src/main/java/com/worklog/application/command/CopyFromPreviousMonthCommand.java
+- [x] T147 [US6] Implement project list extraction logic in WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java
 
 ### Backend - Copy API (US6)
 
-- [ ] T148 [US6] Implement POST /api/v1/worklog/copy-previous-month in backend/src/main/java/com/worklog/api/WorkLogController.java (returns unique project list)
+- [x] T148 [US6] Implement POST /api/v1/worklog/copy-previous-month in backend/src/main/java/com/worklog/api/WorkLogController.java (returns unique project list)
 
 ### Frontend - Copy UI (US6)
 
-- [ ] T149 [US6] Add "Copy from Previous Month" button to /app/worklog/page.tsx
-- [ ] T150 [US6] Implement confirmation dialog with project preview in frontend/app/components/worklog/CopyPreviousMonthDialog.tsx
-- [ ] T151 [US6] Update worklogStore to handle copied projects in frontend/app/services/worklogStore.ts
+- [x] T149 [US6] Add "Copy from Previous Month" button to /app/worklog/page.tsx
+- [x] T150 [US6] Implement confirmation dialog with project preview in frontend/app/components/worklog/CopyPreviousMonthDialog.tsx
+- [x] T151 [US6] Update worklogStore to handle copied projects in frontend/app/services/worklogStore.ts
 
 ### Testing (US6)
 
-- [ ] T152 [P] [US6] Write integration test for copy previous month in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
-- [ ] T153 [P] [US6] Write E2E test for copy previous month in frontend/e2e/copy-previous-month.spec.ts (verify projects copied, hours are zero)
+- [x] T152 [P] [US6] Write integration test for copy previous month in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
+- [x] T153 [P] [US6] Write E2E test for copy previous month in frontend/tests/e2e/copy-previous-month.spec.ts (verify projects copied, hours are zero)
 
 **Checkpoint**: Copy previous month feature complete (SC-001: 15 minutes to complete month)
 
@@ -363,21 +363,21 @@
 
 ### Backend - Proxy Domain (US7)
 
-- [ ] T154 [US7] Add proxy permission validation to WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (check managerId relationship)
-- [ ] T155 [US7] Implement GET /api/v1/members/{id}/subordinates in backend/src/main/java/com/worklog/api/MemberController.java (recursive subordinate query)
+- [x] T154 [US7] Add proxy permission validation to WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (check managerId relationship)
+- [x] T155 [US7] Implement GET /api/v1/members/{id}/subordinates in backend/src/main/java/com/worklog/api/MemberController.java (recursive subordinate query)
 
 ### Frontend - Proxy UI (US7)
 
-- [ ] T156 [P] [US7] Create /app/worklog/proxy/page.tsx (proxy entry mode selection)
-- [ ] T157 [P] [US7] Create MemberSelector component in frontend/app/components/worklog/MemberSelector.tsx (subordinates dropdown)
-- [ ] T158 [US7] Add proxy mode toggle to /app/worklog/page.tsx header
-- [ ] T159 [US7] Update DailyEntryForm to show "Entering as [Member Name]" banner in proxy mode
-- [ ] T160 [US7] Update Calendar to show proxy entry indicator icon for entries with enteredBy ≠ memberId
+- [x] T156 [P] [US7] Create /app/worklog/proxy/page.tsx (proxy entry mode selection)
+- [x] T157 [P] [US7] Create MemberSelector component in frontend/app/components/worklog/MemberSelector.tsx (subordinates dropdown)
+- [x] T158 [US7] Add proxy mode toggle to /app/worklog/page.tsx header
+- [x] T159 [US7] Update DailyEntryForm to show "Entering as [Member Name]" banner in proxy mode
+- [x] T160 [US7] Update Calendar to show proxy entry indicator icon for entries with enteredBy ≠ memberId
 
 ### Testing (US7)
 
-- [ ] T161 [P] [US7] Write integration test for proxy entry authorization in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt (verify manager can enter for subordinate, non-manager cannot)
-- [ ] T162 [P] [US7] Write E2E test for proxy entry workflow in frontend/e2e/proxy-entry.spec.ts (manager enters for subordinate, verify audit trail in SC-010)
+- [x] T161 [P] [US7] Write integration test for proxy entry authorization in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt (verify manager can enter for subordinate, non-manager cannot)
+- [x] T162 [P] [US7] Write E2E test for proxy entry workflow in frontend/e2e/proxy-entry.spec.ts (manager enters for subordinate, verify audit trail in SC-010)
 
 **Checkpoint**: All 7 user stories independently functional
 

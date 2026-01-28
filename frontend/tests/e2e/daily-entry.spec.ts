@@ -14,248 +14,253 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Daily Entry Workflow", () => {
-	const baseURL = "http://localhost:3000";
-	const memberId = "00000000-0000-0000-0000-000000000001";
-	const testDate = "2026-01-15";
+  const baseURL = "http://localhost:3000";
+  const memberId = "00000000-0000-0000-0000-000000000001";
+  const testDate = "2026-01-15";
 
-	test.beforeEach(async ({ page }) => {
-		// Mock the API endpoints to avoid needing a real backend
-		// This allows E2E tests to run independently
+  test.beforeEach(async ({ page }) => {
+    // Mock the API endpoints to avoid needing a real backend
+    // This allows E2E tests to run independently
 
-		// Mock calendar API
-		await page.route("**/api/v1/worklog/calendar/**", async (route) => {
-			await route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({
-					memberId: memberId,
-					memberName: "Test Engineer",
-					periodStart: "2026-01-01",
-					periodEnd: "2026-01-31",
-					dates: Array.from({ length: 31 }, (_, i) => ({
-						date: `2026-01-${String(i + 1).padStart(2, "0")}`,
-						totalWorkHours: 0,
-						totalAbsenceHours: 0,
-						status: "DRAFT",
-						isWeekend: [6, 0].includes(new Date(2026, 0, i + 1).getDay()),
-						isHoliday: false,
-					})),
-				}),
-			});
-		});
+    // Mock calendar API
+    await page.route("**/api/v1/worklog/calendar/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          memberId: memberId,
+          memberName: "Test Engineer",
+          periodStart: "2026-01-01",
+          periodEnd: "2026-01-31",
+          dates: Array.from({ length: 31 }, (_, i) => ({
+            date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+            totalWorkHours: 0,
+            totalAbsenceHours: 0,
+            status: "DRAFT",
+            isWeekend: [6, 0].includes(new Date(2026, 0, i + 1).getDay()),
+            isHoliday: false,
+          })),
+        }),
+      });
+    });
 
-		// Mock get entries API (initially empty)
-		await page.route("**/api/v1/worklog/entries?**", async (route) => {
-			await route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({
-					entries: [],
-					total: 0,
-				}),
-			});
-		});
+    // Mock get entries API (initially empty)
+    await page.route("**/api/v1/worklog/entries?**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          entries: [],
+          total: 0,
+        }),
+      });
+    });
 
-		// Mock create entry API
-		await page.route("**/api/v1/worklog/entries", async (route) => {
-			if (route.request().method() === "POST") {
-				const requestBody = route.request().postDataJSON();
-				await route.fulfill({
-					status: 201,
-					contentType: "application/json",
-					body: JSON.stringify({
-						id: `entry-${Date.now()}`,
-						...requestBody,
-						status: "DRAFT",
-						enteredBy: memberId,
-						createdAt: new Date().toISOString(),
-						updatedAt: new Date().toISOString(),
-						version: 1,
-					}),
-				});
-			} else {
-				await route.continue();
-			}
-		});
+    // Mock create entry API
+    await page.route("**/api/v1/worklog/entries", async (route) => {
+      if (route.request().method() === "POST") {
+        const requestBody = route.request().postDataJSON();
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: `entry-${Date.now()}`,
+            ...requestBody,
+            status: "DRAFT",
+            enteredBy: memberId,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            version: 1,
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
 
-		// Mock update entry API (for auto-save)
-		await page.route("**/api/v1/worklog/entries/*", async (route) => {
-			if (route.request().method() === "PATCH") {
-				await route.fulfill({
-					status: 204,
-				});
-			} else if (route.request().method() === "DELETE") {
-				await route.fulfill({
-					status: 204,
-				});
-			} else {
-				await route.continue();
-			}
-		});
-	});
+    // Mock update entry API (for auto-save)
+    await page.route("**/api/v1/worklog/entries/*", async (route) => {
+      if (route.request().method() === "PATCH") {
+        await route.fulfill({
+          status: 204,
+        });
+      } else if (route.request().method() === "DELETE") {
+        await route.fulfill({
+          status: 204,
+        });
+      } else {
+        await route.continue();
+      }
+    });
+  });
 
-	test("should complete full daily entry workflow", async ({ page }) => {
-		// Step 1: Navigate to calendar view
-		await page.goto(`${baseURL}/worklog`);
-		await expect(page).toHaveURL(/\/worklog$/);
+  test("should complete full daily entry workflow", async ({ page }) => {
+    // Step 1: Navigate to calendar view
+    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
+    await expect(page).toHaveURL(/\/worklog$/);
 
-		// Verify calendar is loaded
-		await expect(page.locator("h1")).toContainText("Work Log");
+    // Verify calendar is loaded
+    await expect(page.locator("h1")).toContainText("Work Log");
 
-		// Step 2: Click on a specific date (15th)
-		// The calendar should have clickable date cells
-		await page.click('button[aria-label*="January 15"]');
+    // Wait for calendar to be fully rendered with data
+    await expect(
+      page.locator('button[aria-label*="January 15"]'),
+    ).toBeVisible();
 
-		// Step 3: Verify navigation to daily entry form
-		await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
+    // Step 2: Click on a specific date (15th)
+    // The calendar should have clickable date cells
+    await page.locator('button[aria-label*="January 15"]').click();
 
-		// Wait for form to load
-		await page.waitForLoadState("networkidle");
-		await page.waitForSelector('input[id="project-0"]', { timeout: 10000 });
+    // Step 3: Verify navigation to daily entry form
+    await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
 
-		// Verify form is loaded
-		await expect(page.locator("h2, h3")).toContainText(/Work Log Entry|Daily Entry|${testDate}/i);
+    // Wait for form to load
+    await page.waitForLoadState("networkidle");
+    await page.waitForSelector('input[id="project-0"]', { timeout: 10000 });
 
-		// Step 4: Enter time for first project
-		// Add first project row (project is text input, not select)
-		const firstProjectInput = page.locator('input[id="project-0"]');
-		const firstHoursInput = page.locator('input[id="hours-0"]');
+    // Verify form is loaded
+    await expect(page.locator("h2, h3")).toContainText(
+      /Work Log Entry|Daily Entry|${testDate}/i,
+    );
 
-		await firstProjectInput.fill("project-1");
-		await firstHoursInput.fill("5");
+    // Step 4: Enter time for first project
+    // Add first project row (project is text input, not select)
+    const firstProjectInput = page.locator('input[id="project-0"]');
+    const firstHoursInput = page.locator('input[id="hours-0"]');
 
-		// Step 5: Add second project
-		// Click "Add Project" button
-		await page.click('button:has-text("Add Project")');
+    await firstProjectInput.fill("project-1");
+    await firstHoursInput.fill("5");
 
-		// Fill second project row
-		const secondProjectInput = page.locator('input[id="project-1"]');
-		const secondHoursInput = page.locator('input[id="hours-1"]');
+    // Step 5: Add second project
+    // Click "Add Project" button
+    await page.click('button:has-text("Add Project")');
 
-		await secondProjectInput.fill("project-2");
-		await secondHoursInput.fill("3");
+    // Fill second project row
+    const secondProjectInput = page.locator('input[id="project-1"]');
+    const secondHoursInput = page.locator('input[id="hours-1"]');
 
-		// Step 6: Verify total hours calculation
-		await expect(page.locator("text=/Total.*8.00h/")).toBeVisible();
+    await secondProjectInput.fill("project-2");
+    await secondHoursInput.fill("3");
 
-		// Step 7: Save the entry
-		await page.click('button:has-text("Save")');
+    // Step 6: Verify total hours calculation
+    await expect(page.locator("text=/Total.*8.00h/")).toBeVisible();
 
-		// Step 8: Verify redirect back to calendar
-		await expect(page).toHaveURL(`${baseURL}/worklog`);
+    // Step 7: Save the entry
+    await page.click('button:has-text("Save")');
 
-		// Step 9: Verify calendar is displayed again
-		await expect(page.locator("h1")).toContainText("Work Log");
-		
-		// Note: Verifying updated hours in calendar would require mocking
-		// the calendar API response to include the newly saved data
-	});
+    // Step 8: Verify redirect back to calendar
+    await expect(page).toHaveURL(`${baseURL}/worklog`);
 
-	test("should validate 24-hour maximum per day", async ({ page }) => {
-		// Navigate to daily entry form
-		await page.goto(`${baseURL}/worklog/${testDate}`);
-		await page.waitForLoadState("networkidle");
-		await page.waitForSelector('input[id="hours-0"]', { timeout: 10000 });
+    // Step 9: Verify calendar is displayed again
+    await expect(page.locator("h1")).toContainText("Work Log");
 
-		// Fill in project first
-		const projectInput = page.locator('input[id="project-0"]');
-		await projectInput.fill("project-1");
+    // Note: Verifying updated hours in calendar would require mocking
+    // the calendar API response to include the newly saved data
+  });
 
-		// Enter hours exceeding 24
-		const hoursInput = page.locator('input[id="hours-0"]');
-		await hoursInput.fill("25");
+  test("should validate 24-hour maximum per day", async ({ page }) => {
+    // Navigate to daily entry form
+    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.waitForLoadState("networkidle");
+    await page.waitForSelector('input[id="hours-0"]', { timeout: 10000 });
 
-		// Wait for validation to trigger
-		await page.waitForTimeout(100);
+    // Fill in project first
+    const projectInput = page.locator('input[id="project-0"]');
+    await projectInput.fill("project-1");
 
-		// Verify validation error appears (global error message)
-		await expect(
-			page.locator("text=/Combined hours cannot exceed 24 hours/i"),
-		).toBeVisible();
+    // Enter hours exceeding 24
+    const hoursInput = page.locator('input[id="hours-0"]');
+    await hoursInput.fill("25");
 
-		// Save button should be disabled
-		const saveButton = page.locator('button:has-text("Save")');
-		await expect(saveButton).toBeDisabled();
-	});
+    // Wait for validation to trigger
+    await page.waitForTimeout(100);
 
-	test("should support 15-minute (0.25h) granularity", async ({ page }) => {
-		// Navigate to daily entry form
-		await page.goto(`${baseURL}/worklog/${testDate}`);
+    // Verify validation error appears (global error message)
+    await expect(
+      page.locator("text=/Combined hours cannot exceed 24 hours/i"),
+    ).toBeVisible();
 
-		// Enter time with 15-minute increments
-		const projectInput = page.locator('input[id="project-0"]');
-		const hoursInput = page.locator('input[id="hours-0"]');
+    // Save button should be disabled
+    const saveButton = page.locator('button:has-text("Save")');
+    await expect(saveButton).toBeDisabled();
+  });
 
-		await projectInput.fill("project-1");
-		await hoursInput.fill("2.25"); // 2 hours 15 minutes
+  test("should support 15-minute (0.25h) granularity", async ({ page }) => {
+    // Navigate to daily entry form
+    await page.goto(`${baseURL}/worklog/${testDate}`);
 
-		// Add another project with 0.5h
-		await page.click('button:has-text("Add Project")');
-		const secondProjectInput = page.locator('input[id="project-1"]');
-		const secondHoursInput = page.locator('input[id="hours-1"]');
+    // Enter time with 15-minute increments
+    const projectInput = page.locator('input[id="project-0"]');
+    const hoursInput = page.locator('input[id="hours-0"]');
 
-		await secondProjectInput.fill("project-2");
-		await secondHoursInput.fill("0.75"); // 45 minutes
+    await projectInput.fill("project-1");
+    await hoursInput.fill("2.25"); // 2 hours 15 minutes
 
-		// Verify total: 2.25 + 0.75 = 3.0
-		await expect(page.locator("text=/Total.*3.00h/i")).toBeVisible();
+    // Add another project with 0.5h
+    await page.click('button:has-text("Add Project")');
+    const secondProjectInput = page.locator('input[id="project-1"]');
+    const secondHoursInput = page.locator('input[id="hours-1"]');
 
-		// Save should work
-		const saveButton = page.locator('button:has-text("Save")');
-		await expect(saveButton).not.toBeDisabled();
-	});
+    await secondProjectInput.fill("project-2");
+    await secondHoursInput.fill("0.75"); // 45 minutes
 
-	test("should require project selection before saving", async ({ page }) => {
-		// Navigate to daily entry form
-		await page.goto(`${baseURL}/worklog/${testDate}`);
+    // Verify total: 2.25 + 0.75 = 3.0
+    await expect(page.locator("text=/Total.*3.00h/i")).toBeVisible();
 
-		// Enter hours without selecting project
-		const hoursInput = page.locator('input[id="hours-0"]');
-		await hoursInput.fill("8");
+    // Save should work
+    const saveButton = page.locator('button:has-text("Save")');
+    await expect(saveButton).not.toBeDisabled();
+  });
 
-		// Try to save
-		const saveButton = page.locator('button:has-text("Save")');
-		await saveButton.click();
-		
-		// Should show validation error
-		await expect(
-			page.locator("text=/Project is required/i"),
-		).toBeVisible();
-	});
+  test("should require project selection before saving", async ({ page }) => {
+    // Navigate to daily entry form
+    await page.goto(`${baseURL}/worklog/${testDate}`);
 
-	test("should allow adding and removing project rows", async ({ page }) => {
-		// Navigate to daily entry form
-		await page.goto(`${baseURL}/worklog/${testDate}`);
+    // Enter hours without selecting project
+    const hoursInput = page.locator('input[id="hours-0"]');
+    await hoursInput.fill("8");
 
-		// Initially should have 1 row
-		let projectRows = page.locator('input[id^="project-"]');
-		await expect(projectRows).toHaveCount(1);
+    // Try to save
+    const saveButton = page.locator('button:has-text("Save")');
+    await saveButton.click();
 
-		// Add 2 more rows
-		await page.click('button:has-text("Add Project")');
-		await page.click('button:has-text("Add Project")');
+    // Should show validation error
+    await expect(page.locator("text=/Project is required/i")).toBeVisible();
+  });
 
-		// Should now have 3 rows
-		await expect(projectRows).toHaveCount(3);
+  test("should allow adding and removing project rows", async ({ page }) => {
+    // Navigate to daily entry form
+    await page.goto(`${baseURL}/worklog/${testDate}`);
 
-		// Fill all rows
-		await page.locator('input[id="project-0"]').fill("project-1");
-		await page.locator('input[id="hours-0"]').fill("3");
+    // Initially should have 1 row
+    let projectRows = page.locator('input[id^="project-"]');
+    await expect(projectRows).toHaveCount(1);
 
-		await page.locator('input[id="project-1"]').fill("project-2");
-		await page.locator('input[id="hours-1"]').fill("2");
+    // Add 2 more rows
+    await page.click('button:has-text("Add Project")');
+    await page.click('button:has-text("Add Project")');
 
-		await page.locator('input[id="project-2"]').fill("project-3");
-		await page.locator('input[id="hours-2"]').fill("1");
+    // Should now have 3 rows
+    await expect(projectRows).toHaveCount(3);
 
-		// Remove middle row
-		const removeButtons = page.locator('button:has-text("Remove")');
-		await removeButtons.nth(1).click();
+    // Fill all rows
+    await page.locator('input[id="project-0"]').fill("project-1");
+    await page.locator('input[id="hours-0"]').fill("3");
 
-		// Should now have 2 rows
-		await expect(projectRows).toHaveCount(2);
+    await page.locator('input[id="project-1"]').fill("project-2");
+    await page.locator('input[id="hours-1"]').fill("2");
 
-		// Verify total: 3 + 1 = 4
-		await expect(page.locator("text=/Total.*4.00h/i")).toBeVisible();
-	});
+    await page.locator('input[id="project-2"]').fill("project-3");
+    await page.locator('input[id="hours-2"]').fill("1");
+
+    // Remove middle row
+    const removeButtons = page.locator('button:has-text("Remove")');
+    await removeButtons.nth(1).click();
+
+    // Should now have 2 rows
+    await expect(projectRows).toHaveCount(2);
+
+    // Verify total: 3 + 1 = 4
+    await expect(page.locator("text=/Total.*4.00h/i")).toBeVisible();
+  });
 });

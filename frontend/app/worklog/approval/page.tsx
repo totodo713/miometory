@@ -96,9 +96,7 @@ export default function ApprovalPage() {
       await loadApprovalQueue();
     } catch (err) {
       console.error("Failed to reject month:", err);
-      alert(
-        err instanceof Error ? err.message : "Failed to reject submission",
-      );
+      alert(err instanceof Error ? err.message : "Failed to reject submission");
     } finally {
       setActionInProgress(null);
     }
@@ -165,9 +163,7 @@ export default function ApprovalPage() {
         {/* Queue List */}
         {pendingApprovals.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600">
-              No pending approvals at this time.
-            </p>
+            <p className="text-gray-600">No pending approvals at this time.</p>
           </div>
         ) : (
           <div className="space-y-4">

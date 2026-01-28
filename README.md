@@ -1,19 +1,24 @@
-# Work-Log: Engineer Management System
+# Miometry (ミオメトリー): Time Entry Management System
 
-A comprehensive engineer management system built with event sourcing architecture, supporting multi-tenant organizations, fiscal year patterns, and work log tracking.
+A comprehensive time entry management system built with event sourcing architecture, supporting multi-tenant organizations, fiscal year patterns, and work log tracking.
 
 ## 🚀 Project Overview
 
-Work-Log is a DDD (Domain-Driven Design) and event-sourced application designed to manage engineers, projects, and work logs across multiple tenants and organizations. The system supports flexible fiscal year patterns, monthly period calculations, and hierarchical organization structures.
+Miometry is a DDD (Domain-Driven Design) and event-sourced application designed to manage engineers, projects, and work logs across multiple tenants and organizations. The system supports flexible fiscal year patterns, monthly period calculations, and hierarchical organization structures.
 
 ### Key Features
 
 - **Multi-Tenant Architecture**: Isolated data and configurations per tenant
 - **Hierarchical Organizations**: Up to 6 levels of organization hierarchy
 - **Flexible Fiscal Year Patterns**: Support for various fiscal year start dates (e.g., April 1, November 1)
-- **Monthly Period Patterns**: Configurable monthly closing dates (1-28)
+- **Monthly Period Patterns**: Configurable monthly closing dates (1-28, with 21st-20th default)
 - **Event Sourcing**: Complete audit trail of all domain changes
 - **Date Info API**: Calculate fiscal year and monthly period for any date
+- **Work Log Entry**: Daily time entry with multi-project allocation
+- **Absence Tracking**: Vacation, sick leave, and other absence types
+- **Approval Workflow**: Submit, approve, and reject work logs
+- **CSV Import/Export**: Bulk data management with streaming processing
+- **Proxy Entry**: Managers can enter time on behalf of team members
 
 ## 📁 Project Structure
 
@@ -27,8 +32,9 @@ work-log/
 │   └── src/test/      # Test suite (Kotlin + JUnit)
 ├── frontend/          # Next.js frontend (TypeScript + React)
 ├── infra/            # Infrastructure configurations
-│   └── docker/       # Docker Compose for local development
-└── specs/            # Feature specifications and tasks
+│   └── docker/       # Docker Compose for local/production
+├── specs/            # Feature specifications and tasks
+└── docs/             # User documentation
 ```
 
 ## 🛠 Technology Stack
@@ -62,17 +68,23 @@ All domain aggregates use event sourcing:
 - `Organization` - Hierarchical org structure
 - `FiscalYearPattern` - Fiscal year definitions
 - `MonthlyPeriodPattern` - Monthly period definitions
+- `WorkLogEntry` - Daily time entries
+- `Absence` - Leave tracking
+- `ApprovalWorkflow` - Submission and approval status
+- `Member` - User profiles and roles
 
 ### Domain Events
 - `TenantCreated`, `TenantRenamed`, `TenantDeactivated`
 - `OrganizationCreated`, `OrganizationDeactivated`
-- `FiscalYearPatternCreated`
-- `MonthlyPeriodPatternCreated`
+- `FiscalYearPatternCreated`, `MonthlyPeriodPatternCreated`
+- `EntryCreated`, `EntryUpdated`, `EntrySubmitted`
+- `EntryApproved`, `EntryRejected`
 
 ### Event Store Components
 - **EventStore**: Append-only event storage with optimistic locking
 - **SnapshotStore**: Performance optimization for aggregate reconstruction
 - **AuditLogger**: Immutable audit log for all events
+- **Projections**: Read models (MonthlyCalendar, ApprovalQueue, DailyEntry)
 
 ## 📋 Prerequisites
 
@@ -83,56 +95,29 @@ All domain aggregates use event sourcing:
 
 ## 🚀 Getting Started
 
-### 1. Clone the Repository
+### Quick Start (Docker)
 
 ```bash
-git clone <repository-url>
-cd work-log
-```
-
-### 2. Backend Setup
-
-```bash
-cd backend
-
-# Build the project
-./gradlew build -x test
-
-# Run the application (requires PostgreSQL)
-./gradlew bootRun
-```
-
-The backend will start on `http://localhost:8080`
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-```
-
-The frontend will start on `http://localhost:3000`
-
-### 4. Database Setup (Docker)
-
-```bash
+# Start all services
 cd infra/docker
-
-# Start PostgreSQL
 docker-compose -f docker-compose.dev.yml up -d
+
+# Backend
+cd backend
+./gradlew bootRun
+
+# Frontend
+cd frontend
+npm install && npm run dev
 ```
 
-**Database Connection:**
-- Host: `localhost`
-- Port: `5432`
-- Database: `worklog_dev`
-- Username: `worklog`
-- Password: `worklog`
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
+
+### Manual Setup
+
+See [QUICKSTART.md](QUICKSTART.md) for detailed setup instructions.
 
 ## 🧪 Running Tests
 
@@ -146,26 +131,21 @@ cd backend
 
 # Run specific test class
 ./gradlew test --tests "FiscalYearPatternTest"
-
-# Run without integration tests
-./gradlew test --tests "*Test" --exclude-task testIntegration
 ```
-
-**Test Coverage:**
-- Domain tests: 81 tests (no Docker required)
-- Integration tests: 21 tests (requires Docker)
-- Total: 102 tests
 
 ### Frontend Tests
 
 ```bash
 cd frontend
 
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
 # Lint
 npm run lint
-
-# Format
-npm run format
 ```
 
 ## 📚 API Documentation
@@ -180,71 +160,46 @@ Password: password
 
 ### Core Endpoints
 
-#### Tenants
-- `POST /api/v1/tenants` - Create tenant
-- `GET /api/v1/tenants` - List tenants
-- `GET /api/v1/tenants/{id}` - Get tenant
-- `PATCH /api/v1/tenants/{id}/deactivate` - Deactivate tenant
+| Resource | Endpoint | Description |
+|----------|----------|-------------|
+| Work Logs | `GET/POST /api/v1/worklog/entries` | Daily time entries |
+| Calendar | `GET /api/v1/worklog/calendar/{year}/{month}` | Monthly calendar view |
+| Absences | `GET/POST /api/v1/worklog/absences` | Leave management |
+| Approvals | `GET/POST /api/v1/worklog/approvals` | Workflow management |
+| CSV Import | `POST /api/v1/worklog/import` | Bulk data import |
+| CSV Export | `GET /api/v1/worklog/export` | Data export |
 
-#### Organizations
-- `POST /api/v1/tenants/{tenantId}/organizations` - Create organization
-- `GET /api/v1/tenants/{tenantId}/organizations` - List organizations
-- `GET /api/v1/tenants/{tenantId}/organizations/{id}` - Get organization
-- `PATCH /api/v1/tenants/{tenantId}/organizations/{id}/deactivate` - Deactivate organization
+Full API documentation available at `/api-docs.html` when running the backend.
 
-#### Fiscal Year Patterns
-- `POST /api/v1/tenants/{tenantId}/fiscal-year-patterns` - Create pattern
-- `GET /api/v1/tenants/{tenantId}/fiscal-year-patterns` - List patterns
-- `GET /api/v1/tenants/{tenantId}/fiscal-year-patterns/{id}` - Get pattern
+## 📖 Documentation
 
-#### Monthly Period Patterns
-- `POST /api/v1/tenants/{tenantId}/monthly-period-patterns` - Create pattern
-- `GET /api/v1/tenants/{tenantId}/monthly-period-patterns` - List patterns
-- `GET /api/v1/tenants/{tenantId}/monthly-period-patterns/{id}` - Get pattern
+- [Quick Start Guide](QUICKSTART.md) - Get up and running
+- [User Manual](docs/user-manual.md) - End-user documentation
+- [Manager Guide](docs/manager-guide.md) - Approval workflow guide
+- [Backup Strategy](docs/backup-strategy.md) - Data backup procedures
+- [Agent Guidelines](AGENTS.md) - Coding standards for AI agents
 
-#### Date Info (Calculation)
-- `POST /api/v1/tenants/{tenantId}/organizations/{id}/date-info` - Calculate fiscal year and monthly period
+## 🎯 Current Status
 
-**Example Request:**
-```bash
-curl -X POST http://localhost:8080/api/v1/tenants/{tenantId}/organizations/{id}/date-info \
-  -H "Content-Type: application/json" \
-  -u user:password \
-  -d '{"date": "2025-01-15"}'
-```
+### Phase 1: Foundation ✅ COMPLETE
+- Multi-tenant architecture
+- Fiscal year and monthly period patterns
+- Event sourcing infrastructure
 
-**Example Response:**
-```json
-{
-  "date": "2025-01-15",
-  "fiscalYear": 2024,
-  "fiscalYearStart": "2024-04-01",
-  "fiscalYearEnd": "2025-03-31",
-  "monthlyPeriodStart": "2024-12-21",
-  "monthlyPeriodEnd": "2025-01-20",
-  "fiscalYearPatternId": "uuid",
-  "monthlyPeriodPatternId": "uuid",
-  "organizationId": "uuid"
-}
-```
+### Phase 2: Work Log Entry ✅ COMPLETE
+- Daily time entry (US1)
+- Multi-project allocation (US2)
+- Absence tracking (US3)
+- Approval workflow (US4)
+- CSV import/export (US5)
+- Copy previous month (US6)
+- Proxy entry (US7)
 
-## 🗄 Database Schema
-
-### Main Tables
-- `tenant` - Tenant entities
-- `organization` - Organization hierarchy
-- `fiscal_year_pattern` - Fiscal year definitions
-- `monthly_period_pattern` - Monthly period definitions
-
-### Event Sourcing Tables
-- `event_store` - All domain events (append-only)
-- `snapshot_store` - Aggregate snapshots for performance
-- `audit_log` - Immutable audit trail
-
-### Migrations
-- `V1__init.sql` - Initial schema
-- `V2__foundation.sql` - Event sourcing tables
-- `V3__add_pattern_refs_to_organization.sql` - Pattern references
+### Phase 3: Polish ✅ COMPLETE
+- Performance benchmarks
+- Error handling
+- Auto-save functionality
+- Session timeout warnings
 
 ## 🐳 Docker Support
 
@@ -255,104 +210,27 @@ cd infra/docker
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
+### Production Environment
+
+```bash
+cd infra/docker
+docker-compose -f docker-compose.prod.yml up -d
+```
+
 Services:
-- PostgreSQL (port 5432)
+- `miometry-db` - PostgreSQL database
+- `miometry-backend` - Spring Boot API
+- `miometry-frontend` - Next.js application
 
-### Production Build
+## 📈 Performance Targets
 
-```bash
-# Backend
-cd backend
-./gradlew bootJar
-docker build -t work-log-backend .
-
-# Frontend
-cd frontend
-npm run build
-docker build -t work-log-frontend .
-```
-
-## 📈 Development Workflow
-
-### Branch Strategy
-- `main` - Production-ready code
-- `001-foundation` - Feature branch for foundation phase
-- Future features: `002-member`, `003-project`, etc.
-
-### Commit Message Convention
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `test:` - Test additions/changes
-- `refactor:` - Code refactoring
-
-### Testing Strategy
-1. **Domain Tests** - Unit tests for domain logic (no DB)
-2. **Integration Tests** - Full stack tests with Testcontainers
-3. **API Tests** - REST API endpoint tests
-
-## 🎯 Current Status
-
-### Phase 1-5: Foundation ✅ COMPLETE
-- ✅ Tenant & Organization management
-- ✅ Fiscal Year & Monthly Period patterns
-- ✅ Event Sourcing infrastructure
-- ✅ Date calculation API
-- ✅ All domain tests passing (81/81)
-
-### Phase 6: Polish 🚧 IN PROGRESS
-- ⏳ Global exception handler
-- ⏳ Error response standardization
-- ⏳ Performance testing
-- ⏳ Code coverage verification
-
-### Phase 7: Final Testing ⏳ BLOCKED
-- ⚠️ Requires Docker access for integration tests
-- ⏳ Full test suite execution (102 tests)
-- ⏳ Merge to main branch
-
-## 🔧 Troubleshooting
-
-### Docker Permission Denied
-
-If you see: `permission denied while trying to connect to the docker API`
-
-**Solution:**
-```bash
-# Add user to docker group
-sudo usermod -aG docker $USER
-newgrp docker
-
-# Verify
-docker ps
-```
-
-### Test Failures
-
-If integration tests fail:
-1. Ensure Docker is running: `docker ps`
-2. Check Testcontainers logs in `backend/build/reports/tests/test/`
-3. Verify database migrations: Check Flyway logs
-
-### Build Failures
-
-```bash
-# Clean build
-cd backend
-./gradlew clean build -x test
-
-# Check Java version
-java -version  # Should be 21+
-```
-
-## 📖 Documentation
-
-- [Feature Specification](specs/001-foundation/spec.md) - Detailed feature requirements
-- [Tasks Breakdown](specs/001-foundation/tasks.md) - Implementation tasks
-- [Phase 7 Instructions](PHASE7_INSTRUCTIONS.md) - Final testing guide
-- [Docker Setup Guide](DOCKER_SETUP_REQUIRED.md) - Docker configuration
-- [Phase 5 Gap Analysis](PHASE5_GAP_ANALYSIS.md) - Architectural decisions
-- [Agent Guidelines](AGENTS.md) - Coding standards for AI agents
+| Metric | Target |
+|--------|--------|
+| Calendar load | < 1 second |
+| CSV import | 100 rows/second |
+| Concurrent users | 100+ |
+| Mobile entry time | < 2 minutes |
+| Auto-save reliability | 99.9% |
 
 ## 🤝 Contributing
 
@@ -372,6 +250,6 @@ java -version  # Should be 21+
 
 ---
 
-**Last Updated**: 2026-01-02  
-**Version**: 0.0.1-SNAPSHOT  
-**Branch**: 001-foundation
+**Last Updated**: 2026-01-28  
+**Version**: 0.1.0  
+**Product**: Miometry (ミオメトリー)

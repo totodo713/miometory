@@ -1,18 +1,21 @@
 "use client";
 
 /**
- * Work Log Dashboard Page
+ * Miometry Dashboard Page
  *
- * Main entry point for work log functionality.
+ * Main entry point for time entry functionality.
  * Displays monthly calendar view with navigation.
+ * Supports proxy entry mode for managers entering time on behalf of subordinates.
  */
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Calendar } from "@/components/worklog/Calendar";
+import { CopyPreviousMonthDialog } from "@/components/worklog/CopyPreviousMonthDialog";
 import { MonthlySummary } from "@/components/worklog/MonthlySummary";
 import { api } from "@/services/api";
 import { exportCsv } from "@/services/csvService";
+import { useProxyMode } from "@/services/worklogStore";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 
 export default function WorkLogPage() {
@@ -21,6 +24,10 @@ export default function WorkLogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
+
+  // Proxy mode state
+  const { isProxyMode, targetMember, disableProxyMode } = useProxyMode();
 
   // Get current year and month
   const now = new Date();
@@ -28,7 +35,11 @@ export default function WorkLogPage() {
   const [month, setMonth] = useState(now.getMonth() + 1); // 1-indexed
 
   // TODO: Get actual member ID from auth context
-  const memberId = "00000000-0000-0000-0000-000000000001";
+  const currentUserId = "00000000-0000-0000-0000-000000000001";
+
+  // Use target member ID if in proxy mode, otherwise use current user
+  const effectiveMemberId =
+    isProxyMode && targetMember ? targetMember.id : currentUserId;
 
   useEffect(() => {
     async function loadCalendar() {
@@ -36,7 +47,11 @@ export default function WorkLogPage() {
       setError(null);
 
       try {
-        const data = await api.worklog.getCalendar({ year, month, memberId });
+        const data = await api.worklog.getCalendar({
+          year,
+          month,
+          memberId: effectiveMemberId,
+        });
         setCalendarData(data);
       } catch (err) {
         setError(
@@ -48,7 +63,7 @@ export default function WorkLogPage() {
     }
 
     loadCalendar();
-  }, [year, month]); // memberId is constant, no need to include
+  }, [year, month, effectiveMemberId]);
 
   const handlePreviousMonth = () => {
     if (month === 1) {
@@ -77,28 +92,85 @@ export default function WorkLogPage() {
   const handleExport = async () => {
     setIsExporting(true);
     try {
-      await exportCsv(year, month, memberId);
+      await exportCsv(year, month, effectiveMemberId);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to export CSV",
-      );
+      setError(err instanceof Error ? err.message : "Failed to export CSV");
     } finally {
       setIsExporting(false);
     }
   };
 
+  const handleCopyProjects = (projectIds: string[]) => {
+    // Store copied project IDs in session storage for use by the entry form
+    // The DailyEntryForm can read these and pre-populate project selections
+    if (projectIds.length > 0) {
+      sessionStorage.setItem(
+        "copiedProjectIds",
+        JSON.stringify({
+          projectIds,
+          year,
+          month,
+          copiedAt: new Date().toISOString(),
+        }),
+      );
+      // Optionally show a success message or navigate to add entries
+      setError(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Proxy Mode Banner */}
+      {isProxyMode && targetMember && (
+        <div className="bg-yellow-400 px-4 py-2">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-900 font-medium">
+                Proxy Mode: Entering time for{" "}
+                <span className="font-bold">{targetMember.displayName}</span>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={disableProxyMode}
+              className="px-3 py-1 text-sm text-yellow-900 bg-yellow-200 hover:bg-yellow-100 border border-yellow-600 rounded-md transition-colors"
+            >
+              Exit Proxy Mode
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Work Log</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isProxyMode && targetMember
+                ? `Miometry - ${targetMember.displayName}`
+                : "Miometry"}
+            </h1>
             <p className="mt-1 text-sm text-gray-600">
-              Track and manage your daily work hours
+              {isProxyMode && targetMember
+                ? `Entering time on behalf of ${targetMember.email}`
+                : "Track and manage your daily work hours"}
             </p>
           </div>
           <div className="flex gap-2">
+            {/* Proxy Entry Link (for managers) */}
+            <Link
+              href="/worklog/proxy"
+              className="px-4 py-2 bg-yellow-500 text-white rounded-md shadow-sm text-sm font-medium hover:bg-yellow-600"
+            >
+              Enter Time for Team
+            </Link>
+            <button
+              type="button"
+              onClick={() => setIsCopyDialogOpen(true)}
+              className="px-4 py-2 bg-purple-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-purple-700"
+            >
+              Copy Previous Month
+            </button>
             <Link
               href="/worklog/import"
               className="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-green-700"
@@ -170,10 +242,10 @@ export default function WorkLogPage() {
         {!isLoading && !error && calendarData && (
           <>
             <Calendar year={year} month={month} dates={calendarData.dates} />
-            
+
             {/* Monthly Summary (T072) */}
             <div className="mt-6">
-              <MonthlySummary year={year} month={month} memberId={memberId} />
+              <MonthlySummary year={year} month={month} memberId={effectiveMemberId} />
             </div>
           </>
         )}
@@ -183,6 +255,16 @@ export default function WorkLogPage() {
             No data available
           </div>
         )}
+
+        {/* Copy Previous Month Dialog */}
+        <CopyPreviousMonthDialog
+          isOpen={isCopyDialogOpen}
+          onClose={() => setIsCopyDialogOpen(false)}
+          onConfirm={handleCopyProjects}
+          year={year}
+          month={month}
+          memberId={effectiveMemberId}
+        />
       </div>
     </div>
   );

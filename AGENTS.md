@@ -1,4 +1,4 @@
-# AGENTS.md – Agentic Coding Rules for Work-Log
+# AGENTS.md – Agentic Coding Rules for Miometry
 
 This file provides agentic coding agents with complete guidelines for operating in this repository. It covers build, lint, and test commands, exhaustive style recommendations, and critical patterns for maintaining code standardization across backend (Spring Boot/Kotlin) and frontend (Next.js/TypeScript) projects.
 
@@ -124,5 +124,53 @@ _No special Copilot or Cursor agent instructions are present. If present, add th
 - PostgreSQL with JSONB for events (001-foundation)
 - PostgreSQL with JSONB for event sourcing, event store for domain events, projection tables for read models (002-work-log-entry)
 
+## Architecture Patterns (002-work-log-entry)
+
+### Domain-Driven Design (DDD)
+- **Aggregates**: WorkLogEntry, Absence, ApprovalWorkflow, Member
+- **Value Objects**: TimeRange, WorkHours, ProjectAllocation, AbsenceType
+- **Domain Events**: EntryCreated, EntryUpdated, EntrySubmitted, EntryApproved, EntryRejected
+- **Event Sourcing**: All state changes stored as immutable events in `domain_events` table
+- **Projections**: Read models rebuilt from events (MonthlyCalendarProjection, ApprovalQueueProjection)
+
+### Backend Layers
+```
+com.worklog/
+  api/           # REST controllers, request/response DTOs
+  application/   # Application services, commands, queries (CQRS)
+  domain/        # Aggregates, entities, value objects, domain events
+  infrastructure/
+    config/      # Spring configuration (Security, CORS, Rate Limiting)
+    persistence/ # Repository implementations, event store
+    projection/  # Read model projections
+```
+
+### Frontend Architecture
+```
+frontend/app/
+  components/
+    shared/      # Reusable UI components (LoadingSpinner, ErrorBoundary)
+    worklog/     # Domain-specific components (Calendar, DailyEntryForm)
+  hooks/         # Custom React hooks (useAutoSave, useWorkLogEntry)
+  lib/           # Utilities, API client, types
+```
+
+### Key Design Decisions
+- **Auto-save**: 3-second debounce with optimistic UI updates
+- **Session timeout**: 30 minutes with warning at 25 minutes
+- **Time granularity**: 15-minute increments for all time entries
+- **Fiscal months**: 21st-20th pattern for month boundaries
+- **CSV streaming**: Chunked processing for large file imports
+
+### Performance Targets
+| Metric | Target | Validation |
+|--------|--------|------------|
+| Calendar load | < 1 second | SC-006 |
+| CSV import | 100 rows/second | SC-005 |
+| Concurrent users | 100+ without degradation | SC-007 |
+| Mobile entry time | < 2 minutes | SC-008 |
+| Auto-save reliability | 99.9% | SC-011 |
+
 ## Recent Changes
 - 001-foundation: Added Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend)
+- 002-work-log-entry: Implemented complete Miometry Entry System with 7 user stories (daily entry, multi-project, absences, approval workflow, CSV import/export, copy previous month, proxy entry)

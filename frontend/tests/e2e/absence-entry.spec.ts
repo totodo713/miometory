@@ -131,11 +131,16 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should record full day paid leave", async ({ page }) => {
     // Step 1: Navigate to calendar view
-    await page.goto(`${baseURL}/worklog`);
+    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
+    // Wait for calendar to be fully rendered with data
+    await expect(
+      page.locator('button[aria-label*="January 20"]'),
+    ).toBeVisible();
+
     // Step 2: Click on date (20th)
-    await page.click('button[aria-label*="January 20"]');
+    await page.locator('button[aria-label*="January 20"]').click();
 
     // Step 3: Verify navigation to daily entry form
     await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
@@ -191,9 +196,7 @@ test.describe("Absence Entry Workflow", () => {
 
     // Step 5: Verify combined total is shown (8h)
     // This depends on UI implementation - might show in tab or summary
-    await expect(
-      page.locator("text=/Total Daily Hours.*8/i"),
-    ).toBeVisible();
+    await expect(page.locator("text=/Total Daily Hours.*8/i")).toBeVisible();
 
     // Step 6: Save absence
     await page.click('button:has-text("Save Absence")');
@@ -257,9 +260,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.fill('textarea[id="reason"]', "Vacation half-day");
 
     // Step 4: Verify total shows 24h
-    await expect(
-      page.locator("text=/Total Daily Hours.*24/i"),
-    ).toBeVisible();
+    await expect(page.locator("text=/Total Daily Hours.*24/i")).toBeVisible();
 
     // Step 5: Save button should be enabled
     const saveButton = page.locator('button:has-text("Save Absence")');
@@ -565,14 +566,8 @@ test.describe("Absence Entry Workflow", () => {
     // - Total absence hours: 12h (8 + 4)
     // - Combined hours: 24h
 
-    await expect(
-      page.locator("text=/Work Hours:.*12/i"),
-    ).toBeVisible();
-    await expect(
-      page.locator("text=/Absence Hours:.*12/i"),
-    ).toBeVisible();
-    await expect(
-      page.locator("text=/Total Daily Hours:.*24/i"),
-    ).toBeVisible();
+    await expect(page.locator("text=/Work Hours:.*12/i")).toBeVisible();
+    await expect(page.locator("text=/Absence Hours:.*12/i")).toBeVisible();
+    await expect(page.locator("text=/Total Daily Hours:.*24/i")).toBeVisible();
   });
 });

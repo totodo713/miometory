@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miometry API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .swagger-ui .topbar {
+            background-color: #1a365d;
+        }
+        .swagger-ui .topbar .download-url-wrapper .select-label {
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+        .swagger-ui .info .title {
+            color: #1a365d;
+        }
+        .swagger-ui .info .title small {
+            background: #1a365d;
+        }
+        .swagger-ui .opblock.opblock-get .opblock-summary-method {
+            background: #2b6cb0;
+        }
+        .swagger-ui .opblock.opblock-post .opblock-summary-method {
+            background: #2f855a;
+        }
+        .swagger-ui .opblock.opblock-put .opblock-summary-method {
+            background: #c05621;
+        }
+        .swagger-ui .opblock.opblock-delete .opblock-summary-method {
+            background: #c53030;
+        }
+        .swagger-ui .opblock.opblock-patch .opblock-summary-method {
+            background: #6b46c1;
+        }
+        #swagger-ui {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            window.ui = SwaggerUIBundle({
+                url: "/api-docs/openapi.yaml",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                validatorUrl: null,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                defaultModelsExpandDepth: 1,
+                defaultModelExpandDepth: 1,
+                displayRequestDuration: true,
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                tryItOutEnabled: true
+            });
+        };
+    </script>
+</body>
+</html>

@@ -2,16 +2,20 @@ package com.worklog.infrastructure.config
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 import org.springframework.web.cors.CorsConfigurationSource
 
 /**
- * Security configuration for Work-Log application.
+ * Security configuration for Miometry application.
  *
- * Development mode: All endpoints are public for rapid prototyping.
+ * Development mode: All endpoints are public for rapid prototyping, CSRF disabled.
+ * Production mode: CSRF enabled with cookie-based token for SPA compatibility.
  * 
  * TODO: Enable OAuth2/OIDC and SAML2 authentication for production:
  * - OAuth2/OIDC login for modern SSO providers (Azure AD, Google, etc.)
@@ -22,22 +26,82 @@ import org.springframework.web.cors.CorsConfigurationSource
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val corsConfigurationSource: CorsConfigurationSource
+    private val corsConfigurationSource: CorsConfigurationSource,
 ) {
-
+    /**
+     * Development security filter chain - CSRF disabled for easier testing.
+     */
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+    @Profile("default", "dev", "test")
+    fun devFilterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
             .cors { it.configurationSource(corsConfigurationSource) }
             .authorizeHttpRequests { auth ->
                 auth
                     // Allow all requests during development
-                    .anyRequest().permitAll()
+                    .anyRequest()
+                    .permitAll()
             }
             // Session Management (30-minute timeout)
             .sessionManagement { session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            }
+
+        return http.build()
+    }
+
+    /**
+     * Production security filter chain - CSRF enabled with cookie-based token.
+     *
+     * CSRF Protection Strategy:
+     * - Uses CookieCsrfTokenRepository with HttpOnly=false for JavaScript access
+     * - Frontend reads XSRF-TOKEN cookie and sends X-XSRF-TOKEN header
+     * - Spring Security validates the header against the cookie
+     * - Safe methods (GET, HEAD, OPTIONS, TRACE) are not protected
+     */
+    @Bean
+    @Profile("prod", "production")
+    fun prodFilterChain(http: HttpSecurity): SecurityFilterChain {
+        // Use CsrfTokenRequestAttributeHandler for proper token handling with SPAs
+        val csrfTokenHandler = CsrfTokenRequestAttributeHandler()
+        csrfTokenHandler.setCsrfRequestAttributeName("_csrf")
+
+        http
+            .csrf { csrf ->
+                csrf
+                    // Cookie-based CSRF token for JavaScript SPA access
+                    // withHttpOnlyFalse() allows JavaScript to read the XSRF-TOKEN cookie
+                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    .csrfTokenRequestHandler(csrfTokenHandler)
+                    // Exclude health/actuator endpoints from CSRF
+                    .ignoringRequestMatchers(
+                        "/actuator/**",
+                        "/health",
+                        "/ready",
+                    )
+            }.cors { it.configurationSource(corsConfigurationSource) }
+            .authorizeHttpRequests { auth ->
+                auth
+                    // Public endpoints
+                    .requestMatchers(
+                        "/actuator/**",
+                        "/health",
+                        "/ready",
+                        "/docs",
+                        "/api-docs",
+                        "/api-docs/**",
+                        "/static/**",
+                    ).permitAll()
+                    // All other requests require authentication (to be configured with SSO)
+                    .anyRequest()
+                    .permitAll() // TODO: Change to .authenticated() when SSO is enabled
+            }
+            // Session Management (30-minute timeout)
+            .sessionManagement { session ->
+                session
+                    .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                    .maximumSessions(1)
             }
 
         return http.build()

@@ -50,22 +50,24 @@ class ApprovalControllerTest : IntegrationTestBase() {
         memberId: UUID,
         projectId: UUID,
         date: LocalDate,
-        hours: Double = 8.0
+        hours: Double = 8.0,
     ): String {
-        val request = mapOf(
-            "memberId" to memberId.toString(),
-            "projectId" to projectId.toString(),
-            "date" to date.toString(),
-            "hours" to hours,
-            "comment" to "Test work"
-        )
-        
-        val response = restTemplate.postForEntity(
-            "/api/v1/worklog/entries",
-            request,
-            Map::class.java
-        )
-        
+        val request =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "projectId" to projectId.toString(),
+                "date" to date.toString(),
+                "hours" to hours,
+                "comment" to "Test work",
+            )
+
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/entries",
+                request,
+                Map::class.java,
+            )
+
         assertEquals(HttpStatus.CREATED, response.statusCode)
         return (response.body as Map<*, *>)["id"] as String
     }
@@ -81,22 +83,24 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val projectId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(10)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         val entryId1 = createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(1), 8.0)
         val entryId2 = createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(2), 7.5)
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
 
-        val response = restTemplate.postForEntity(
-            "/api/v1/worklog/submissions",
-            submitRequest,
-            Map::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/submissions",
+                submitRequest,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.CREATED, response.statusCode)
         assertNotNull(response.body)
@@ -116,16 +120,18 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val date = LocalDate.now().minusDays(15)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
 
-        val submitRequest = mapOf(
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+            )
 
-        val response = restTemplate.postForEntity(
-            "/api/v1/worklog/submissions",
-            submitRequest,
-            Map::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/submissions",
+                submitRequest,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
         val body = response.body as Map<*, *>
@@ -137,15 +143,17 @@ class ApprovalControllerTest : IntegrationTestBase() {
     fun `POST submissions should fail with missing fiscal month dates`() {
         val memberId = UUID.randomUUID()
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+            )
 
-        val response = restTemplate.postForEntity(
-            "/api/v1/worklog/submissions",
-            submitRequest,
-            Map::class.java
-        )
+        val response =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/submissions",
+                submitRequest,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
         val body = response.body as Map<*, *>
@@ -159,15 +167,16 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val projectId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(20)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(3), 8.0)
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
 
         // First submission
         val response1 = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
@@ -190,28 +199,30 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(25)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(4), 8.0)
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
 
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
 
-        val queueResponse = restTemplate.getForEntity(
-            "/api/v1/worklog/approvals/queue?managerId=$managerId",
-            Map::class.java
-        )
+        val queueResponse =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/approvals/queue?managerId=$managerId",
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.OK, queueResponse.statusCode)
         val queueBody = queueResponse.body as Map<*, *>
         val pendingApprovals = queueBody["pendingApprovals"] as List<*>
-        
+
         // Should find our approval
         val approval = pendingApprovals.find { (it as Map<*, *>)["approvalId"] == approvalId }
         assertNotNull(approval)
@@ -220,10 +231,11 @@ class ApprovalControllerTest : IntegrationTestBase() {
     @Test
     @Transactional
     fun `GET approvals queue should fail without managerId parameter`() {
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/approvals/queue",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/approvals/queue",
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
         val body = response.body as Map<*, *>
@@ -242,26 +254,28 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(30)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         val entryId = createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(5), 8.0)
 
         // Submit
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
 
         // Approve
         val approveRequest = mapOf("reviewedBy" to managerId.toString())
-        val approveResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/approve",
-            approveRequest,
-            Void::class.java
-        )
+        val approveResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/approve",
+                approveRequest,
+                Void::class.java,
+            )
 
         assertEquals(HttpStatus.NO_CONTENT, approveResponse.statusCode)
 
@@ -273,17 +287,18 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val version = (entryResponse.body as Map<*, *>)["version"]
         val updateRequest = mapOf("hours" to 7.0, "comment" to "Should fail")
         val headers = HttpHeaders().apply { set("If-Match", version.toString()) }
-        
-        val updateResponse = restTemplate.exchange(
-            "/api/v1/worklog/entries/$entryId",
-            HttpMethod.PATCH,
-            HttpEntity(updateRequest, headers),
-            Map::class.java
-        )
+
+        val updateResponse =
+            restTemplate.exchange(
+                "/api/v1/worklog/entries/$entryId",
+                HttpMethod.PATCH,
+                HttpEntity(updateRequest, headers),
+                Map::class.java,
+            )
 
         assertTrue(
             updateResponse.statusCode == HttpStatus.BAD_REQUEST ||
-            updateResponse.statusCode == HttpStatus.UNPROCESSABLE_ENTITY
+                updateResponse.statusCode == HttpStatus.UNPROCESSABLE_ENTITY,
         )
     }
 
@@ -294,24 +309,26 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val projectId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(35)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(6), 8.0)
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
 
         val approveRequest = mapOf<String, String>()
-        val approveResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/approve",
-            approveRequest,
-            Map::class.java
-        )
+        val approveResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/approve",
+                approveRequest,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.BAD_REQUEST, approveResponse.statusCode)
         val body = approveResponse.body as Map<*, *>
@@ -326,34 +343,37 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(40)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(7), 8.0)
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
 
         val approveRequest = mapOf("reviewedBy" to managerId.toString())
 
         // First approval
-        val response1 = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/approve",
-            approveRequest,
-            Void::class.java
-        )
+        val response1 =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/approve",
+                approveRequest,
+                Void::class.java,
+            )
         assertEquals(HttpStatus.NO_CONTENT, response1.statusCode)
 
         // Second approval (should fail)
-        val response2 = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/approve",
-            approveRequest,
-            Map::class.java
-        )
+        val response2 =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/approve",
+                approveRequest,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response2.statusCode)
     }
@@ -370,29 +390,32 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(45)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         val entryId = createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(8), 8.0)
 
         // Submit
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
 
         // Reject
-        val rejectRequest = mapOf(
-            "reviewedBy" to managerId.toString(),
-            "rejectionReason" to "Please add more detail"
-        )
-        val rejectResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/reject",
-            rejectRequest,
-            Void::class.java
-        )
+        val rejectRequest =
+            mapOf(
+                "reviewedBy" to managerId.toString(),
+                "rejectionReason" to "Please add more detail",
+            )
+        val rejectResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/reject",
+                rejectRequest,
+                Void::class.java,
+            )
 
         assertEquals(HttpStatus.NO_CONTENT, rejectResponse.statusCode)
 
@@ -404,13 +427,14 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val version = (entryResponse.body as Map<*, *>)["version"]
         val updateRequest = mapOf("hours" to 7.5, "comment" to "Updated")
         val headers = HttpHeaders().apply { set("If-Match", version.toString()) }
-        
-        val updateResponse = restTemplate.exchange(
-            "/api/v1/worklog/entries/$entryId",
-            HttpMethod.PATCH,
-            HttpEntity(updateRequest, headers),
-            Void::class.java
-        )
+
+        val updateResponse =
+            restTemplate.exchange(
+                "/api/v1/worklog/entries/$entryId",
+                HttpMethod.PATCH,
+                HttpEntity(updateRequest, headers),
+                Void::class.java,
+            )
 
         assertEquals(HttpStatus.NO_CONTENT, updateResponse.statusCode)
     }
@@ -423,24 +447,26 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(50)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(9), 8.0)
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
 
         val rejectRequest = mapOf("reviewedBy" to managerId.toString())
-        val rejectResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/reject",
-            rejectRequest,
-            Map::class.java
-        )
+        val rejectResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/reject",
+                rejectRequest,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.BAD_REQUEST, rejectResponse.statusCode)
         val body = rejectResponse.body as Map<*, *>
@@ -455,28 +481,31 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(55)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(10), 8.0)
 
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
 
         val longReason = "x".repeat(1001)
-        val rejectRequest = mapOf(
-            "reviewedBy" to managerId.toString(),
-            "rejectionReason" to longReason
-        )
-        val rejectResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/reject",
-            rejectRequest,
-            Map::class.java
-        )
+        val rejectRequest =
+            mapOf(
+                "reviewedBy" to managerId.toString(),
+                "rejectionReason" to longReason,
+            )
+        val rejectResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/reject",
+                rejectRequest,
+                Map::class.java,
+            )
 
         assertEquals(HttpStatus.BAD_REQUEST, rejectResponse.statusCode)
     }
@@ -493,7 +522,7 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(60)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         // 1. Create entries
         val entryId1 = createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(1), 8.0)
         val entryId2 = createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(2), 7.5)
@@ -503,12 +532,13 @@ class ApprovalControllerTest : IntegrationTestBase() {
         assertEquals("DRAFT", (initialCheck.body as Map<*, *>)["status"])
 
         // 2. Submit
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         assertEquals(HttpStatus.CREATED, submitResponse.statusCode)
         val approvalId = (submitResponse.body as Map<*, *>)["approvalId"] as String
@@ -519,11 +549,12 @@ class ApprovalControllerTest : IntegrationTestBase() {
 
         // 3. Approve
         val approveRequest = mapOf("reviewedBy" to managerId.toString())
-        val approveResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId/approve",
-            approveRequest,
-            Void::class.java
-        )
+        val approveResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId/approve",
+                approveRequest,
+                Void::class.java,
+            )
         assertEquals(HttpStatus.NO_CONTENT, approveResponse.statusCode)
 
         // 4. Verify APPROVED and read-only
@@ -533,16 +564,17 @@ class ApprovalControllerTest : IntegrationTestBase() {
         // Try to update - should fail
         val version = (approvedCheck.body as Map<*, *>)["version"]
         val headers = HttpHeaders().apply { set("If-Match", version.toString()) }
-        val updateAttempt = restTemplate.exchange(
-            "/api/v1/worklog/entries/$entryId1",
-            HttpMethod.PATCH,
-            HttpEntity(mapOf("hours" to 6.0, "comment" to "Should fail"), headers),
-            Map::class.java
-        )
+        val updateAttempt =
+            restTemplate.exchange(
+                "/api/v1/worklog/entries/$entryId1",
+                HttpMethod.PATCH,
+                HttpEntity(mapOf("hours" to 6.0, "comment" to "Should fail"), headers),
+                Map::class.java,
+            )
 
         assertTrue(
             updateAttempt.statusCode == HttpStatus.BAD_REQUEST ||
-            updateAttempt.statusCode == HttpStatus.UNPROCESSABLE_ENTITY
+                updateAttempt.statusCode == HttpStatus.UNPROCESSABLE_ENTITY,
         )
     }
 
@@ -554,30 +586,33 @@ class ApprovalControllerTest : IntegrationTestBase() {
         val managerId = UUID.randomUUID()
         val date = LocalDate.now().minusDays(65)
         val (fiscalStart, fiscalEnd) = getFiscalMonthPeriod(date)
-        
+
         // 1. Create entry
         val entryId = createWorkLogEntry(memberId, projectId, fiscalStart.plusDays(3), 8.0)
 
         // 2. Submit
-        val submitRequest = mapOf(
-            "memberId" to memberId.toString(),
-            "fiscalMonthStart" to fiscalStart.toString(),
-            "fiscalMonthEnd" to fiscalEnd.toString(),
-            "submittedBy" to memberId.toString()
-        )
+        val submitRequest =
+            mapOf(
+                "memberId" to memberId.toString(),
+                "fiscalMonthStart" to fiscalStart.toString(),
+                "fiscalMonthEnd" to fiscalEnd.toString(),
+                "submittedBy" to memberId.toString(),
+            )
         val submitResponse1 = restTemplate.postForEntity("/api/v1/worklog/submissions", submitRequest, Map::class.java)
         val approvalId1 = (submitResponse1.body as Map<*, *>)["approvalId"] as String
 
         // 3. Reject
-        val rejectRequest = mapOf(
-            "reviewedBy" to managerId.toString(),
-            "rejectionReason" to "Please add more detail"
-        )
-        val rejectResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId1/reject",
-            rejectRequest,
-            Void::class.java
-        )
+        val rejectRequest =
+            mapOf(
+                "reviewedBy" to managerId.toString(),
+                "rejectionReason" to "Please add more detail",
+            )
+        val rejectResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId1/reject",
+                rejectRequest,
+                Void::class.java,
+            )
         assertEquals(HttpStatus.NO_CONTENT, rejectResponse.statusCode)
 
         // 4. Verify DRAFT and editable
@@ -588,12 +623,13 @@ class ApprovalControllerTest : IntegrationTestBase() {
         // 5. Edit entry
         val headers = HttpHeaders().apply { set("If-Match", version.toString()) }
         val updateRequest = mapOf("hours" to 7.5, "comment" to "Updated with more detail")
-        val updateResponse = restTemplate.exchange(
-            "/api/v1/worklog/entries/$entryId",
-            HttpMethod.PATCH,
-            HttpEntity(updateRequest, headers),
-            Void::class.java
-        )
+        val updateResponse =
+            restTemplate.exchange(
+                "/api/v1/worklog/entries/$entryId",
+                HttpMethod.PATCH,
+                HttpEntity(updateRequest, headers),
+                Void::class.java,
+            )
         assertEquals(HttpStatus.NO_CONTENT, updateResponse.statusCode)
 
         // 6. Resubmit
@@ -603,11 +639,12 @@ class ApprovalControllerTest : IntegrationTestBase() {
 
         // 7. Approve second submission
         val approveRequest = mapOf("reviewedBy" to managerId.toString())
-        val approveResponse = restTemplate.postForEntity(
-            "/api/v1/worklog/approvals/$approvalId2/approve",
-            approveRequest,
-            Void::class.java
-        )
+        val approveResponse =
+            restTemplate.postForEntity(
+                "/api/v1/worklog/approvals/$approvalId2/approve",
+                approveRequest,
+                Void::class.java,
+            )
         assertEquals(HttpStatus.NO_CONTENT, approveResponse.statusCode)
 
         // 8. Verify final APPROVED status

@@ -6,10 +6,14 @@ import com.worklog.domain.tenant.TenantId
 import com.worklog.fixtures.OrganizationFixtures.Companion.createOrganization
 import com.worklog.fixtures.OrganizationFixtures.Companion.randomCode
 import com.worklog.fixtures.OrganizationFixtures.Companion.randomOrganizationId
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.util.*
+import java.util.UUID
 
 /**
  * Domain unit tests for Organization aggregate.

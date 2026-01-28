@@ -13,7 +13,8 @@ public record DailyEntryProjection(
     BigDecimal totalAbsenceHours,
     String status,
     boolean isWeekend,
-    boolean isHoliday
+    boolean isHoliday,
+    boolean hasProxyEntries
 ) {
     /**
      * Creates a projection with default values.
@@ -25,6 +26,7 @@ public record DailyEntryProjection(
             BigDecimal.ZERO,
             "DRAFT",
             isWeekend,
+            false,
             false
         );
     }

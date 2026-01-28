@@ -99,7 +99,9 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       {/* Header with Approval Status */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Monthly Summary</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Monthly Summary
+          </h2>
           <p className="text-sm text-gray-600 mt-1">
             {new Date(year, month - 1).toLocaleString("en-US", {
               month: "long",
@@ -107,7 +109,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
             })}
           </p>
         </div>
-        
+
         {/* Approval Status Badge */}
         {summary.approvalStatus && (
           <div className="flex flex-col items-end gap-2">

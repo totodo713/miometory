@@ -8,7 +8,6 @@ import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
-import java.math.BigDecimal
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -504,7 +503,7 @@ class AbsenceControllerTest : IntegrationTestBase() {
     fun `POST absences should aggregate multiple absence entries when checking limit`() {
         // Arrange - Create 2 absence entries totaling 20 hours
         val testDate = LocalDate.now().minusDays(9)
-        
+
         val absence1Request =
             mapOf(
                 "memberId" to testMemberId.toString(),
@@ -1049,7 +1048,7 @@ class AbsenceControllerTest : IntegrationTestBase() {
         // Assert - Service throws DomainException which becomes 400
         assertTrue(
             response.statusCode == HttpStatus.BAD_REQUEST ||
-            response.statusCode == HttpStatus.NOT_FOUND
+                response.statusCode == HttpStatus.NOT_FOUND,
         )
     }
 
