@@ -47,6 +47,7 @@ export async function downloadTemplate(): Promise<void> {
 /**
  * Import a CSV file.
  * Returns an import ID that can be used to track progress.
+ * Uses credentials: "include" for session cookie authentication (CSRF protection).
  */
 export async function importCsv(
   file: File,
@@ -59,6 +60,7 @@ export async function importCsv(
   const response = await fetch(`${API_BASE_URL}/api/v1/worklog/csv/import`, {
     method: "POST",
     body: formData,
+    credentials: "include", // Include session cookies for CSRF protection
   });
 
   if (!response.ok) {

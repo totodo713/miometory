@@ -6,6 +6,7 @@ import com.worklog.infrastructure.csv.ProjectCodeResolver;
 import com.worklog.infrastructure.csv.StreamingCsvProcessor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -20,8 +21,6 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * REST API controller for CSV import operations.
@@ -33,15 +32,16 @@ public class CsvImportController {
 
     private final StreamingCsvProcessor csvProcessor;
     private final WorkLogEntryService workLogEntryService;
-    private final ExecutorService executorService;
+    private final TaskExecutor taskExecutor;
     private final Map<String, ImportProgress> activeImports;
 
     public CsvImportController(
             StreamingCsvProcessor csvProcessor,
-            WorkLogEntryService workLogEntryService) {
+            WorkLogEntryService workLogEntryService,
+            TaskExecutor taskExecutor) {
         this.csvProcessor = csvProcessor;
         this.workLogEntryService = workLogEntryService;
-        this.executorService = Executors.newCachedThreadPool();
+        this.taskExecutor = taskExecutor;
         this.activeImports = new ConcurrentHashMap<>();
     }
 
@@ -85,7 +85,8 @@ public class CsvImportController {
                     .body(Map.of("error", "File is empty"));
         }
 
-        if (!file.getOriginalFilename().endsWith(".csv")) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !originalFilename.endsWith(".csv")) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "File must be a CSV file"));
         }
@@ -96,7 +97,7 @@ public class CsvImportController {
         activeImports.put(importId, progress);
 
         // Start async processing
-        executorService.submit(() -> {
+        taskExecutor.execute(() -> {
             try {
                 StreamingCsvProcessor.ProcessingResult result = csvProcessor.processStream(
                         file.getInputStream(),
@@ -158,12 +159,18 @@ public class CsvImportController {
 
         emitter.onCompletion(() -> {
             progress.removeEmitter(emitter);
-            activeImports.remove(importId);
+            // Only remove from activeImports if import is completed or failed
+            if (progress.isFinished()) {
+                activeImports.remove(importId);
+            }
         });
 
         emitter.onTimeout(() -> {
             progress.removeEmitter(emitter);
-            activeImports.remove(importId);
+            // Only remove from activeImports if import is completed or failed
+            if (progress.isFinished()) {
+                activeImports.remove(importId);
+            }
         });
 
         // Send initial state
@@ -220,6 +227,10 @@ public class CsvImportController {
 
         public synchronized void removeEmitter(SseEmitter emitter) {
             emitters.remove(emitter);
+        }
+
+        public synchronized boolean isFinished() {
+            return "completed".equals(status) || "failed".equals(status);
         }
 
         private void notifyClients() {

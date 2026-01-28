@@ -8,6 +8,7 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -198,7 +199,7 @@ public class MonthlySummaryProjection {
             LocalDate effectiveEnd = absenceEnd.isAfter(endDate) ? endDate : absenceEnd;
             
             // Count days in the effective range
-            long days = effectiveStart.until(effectiveEnd).getDays() + 1;
+            long days = ChronoUnit.DAYS.between(effectiveStart, effectiveEnd) + 1;
             
             totalHours = totalHours.add(hoursPerDay.multiply(BigDecimal.valueOf(days)));
         }

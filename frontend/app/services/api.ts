@@ -12,7 +12,10 @@
  * Session timeout (30 minutes) is handled client-side via session timeout warnings.
  */
 
-import type { DailyCalendarEntry, MonthlyCalendarResponse } from "@/types/worklog";
+import type {
+  DailyCalendarEntry,
+  MonthlyCalendarResponse,
+} from "@/types/worklog";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -372,7 +375,12 @@ export const api = {
           totalHours: number;
           percentage: number;
         }>;
-        approvalStatus: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | null;
+        approvalStatus:
+          | "PENDING"
+          | "SUBMITTED"
+          | "APPROVED"
+          | "REJECTED"
+          | null;
         rejectionReason: string | null;
       }>(
         `/api/v1/worklog/calendar/${params.year}/${params.month}/summary?${query}`,

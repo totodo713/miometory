@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DailyEntryForm } from "../../../app/components/worklog/DailyEntryForm";
 
 // Mock API module - must return mock functions directly in the factory
@@ -293,7 +293,6 @@ describe("DailyEntryForm", () => {
     });
 
     it("should reject negative hours", async () => {
-      const user = userEvent.setup();
       render(
         <DailyEntryForm
           date={mockDate}
@@ -500,7 +499,6 @@ describe("DailyEntryForm", () => {
     });
 
     it("should not allow removing the last project row", async () => {
-      const user = userEvent.setup();
       render(
         <DailyEntryForm
           date={mockDate}

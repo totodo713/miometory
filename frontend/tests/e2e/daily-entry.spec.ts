@@ -11,7 +11,7 @@
  * - Data persists after page reload
  */
 
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Daily Entry Workflow", () => {
   const baseURL = "http://localhost:3000";
@@ -120,7 +120,7 @@ test.describe("Daily Entry Workflow", () => {
 
     // Verify form is loaded
     await expect(page.locator("h2, h3")).toContainText(
-      /Work Log Entry|Daily Entry|${testDate}/i,
+      /Work Log Entry|Daily Entry|2026-01-15/i,
     );
 
     // Step 4: Enter time for first project
@@ -233,7 +233,7 @@ test.describe("Daily Entry Workflow", () => {
     await page.goto(`${baseURL}/worklog/${testDate}`);
 
     // Initially should have 1 row
-    let projectRows = page.locator('input[id^="project-"]');
+    const projectRows = page.locator('input[id^="project-"]');
     await expect(projectRows).toHaveCount(1);
 
     // Add 2 more rows

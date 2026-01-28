@@ -245,7 +245,11 @@ export default function WorkLogPage() {
 
             {/* Monthly Summary (T072) */}
             <div className="mt-6">
-              <MonthlySummary year={year} month={month} memberId={effectiveMemberId} />
+              <MonthlySummary
+                year={year}
+                month={month}
+                memberId={effectiveMemberId}
+              />
             </div>
           </>
         )}

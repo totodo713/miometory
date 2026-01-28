@@ -12,13 +12,10 @@
  * 3. All entries created in proxy mode have enteredBy = manager, memberId = subordinate
  */
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { MemberSelector } from "@/components/worklog/MemberSelector";
-import {
-  useProxyMode,
-  type SubordinateMember,
-} from "@/services/worklogStore";
+import { type SubordinateMember, useProxyMode } from "@/services/worklogStore";
 
 // TODO: Get from authentication context
 const CURRENT_USER_ID = "00000000-0000-0000-0000-000000000001";

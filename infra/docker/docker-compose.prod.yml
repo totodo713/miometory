@@ -72,7 +72,7 @@ services:
     container_name: miometry-frontend
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: https://${DOMAIN:-localhost}/api
+      NEXT_PUBLIC_API_URL: https://${DOMAIN:-localhost}
     restart: unless-stopped
     # Internal network only - not exposed directly
     expose:

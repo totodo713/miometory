@@ -421,15 +421,13 @@ export function DailyEntryForm({
               <div className="flex items-center gap-2">
                 <span className="text-amber-800 font-medium">
                   Entering time as:{" "}
-                  <span className="font-bold">
-                    {targetMember.displayName}
-                  </span>
+                  <span className="font-bold">{targetMember.displayName}</span>
                 </span>
               </div>
               <p className="text-sm text-amber-700 mt-1">
                 This entry will be recorded on behalf of{" "}
-                {targetMember.displayName}. You will be logged as the person
-                who entered this data.
+                {targetMember.displayName}. You will be logged as the person who
+                entered this data.
               </p>
             </div>
           )}

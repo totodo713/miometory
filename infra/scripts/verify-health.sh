@@ -149,7 +149,7 @@ fi
 echo "--- Health Endpoints ---"
 
 # Primary health check
-check_endpoint_json "/api/v1/health" ".status" "UP" "API Health Check"
+check_endpoint_json "/api/v1/health" ".status" "ok" "API Health Check"
 
 # Readiness probe (for Kubernetes)
 check_endpoint "/ready" "200" "Readiness Probe" || true

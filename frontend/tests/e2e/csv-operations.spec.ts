@@ -12,8 +12,6 @@ import { expect, test } from "@playwright/test";
  * Task: T145 - CSV import/export roundtrip E2E test
  */
 test.describe("CSV Import/Export", () => {
-  const testMemberId = "00000000-0000-0000-0000-000000000001";
-
   test("should download CSV template", async ({ page }) => {
     await page.goto("/worklog/import");
 

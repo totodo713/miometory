@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -210,7 +211,7 @@ public class ApprovalQueueProjection {
             LocalDate effectiveEnd = absenceEnd.isAfter(endDate) ? endDate : absenceEnd;
             
             // Count days in the effective range
-            long days = effectiveStart.until(effectiveEnd).getDays() + 1;
+            long days = ChronoUnit.DAYS.between(effectiveStart, effectiveEnd) + 1;
             
             totalHours = totalHours.add(hoursPerDay.multiply(BigDecimal.valueOf(days)));
         }

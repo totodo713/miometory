@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CsvImportProgress } from "@/services/csvService";
 import { importCsv, subscribeToImportProgress } from "@/services/csvService";
 
@@ -15,6 +15,19 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState<CsvImportProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Ref to store EventSource cleanup function
+  const eventSourceCleanupRef = useRef<(() => void) | null>(null);
+
+  // Cleanup EventSource on unmount
+  useEffect(() => {
+    return () => {
+      if (eventSourceCleanupRef.current) {
+        eventSourceCleanupRef.current();
+        eventSourceCleanupRef.current = null;
+      }
+    };
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -64,7 +77,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
       const result = await importCsv(file, memberId);
 
       // Subscribe to progress updates
-      subscribeToImportProgress(
+      const cleanup = subscribeToImportProgress(
         result.importId,
         (progressData) => {
           setProgress(progressData);
@@ -75,16 +88,23 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
         },
         () => {
           setIsImporting(false);
-          if (progress?.status === "completed") {
-            onImportComplete?.();
-          }
+          // Use functional update to get latest progress state (avoids stale closure)
+          setProgress((currentProgress) => {
+            if (currentProgress?.status === "completed") {
+              onImportComplete?.();
+            }
+            return currentProgress;
+          });
         },
       );
+
+      // Store cleanup function for unmount
+      eventSourceCleanupRef.current = cleanup;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
       setIsImporting(false);
     }
-  }, [file, memberId, onImportComplete, progress?.status]);
+  }, [file, memberId, onImportComplete]);
 
   const handleReset = useCallback(() => {
     setFile(null);

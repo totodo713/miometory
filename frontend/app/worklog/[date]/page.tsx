@@ -7,9 +7,10 @@
  * Handles routing from calendar view (/worklog -> /worklog/2026-01-15)
  */
 
-import { use } from "react";
 import { useRouter } from "next/navigation";
+import { use } from "react";
 import { DailyEntryForm } from "@/components/worklog/DailyEntryForm";
+import { useProxyMode } from "@/services/worklogStore";
 
 interface PageProps {
   params: Promise<{
@@ -20,6 +21,9 @@ interface PageProps {
 export default function DailyEntryPage({ params }: PageProps) {
   const router = useRouter();
   const { date } = use(params);
+
+  // Proxy mode state - get effective member ID
+  const { isProxyMode, targetMember } = useProxyMode();
 
   // Parse date string to Date object
   let parsedDate: Date;
@@ -35,8 +39,12 @@ export default function DailyEntryPage({ params }: PageProps) {
     return null;
   }
 
-  // TODO: Get actual member ID from auth context
-  const memberId = "00000000-0000-0000-0000-000000000001";
+  // TODO: Get actual current user ID from auth context
+  const currentUserId = "00000000-0000-0000-0000-000000000001";
+
+  // Use target member ID if in proxy mode, otherwise use current user
+  const memberId =
+    isProxyMode && targetMember ? targetMember.id : currentUserId;
 
   const handleClose = () => {
     router.push("/worklog");

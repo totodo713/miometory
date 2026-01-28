@@ -12,7 +12,7 @@
  * - Auto-save doesn't trigger for read-only entries
  */
 
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Auto-Save Reliability", () => {
   const baseURL = "http://localhost:3000";
