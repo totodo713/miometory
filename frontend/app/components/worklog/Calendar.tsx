@@ -152,8 +152,10 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                       <span
                         className="text-xs text-amber-600"
                         title="Contains entries made by manager"
+                        aria-label="Contains entries made by manager"
+                        role="img"
                       >
-                        👤
+                        👤<span className="sr-only">Proxy entry indicator</span>
                       </span>
                     )}
                     {dateEntry.isHoliday && (

@@ -437,12 +437,12 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      expect(screen.getAllByLabelText(/project/i)).toHaveLength(1);
+      expect(screen.getAllByRole("textbox", { name: /project/i })).toHaveLength(1);
 
       await user.click(screen.getByRole("button", { name: /add project/i }));
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/project/i)).toHaveLength(2);
+        expect(screen.getAllByRole("textbox", { name: /project/i })).toHaveLength(2);
       });
     });
 
@@ -460,14 +460,14 @@ describe("DailyEntryForm", () => {
       await waitForLoading();
       await user.click(screen.getByRole("button", { name: /add project/i }));
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/project/i)).toHaveLength(2);
+        expect(screen.getAllByRole("textbox", { name: /project/i })).toHaveLength(2);
       });
 
       const removeButtons = screen.getAllByRole("button", { name: /remove/i });
       await user.click(removeButtons[0]);
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/project/i)).toHaveLength(1);
+        expect(screen.getAllByRole("textbox", { name: /project/i })).toHaveLength(1);
       });
     });
 

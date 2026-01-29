@@ -14,7 +14,10 @@
 #   1 - One or more health checks failed
 #
 
-set -e
+# Use set -u -o pipefail instead of set -e to allow check_endpoint* to fail
+# without immediately terminating the script. This allows FAILED aggregation
+# and summary output to work correctly.
+set -u -o pipefail
 
 # Colors for output
 RED='\033[0;31m'

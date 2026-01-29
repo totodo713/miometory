@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.UUID;
 
 /**
@@ -47,9 +48,10 @@ public class CsvExportController {
             @PathVariable int month,
             @RequestParam UUID memberId) throws IOException {
         
-        // Calculate fiscal month date range (21st to 20th)
-        LocalDate startDate = LocalDate.of(year, month, 21);
-        LocalDate endDate = startDate.plusMonths(1).minusDays(1); // 20th of next month
+        // Calculate fiscal month date range (21st of previous month to 20th of current month)
+        // This aligns with CalendarController's fiscal month logic
+        LocalDate startDate = YearMonth.of(year, month).atDay(1).minusMonths(1).withDayOfMonth(21);
+        LocalDate endDate = YearMonth.of(year, month).atDay(20);
         
         // Get entries for the date range (all statuses)
         var entries = workLogRepository.findByDateRange(

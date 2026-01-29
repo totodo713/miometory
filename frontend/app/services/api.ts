@@ -20,6 +20,30 @@ import type {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 /**
+ * Get CSRF token from cookie set by Spring Security.
+ * Spring Security sets XSRF-TOKEN cookie which we need to read
+ * and send back in X-XSRF-TOKEN header for non-GET requests.
+ *
+ * Note: This only works in browser environments (client-side).
+ * For server-side requests, CSRF is typically not required.
+ */
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") {
+    // Server-side rendering - no cookies available
+    return null;
+  }
+
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split("=");
+    if (name === "XSRF-TOKEN") {
+      return decodeURIComponent(value);
+    }
+  }
+  return null;
+}
+
+/**
  * API Error types
  */
 export class ApiError extends Error {
@@ -94,6 +118,16 @@ class ApiClient {
     // Add If-Match header for optimistic locking
     if (version !== undefined) {
       headers["If-Match"] = version.toString();
+    }
+
+    // Add CSRF token for non-safe methods (POST, PUT, PATCH, DELETE)
+    // Safe methods (GET, HEAD, OPTIONS, TRACE) don't require CSRF protection
+    const method = fetchOptions.method?.toUpperCase() || "GET";
+    if (!["GET", "HEAD", "OPTIONS", "TRACE"].includes(method)) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        headers["X-XSRF-TOKEN"] = csrfToken;
+      }
     }
 
     try {

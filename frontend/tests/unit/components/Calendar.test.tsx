@@ -7,7 +7,7 @@
 
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Calendar } from "@/components/worklog/Calendar";
 import type { DailyCalendarEntry } from "@/types/worklog";
 
@@ -251,7 +251,7 @@ describe("Calendar Component", () => {
         btn.textContent?.includes("24"),
       );
 
-      expect(weekendButton).toHaveClass("bg-gray-50");
+      expect(weekendButton).toHaveClass("bg-weekend-100");
     });
 
     it("should display holiday indicator", () => {
@@ -269,7 +269,7 @@ describe("Calendar Component", () => {
         btn.textContent?.includes("28"),
       );
 
-      expect(holidayButton).toHaveClass("bg-red-50");
+      expect(holidayButton).toHaveClass("bg-holiday-100");
     });
   });
 

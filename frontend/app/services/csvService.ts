@@ -7,7 +7,19 @@
  * - Exporting work log data to CSV
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+// Normalize API base URL to ensure no trailing path segments
+// NEXT_PUBLIC_API_URL should be the origin only (e.g., "https://example.com")
+const API_BASE_URL = (() => {
+  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  // Remove any trailing path segments to prevent double-prefix issues
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    // Fallback for relative URLs or invalid URLs
+    return url.replace(/\/+$/, "");
+  }
+})();
 
 export interface CsvImportProgress {
   totalRows: number;
@@ -98,10 +110,19 @@ export function subscribeToImportProgress(
     }
   });
 
+  // Handle server-sent "error" events with payload
+  // Note: Native connection errors dispatch as Event (not MessageEvent) without data
   eventSource.addEventListener("error", (event) => {
-    const errorData = JSON.parse((event as MessageEvent).data);
-    onError(errorData.error || "Unknown error");
-    eventSource.close();
+    if (event instanceof MessageEvent && typeof event.data === "string") {
+      try {
+        const errorData = JSON.parse(event.data);
+        onError(errorData.error || "Unknown error");
+      } catch {
+        onError("Failed to parse error response");
+      }
+      eventSource.close();
+    }
+    // Native transport errors are handled by eventSource.onerror below
   });
 
   eventSource.onerror = () => {

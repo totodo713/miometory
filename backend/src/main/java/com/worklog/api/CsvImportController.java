@@ -15,12 +15,18 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Scheduled;
+
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * REST API controller for CSV import operations.
@@ -30,6 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequestMapping("/api/v1/worklog/csv")
 public class CsvImportController {
 
+    /** TTL for finished imports in minutes before cleanup */
+    private static final long IMPORT_TTL_MINUTES = 30;
+
     private final StreamingCsvProcessor csvProcessor;
     private final WorkLogEntryService workLogEntryService;
     private final TaskExecutor taskExecutor;
@@ -38,11 +47,30 @@ public class CsvImportController {
     public CsvImportController(
             StreamingCsvProcessor csvProcessor,
             WorkLogEntryService workLogEntryService,
-            TaskExecutor taskExecutor) {
+            @Qualifier("applicationTaskExecutor") TaskExecutor taskExecutor) {
         this.csvProcessor = csvProcessor;
         this.workLogEntryService = workLogEntryService;
         this.taskExecutor = taskExecutor;
         this.activeImports = new ConcurrentHashMap<>();
+    }
+
+    /**
+     * Cleanup stale import progress entries that have been finished for longer than TTL.
+     * Runs every 5 minutes to prevent memory leaks from abandoned imports.
+     */
+    @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
+    public void cleanupStaleImports() {
+        Instant cutoff = Instant.now().minusSeconds(IMPORT_TTL_MINUTES * 60);
+        Iterator<Map.Entry<String, ImportProgress>> iterator = activeImports.entrySet().iterator();
+        
+        while (iterator.hasNext()) {
+            Map.Entry<String, ImportProgress> entry = iterator.next();
+            ImportProgress progress = entry.getValue();
+            
+            if (progress.isFinished() && progress.getCreatedAt().isBefore(cutoff)) {
+                iterator.remove();
+            }
+        }
     }
 
     /**
@@ -189,6 +217,7 @@ public class CsvImportController {
      * Internal class to track import progress and notify SSE clients.
      */
     private static class ImportProgress {
+        private final Instant createdAt = Instant.now();
         private int totalRows = 0;
         private int validRows = 0;
         private int errorRows = 0;
@@ -231,6 +260,10 @@ public class CsvImportController {
 
         public synchronized boolean isFinished() {
             return "completed".equals(status) || "failed".equals(status);
+        }
+
+        public Instant getCreatedAt() {
+            return createdAt;
         }
 
         private void notifyClients() {
