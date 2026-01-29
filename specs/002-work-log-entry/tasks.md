@@ -389,49 +389,49 @@
 
 ### UI/UX Refinements
 
-- [ ] T163 [P] Configure responsive breakpoints (375/768/1024px) in frontend/tailwind.config.js per FR-023
-- [ ] T164 [P] Add touch target sizing (≥44px) for mobile in frontend/app/globals.css
-- [ ] T165 [P] Implement custom color scheme (weekend blue, holiday orange) in frontend/tailwind.config.js per research.md
-- [ ] T166 [P] Create LoadingSpinner component in frontend/app/components/shared/LoadingSpinner.tsx
-- [ ] T167 [P] Create ErrorBoundary component in frontend/app/components/shared/ErrorBoundary.tsx
-- [ ] T168 [P] Add ARIA labels to all interactive elements for accessibility (FR-023, T101-T105)
+- [x] T163 [P] Configure responsive breakpoints (375/768/1024px) in frontend/tailwind.config.js per FR-023
+- [x] T164 [P] Add touch target sizing (≥44px) for mobile in frontend/app/globals.css
+- [x] T165 [P] Implement custom color scheme (weekend blue, holiday orange) in frontend/tailwind.config.js per research.md
+- [x] T166 [P] Create LoadingSpinner component in frontend/app/components/shared/LoadingSpinner.tsx
+- [x] T167 [P] Create ErrorBoundary component in frontend/app/components/shared/ErrorBoundary.tsx
+- [x] T168 [P] Add ARIA labels to all interactive elements for accessibility (FR-023, T101-T105)
 
 ### Performance Optimization
 
-- [ ] T169 [P] Add database indices for common queries in V7__performance_indices.sql (member_id + date range)
-- [ ] T170 [P] Implement projection caching with Redis in backend/src/main/java/com/worklog/infrastructure/projection/
-- [ ] T171 [P] Optimize calendar query to use projection instead of event replay in MonthlyCalendarProjection
-- [ ] T172 Run performance benchmarks and verify SC-006 (1s calendar load), SC-007 (100 concurrent users), SC-008 (2min mobile entry)
+- [x] T169 [P] Add database indices for common queries in V6__performance_indices.sql (member_id + date range)
+- [x] T170 [P] Implement projection caching with Redis in backend/src/main/java/com/worklog/infrastructure/config/CacheConfig.kt
+- [x] T171 [P] Optimize calendar query to use projection instead of event replay in MonthlyCalendarProjection
+- [x] T172 Run performance benchmarks and verify SC-006 (1s calendar load), SC-007 (100 concurrent users), SC-008 (2min mobile entry)
 
 ### Security Hardening
 
-- [ ] T173 [P] Add rate limiting to API endpoints in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
-- [ ] T174 [P] Implement CSRF protection for state-changing operations in SecurityConfig.kt
-- [ ] T175 [P] Add request/response logging with sensitive data masking in backend/src/main/kotlin/com/worklog/infrastructure/config/LoggingConfig.kt
-- [ ] T176 Verify TLS/HTTPS configuration for production in infra/docker/docker-compose.prod.yml (FR-032)
+- [x] T173 [P] Add rate limiting to API endpoints in backend/src/main/kotlin/com/worklog/infrastructure/config/RateLimitConfig.kt
+- [x] T174 [P] Implement CSRF protection for state-changing operations in SecurityConfig.kt
+- [x] T175 [P] Add request/response logging with sensitive data masking in backend/src/main/kotlin/com/worklog/infrastructure/config/LoggingConfig.kt
+- [x] T176 Verify TLS/HTTPS configuration for production in infra/docker/nginx/nginx.conf
 
 ### Testing & Quality
 
-- [ ] T177 Run all E2E tests and verify acceptance scenarios from spec.md (35 scenarios across 7 stories)
-- [ ] T178 Run accessibility tests with axe-core in frontend/e2e/accessibility.spec.ts (WCAG 2.1 AA compliance)
-- [ ] T179 Run browser compatibility tests (Chrome, Firefox, Safari, Edge latest 2 versions)
-- [ ] T180 Verify code coverage targets (backend ≥85%, frontend ≥80%)
-- [ ] T181 Run security scan with OWASP dependency check
+- [x] T177 Run all E2E tests and verify acceptance scenarios from spec.md (35 scenarios across 7 stories)
+- [x] T178 Run accessibility tests with axe-core in frontend/e2e/accessibility.spec.ts (WCAG 2.1 AA compliance)
+- [x] T179 Run browser compatibility tests (Chrome, Firefox, Safari, Edge latest 2 versions)
+- [x] T180 Verify code coverage targets (backend ≥85%, frontend ≥80%)
+- [x] T181 Run security scan with OWASP dependency check
 
 ### Documentation
 
-- [ ] T182 [P] Update quickstart.md with SSO mock configuration (4 test users per quickstart.md)
-- [ ] T183 [P] Create API documentation with OpenAPI spec in backend/src/main/resources/static/api-docs.html
-- [ ] T184 [P] Create user manual for engineers in docs/user-manual.md
-- [ ] T185 [P] Create manager guide for approval workflow in docs/manager-guide.md
-- [ ] T186 [P] Update AGENTS.md with Phase 1 technology decisions per plan.md
+- [x] T182 [P] Update quickstart.md with SSO mock configuration (4 test users per quickstart.md)
+- [x] T183 [P] Create API documentation with OpenAPI spec in backend/src/main/resources/static/api-docs.html
+- [x] T184 [P] Create user manual for engineers in docs/user-manual.md
+- [x] T185 [P] Create manager guide for approval workflow in docs/manager-guide.md
+- [x] T186 [P] Update AGENTS.md with Phase 10 technology decisions per plan.md
 
 ### Deployment
 
-- [ ] T187 Create production Docker Compose configuration in infra/docker/docker-compose.prod.yml
-- [ ] T188 Add health check endpoints verification in deployment script
-- [ ] T189 Create database backup strategy documentation in docs/backup-strategy.md
-- [ ] T190 Run quickstart.md validation (verify 5-minute setup works)
+- [x] T187 Create production Docker Compose configuration in infra/docker/docker-compose.prod.yml
+- [x] T188 Add health check endpoints verification in infra/scripts/verify-health.sh
+- [x] T189 Create database backup strategy documentation in docs/backup-strategy.md
+- [x] T190 Run quickstart.md validation (verify 5-minute setup works)
 
 ---
 
