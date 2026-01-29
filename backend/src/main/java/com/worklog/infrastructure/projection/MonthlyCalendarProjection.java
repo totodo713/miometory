@@ -1,5 +1,8 @@
 package com.worklog.infrastructure.projection;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -36,12 +39,18 @@ public class MonthlyCalendarProjection {
      * Gets daily totals for a member within a date range.
      * 
      * This method aggregates work hours from the work_log_entries_projection table.
+     * Results are cached with key: memberId:startDate:endDate
      * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
      * @return Map of date to total work hours
      */
+    @Cacheable(
+        cacheNames = "calendar:daily-totals",
+        key = "#memberId.toString() + ':' + #startDate.toString() + ':' + #endDate.toString()",
+        condition = "@environment.getProperty('worklog.cache.enabled', 'false') == 'true'"
+    )
     public Map<LocalDate, BigDecimal> getDailyTotals(
         UUID memberId,
         LocalDate startDate,
@@ -81,12 +90,18 @@ public class MonthlyCalendarProjection {
      * 
      * This method aggregates absence hours from the absences_projection table.
      * Since absences span date ranges, we need to expand them into daily hours.
+     * Results are cached with key: memberId:startDate:endDate
      * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
      * @return Map of date to total absence hours
      */
+    @Cacheable(
+        cacheNames = "calendar:absence-totals",
+        key = "#memberId.toString() + ':' + #startDate.toString() + ':' + #endDate.toString()",
+        condition = "@environment.getProperty('worklog.cache.enabled', 'false') == 'true'"
+    )
     public Map<LocalDate, BigDecimal> getAbsenceTotals(
         UUID memberId,
         LocalDate startDate,
@@ -136,12 +151,18 @@ public class MonthlyCalendarProjection {
 
     /**
      * Gets dates that have proxy entries (where entered_by != member_id) for a member.
+     * Results are cached with key: memberId:startDate:endDate
      * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
      * @return Set of dates that have at least one proxy entry
      */
+    @Cacheable(
+        cacheNames = "calendar:proxy-dates",
+        key = "#memberId.toString() + ':' + #startDate.toString() + ':' + #endDate.toString()",
+        condition = "@environment.getProperty('worklog.cache.enabled', 'false') == 'true'"
+    )
     public Set<LocalDate> getProxyEntryDates(
         UUID memberId,
         LocalDate startDate,
@@ -177,12 +198,18 @@ public class MonthlyCalendarProjection {
      * Gets daily calendar entries for a member within a date range.
      * 
      * This includes days with no entries (showing zero hours).
+     * Results are cached with key: memberId:startDate:endDate
      * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
      * @return List of daily entry projections
      */
+    @Cacheable(
+        cacheNames = "calendar:daily-entries",
+        key = "#memberId.toString() + ':' + #startDate.toString() + ':' + #endDate.toString()",
+        condition = "@environment.getProperty('worklog.cache.enabled', 'false') == 'true'"
+    )
     public List<DailyEntryProjection> getDailyEntries(
         UUID memberId,
         LocalDate startDate,
@@ -267,5 +294,39 @@ public class MonthlyCalendarProjection {
         }
 
         return dailyStatuses;
+    }
+
+    /**
+     * Evicts all cached data for a specific member.
+     * 
+     * Should be called when a member's work log entries or absences are modified.
+     * This uses a pattern-based eviction to clear all cache entries for the member.
+     * 
+     * @param memberId Member ID whose cache should be evicted
+     */
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "calendar:daily-totals", allEntries = true),
+        @CacheEvict(cacheNames = "calendar:absence-totals", allEntries = true),
+        @CacheEvict(cacheNames = "calendar:proxy-dates", allEntries = true),
+        @CacheEvict(cacheNames = "calendar:daily-entries", allEntries = true)
+    })
+    public void evictMemberCache(UUID memberId) {
+        // Cache eviction is handled by the annotations
+        // This method is intentionally empty - the @CacheEvict annotations do the work
+    }
+
+    /**
+     * Evicts all projection caches.
+     * 
+     * Should be called during bulk operations or data migrations.
+     */
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "calendar:daily-totals", allEntries = true),
+        @CacheEvict(cacheNames = "calendar:absence-totals", allEntries = true),
+        @CacheEvict(cacheNames = "calendar:proxy-dates", allEntries = true),
+        @CacheEvict(cacheNames = "calendar:daily-entries", allEntries = true)
+    })
+    public void evictAllCaches() {
+        // Cache eviction is handled by the annotations
     }
 }

@@ -8,6 +8,7 @@ plugins {
     kotlin("plugin.spring") version "2.3.0"
     jacoco
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+    id("org.owasp.dependencycheck") version "12.1.1"
 }
 
 group = "com.worklog"
@@ -42,6 +43,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.apache.commons:commons-csv:1.11.0")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
     runtimeOnly("org.postgresql:postgresql")
 
     // Test dependencies
