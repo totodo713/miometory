@@ -66,17 +66,22 @@ echo ""
 echo "Starting restore at $(date)"
 
 # Terminate existing connections
+# Use psql variables with identifier quoting to prevent SQL injection
 echo "Terminating existing connections..."
 psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d postgres \
-    -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '${DB_NAME}' AND pid <> pg_backend_pid();" \
+    -v dbname="${DB_NAME}" \
+    -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = :'dbname' AND pid <> pg_backend_pid();" \
     2>/dev/null || true
 
 # Drop and recreate database
+# Use psql variables with identifier quoting to prevent SQL injection
 echo "Recreating database..."
 psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d postgres \
-    -c "DROP DATABASE IF EXISTS ${DB_NAME};"
+    -v dbname="${DB_NAME}" -v dbowner="${DB_USER}" \
+    -c 'DROP DATABASE IF EXISTS :"dbname";'
 psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d postgres \
-    -c "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
+    -v dbname="${DB_NAME}" -v dbowner="${DB_USER}" \
+    -c 'CREATE DATABASE :"dbname" OWNER :"dbowner";'
 
 # Restore from backup
 echo "Restoring data..."

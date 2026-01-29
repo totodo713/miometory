@@ -21,6 +21,25 @@ const API_BASE_URL = (() => {
   }
 })();
 
+/**
+ * Get CSRF token from cookie set by Spring Security.
+ * Spring Security sets XSRF-TOKEN cookie which we need to read
+ * and send back in X-XSRF-TOKEN header for non-GET requests.
+ */
+function getCsrfToken(): string | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split("=");
+    if (name === "XSRF-TOKEN") {
+      return decodeURIComponent(value);
+    }
+  }
+  return null;
+}
+
 export interface CsvImportProgress {
   totalRows: number;
   validRows: number;
@@ -69,9 +88,16 @@ export async function importCsv(
   formData.append("file", file);
   formData.append("memberId", memberId);
 
+  const headers: Record<string, string> = {};
+  const csrfToken = getCsrfToken();
+  if (csrfToken) {
+    headers["X-XSRF-TOKEN"] = csrfToken;
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/v1/worklog/csv/import`, {
     method: "POST",
     body: formData,
+    headers,
     credentials: "include", // Include session cookies for CSRF protection
   });
 

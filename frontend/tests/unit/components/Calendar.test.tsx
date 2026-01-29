@@ -27,6 +27,7 @@ describe("Calendar Component", () => {
       status: "APPROVED",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-22",
@@ -35,6 +36,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-23",
@@ -43,6 +45,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-24",
@@ -51,6 +54,7 @@ describe("Calendar Component", () => {
       status: "SUBMITTED",
       isWeekend: true,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-25",
@@ -59,6 +63,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: true,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-26",
@@ -67,6 +72,7 @@ describe("Calendar Component", () => {
       status: "REJECTED",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-27",
@@ -75,6 +81,7 @@ describe("Calendar Component", () => {
       status: "MIXED",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-28",
@@ -83,6 +90,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: true,
+      hasProxyEntries: false,
     },
   ];
 
@@ -372,6 +380,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 
@@ -390,6 +399,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
         {
           date: "2026-01-22",
@@ -398,6 +408,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 
@@ -416,6 +427,7 @@ describe("Calendar Component", () => {
           status: "UNKNOWN" as any, // Force unknown status
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 
@@ -437,6 +449,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 

@@ -19,6 +19,10 @@ CREATE INDEX idx_work_log_entries_status_date
 
 -- Covering index for calendar view queries (avoid table lookups)
 -- Covers: "Get all entries for member in date range with hours and status"
+-- Note: This index extends the basic (member_id, work_date) index from V4 by
+-- including additional columns to enable index-only scans for calendar queries.
+-- Both indices are retained: V4's simpler index is still optimal for non-calendar
+-- queries that only need member+date lookup without the extra columns.
 CREATE INDEX idx_work_log_entries_calendar_covering 
     ON work_log_entries_projection (member_id, work_date) 
     INCLUDE (project_id, hours, status, notes);

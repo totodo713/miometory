@@ -47,6 +47,7 @@ class CorsConfig {
                 "Authorization",
                 "If-Match", // For optimistic locking
                 "If-None-Match", // For caching
+                "X-XSRF-TOKEN", // For CSRF protection
             )
 
         // Expose ETag header for optimistic locking
