@@ -92,57 +92,54 @@ test.describe("Proxy Entry Workflow", () => {
       },
     );
 
-    // Mock calendar API for manager
-    await page.route(
-      `**/api/v1/worklog/calendar/**memberId=${managerId}**`,
-      async (route) => {
+    // Mock calendar API - handle all requests including summary
+    await page.route("**/api/v1/worklog/calendar/**", async (route) => {
+      const url = route.request().url();
+      
+      // Handle summary endpoint
+      if (url.includes("/summary")) {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            memberId: managerId,
-            memberName: managerName,
-            periodStart: "2025-12-21",
-            periodEnd: "2026-01-20",
-            dates: Array.from({ length: 31 }, (_, i) => ({
-              date: `2026-01-${String(i + 1).padStart(2, "0")}`,
-              totalWorkHours: 0,
-              totalAbsenceHours: 0,
-              status: "DRAFT",
-              isWeekend: [6, 0].includes(new Date(2026, 0, i + 1).getDay()),
-              isHoliday: false,
-              hasProxyEntries: false,
-            })),
+            year: 2026,
+            month: 1,
+            totalWorkHours: 0,
+            totalAbsenceHours: 0,
+            totalBusinessDays: 22,
+            projects: [],
+            approvalStatus: null,
+            rejectionReason: null,
           }),
         });
-      },
-    );
-
-    // Mock calendar API for subordinate (with proxy entry indicator)
-    await page.route(
-      `**/api/v1/worklog/calendar/**memberId=${subordinateId}**`,
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            memberId: subordinateId,
-            memberName: subordinateName,
-            periodStart: "2025-12-21",
-            periodEnd: "2026-01-20",
-            dates: Array.from({ length: 31 }, (_, i) => ({
-              date: `2026-01-${String(i + 1).padStart(2, "0")}`,
-              totalWorkHours: i === 14 ? 8 : 0, // Day 15 has proxy entry
-              totalAbsenceHours: 0,
-              status: i === 14 ? "DRAFT" : "DRAFT",
-              isWeekend: [6, 0].includes(new Date(2026, 0, i + 1).getDay()),
-              isHoliday: false,
-              hasProxyEntries: i === 14, // Day 15 has proxy entry indicator
-            })),
-          }),
-        });
-      },
-    );
+        return;
+      }
+      
+      // Check if this is for subordinate (has subordinateId in URL)
+      const isSubordinate = url.includes(subordinateId);
+      const memberIdToUse = isSubordinate ? subordinateId : managerId;
+      const memberNameToUse = isSubordinate ? subordinateName : managerName;
+      
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          memberId: memberIdToUse,
+          memberName: memberNameToUse,
+          periodStart: "2025-12-21",
+          periodEnd: "2026-01-20",
+          dates: Array.from({ length: 31 }, (_, i) => ({
+            date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+            totalWorkHours: isSubordinate && i === 14 ? 8 : 0, // Day 15 has proxy entry for subordinate
+            totalAbsenceHours: 0,
+            status: "DRAFT",
+            isWeekend: [6, 0].includes(new Date(2026, 0, i + 1).getDay()),
+            isHoliday: false,
+            hasProxyEntries: isSubordinate && i === 14, // Day 15 has proxy entry indicator for subordinate
+          })),
+        }),
+      });
+    });
 
     // Mock get entries API (initially empty for subordinate)
     await page.route("**/api/v1/worklog/entries?**", async (route) => {
@@ -188,6 +185,20 @@ test.describe("Proxy Entry Workflow", () => {
         await route.continue();
       }
     });
+
+    // Mock previous month projects API
+    await page.route("**/api/v1/worklog/projects/previous-month**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projectIds: [],
+          previousMonthStart: "2025-12-21",
+          previousMonthEnd: "2026-01-20",
+          count: 0,
+        }),
+      });
+    });
   });
 
   test("manager can navigate to proxy entry page and see subordinates", async ({
@@ -198,18 +209,22 @@ test.describe("Proxy Entry Workflow", () => {
       waitUntil: "networkidle",
     });
 
-    // Step 2: Click on "Enter Time for Team" button
-    const proxyButton = page.getByRole("link", {
+    // Step 2: Click on "Enter Time for Team" link
+    const proxyLink = page.getByRole("link", {
       name: /Enter Time for Team/i,
     });
-    await expect(proxyButton).toBeVisible();
-    await proxyButton.click();
+    await expect(proxyLink).toBeVisible();
+    await proxyLink.click();
 
     // Step 3: Verify navigation to proxy page
     await expect(page).toHaveURL(/\/worklog\/proxy/);
 
-    // Step 4: Verify subordinate is listed
-    await expect(page.getByText(subordinateName)).toBeVisible();
+    // Step 4: Verify subordinate selector is available (it's a select dropdown)
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    await expect(memberSelector).toBeVisible();
+    
+    // Verify subordinate is listed as an option
+    await expect(page.locator(`option:has-text("${subordinateName}")`)).toBeAttached();
   });
 
   test("manager can enable proxy mode and see proxy banner", async ({
@@ -220,36 +235,45 @@ test.describe("Proxy Entry Workflow", () => {
       waitUntil: "networkidle",
     });
 
-    // Select subordinate from dropdown or list
-    const subordinateOption = page.getByRole("button", {
-      name: new RegExp(subordinateName, "i"),
+    // Select subordinate from dropdown
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    await expect(memberSelector).toBeVisible();
+    await memberSelector.selectOption({ value: subordinateId });
+
+    // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
+    const enterTimeButton = page.getByRole("button", {
+      name: /Enter Time for/i,
     });
-    await expect(subordinateOption).toBeVisible();
-    await subordinateOption.click();
+    await enterTimeButton.click();
 
     // Should redirect back to worklog with proxy mode enabled
-    await expect(page).toHaveURL(/\/worklog/);
+    await expect(page).toHaveURL(/\/worklog$/);
 
-    // Verify proxy banner is displayed
-    const proxyBanner = page.getByText(/Entering time as:/i);
+    // Verify proxy banner is displayed (text says "Proxy Mode: Entering time for")
+    const proxyBanner = page.getByText(/Proxy Mode: Entering time for/i);
     await expect(proxyBanner).toBeVisible();
-    await expect(page.getByText(subordinateName)).toBeVisible();
+    // Subordinate name appears in the proxy banner
+    await expect(proxyBanner.locator("..").getByText(subordinateName)).toBeVisible();
   });
 
   test("manager can exit proxy mode", async ({ page }) => {
-    // Navigate to worklog in proxy mode
+    // Navigate to proxy page and enable proxy mode
     await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
     // Select subordinate
-    const subordinateOption = page.getByRole("button", {
-      name: new RegExp(subordinateName, "i"),
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    await memberSelector.selectOption({ value: subordinateId });
+
+    // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
+    const enterTimeButton = page.getByRole("button", {
+      name: /Enter Time for/i,
     });
-    await subordinateOption.click();
+    await enterTimeButton.click();
 
     // Verify in proxy mode
-    await expect(page.getByText(/Entering time as:/i)).toBeVisible();
+    await expect(page.getByText(/Proxy Mode: Entering time for/i)).toBeVisible();
 
     // Click exit proxy mode button
     const exitButton = page.getByRole("button", { name: /Exit Proxy Mode/i });
@@ -257,28 +281,34 @@ test.describe("Proxy Entry Workflow", () => {
     await exitButton.click();
 
     // Verify proxy banner is no longer visible
-    await expect(page.getByText(/Entering time as:/i)).not.toBeVisible();
+    await expect(page.getByText(/Proxy Mode: Entering time for/i)).not.toBeVisible();
   });
 
   test("proxy entry form shows 'Entering as' banner", async ({ page }) => {
-    // Navigate to worklog in proxy mode (simulate via URL params)
-    // Note: In real E2E this would go through the proxy selection flow
+    // Navigate to proxy page and enable proxy mode
     await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
     // Select subordinate to enter proxy mode
-    const subordinateOption = page.getByRole("button", {
-      name: new RegExp(subordinateName, "i"),
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    await memberSelector.selectOption({ value: subordinateId });
+
+    // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
+    const enterTimeButton = page.getByRole("button", {
+      name: /Enter Time for/i,
     });
-    await subordinateOption.click();
+    await enterTimeButton.click();
 
     // Wait for worklog page with proxy mode
-    await page.waitForURL(/\/worklog/);
+    await page.waitForURL(/\/worklog$/);
 
     // Click on a date to open daily entry form
-    const dateButton = page.getByRole("button", { name: /January 15/ });
+    const dateButton = page.locator('button[aria-label*="January 15"]');
     await dateButton.click();
+
+    // Wait for the daily entry dialog
+    await page.waitForSelector('[role="dialog"]');
 
     // Verify the form shows proxy entry banner
     await expect(page.getByText(/Entering time as:/i)).toBeVisible();
@@ -290,18 +320,31 @@ test.describe("Proxy Entry Workflow", () => {
   test("calendar shows proxy entry indicator for entries made by manager", async ({
     page,
   }) => {
-    // Navigate to subordinate's worklog (which has proxy entries from mock)
-    await page.goto(`${baseURL}/worklog?memberId=${subordinateId}`, {
+    // Navigate to proxy page first to enable proxy mode
+    await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
-    // The mock data has hasProxyEntries=true for Jan 15
+    // Select subordinate
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    await memberSelector.selectOption({ value: subordinateId });
+
+    // Click Enter Time button to enable proxy mode
+    const enterTimeButton = page.getByRole("button", {
+      name: /Enter Time for/i,
+    });
+    await enterTimeButton.click();
+
+    // Wait for worklog page with proxy mode
+    await page.waitForURL(/\/worklog$/);
+
+    // The mock data has hasProxyEntries=true for Jan 15 for subordinate
     // Find the calendar cell for that day and verify it has proxy indicator
-    const day15Cell = page.getByRole("button", { name: /January 15/ });
+    const day15Cell = page.locator('button[aria-label*="January 15"]');
     await expect(day15Cell).toBeVisible();
 
-    // The proxy indicator should be visible (using person icon or similar)
-    // Check for the proxy indicator icon within the cell
+    // The proxy indicator should be visible (using person icon emoji 👤)
+    // Check for the proxy indicator within the cell (has title="Contains entries made by manager")
     const proxyIndicator = day15Cell.locator('[title*="manager"]');
     await expect(proxyIndicator).toBeVisible();
   });

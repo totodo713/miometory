@@ -14,10 +14,99 @@ import { expect, test } from "@playwright/test";
  * Task: T153 - E2E test for copy previous month
  */
 test.describe("Copy Previous Month", () => {
-  // Member ID for potential future use
-  const _testMemberId = "00000000-0000-0000-0000-000000000001";
+  const memberId = "00000000-0000-0000-0000-000000000001";
 
   test.beforeEach(async ({ page }) => {
+    // Mock calendar API (skip summary endpoint)
+    await page.route("**/api/v1/worklog/calendar/**", async (route) => {
+      if (route.request().url().includes("/summary")) {
+        await route.continue();
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          memberId: memberId,
+          memberName: "Test Engineer",
+          periodStart: "2026-01-01",
+          periodEnd: "2026-01-31",
+          dates: Array.from({ length: 31 }, (_, i) => ({
+            date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+            totalWorkHours: 0,
+            totalAbsenceHours: 0,
+            status: "DRAFT",
+            isWeekend: [6, 0].includes(new Date(2026, 0, i + 1).getDay()),
+            isHoliday: false,
+          })),
+        }),
+      });
+    });
+
+    // Mock calendar summary API
+    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          year: 2026,
+          month: 1,
+          totalWorkHours: 0,
+          totalAbsenceHours: 0,
+          totalBusinessDays: 22,
+          projects: [],
+          approvalStatus: null,
+          rejectionReason: null,
+        }),
+      });
+    });
+
+    // Mock entries API
+    await page.route("**/api/v1/worklog/entries**", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            entries: [],
+            total: 0,
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Mock absences API
+    await page.route("**/api/v1/absences**", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            absences: [],
+            total: 0,
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Mock previous month projects API
+    await page.route("**/api/v1/worklog/projects/previous-month**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projectIds: ["PRJ-001", "PRJ-002"],
+          previousMonthStart: "2025-12-21",
+          previousMonthEnd: "2026-01-20",
+          count: 2,
+        }),
+      });
+    });
+
     // Navigate to worklog page
     await page.goto("/worklog");
     await page.waitForLoadState("networkidle");
@@ -48,6 +137,20 @@ test.describe("Copy Previous Month", () => {
   test("should show empty state when no previous entries exist", async ({
     page,
   }) => {
+    // Override the previous-month-projects mock to return empty
+    await page.route("**/api/v1/worklog/projects/previous-month**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projectIds: [],
+          previousMonthStart: "2029-12-21",
+          previousMonthEnd: "2030-01-20",
+          count: 0,
+        }),
+      });
+    });
+
     // Navigate to a month with no entries
     await page.goto("/worklog?year=2030&month=1");
     await page.waitForLoadState("networkidle");

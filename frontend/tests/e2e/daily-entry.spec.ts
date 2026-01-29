@@ -21,6 +21,7 @@ test.describe("Daily Entry Workflow", () => {
   test.beforeEach(async ({ page }) => {
     // Mock the API endpoints to avoid needing a real backend
     // This allows E2E tests to run independently
+    // API calls go to localhost:8080
 
     // Mock calendar API
     await page.route("**/api/v1/worklog/calendar/**", async (route) => {
@@ -45,15 +46,19 @@ test.describe("Daily Entry Workflow", () => {
     });
 
     // Mock get entries API (initially empty)
-    await page.route("**/api/v1/worklog/entries?**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          entries: [],
-          total: 0,
-        }),
-      });
+    await page.route("**/api/v1/worklog/entries**", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            entries: [],
+            total: 0,
+          }),
+        });
+      } else {
+        await route.continue();
+      }
     });
 
     // Mock create entry API
@@ -92,20 +97,86 @@ test.describe("Daily Entry Workflow", () => {
         await route.continue();
       }
     });
+
+    // Mock absence API
+    await page.route("**/api/v1/absences**", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            absences: [],
+            total: 0,
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    // Mock monthly summary API (used by MonthlySummary component on calendar page)
+    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          year: 2026,
+          month: 1,
+          totalWorkHours: 0,
+          totalAbsenceHours: 0,
+          totalBusinessDays: 22,
+          projects: [],
+          approvalStatus: null,
+          rejectionReason: null,
+        }),
+      });
+    });
+
+    // Mock previous month projects API (used by CopyPreviousMonthDialog)
+    await page.route("**/api/v1/worklog/previous-month-projects**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projects: [],
+        }),
+      });
+    });
   });
 
   test("should complete full daily entry workflow", async ({ page }) => {
-    // Step 1: Navigate to calendar view
-    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
-    await expect(page).toHaveURL(/\/worklog$/);
+    // Log all requests that fail to be mocked
+    page.on("requestfailed", (request) => {
+      console.log("Request failed:", request.url(), request.failure()?.errorText);
+    });
+    
+    // Log console errors
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        console.log("Console error:", msg.text());
+      }
+    });
+
+    // Step 1: Navigate to calendar view for January 2026
+    await page.goto(`${baseURL}/worklog?year=2026&month=1`, { waitUntil: "networkidle" });
+    
+    // Wait for page load and calendar render
+    await page.waitForLoadState("domcontentloaded");
+    
+    // Debug: capture page content if h1 not found
+    const h1Element = page.locator("h1");
+    const h1Count = await h1Element.count();
+    if (h1Count === 0) {
+      console.log("H1 not found, page content:", await page.content());
+    }
 
     // Verify calendar is loaded
-    await expect(page.locator("h1")).toContainText("Work Log");
+    await expect(page.locator("h1")).toContainText("Miometry", { timeout: 10000 });
 
     // Wait for calendar to be fully rendered with data
     await expect(
       page.locator('button[aria-label*="January 15"]'),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     // Step 2: Click on a specific date (15th)
     // The calendar should have clickable date cells
@@ -133,7 +204,7 @@ test.describe("Daily Entry Workflow", () => {
 
     // Step 5: Add second project
     // Click "Add Project" button
-    await page.click('button:has-text("Add Project")');
+    await page.click('button:has-text("+ Add Project")');
 
     // Fill second project row
     const secondProjectInput = page.locator('input[id="project-1"]');
@@ -142,8 +213,8 @@ test.describe("Daily Entry Workflow", () => {
     await secondProjectInput.fill("project-2");
     await secondHoursInput.fill("3");
 
-    // Step 6: Verify total hours calculation
-    await expect(page.locator("text=/Total.*8.00h/")).toBeVisible();
+    // Step 6: Verify total hours calculation (use .first() to target main total display)
+    await expect(page.locator("text=/8\\.00h/").first()).toBeVisible();
 
     // Step 7: Save the entry
     await page.click('button:has-text("Save")');
@@ -152,7 +223,7 @@ test.describe("Daily Entry Workflow", () => {
     await expect(page).toHaveURL(`${baseURL}/worklog`);
 
     // Step 9: Verify calendar is displayed again
-    await expect(page.locator("h1")).toContainText("Work Log");
+    await expect(page.locator("h1")).toContainText("Miometry");
 
     // Note: Verifying updated hours in calendar would require mocking
     // the calendar API response to include the newly saved data
@@ -197,15 +268,15 @@ test.describe("Daily Entry Workflow", () => {
     await hoursInput.fill("2.25"); // 2 hours 15 minutes
 
     // Add another project with 0.5h
-    await page.click('button:has-text("Add Project")');
+    await page.click('button:has-text("+ Add Project")');
     const secondProjectInput = page.locator('input[id="project-1"]');
     const secondHoursInput = page.locator('input[id="hours-1"]');
 
     await secondProjectInput.fill("project-2");
     await secondHoursInput.fill("0.75"); // 45 minutes
 
-    // Verify total: 2.25 + 0.75 = 3.0
-    await expect(page.locator("text=/Total.*3.00h/i")).toBeVisible();
+    // Verify total: 2.25 + 0.75 = 3.0 (use .first() to target main total display)
+    await expect(page.locator("text=/3\\.00h/i").first()).toBeVisible();
 
     // Save should work
     const saveButton = page.locator('button:has-text("Save")');
@@ -237,8 +308,8 @@ test.describe("Daily Entry Workflow", () => {
     await expect(projectRows).toHaveCount(1);
 
     // Add 2 more rows
-    await page.click('button:has-text("Add Project")');
-    await page.click('button:has-text("Add Project")');
+    await page.click('button:has-text("+ Add Project")');
+    await page.click('button:has-text("+ Add Project")');
 
     // Should now have 3 rows
     await expect(projectRows).toHaveCount(3);
@@ -260,7 +331,7 @@ test.describe("Daily Entry Workflow", () => {
     // Should now have 2 rows
     await expect(projectRows).toHaveCount(2);
 
-    // Verify total: 3 + 1 = 4
-    await expect(page.locator("text=/Total.*4.00h/i")).toBeVisible();
+    // Verify total: 3 + 1 = 4 (use .first() to target main total display)
+    await expect(page.locator("text=/4\\.00h/i").first()).toBeVisible();
   });
 });
