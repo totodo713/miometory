@@ -69,13 +69,13 @@ CREATE INDEX IF NOT EXISTS idx_event_store_type_created
     ON event_store (aggregate_type, created_at);
 
 -- ============================================================================
--- Member Table: Hierarchy Queries
+-- Members Table: Hierarchy Queries
 -- ============================================================================
 
 -- Covering index for subordinate lookup with display info
 -- Covers: "Get all active subordinates for a manager with their names"
-CREATE INDEX idx_member_manager_covering 
-    ON member (manager_id) 
+CREATE INDEX idx_members_manager_covering 
+    ON members (manager_id) 
     INCLUDE (display_name, email, is_active) 
     WHERE manager_id IS NOT NULL AND is_active = true;
 
@@ -91,4 +91,4 @@ COMMENT ON INDEX idx_absences_overlap IS 'Optimizes overlap detection: find abse
 COMMENT ON INDEX idx_monthly_approvals_org_status_period IS 'Optimizes approval dashboard: pending approvals by org and period';
 COMMENT ON INDEX idx_event_store_created_brin IS 'BRIN index for time-series event queries on event_store table (smaller than B-tree)';
 COMMENT ON INDEX idx_event_store_type_created IS 'Optimizes event replay by aggregate type and time on event_store table';
-COMMENT ON INDEX idx_member_manager_covering IS 'Covering index for subordinate list with display info';
+COMMENT ON INDEX idx_members_manager_covering IS 'Covering index for subordinate list with display info';
