@@ -35,11 +35,12 @@ No additional setup is required. Your employee profile is automatically synced f
 ### Recording Work Hours
 
 1. Click on any day in the calendar to open the daily entry form
-2. Enter your working hours:
-   - **Start Time**: When you began working (e.g., 09:00)
-   - **End Time**: When you finished working (e.g., 18:00)
-   - **Break Duration**: Total break time in minutes (e.g., 60)
-3. Your work hours are calculated automatically: `End Time - Start Time - Break Duration`
+2. For each project you worked on:
+   - **Project**: Enter or select the project ID
+   - **Hours**: Enter hours worked (in 0.25 increments, e.g., 7.5)
+   - **Comment**: Optionally add a description of work performed
+3. Click "+ Add Project" to add additional projects for the same day
+4. Your total daily hours are calculated automatically from all project entries
 
 ### Auto-Save Feature
 
@@ -159,16 +160,15 @@ Speed up data entry by copying from a previous month.
 1. Navigate to the month you want to fill
 2. Click "Copy from Previous Month"
 3. Select which data to copy:
-   - Work hours (start/end times, breaks)
-   - Project allocations
+   - Project allocations and hours
    - Regular schedule only (excludes absences)
 4. Click "Copy"
 
 ### What Gets Copied
 
-- Working hour patterns (e.g., 9:00-18:00)
-- Break durations
-- Project allocations (if selected)
+- Project allocations and hours
+- Comments (if present)
+- Daily work patterns
 
 ### What Doesn't Get Copied
 
