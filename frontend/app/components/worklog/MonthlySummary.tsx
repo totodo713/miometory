@@ -171,16 +171,16 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
           <div className="text-2xl font-bold text-sky-900 mt-1">
             {summary.totalAbsenceHours}h
           </div>
-          <div className="text-xs text-sky-600 mt-1">Time away from work</div>
+          <div className="text-xs text-sky-700 mt-1">Time away from work</div>
         </div>
         <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-          <div className="text-sm text-green-600 font-medium">
+          <div className="text-sm text-green-700 font-medium">
             Business Days
           </div>
           <div className="text-2xl font-bold text-green-900 mt-1">
             {summary.totalBusinessDays}
           </div>
-          <div className="text-xs text-green-600 mt-1">In this period</div>
+          <div className="text-xs text-green-700 mt-1">In this period</div>
         </div>
       </div>
 

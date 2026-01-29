@@ -9,7 +9,7 @@
  * Task: T150 - Implement confirmation dialog with project preview
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/services/api";
 
 interface CopyPreviousMonthDialogProps {
@@ -42,6 +42,56 @@ export function CopyPreviousMonthDialog({
   const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(
     new Set(),
   );
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const firstFocusableRef = useRef<HTMLButtonElement>(null);
+  const lastFocusableRef = useRef<HTMLButtonElement>(null);
+
+  // Handle escape key to close dialog
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+
+      // Focus trap: Tab key cycles within dialog
+      if (event.key === "Tab" && dialogRef.current) {
+        const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (event.shiftKey) {
+          // Shift+Tab: if on first element, go to last
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement?.focus();
+          }
+        } else {
+          // Tab: if on last element, go to first
+          if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement?.focus();
+          }
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Focus first focusable element when dialog opens
+  useEffect(() => {
+    if (isOpen && dialogRef.current) {
+      const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      focusableElements[0]?.focus();
+    }
+  }, [isOpen]);
 
   const loadPreviousMonthProjects = useCallback(async () => {
     setIsLoading(true);
@@ -113,11 +163,20 @@ export function CopyPreviousMonthDialog({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      ref={dialogRef}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="copy-month-dialog-title"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2
+            id="copy-month-dialog-title"
+            className="text-lg font-semibold text-gray-900"
+          >
             Copy from Previous Month
           </h2>
           <p className="mt-1 text-sm text-gray-600">

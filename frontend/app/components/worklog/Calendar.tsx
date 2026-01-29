@@ -148,7 +148,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                   <span
                     className={`
                     text-sm font-medium
-                    ${dateEntry.isWeekend ? "text-gray-500" : "text-gray-900"}
+                    ${dateEntry.isWeekend ? "text-gray-600" : "text-gray-900"}
                   `}
                   >
                     {dayNum}

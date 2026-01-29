@@ -160,7 +160,7 @@ export default function WorkLogPage() {
             {/* Proxy Entry Link (for managers) */}
             <Link
               href="/worklog/proxy"
-              className="px-4 py-2 bg-yellow-500 text-white rounded-md shadow-sm text-sm font-medium hover:bg-yellow-600"
+              className="px-4 py-2 bg-amber-700 text-white rounded-md shadow-sm text-sm font-medium hover:bg-amber-800"
             >
               Enter Time for Team
             </Link>
@@ -173,7 +173,7 @@ export default function WorkLogPage() {
             </button>
             <Link
               href="/worklog/import"
-              className="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-green-700"
+              className="px-4 py-2 bg-green-700 text-white rounded-md shadow-sm text-sm font-medium hover:bg-green-800"
             >
               Import CSV
             </Link>

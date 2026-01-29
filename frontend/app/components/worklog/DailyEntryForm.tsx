@@ -392,12 +392,17 @@ export function DailyEntryForm({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="daily-entry-title"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">
+            <h2 id="daily-entry-title" className="text-2xl font-bold">
               Daily Entry -{" "}
               {date.toLocaleDateString("en-US", {
                 year: "numeric",
@@ -498,7 +503,7 @@ export function DailyEntryForm({
                   totalExceeds24
                     ? "text-red-600"
                     : totalHours === 0
-                      ? "text-gray-400"
+                      ? "text-gray-500"
                       : "text-green-600"
                 }`}
               >
@@ -712,10 +717,18 @@ export function DailyEntryForm({
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-confirm-title"
+          aria-describedby="delete-confirm-description"
+        >
           <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
-            <p className="mb-6">
+            <h3 id="delete-confirm-title" className="text-lg font-bold mb-4">
+              Confirm Delete
+            </h3>
+            <p id="delete-confirm-description" className="mb-6">
               Are you sure you want to delete this entry? This action cannot be
               undone.
             </p>
