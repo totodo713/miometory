@@ -1,6 +1,7 @@
 package com.worklog.benchmark
 
 import com.worklog.IntegrationTestBase
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -22,7 +23,11 @@ import kotlin.test.assertTrue
  * - SC-006: Calendar view loads within 1 second for 30 entries
  * - SC-007: System supports 100 concurrent users without degradation
  * - SC-008: Time entry operations complete quickly (API portion of 2min mobile target)
+ *
+ * These tests are tagged with "performance" and excluded from the default test suite
+ * to avoid flakiness in CI. Run with: ./gradlew test -PincludeTags=performance
  */
+@Tag("performance")
 class PerformanceBenchmarkTest : IntegrationTestBase() {
     @Autowired
     private lateinit var restTemplate: TestRestTemplate

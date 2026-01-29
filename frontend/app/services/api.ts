@@ -12,10 +12,7 @@
  * Session timeout (30 minutes) is handled client-side via session timeout warnings.
  */
 
-import type {
-  DailyCalendarEntry,
-  MonthlyCalendarResponse,
-} from "@/types/worklog";
+import type { MonthlyCalendarResponse } from "@/types/worklog";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 

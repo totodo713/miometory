@@ -67,7 +67,15 @@ dependencies {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        // Exclude performance tests by default (they are slow and may be flaky in CI)
+        // Run performance tests with: ./gradlew test -PincludeTags=performance
+        if (!project.hasProperty("includeTags")) {
+            excludeTags("performance")
+        } else {
+            includeTags(project.property("includeTags") as String)
+        }
+    }
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

@@ -59,7 +59,9 @@ export interface CsvImportResult {
  * Download the CSV template file.
  */
 export async function downloadTemplate(): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/worklog/csv/template`);
+  const response = await fetch(`${API_BASE_URL}/api/v1/worklog/csv/template`, {
+    credentials: "include", // Include session cookies for cross-origin requests
+  });
   if (!response.ok) {
     throw new Error("Failed to download template");
   }
@@ -124,6 +126,7 @@ export function subscribeToImportProgress(
 ): () => void {
   const eventSource = new EventSource(
     `${API_BASE_URL}/api/v1/worklog/csv/import/${importId}/progress`,
+    { withCredentials: true }, // Include session cookies for cross-origin SSE
   );
 
   eventSource.addEventListener("progress", (event) => {
@@ -177,6 +180,9 @@ export async function exportCsv(
 ): Promise<void> {
   const response = await fetch(
     `${API_BASE_URL}/api/v1/worklog/csv/export/${year}/${month}?memberId=${memberId}`,
+    {
+      credentials: "include", // Include session cookies for cross-origin requests
+    },
   );
 
   if (!response.ok) {
