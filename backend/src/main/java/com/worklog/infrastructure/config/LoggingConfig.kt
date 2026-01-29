@@ -54,7 +54,7 @@ class LoggingProperties {
  * - Skips health check endpoints to reduce noise
  */
 @Component
-@Order(Ordered.HIGHEST_PRECEDENCE + 10) // Run after rate limiting
+@Order(Ordered.HIGHEST_PRECEDENCE + 10) // Run early in filter chain for comprehensive request logging
 class LoggingFilter(
     private val properties: LoggingProperties,
 ) : OncePerRequestFilter() {
@@ -90,6 +90,7 @@ class LoggingFilter(
             setOf(
                 "/actuator",
                 "/health",
+                "/api/v1/health",
                 "/ready",
             )
     }

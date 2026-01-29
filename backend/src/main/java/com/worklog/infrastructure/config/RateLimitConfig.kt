@@ -115,7 +115,7 @@ class RateLimitFilter(
 
         // Skip rate limiting for health check endpoints
         val path = request.requestURI
-        if (path.startsWith("/actuator") || path == "/health" || path == "/ready") {
+        if (path.startsWith("/actuator") || path == "/health" || path == "/api/v1/health" || path == "/ready") {
             filterChain.doFilter(request, response)
             return
         }

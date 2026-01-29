@@ -78,6 +78,7 @@ class SecurityConfig(
                     .ignoringRequestMatchers(
                         "/actuator/**",
                         "/health",
+                        "/api/v1/health",
                         "/ready",
                     )
             }.cors { it.configurationSource(corsConfigurationSource) }
@@ -87,6 +88,7 @@ class SecurityConfig(
                     .requestMatchers(
                         "/actuator/**",
                         "/health",
+                        "/api/v1/health",
                         "/ready",
                         "/docs",
                         "/api-docs",
