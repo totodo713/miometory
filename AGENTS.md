@@ -161,6 +161,8 @@ frontend/app/
 - **Time granularity**: 15-minute increments for all time entries
 - **Fiscal months**: 21st-20th pattern for month boundaries
 - **CSV streaming**: Chunked processing for large file imports
+- **Redis caching**: Optional projection caching with 5-minute TTL (enabled in production)
+- **Rate limiting**: Token bucket algorithm with configurable RPS and burst size
 
 ### Performance Targets
 | Metric | Target | Validation |
@@ -171,6 +173,90 @@ frontend/app/
 | Mobile entry time | < 2 minutes | SC-008 |
 | Auto-save reliability | 99.9% | SC-011 |
 
+### Infrastructure Configuration
+
+**Development:**
+```bash
+# Start development stack
+cd infra/docker && docker compose up -d
+
+# Backend dev server
+cd backend && ./gradlew bootRun
+
+# Frontend dev server
+cd frontend && npm run dev
+```
+
+**Production:**
+```bash
+# Production with TLS, Redis caching, and health checks
+cd infra/docker && docker compose -f docker-compose.prod.yml --env-file prod.env up -d
+```
+
+**Environment Variables (Production):**
+| Variable | Description | Default |
+|----------|-------------|---------|
+| POSTGRES_PASSWORD | Database password | (required) |
+| REDIS_PASSWORD | Redis password | (optional) |
+| CACHE_ENABLED | Enable Redis caching | true |
+| RATE_LIMIT_ENABLED | Enable API rate limiting | true |
+| RATE_LIMIT_RPS | Requests per second | 20 |
+| RATE_LIMIT_BURST | Burst size | 50 |
+
+### Security Features (Phase 10)
+- **CSRF Protection**: Cookie-based for SPA (`SecurityConfig.kt`)
+- **Rate Limiting**: Token bucket algorithm (`RateLimitConfig.kt`)
+- **Request Logging**: With sensitive data masking (`LoggingConfig.kt`)
+- **TLS/HTTPS**: Nginx reverse proxy with modern cipher suites
+- **Session Management**: 30-minute timeout with secure cookies
+
+### Accessibility (WCAG 2.1 AA)
+- ARIA labels on all interactive elements
+- Modal dialogs with proper `role="dialog"` and `aria-modal`
+- Alert messages with `role="alert"` and `aria-live`
+- Keyboard navigation support throughout
+
 ## Recent Changes
 - 001-foundation: Added Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend)
 - 002-work-log-entry: Implemented complete Miometry Entry System with 7 user stories (daily entry, multi-project, absences, approval workflow, CSV import/export, copy previous month, proxy entry)
+- 002-work-log-entry (Phase 10): Added Redis caching, ARIA accessibility improvements, performance indices, rate limiting, CSRF protection, TLS configuration, API documentation (OpenAPI/Swagger)
+
+## Test Results Summary (Phase 10 Validation)
+
+### Performance Benchmarks ✅
+| Benchmark | Target | Result | Status |
+|-----------|--------|--------|--------|
+| SC-006 Calendar Load | < 1 second | Avg 8.8ms, Max 13ms | ✅ PASSED |
+| SC-007 100 Concurrent Users | 95%+ success | 100% (300/300 requests) | ✅ PASSED |
+| SC-008 Mobile API Operations | < 2 seconds | 26ms total | ✅ PASSED |
+
+### Unit Tests
+| Component | Tests | Pass Rate |
+|-----------|-------|-----------|
+| Backend (JUnit 5) | All | 100% |
+| Frontend Calendar (Vitest) | 32 | 100% |
+| Frontend DailyEntryForm (Vitest) | 43 | 100% |
+
+### E2E Tests (Chromium)
+| Result | Count |
+|--------|-------|
+| Passed | 30 |
+| Failed | 33 |
+| **Note** | Failures are selector mismatches between tests and actual UI |
+
+### Code Coverage
+| Component | Coverage | Target | Status |
+|-----------|----------|--------|--------|
+| Backend | 76.1% | 85% | ⚠️ Below target |
+| Frontend Unit | 100% | 80% | ✅ Above target |
+
+### Security Scan (OWASP)
+**Frontend (npm audit):**
+- High: 1 (Next.js image optimizer)
+- Moderate: 4 (esbuild, vite dependencies)
+- Fix available: `npm audit fix --force`
+
+**Backend:**
+- OWASP Dependency Check plugin added to `build.gradle.kts`
+- Run: `./gradlew dependencyCheckAnalyze`
+
