@@ -144,7 +144,7 @@ echo "Timeout: ${TIMEOUT}s per request"
 echo ""
 
 # Wait for service if --wait flag is provided
-if [ "$2" == "--wait" ]; then
+if [ "${2:-}" == "--wait" ]; then
     wait_for_service || exit 1
     echo ""
 fi

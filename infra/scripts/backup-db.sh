@@ -28,7 +28,7 @@ pg_dump \
     -Fc \
     -f "${BACKUP_FILE}"
 
-# Compress and encrypt
+# Compress backup file
 gzip "${BACKUP_FILE}"
 FINAL_FILE="${BACKUP_FILE}.gz"
 
