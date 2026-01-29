@@ -53,18 +53,22 @@ CREATE INDEX idx_monthly_approvals_org_status_period
 -- ============================================================================
 -- Event Store: Time-Series Optimization with BRIN Index
 -- ============================================================================
+-- NOTE: The actual event store table is `event_store` (created in V2).
+-- The `work_log_events` table is a legacy/renamed reference. If this migration
+-- fails due to table not existing, update the table name to `event_store`.
+-- These indices optimize event replay and projection rebuilding operations.
 
 -- BRIN index for time-series queries on event store
 -- BRIN is much smaller than B-tree for time-series data with natural ordering
 -- Covers: "Replay events in a time range" for projection rebuilding
-CREATE INDEX idx_work_log_events_occurred_brin 
-    ON work_log_events USING BRIN (occurred_at) 
+CREATE INDEX IF NOT EXISTS idx_work_log_events_occurred_brin 
+    ON event_store USING BRIN (occurred_at) 
     WITH (pages_per_range = 32);
 
 -- Composite index for aggregate type + occurred_at (event sourcing queries)
 -- Covers: "Get all events of type X after timestamp Y"
-CREATE INDEX idx_work_log_events_type_occurred 
-    ON work_log_events (aggregate_type, occurred_at);
+CREATE INDEX IF NOT EXISTS idx_work_log_events_type_occurred 
+    ON event_store (aggregate_type, occurred_at);
 
 -- ============================================================================
 -- Member Table: Hierarchy Queries
@@ -87,6 +91,6 @@ COMMENT ON INDEX idx_work_log_entries_calendar_covering IS 'Covering index for c
 COMMENT ON INDEX idx_absences_org_dates IS 'Optimizes manager view: org-wide absences in date range';
 COMMENT ON INDEX idx_absences_overlap IS 'Optimizes overlap detection: find absences overlapping a date range';
 COMMENT ON INDEX idx_monthly_approvals_org_status_period IS 'Optimizes approval dashboard: pending approvals by org and period';
-COMMENT ON INDEX idx_work_log_events_occurred_brin IS 'BRIN index for time-series event queries (smaller than B-tree)';
-COMMENT ON INDEX idx_work_log_events_type_occurred IS 'Optimizes event replay by aggregate type and time';
+COMMENT ON INDEX idx_work_log_events_occurred_brin IS 'BRIN index for time-series event queries on event_store table (smaller than B-tree)';
+COMMENT ON INDEX idx_work_log_events_type_occurred IS 'Optimizes event replay by aggregate type and time on event_store table';
 COMMENT ON INDEX idx_member_manager_covering IS 'Covering index for subordinate list with display info';

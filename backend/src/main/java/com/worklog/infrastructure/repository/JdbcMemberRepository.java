@@ -237,6 +237,7 @@ public class JdbcMemberRepository {
         public Member mapRow(ResultSet rs, int rowNum) throws SQLException {
             UUID managerId = (UUID) rs.getObject("manager_id");
             Instant createdAt = rs.getTimestamp("created_at").toInstant();
+            Instant updatedAt = rs.getTimestamp("updated_at").toInstant();
             
             return new Member(
                 MemberId.of(rs.getObject("id", UUID.class)),
@@ -246,7 +247,8 @@ public class JdbcMemberRepository {
                 rs.getString("display_name"),
                 managerId != null ? MemberId.of(managerId) : null,
                 rs.getBoolean("is_active"),
-                createdAt
+                createdAt,
+                updatedAt
             );
         }
     }

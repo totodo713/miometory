@@ -7,7 +7,7 @@
  * Fetches and displays the manager's subordinates for time entry on their behalf.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { api } from "@/services/api";
 import type { SubordinateMember } from "@/services/worklogStore";
 
@@ -37,6 +37,7 @@ export function MemberSelector({
   label = "Select Team Member",
   placeholder = "Choose a team member...",
 }: MemberSelectorProps) {
+  const selectorId = useId();
   const [subordinates, setSubordinates] = useState<SubordinateMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,14 +96,14 @@ export function MemberSelector({
     <div className={`flex flex-col gap-1 ${className}`}>
       {label && (
         <label
-          htmlFor="member-selector"
+          htmlFor={selectorId}
           className="text-sm font-medium text-gray-700"
         >
           {label}
         </label>
       )}
       <select
-        id="member-selector"
+        id={selectorId}
         value={selectedMember?.id || ""}
         onChange={handleChange}
         disabled={isLoading}

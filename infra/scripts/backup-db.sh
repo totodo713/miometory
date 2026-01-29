@@ -46,13 +46,16 @@ echo "Size: $(du -h "${FINAL_FILE}" | cut -f1)"
 case "${BACKUP_TYPE}" in
     daily)
         find "${BACKUP_DIR}" -name "*.dump.gz" -mtime +30 -delete
+        find "${BACKUP_DIR}" -name "*.dump.gz.sha256" -mtime +30 -delete
         ;;
     weekly)
         find "${BACKUP_DIR}" -name "*.dump.gz" -mtime +84 -delete
+        find "${BACKUP_DIR}" -name "*.dump.gz.sha256" -mtime +84 -delete
         ;;
     monthly)
         # Keep for 7 years (2555 days)
         find "${BACKUP_DIR}" -name "*.dump.gz" -mtime +2555 -delete
+        find "${BACKUP_DIR}" -name "*.dump.gz.sha256" -mtime +2555 -delete
         ;;
 esac
 

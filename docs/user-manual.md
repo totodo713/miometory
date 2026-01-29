@@ -153,27 +153,24 @@ If your submission is rejected:
 
 ## Copy Previous Month
 
-Speed up data entry by copying from a previous month.
+Speed up data entry by copying your project list from a previous month.
 
 ### How to Copy
 
 1. Navigate to the month you want to fill
 2. Click "Copy from Previous Month"
-3. Select which data to copy:
-   - Project allocations and hours
-   - Regular schedule only (excludes absences)
-4. Click "Copy"
+3. The system will copy your project assignments from last month
+4. You will still need to enter hours and comments for each day
 
 ### What Gets Copied
 
-- Project allocations and hours
-- Comments (if present)
-- Daily work patterns
+- Project assignments (the list of projects you worked on)
 
 ### What Doesn't Get Copied
 
+- Work hours (you must enter these manually)
+- Comments and notes
 - Absences (vacation, sick leave, etc.)
-- Notes and comments
 - Days that already have entries (won't be overwritten)
 
 ---
