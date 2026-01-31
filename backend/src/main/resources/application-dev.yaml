@@ -1,0 +1,34 @@
+# ============================================================================
+# Development Profile Configuration
+# ============================================================================
+# Purpose: Enable seed data loading and development-friendly settings
+# Usage: ./gradlew bootRun --args='--spring.profiles.active=dev'
+#    or: SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+# ============================================================================
+
+spring:
+  # SQL Initialization - Load seed data on startup
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data-dev.sql
+      # Continue on error to handle idempotent re-runs gracefully
+      continue-on-error: false
+
+  # Flyway runs before SQL init by default (order is correct)
+  flyway:
+    enabled: true
+
+# Development-specific settings
+worklog:
+  cache:
+    enabled: false  # Disable Redis cache in dev for simpler debugging
+  rate-limit:
+    enabled: false  # Disable rate limiting in dev
+
+# Logging - More verbose for development
+logging:
+  level:
+    com.miometry.worklog: DEBUG
+    org.springframework.jdbc: DEBUG
+    org.springframework.sql: DEBUG
