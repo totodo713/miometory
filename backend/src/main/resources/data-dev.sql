@@ -106,8 +106,33 @@ ON CONFLICT (id) DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================================================
--- 5. Members (using UUIDs that match frontend hardcoded values)
--- Note: Table is named 'members' (plural) in the actual schema
+-- 5. Projects (must be before work log entries which reference them)
+-- ============================================================================
+INSERT INTO projects (
+    id, tenant_id, code, name, is_active, valid_from, valid_until, created_at, updated_at
+)
+VALUES (
+    '990e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440001',
+    'WORKLOG-DEV',
+    'Work-Log Development Project',
+    true,
+    '2025-01-01',  -- Project started January 2025
+    NULL,          -- No end date (ongoing project)
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    code = EXCLUDED.code,
+    is_active = EXCLUDED.is_active,
+    valid_from = EXCLUDED.valid_from,
+    valid_until = EXCLUDED.valid_until,
+    updated_at = CURRENT_TIMESTAMP;
+
+-- ============================================================================
+-- 6. Members (using UUIDs that match frontend hardcoded values)
+-- Note: Table is named 'members' (plural) in the schema
 -- ============================================================================
 
 -- Alice (Manager) - Insert first since others reference her as manager
@@ -197,7 +222,7 @@ ON CONFLICT (id) DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================================================
--- 6. Sample Work Log Entries (for current month - testing purposes)
+-- 7. Sample Work Log Entries (for current month - testing purposes)
 -- ============================================================================
 -- Note: Uses dynamic date calculation for current month
 
@@ -299,7 +324,7 @@ ON CONFLICT (id) DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================================================
--- 7. Sample Absences (for testing absence features)
+-- 8. Sample Absences (for testing absence features)
 -- ============================================================================
 INSERT INTO absences_projection (
     id, member_id, organization_id, absence_type, start_date, end_date, hours_per_day, notes, status, version, created_at, updated_at
