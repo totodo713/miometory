@@ -29,6 +29,6 @@ worklog:
 # Logging - More verbose for development
 logging:
   level:
-    com.miometry.worklog: DEBUG
+    com.worklog: DEBUG
     org.springframework.jdbc: DEBUG
     org.springframework.sql: DEBUG

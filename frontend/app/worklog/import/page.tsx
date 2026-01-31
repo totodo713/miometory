@@ -27,8 +27,7 @@ export default function CsvImportPage() {
   };
 
   const handleImportComplete = () => {
-    // Optionally redirect to worklog page or show success message
-    console.log("Import completed successfully");
+    // Import completed successfully - could redirect or show a toast notification here
   };
 
   return (

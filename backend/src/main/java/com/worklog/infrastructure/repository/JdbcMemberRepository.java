@@ -41,7 +41,7 @@ public class JdbcMemberRepository {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name, 
                    manager_id, is_active, version, created_at, updated_at
-            FROM member
+            FROM members
             WHERE id = ?
             """;
 
@@ -59,7 +59,7 @@ public class JdbcMemberRepository {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name, 
                    manager_id, is_active, version, created_at, updated_at
-            FROM member
+            FROM members
             WHERE email = ?
             """;
 
@@ -78,7 +78,7 @@ public class JdbcMemberRepository {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name, 
                    manager_id, is_active, version, created_at, updated_at
-            FROM member
+            FROM members
             WHERE manager_id = ? AND is_active = true
             ORDER BY display_name
             """;
@@ -99,7 +99,7 @@ public class JdbcMemberRepository {
                 -- Base case: direct reports
                 SELECT id, tenant_id, organization_id, email, display_name, 
                        manager_id, is_active, version, created_at, updated_at, 1 as level
-                FROM member
+                FROM members
                 WHERE manager_id = ? AND is_active = true
                 
                 UNION ALL
@@ -107,7 +107,7 @@ public class JdbcMemberRepository {
                 -- Recursive case: reports of reports
                 SELECT m.id, m.tenant_id, m.organization_id, m.email, m.display_name, 
                        m.manager_id, m.is_active, m.version, m.created_at, m.updated_at, s.level + 1
-                FROM member m
+                FROM members m
                 INNER JOIN subordinates s ON m.manager_id = s.id
                 WHERE m.is_active = true AND s.level < 10  -- Prevent infinite loops, max 10 levels
             )
@@ -132,13 +132,13 @@ public class JdbcMemberRepository {
             WITH RECURSIVE chain AS (
                 -- Start from the member and walk up the chain
                 SELECT id, manager_id, 1 as level
-                FROM member
+                FROM members
                 WHERE id = ?
                 
                 UNION ALL
                 
                 SELECT m.id, m.manager_id, c.level + 1
-                FROM member m
+                FROM members m
                 INNER JOIN chain c ON m.id = c.manager_id
                 WHERE c.level < 10  -- Prevent infinite loops
             )
@@ -163,7 +163,7 @@ public class JdbcMemberRepository {
      */
     public boolean isDirectSubordinateOf(MemberId managerId, MemberId memberId) {
         String sql = """
-            SELECT 1 FROM member 
+            SELECT 1 FROM members 
             WHERE id = ? AND manager_id = ? AND is_active = true
             LIMIT 1
             """;
@@ -179,12 +179,15 @@ public class JdbcMemberRepository {
 
     /**
      * Saves a member (insert or update).
+     * Uses optimistic locking: update only succeeds if the version matches.
      * 
      * @param member The member to save
+     * @param expectedVersion The expected current version for optimistic locking (use 0 for new records)
+     * @throws OptimisticLockingException if the version doesn't match (concurrent modification)
      */
-    public void save(Member member) {
+    public void save(Member member, int expectedVersion) {
         String upsertSql = """
-            INSERT INTO member (id, tenant_id, organization_id, email, display_name, 
+            INSERT INTO members (id, tenant_id, organization_id, email, display_name, 
                                manager_id, is_active, version, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
@@ -192,11 +195,12 @@ public class JdbcMemberRepository {
                 display_name = EXCLUDED.display_name,
                 manager_id = EXCLUDED.manager_id,
                 is_active = EXCLUDED.is_active,
-                version = member.version + 1,
+                version = members.version + 1,
                 updated_at = EXCLUDED.updated_at
+            WHERE members.version = ?
             """;
 
-        jdbcTemplate.update(
+        int rowsAffected = jdbcTemplate.update(
             upsertSql,
             member.getId().value(),
             member.getTenantId().value(),
@@ -205,10 +209,31 @@ public class JdbcMemberRepository {
             member.getDisplayName(),
             member.getManagerId() != null ? member.getManagerId().value() : null,
             member.isActive(),
-            0, // Version starts at 0 for new records
+            expectedVersion, // Version for new records
             Timestamp.from(member.getCreatedAt()),
-            Timestamp.from(member.getUpdatedAt())
+            Timestamp.from(member.getUpdatedAt()),
+            expectedVersion // Version check for update
         );
+
+        // For inserts (new records), rowsAffected will be 1
+        // For updates, rowsAffected will be 1 if version matched, 0 if not
+        if (rowsAffected == 0) {
+            // Check if record exists - if it does, it's a version mismatch
+            if (findById(member.getId()).isPresent()) {
+                throw new org.springframework.dao.OptimisticLockingFailureException(
+                    "Member was modified by another transaction. Expected version: " + expectedVersion
+                );
+            }
+        }
+    }
+
+    /**
+     * Saves a member (insert only, for backward compatibility).
+     * 
+     * @param member The member to save
+     */
+    public void save(Member member) {
+        save(member, 0);
     }
 
     /**
@@ -221,7 +246,7 @@ public class JdbcMemberRepository {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name, 
                    manager_id, is_active, version, created_at, updated_at
-            FROM member
+            FROM members
             WHERE organization_id = ? AND is_active = true
             ORDER BY display_name
             """;

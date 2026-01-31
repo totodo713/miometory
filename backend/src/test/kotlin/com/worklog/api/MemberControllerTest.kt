@@ -68,7 +68,7 @@ class MemberControllerTest : IntegrationTestBase() {
         // Insert manager
         jdbcTemplate.update(
             """
-            INSERT INTO member (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
+            INSERT INTO members (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
             VALUES (?, ?, ?, ?, ?, NULL, true, 0)
             ON CONFLICT (id) DO NOTHING
             """,
@@ -82,7 +82,7 @@ class MemberControllerTest : IntegrationTestBase() {
         // Insert subordinate (reports to manager)
         jdbcTemplate.update(
             """
-            INSERT INTO member (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
+            INSERT INTO members (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
             VALUES (?, ?, ?, ?, ?, ?, true, 0)
             ON CONFLICT (id) DO NOTHING
             """,
@@ -97,7 +97,7 @@ class MemberControllerTest : IntegrationTestBase() {
         // Insert non-subordinate (no manager relationship)
         jdbcTemplate.update(
             """
-            INSERT INTO member (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
+            INSERT INTO members (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
             VALUES (?, ?, ?, ?, ?, NULL, true, 0)
             ON CONFLICT (id) DO NOTHING
             """,

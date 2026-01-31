@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { CsvImportProgress } from "@/services/csvService";
 import { importCsv, subscribeToImportProgress } from "@/services/csvService";
 
@@ -18,6 +18,10 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
 
   // Ref to store EventSource cleanup function
   const eventSourceCleanupRef = useRef<(() => void) | null>(null);
+  // Ref for the file input element to allow value reset
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // Use React's useId for unique IDs (safe for SSR and multiple instances)
+  const inputId = useId();
 
   // Cleanup EventSource on unmount
   useEffect(() => {
@@ -111,6 +115,10 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
     setProgress(null);
     setError(null);
     setIsImporting(false);
+    // Clear the file input value so selecting the same file triggers onChange
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }, []);
 
   const getProgressPercentage = () => {
@@ -134,10 +142,11 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => document.getElementById("csv-file-input")?.click()}
+          onClick={() => fileInputRef.current?.click()}
         >
           <input
-            id="csv-file-input"
+            ref={fileInputRef}
+            id={inputId}
             type="file"
             accept=".csv"
             onChange={handleFileSelect}
