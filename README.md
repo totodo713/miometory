@@ -102,9 +102,9 @@ All domain aggregates use event sourcing:
 cd infra/docker
 docker-compose -f docker-compose.dev.yml up -d
 
-# Backend
+# Backend (with seed data)
 cd backend
-./gradlew bootRun
+./gradlew bootRun --args='--spring.profiles.active=dev'
 
 # Frontend
 cd frontend
@@ -114,6 +114,64 @@ npm install && npm run dev
 The application will be available at:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8080
+
+### Development Setup with Seed Data
+
+For reviewers and new developers, we provide a complete seed data setup:
+
+```bash
+# 1. Start Docker containers (PostgreSQL + Redis)
+cd infra/docker
+docker-compose -f docker-compose.dev.yml up -d
+
+# 2. Start backend with dev profile (loads seed data automatically)
+cd backend
+./gradlew bootRun --args='--spring.profiles.active=dev'
+
+# 3. Start frontend
+cd frontend
+npm install && npm run dev
+```
+
+The `dev` profile automatically:
+- Runs Flyway migrations (V1-V7)
+- Loads `data-dev.sql` with sample data
+- Disables Redis cache and rate limiting for easier debugging
+
+#### Seed Data Contents
+
+| Entity | Count | Description |
+|--------|-------|-------------|
+| Tenant | 1 | Miometry Corporation |
+| Organization | 1 | Engineering Department |
+| Members | 4 | Test users (see below) |
+| Work Log Entries | 5 | Sample entries with various statuses |
+| Absences | 2 | Vacation and sick leave examples |
+
+#### Test Users
+
+| User | Email | Role | UUID |
+|------|-------|------|------|
+| Bob Engineer | bob.engineer@miometry.example.com | Regular user | `00000000-0000-0000-0000-000000000001` |
+| Alice Manager | alice.manager@miometry.example.com | Manager | `00000000-0000-0000-0000-000000000002` |
+| Charlie Engineer | charlie.engineer@miometry.example.com | Subordinate | `00000000-0000-0000-0000-000000000003` |
+| David Independent | david.independent@miometry.example.com | Independent | `00000000-0000-0000-0000-000000000004` |
+
+> **Note**: The frontend currently uses hardcoded mock UUIDs. Bob (UUID ending in `...01`) is the default user, and Alice (UUID ending in `...02`) is used for manager view testing.
+
+#### Resetting Seed Data
+
+The seed data is idempotent. To reset to a clean state:
+
+```bash
+# Option 1: Re-run with dev profile (updates existing data)
+./gradlew bootRun --args='--spring.profiles.active=dev'
+
+# Option 2: Full database reset
+docker-compose -f docker-compose.dev.yml down -v
+docker-compose -f docker-compose.dev.yml up -d
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
 
 ### Manual Setup
 
@@ -250,6 +308,6 @@ Services:
 
 ---
 
-**Last Updated**: 2026-01-28  
-**Version**: 0.1.0  
+**Last Updated**: 2026-02-01  
+**Version**: 0.2.0  
 **Product**: Miometry (ミオメトリー)
