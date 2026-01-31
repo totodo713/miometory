@@ -117,7 +117,7 @@ _No special Copilot or Cursor agent instructions are present. If present, add th
 
 ---
 
-*Last updated: 2026-01-01*
+*Last updated: 2026-02-01*
 
 ## Active Technologies
 - Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend) (001-foundation)
@@ -153,6 +153,29 @@ frontend/app/
     worklog/     # Domain-specific components (Calendar, DailyEntryForm)
   hooks/         # Custom React hooks (useAutoSave, useWorkLogEntry)
   lib/           # Utilities, API client, types
+```
+
+### Database Implementation Rules
+
+When adding new domain entities, **always create both the domain model and database migration together** in the same commit/PR to prevent schema-model mismatches.
+
+**Required Checklist for New Entities:**
+- [ ] Domain model: `domain/xxx/Xxx.java`
+- [ ] ID value object: `domain/xxx/XxxId.java`  
+- [ ] Migration file: `db/migration/Vxx__xxx_table.sql`
+- [ ] Seed data: Add test data to `data-dev.sql`
+- [ ] Repository (if needed): `infrastructure/repository/XxxRepository.java`
+
+**Foreign Key Rules:**
+- Always add FK constraints for `*_id` columns referencing other tables
+- Referenced tables must be created before referencing tables
+- Use `ON CONFLICT` clauses in seed data for idempotency
+
+**Verification Command:**
+```bash
+# Compare domain models vs database tables
+ls backend/src/main/java/com/worklog/domain/*/
+docker exec -i miometry-postgres psql -U worklog -d worklog -c "\dt"
 ```
 
 ### Key Design Decisions
