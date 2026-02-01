@@ -107,8 +107,10 @@ export function subscribeToImportProgress(
   onError: (error: string) => void,
   onComplete: () => void,
 ): () => void {
+  // Encode importId to prevent path injection (though UUIDs are safe, consistent encoding is best practice)
+  const encodedImportId = encodeURIComponent(importId);
   const eventSource = new EventSource(
-    `${API_BASE_URL}/api/v1/worklog/csv/import/${importId}/progress`,
+    `${API_BASE_URL}/api/v1/worklog/csv/import/${encodedImportId}/progress`,
     { withCredentials: true }, // Include session cookies for cross-origin SSE
   );
 

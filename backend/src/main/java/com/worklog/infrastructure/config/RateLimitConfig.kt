@@ -12,31 +12,69 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
- * Rate limiting configuration properties.
- *
- * Configurable via application.yml:
- * ```
- * worklog:
- *   rate-limit:
- *     enabled: true
- *     requests-per-second: 10
- *     burst-size: 20
- * ```
+ * Helper class to check if an IP address is from a trusted proxy.
+ * Supports both exact IP addresses and CIDR notation.
  */
-@Configuration
-@ConfigurationProperties(prefix = "worklog.rate-limit")
-class RateLimitProperties {
-    /** Whether rate limiting is enabled. */
-    var enabled: Boolean = true
-
-    /** Maximum sustained requests per second per client. */
-    var requestsPerSecond: Int = 10
-
-    /** Maximum burst size (token bucket capacity). */
-    var burstSize: Int = 20
-
-    /** Cleanup interval for stale buckets (in minutes). */
-    var cleanupIntervalMinutes: Int = 5
+class TrustedProxyChecker(trustedProxiesConfig: String) {
+    private val trustedAddresses = mutableSetOf<String>()
+    private val trustedCidrs = mutableListOf<CidrRange>()
+    
+    init {
+        trustedProxiesConfig.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { entry ->
+            if (entry.contains("/")) {
+                // CIDR notation
+                try {
+                    trustedCidrs.add(CidrRange.parse(entry))
+                } catch (e: Exception) {
+                    // Log and skip invalid CIDR
+                }
+            } else {
+                // Exact IP address
+                trustedAddresses.add(entry)
+            }
+        }
+    }
+    
+    fun isTrusted(ipAddress: String): Boolean {
+        // Check exact match first
+        if (trustedAddresses.contains(ipAddress)) {
+            return true
+        }
+        
+        // Check CIDR ranges
+        return trustedCidrs.any { it.contains(ipAddress) }
+    }
+    
+    /**
+     * Simple CIDR range representation for IPv4.
+     */
+    private data class CidrRange(val networkAddress: Long, val mask: Long) {
+        fun contains(ipAddress: String): Boolean {
+            return try {
+                val ip = ipToLong(ipAddress)
+                (ip and mask) == networkAddress
+            } catch (e: Exception) {
+                false
+            }
+        }
+        
+        companion object {
+            fun parse(cidr: String): CidrRange {
+                val parts = cidr.split("/")
+                val ip = ipToLong(parts[0])
+                val prefixLength = parts[1].toInt()
+                val mask = if (prefixLength == 0) 0L else (-1L shl (32 - prefixLength)) and 0xFFFFFFFFL
+                val network = ip and mask
+                return CidrRange(network, mask)
+            }
+            
+            private fun ipToLong(ip: String): Long {
+                val octets = ip.split(".")
+                if (octets.size != 4) throw IllegalArgumentException("Invalid IPv4 address: $ip")
+                return octets.fold(0L) { acc, octet -> (acc shl 8) or octet.toLong() }
+            }
+        }
+    }
 }
 
 /**
@@ -101,6 +139,11 @@ class RateLimitFilter(
 ) : OncePerRequestFilter() {
     private val buckets = ConcurrentHashMap<String, TokenBucket>()
     private var lastCleanupTime: Long = System.currentTimeMillis()
+    
+    // Lazy-initialized set of trusted proxy addresses/ranges
+    private val trustedProxyChecker: TrustedProxyChecker by lazy {
+        TrustedProxyChecker(properties.trustedProxies)
+    }
 
     override fun doFilterInternal(
         request: HttpServletRequest,
@@ -155,15 +198,19 @@ class RateLimitFilter(
 
     /**
      * Extract client identifier from request.
-     * Uses X-Forwarded-For header if present (for proxied requests), otherwise uses remote IP.
+     * Only trusts X-Forwarded-For header when the request comes from a known trusted proxy.
+     * This prevents rate limit bypass via header spoofing.
      */
     private fun getClientId(request: HttpServletRequest): String {
+        val remoteAddr = request.remoteAddr ?: "unknown"
         val xForwardedFor = request.getHeader("X-Forwarded-For")
-        return if (!xForwardedFor.isNullOrBlank()) {
+        
+        // Only trust X-Forwarded-For if request comes from a trusted proxy
+        return if (!xForwardedFor.isNullOrBlank() && trustedProxyChecker.isTrusted(remoteAddr)) {
             // Take the first IP in the X-Forwarded-For chain (original client)
             xForwardedFor.split(",").first().trim()
         } else {
-            request.remoteAddr ?: "unknown"
+            remoteAddr
         }
     }
 
@@ -184,4 +231,40 @@ class RateLimitFilter(
             }
         }
     }
+}
+
+/**
+ * Rate limiting configuration properties.
+ *
+ * Configurable via application.yml:
+ * ```
+ * worklog:
+ *   rate-limit:
+ *     enabled: true
+ *     requests-per-second: 10
+ *     burst-size: 20
+ *     trusted-proxies: "127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+ * ```
+ */
+@Configuration
+@ConfigurationProperties(prefix = "worklog.rate-limit")
+class RateLimitProperties {
+    /** Whether rate limiting is enabled. */
+    var enabled: Boolean = true
+
+    /** Maximum sustained requests per second per client. */
+    var requestsPerSecond: Int = 10
+
+    /** Maximum burst size (token bucket capacity). */
+    var burstSize: Int = 20
+
+    /** Cleanup interval for stale buckets (in minutes). */
+    var cleanupIntervalMinutes: Int = 5
+
+    /** 
+     * Comma-separated list of trusted proxy IP addresses or CIDR ranges.
+     * X-Forwarded-For header is only trusted from these IPs.
+     * Default includes loopback and private network ranges.
+     */
+    var trustedProxies: String = "127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 }

@@ -10,6 +10,7 @@
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { DailyEntryForm } from "@/components/worklog/DailyEntryForm";
+import { useAuth } from "@/hooks/useAuth";
 import { useProxyMode } from "@/services/worklogStore";
 
 interface PageProps {
@@ -21,6 +22,9 @@ interface PageProps {
 export default function DailyEntryPage({ params }: PageProps) {
   const router = useRouter();
   const { date } = use(params);
+
+  // Authentication state
+  const { userId } = useAuth();
 
   // Proxy mode state - get effective member ID
   const { isProxyMode, targetMember } = useProxyMode();
@@ -39,12 +43,9 @@ export default function DailyEntryPage({ params }: PageProps) {
     return null;
   }
 
-  // TODO: Get actual current user ID from auth context
-  const currentUserId = "00000000-0000-0000-0000-000000000001";
-
   // Use target member ID if in proxy mode, otherwise use current user
   const memberId =
-    isProxyMode && targetMember ? targetMember.id : currentUserId;
+    isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
   const handleClose = () => {
     router.push("/worklog");

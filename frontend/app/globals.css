@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind CSS v4 is used in this project.
+ * @theme directives are processed at build time by Tailwind/PostCSS
+ * and transformed into standard CSS custom properties.
+ * See: https://tailwindcss.com/docs/v4-beta
+ */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -64,12 +71,14 @@ body {
 
 /* T164: Touch target sizing for mobile (≥44px per FR-023) */
 /* Apply minimum touch targets on mobile devices */
+/* Note: <a> is excluded from global rules to prevent breaking inline links, 
+   navigation, and dense UI like lists/tables. Use .touch-target class for 
+   interactive anchor elements that need larger touch targets. */
 @media (max-width: 47.9375rem) {
   /* Below tablet breakpoint (768px) */
-  /* Buttons and interactive elements */
+  /* Buttons and interactive elements (excluding anchors to preserve layout) */
   button,
   [role="button"],
-  a,
   input[type="checkbox"],
   input[type="radio"],
   select {

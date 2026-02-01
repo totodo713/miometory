@@ -16,21 +16,29 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MemberSelector } from "@/components/worklog/MemberSelector";
 import { type SubordinateMember, useProxyMode } from "@/services/worklogStore";
-
-// TODO: Get from authentication context
-const CURRENT_USER_ID = "00000000-0000-0000-0000-000000000001";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ProxyEntryPage() {
   const router = useRouter();
+  const { userId } = useAuth();
   const { enableProxyMode, isProxyMode, targetMember, disableProxyMode } =
     useProxyMode();
   const [selectedMember, setSelectedMember] =
     useState<SubordinateMember | null>(targetMember);
 
-  function handleEnterTime() {
-    if (!selectedMember) return;
+  // Guard: require authentication
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
+        <p className="text-gray-600">Please log in to access this page.</p>
+      </div>
+    );
+  }
 
-    enableProxyMode(CURRENT_USER_ID, selectedMember);
+  function handleEnterTime() {
+    if (!selectedMember || !userId) return;
+
+    enableProxyMode(userId, selectedMember);
     router.push("/worklog");
   }
 
@@ -87,7 +95,7 @@ export default function ProxyEntryPage() {
         {/* Member Selection Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <MemberSelector
-            managerId={CURRENT_USER_ID}
+            managerId={userId}
             selectedMember={selectedMember}
             onSelectMember={setSelectedMember}
             includeIndirect={false}

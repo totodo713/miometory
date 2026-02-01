@@ -51,15 +51,19 @@ public class ProjectCodeResolver {
     
     /**
      * Resolve ProjectId to project code.
+     * If the project ID is not found in the cache, returns the UUID as a fallback
+     * to prevent export failures. This is graceful degradation for data integrity.
      * 
      * @param projectId ProjectId
-     * @return Project code if found
-     * @throws IllegalArgumentException if project ID not found
+     * @return Project code if found, otherwise the project ID UUID string as fallback
      */
     public static String resolveIdToCode(ProjectId projectId) {
         String code = ID_TO_CODE_CACHE.get(projectId.value());
         if (code == null) {
-            throw new IllegalArgumentException("Unknown project ID: " + projectId.value());
+            // Graceful fallback: use UUID string instead of throwing
+            // This ensures exports don't fail for projects not in cache
+            // TODO: When project management is fully implemented, resolve from database
+            return projectId.value().toString();
         }
         return code;
     }

@@ -50,20 +50,24 @@ public class JdbcMemberRepository {
     }
 
     /**
-     * Finds a member by email.
+     * Finds a member by email within a specific tenant.
      * 
+     * The schema allows the same email across different tenants (uk_member_tenant_email),
+     * so tenant scoping is required to prevent cross-tenant data exposure.
+     * 
+     * @param tenantId Tenant ID to scope the search
      * @param email Email address
-     * @return Optional containing the member if found
+     * @return Optional containing the member if found within the tenant
      */
-    public Optional<Member> findByEmail(String email) {
+    public Optional<Member> findByEmail(TenantId tenantId, String email) {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name, 
                    manager_id, is_active, version, created_at, updated_at
             FROM members
-            WHERE email = ?
+            WHERE tenant_id = ? AND email = ?
             """;
 
-        List<Member> results = jdbcTemplate.query(sql, new MemberRowMapper(), email);
+        List<Member> results = jdbcTemplate.query(sql, new MemberRowMapper(), tenantId.value(), email);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 

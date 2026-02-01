@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { Calendar } from "@/components/worklog/Calendar";
 import { CopyPreviousMonthDialog } from "@/components/worklog/CopyPreviousMonthDialog";
 import { MonthlySummary } from "@/components/worklog/MonthlySummary";
+import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/services/api";
 import { exportCsv } from "@/services/csvService";
 import { useProxyMode } from "@/services/worklogStore";
@@ -26,6 +27,9 @@ export default function WorkLogPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
 
+  // Authentication state
+  const { userId } = useAuth();
+
   // Proxy mode state
   const { isProxyMode, targetMember, disableProxyMode } = useProxyMode();
 
@@ -34,12 +38,9 @@ export default function WorkLogPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1); // 1-indexed
 
-  // TODO: Get actual member ID from auth context
-  const currentUserId = "00000000-0000-0000-0000-000000000001";
-
   // Use target member ID if in proxy mode, otherwise use current user
   const effectiveMemberId =
-    isProxyMode && targetMember ? targetMember.id : currentUserId;
+    isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
   useEffect(() => {
     async function loadCalendar() {
