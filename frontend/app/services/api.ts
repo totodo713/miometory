@@ -13,36 +13,21 @@
  */
 
 import type { MonthlyCalendarResponse } from "@/types/worklog";
+import { getCsrfToken } from "./csrf";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
-/**
- * Get CSRF token from cookie set by Spring Security.
- * Spring Security sets XSRF-TOKEN cookie which we need to read
- * and send back in X-XSRF-TOKEN header for non-GET requests.
- *
- * Note: This only works in browser environments (client-side).
- * For server-side requests, CSRF is typically not required.
- */
-function getCsrfToken(): string | null {
-  if (typeof document === "undefined") {
-    // Server-side rendering - no cookies available
-    return null;
+// Normalize API base URL to ensure consistent URL construction
+// This prevents issues when NEXT_PUBLIC_API_URL contains path prefixes
+const API_BASE_URL = (() => {
+  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  // Remove any trailing path segments to prevent double-prefix issues
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    // Fallback for relative URLs or invalid URLs
+    return url.replace(/\/+$/, "");
   }
-
-  const cookies = document.cookie.split(";");
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-    const eqIndex = trimmed.indexOf("=");
-    if (eqIndex === -1) continue;
-    const name = trimmed.substring(0, eqIndex);
-    const value = trimmed.substring(eqIndex + 1);
-    if (name === "XSRF-TOKEN") {
-      return decodeURIComponent(value);
-    }
-  }
-  return null;
-}
+})();
 
 /**
  * API Error types

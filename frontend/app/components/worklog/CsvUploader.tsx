@@ -4,6 +4,29 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { CsvImportProgress } from "@/services/csvService";
 import { importCsv, subscribeToImportProgress } from "@/services/csvService";
 
+// Common MIME types for CSV files across different browsers/OSes
+const CSV_MIME_TYPES = [
+  "text/csv",
+  "application/csv",
+  "application/vnd.ms-excel",
+  "text/plain",
+  "text/x-csv",
+  "", // Some browsers report empty MIME type
+];
+
+/**
+ * Check if a file is a valid CSV file.
+ * Accepts common CSV MIME variants and relies on .csv extension as fallback.
+ */
+function isCsvFile(file: File): boolean {
+  // Check by extension first (most reliable)
+  if (file.name.toLowerCase().endsWith(".csv")) {
+    return true;
+  }
+  // Fallback to MIME type check
+  return CSV_MIME_TYPES.includes(file.type);
+}
+
 interface CsvUploaderProps {
   memberId: string;
   onImportComplete?: () => void;
@@ -48,10 +71,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
     setIsDragging(false);
 
     const droppedFile = e.dataTransfer.files[0];
-    if (
-      droppedFile?.type === "text/csv" ||
-      droppedFile?.name.endsWith(".csv")
-    ) {
+    if (droppedFile && isCsvFile(droppedFile)) {
       setFile(droppedFile);
       setError(null);
     } else {

@@ -7,6 +7,8 @@
  * - Exporting work log data to CSV
  */
 
+import { getCsrfToken } from "./csrf";
+
 // Normalize API base URL to ensure no trailing path segments
 // NEXT_PUBLIC_API_URL should be the origin only (e.g., "https://example.com")
 const API_BASE_URL = (() => {
@@ -20,29 +22,6 @@ const API_BASE_URL = (() => {
     return url.replace(/\/+$/, "");
   }
 })();
-
-/**
- * Get CSRF token from cookie set by Spring Security.
- * Spring Security sets XSRF-TOKEN cookie which we need to read
- * and send back in X-XSRF-TOKEN header for non-GET requests.
- */
-function getCsrfToken(): string | null {
-  if (typeof document === "undefined") {
-    return null;
-  }
-  const cookies = document.cookie.split(";");
-  for (const cookie of cookies) {
-    const trimmed = cookie.trim();
-    const eqIndex = trimmed.indexOf("=");
-    if (eqIndex === -1) continue;
-    const name = trimmed.substring(0, eqIndex);
-    const value = trimmed.substring(eqIndex + 1);
-    if (name === "XSRF-TOKEN") {
-      return decodeURIComponent(value);
-    }
-  }
-  return null;
-}
 
 export interface CsvImportProgress {
   totalRows: number;
@@ -182,8 +161,10 @@ export async function exportCsv(
   month: number,
   memberId: string,
 ): Promise<void> {
+  // Use URLSearchParams to properly encode the memberId parameter
+  const params = new URLSearchParams({ memberId });
   const response = await fetch(
-    `${API_BASE_URL}/api/v1/worklog/csv/export/${year}/${month}?memberId=${memberId}`,
+    `${API_BASE_URL}/api/v1/worklog/csv/export/${year}/${month}?${params}`,
     {
       credentials: "include", // Include session cookies for cross-origin requests
     },

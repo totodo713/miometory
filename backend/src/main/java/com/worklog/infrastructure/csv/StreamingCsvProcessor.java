@@ -57,7 +57,10 @@ public class StreamingCsvProcessor {
 
             for (CSVRecord record : csvParser) {
                 totalRows++;
-                int rowNumber = (int) record.getRecordNumber();
+                // CSVRecord.getRecordNumber() returns physical file record index (header=1, first data row=2)
+                // CsvValidationService expects rowNumber as "1-based, excluding header"
+                // So we subtract 1 to convert from file position to data row number
+                int rowNumber = (int) record.getRecordNumber() - 1;
 
                 // Extract values
                 String date = record.get("Date");

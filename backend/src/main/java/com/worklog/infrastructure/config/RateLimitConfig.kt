@@ -129,10 +129,13 @@ class RateLimitFilter(
                 TokenBucket(properties.burstSize, properties.requestsPerSecond)
             }
 
+        // Always run cleanup regardless of allow/deny to prevent memory pressure
+        // from sustained over-limit traffic or spoofed X-Forwarded-For values
+        cleanupIfNeeded()
+
         // Try to consume a token
         if (bucket.tryConsume()) {
             // Request allowed - proceed with filter chain
-            cleanupIfNeeded()
             filterChain.doFilter(request, response)
         } else {
             // Rate limit exceeded - return 429

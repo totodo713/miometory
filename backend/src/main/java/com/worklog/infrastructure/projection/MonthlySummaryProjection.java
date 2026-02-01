@@ -214,18 +214,19 @@ public class MonthlySummaryProjection {
      * projection tables once event handlers are implemented.
      * 
      * @param memberId Member ID
-     * @param fiscalYear Fiscal year
-     * @param fiscalMonth Fiscal month (1-12)
+     * @param targetYear Calendar year that anchors the fiscal period
+     * @param targetMonth Calendar month (1-12) that anchors the fiscal period
+     *                    (fiscal period runs from 21st of previous month to 20th of this month)
      * @return Approval status data (status and rejection reason)
      */
     private ApprovalStatusData getApprovalStatus(
         UUID memberId,
-        int fiscalYear,
-        int fiscalMonth
+        int targetYear,
+        int targetMonth
     ) {
-        // Calculate fiscal month date range
-        LocalDate fiscalMonthStart = LocalDate.of(fiscalYear, fiscalMonth, 1).minusMonths(1).withDayOfMonth(21);
-        LocalDate fiscalMonthEnd = LocalDate.of(fiscalYear, fiscalMonth, 20);
+        // Calculate fiscal month date range (21st of previous month to 20th of target month)
+        LocalDate fiscalMonthStart = LocalDate.of(targetYear, targetMonth, 1).minusMonths(1).withDayOfMonth(21);
+        LocalDate fiscalMonthEnd = LocalDate.of(targetYear, targetMonth, 20);
         
         String sql = """
             WITH latest_approval AS (
