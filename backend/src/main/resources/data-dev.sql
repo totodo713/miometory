@@ -189,7 +189,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Alice (Manager) - Insert first since others reference her as manager
 INSERT INTO members (
-    id, tenant_id, organization_id, email, display_name, manager_id, is_active, created_at, updated_at
+    id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at
 )
 VALUES (
     '00000000-0000-0000-0000-000000000002',
@@ -199,6 +199,7 @@ VALUES (
     'Alice Manager',
     NULL,  -- Alice has no manager (top-level)
     true,
+    0,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 )
@@ -210,7 +211,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Bob (Regular User / Engineer) - Reports to Alice
 INSERT INTO members (
-    id, tenant_id, organization_id, email, display_name, manager_id, is_active, created_at, updated_at
+    id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at
 )
 VALUES (
     '00000000-0000-0000-0000-000000000001',
@@ -220,6 +221,7 @@ VALUES (
     'Bob Engineer',
     '00000000-0000-0000-0000-000000000002',  -- Reports to Alice
     true,
+    0,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 )
@@ -232,7 +234,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Charlie (Subordinate Engineer) - Reports to Alice
 INSERT INTO members (
-    id, tenant_id, organization_id, email, display_name, manager_id, is_active, created_at, updated_at
+    id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at
 )
 VALUES (
     '00000000-0000-0000-0000-000000000003',
@@ -242,6 +244,7 @@ VALUES (
     'Charlie Engineer',
     '00000000-0000-0000-0000-000000000002',  -- Reports to Alice
     true,
+    0,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 )
@@ -254,7 +257,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- David (Independent) - No manager
 INSERT INTO members (
-    id, tenant_id, organization_id, email, display_name, manager_id, is_active, created_at, updated_at
+    id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at
 )
 VALUES (
     '00000000-0000-0000-0000-000000000004',
@@ -264,6 +267,7 @@ VALUES (
     'David Independent',
     NULL,  -- Independent contributor, no manager
     true,
+    0,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 )

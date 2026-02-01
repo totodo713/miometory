@@ -187,18 +187,14 @@ public class CsvImportController {
 
         emitter.onCompletion(() -> {
             progress.removeEmitter(emitter);
-            // Only remove from activeImports if import is completed or failed
-            if (progress.isFinished()) {
-                activeImports.remove(importId);
-            }
+            // Removal from activeImports is handled by scheduled cleanup to avoid race conditions
+            // when multiple clients are connected to the same import
         });
 
         emitter.onTimeout(() -> {
             progress.removeEmitter(emitter);
-            // Only remove from activeImports if import is completed or failed
-            if (progress.isFinished()) {
-                activeImports.remove(importId);
-            }
+            // Removal from activeImports is handled by scheduled cleanup to avoid race conditions
+            // when multiple clients are connected to the same import
         });
 
         // Send initial state

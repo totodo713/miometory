@@ -297,12 +297,18 @@ public class MonthlyCalendarProjection {
     }
 
     /**
-     * Evicts all cached data for a specific member.
+     * Evicts all cache entries when a member's data is modified.
      * 
      * Should be called when a member's work log entries or absences are modified.
-     * This uses a pattern-based eviction to clear all cache entries for the member.
      * 
-     * @param memberId Member ID whose cache should be evicted
+     * Note: Due to Spring Cache limitations, this evicts ALL cache entries rather than
+     * just the specific member's entries. The cache keys include date ranges
+     * (memberId:startDate:endDate), making pattern-based eviction impossible without
+     * a custom CacheManager implementation.
+     * 
+     * For high-volume scenarios, consider implementing a custom eviction strategy.
+     * 
+     * @param memberId Member ID whose data was modified (currently unused due to Spring Cache limitations)
      */
     @Caching(evict = {
         @CacheEvict(cacheNames = "calendar:daily-totals", allEntries = true),
@@ -310,9 +316,10 @@ public class MonthlyCalendarProjection {
         @CacheEvict(cacheNames = "calendar:proxy-dates", allEntries = true),
         @CacheEvict(cacheNames = "calendar:daily-entries", allEntries = true)
     })
-    public void evictMemberCache(UUID memberId) {
+    public void evictMemberCache(@SuppressWarnings("unused") UUID memberId) {
         // Cache eviction is handled by the annotations
         // This method is intentionally empty - the @CacheEvict annotations do the work
+        // TODO: For better performance, implement custom CacheManager with pattern-based eviction
     }
 
     /**

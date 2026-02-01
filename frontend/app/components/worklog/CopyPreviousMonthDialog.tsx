@@ -43,8 +43,6 @@ export function CopyPreviousMonthDialog({
     new Set(),
   );
   const dialogRef = useRef<HTMLDivElement>(null);
-  const firstFocusableRef = useRef<HTMLButtonElement>(null);
-  const lastFocusableRef = useRef<HTMLButtonElement>(null);
 
   // Handle escape key to close dialog
   useEffect(() => {
