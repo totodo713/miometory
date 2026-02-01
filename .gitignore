@@ -28,3 +28,47 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Gradle ###
+.gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Kotlin/Java ###
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.log.*
+
+### Node.js / TypeScript ###
+node_modules/
+.next/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+### Environment Files ###
+.env
+.env.local
+.env.*.local
+!.env.example
+
+### OS Files ###
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+*.bak
+
+### Test Artifacts ###
+test-results/
+playwright-report/
+playwright/.cache/
+
+### Misc ###
+tmp/
+temp/
+*.prof*

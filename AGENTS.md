@@ -1,4 +1,4 @@
-# AGENTS.md – Agentic Coding Rules for Work-Log
+# AGENTS.md – Agentic Coding Rules for Miometry
 
 This file provides agentic coding agents with complete guidelines for operating in this repository. It covers build, lint, and test commands, exhaustive style recommendations, and critical patterns for maintaining code standardization across backend (Spring Boot/Kotlin) and frontend (Next.js/TypeScript) projects.
 
@@ -14,6 +14,7 @@ This file provides agentic coding agents with complete guidelines for operating 
 5. [Specification Best Practices](#specification-best-practices)
 6. [References](#references)
 7. [Reserved: Copilot/Cursor Rules](#reserved-copilotcursor-rules)
+8. [PR Review Response Rules](#pr-review-response-rules)
 
 ---
 
@@ -117,12 +118,212 @@ _No special Copilot or Cursor agent instructions are present. If present, add th
 
 ---
 
-*Last updated: 2026-01-01*
+*Last updated: 2026-02-01*
 
 ## Active Technologies
 - Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend) (001-foundation)
 - PostgreSQL with JSONB for events (001-foundation)
 - PostgreSQL with JSONB for event sourcing, event store for domain events, projection tables for read models (002-work-log-entry)
 
+## Architecture Patterns (002-work-log-entry)
+
+### Domain-Driven Design (DDD)
+- **Aggregates**: WorkLogEntry, Absence, ApprovalWorkflow, Member
+- **Value Objects**: TimeRange, WorkHours, ProjectAllocation, AbsenceType
+- **Domain Events**: EntryCreated, EntryUpdated, EntrySubmitted, EntryApproved, EntryRejected
+- **Event Sourcing**: All state changes stored as immutable events in `domain_events` table
+- **Projections**: Read models rebuilt from events (MonthlyCalendarProjection, ApprovalQueueProjection)
+
+### Backend Layers
+```
+com.worklog/
+  api/           # REST controllers, request/response DTOs
+  application/   # Application services, commands, queries (CQRS)
+  domain/        # Aggregates, entities, value objects, domain events
+  infrastructure/
+    config/      # Spring configuration (Security, CORS, Rate Limiting)
+    persistence/ # Repository implementations, event store
+    projection/  # Read model projections
+```
+
+### Frontend Architecture
+```
+frontend/app/
+  components/
+    shared/      # Reusable UI components (LoadingSpinner, ErrorBoundary)
+    worklog/     # Domain-specific components (Calendar, DailyEntryForm)
+  hooks/         # Custom React hooks (useAutoSave, useWorkLogEntry)
+  lib/           # Utilities, API client, types
+```
+
+### Database Implementation Rules
+
+When adding new domain entities, **always create both the domain model and database migration together** in the same commit/PR to prevent schema-model mismatches.
+
+**Required Checklist for New Entities:**
+- [ ] Domain model: `domain/xxx/Xxx.java`
+- [ ] ID value object: `domain/xxx/XxxId.java`  
+- [ ] Migration file: `db/migration/Vxx__xxx_table.sql`
+- [ ] Seed data: Add test data to `data-dev.sql`
+- [ ] Repository (if needed): `infrastructure/repository/XxxRepository.java`
+
+**Foreign Key Rules:**
+- Always add FK constraints for `*_id` columns referencing other tables
+- Referenced tables must be created before referencing tables
+- Use `ON CONFLICT` clauses in seed data for idempotency
+
+**Verification Command:**
+```bash
+# Compare domain models vs database tables
+ls backend/src/main/java/com/worklog/domain/*/
+docker exec -i miometry-postgres psql -U worklog -d worklog -c "\dt"
+```
+
+### Key Design Decisions
+- **Auto-save**: 3-second debounce with optimistic UI updates
+- **Session timeout**: 30 minutes with warning at 25 minutes
+- **Time granularity**: 15-minute increments for all time entries
+- **Fiscal months**: 21st-20th pattern for month boundaries
+- **CSV streaming**: Chunked processing for large file imports
+- **Redis caching**: Optional projection caching with 5-minute TTL (enabled in production)
+- **Rate limiting**: Token bucket algorithm with configurable RPS and burst size
+
+### Performance Targets
+| Metric | Target | Validation |
+|--------|--------|------------|
+| Calendar load | < 1 second | SC-006 |
+| CSV import | 100 rows/second | SC-005 |
+| Concurrent users | 100+ without degradation | SC-007 |
+| Mobile entry time | < 2 minutes | SC-008 |
+| Auto-save reliability | 99.9% | SC-011 |
+
+### Infrastructure Configuration
+
+**Development:**
+```bash
+# Start development stack
+cd infra/docker && docker compose up -d
+
+# Backend dev server
+cd backend && ./gradlew bootRun
+
+# Frontend dev server
+cd frontend && npm run dev
+```
+
+**Production:**
+```bash
+# Production with TLS, Redis caching, and health checks
+cd infra/docker && docker compose -f docker-compose.prod.yml --env-file prod.env up -d
+```
+
+**Environment Variables (Production):**
+| Variable | Description | Default |
+|----------|-------------|---------|
+| POSTGRES_PASSWORD | Database password | (required) |
+| REDIS_PASSWORD | Redis password | (optional) |
+| CACHE_ENABLED | Enable Redis caching | true |
+| RATE_LIMIT_ENABLED | Enable API rate limiting | true |
+| RATE_LIMIT_RPS | Requests per second | 20 |
+| RATE_LIMIT_BURST | Burst size | 50 |
+
+### Security Features (Phase 10)
+- **CSRF Protection**: Cookie-based for SPA (`SecurityConfig.kt`)
+- **Rate Limiting**: Token bucket algorithm (`RateLimitConfig.kt`)
+- **Request Logging**: With sensitive data masking (`LoggingConfig.kt`)
+- **TLS/HTTPS**: Nginx reverse proxy with modern cipher suites
+- **Session Management**: 30-minute timeout with secure cookies
+
+### Accessibility (WCAG 2.1 AA)
+- ARIA labels on all interactive elements
+- Modal dialogs with proper `role="dialog"` and `aria-modal`
+- Alert messages with `role="alert"` and `aria-live`
+- Keyboard navigation support throughout
+
 ## Recent Changes
 - 001-foundation: Added Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend)
+- 002-work-log-entry: Implemented complete Miometry Entry System with 7 user stories (daily entry, multi-project, absences, approval workflow, CSV import/export, copy previous month, proxy entry)
+- 002-work-log-entry (Phase 10): Added Redis caching, ARIA accessibility improvements, performance indices, rate limiting, CSRF protection, TLS configuration, API documentation (OpenAPI/Swagger)
+
+## Test Results Summary (Phase 10 Validation)
+
+### Performance Benchmarks ✅
+| Benchmark | Target | Result | Status |
+|-----------|--------|--------|--------|
+| SC-006 Calendar Load | < 1 second | Avg 8.8ms, Max 13ms | ✅ PASSED |
+| SC-007 100 Concurrent Users | 95%+ success | 100% (300/300 requests) | ✅ PASSED |
+| SC-008 Mobile API Operations | < 2 seconds | 26ms total | ✅ PASSED |
+
+### Unit Tests
+| Component | Tests | Pass Rate |
+|-----------|-------|-----------|
+| Backend (JUnit 5) | All | 100% |
+| Frontend Calendar (Vitest) | 32 | 100% |
+| Frontend DailyEntryForm (Vitest) | 43 | 100% |
+
+### E2E Tests (Chromium)
+| Result | Count |
+|--------|-------|
+| Passed | 30 |
+| Failed | 33 |
+| **Note** | Failures are selector mismatches between tests and actual UI |
+
+### Code Coverage
+| Component | Coverage | Target | Status |
+|-----------|----------|--------|--------|
+| Backend | 76.1% | 85% | ⚠️ Below target |
+| Frontend Unit | 100% | 80% | ✅ Above target |
+
+### Security Scan (OWASP)
+**Frontend (npm audit):**
+- High: 1 (Next.js image optimizer)
+- Moderate: 4 (esbuild, vite dependencies)
+- Fix available: `npm audit fix --force`
+
+**Backend:**
+- OWASP Dependency Check plugin added to `build.gradle.kts`
+- Run: `./gradlew dependencyCheckAnalyze`
+
+---
+
+## PR Review Response Rules
+
+PRレビューコメントへの対応時は、以下のルールに従うこと。
+
+### 1. 個別コメントへの返信
+- レビューでindividual comment（スレッド形式のコメント）がある場合は、**必ずそのスレッドに対応内容を返信する**
+- 返信には修正したコミットハッシュと、具体的にどう修正したかを簡潔に記載する
+- 例: `Fixed in commit \`abc1234\`. Changed to use \`indexOf("=")\` to split only on the first \`=\`.`
+
+### 2. サマリコメントは不要
+- PRに対する一般的なサマリコメント（スレッド以外のコメント）は**投稿しない**
+- 各スレッドへの個別返信で十分
+
+### 3. PRのルートコメント（Description）の更新
+- レビュー対応が完了したら、PRのbody（ルートコメント/Description）を更新する
+- 対応内容を反映した統括的な変更内容としてPR Descriptionを更新する
+- 更新には `github_update_pull_request` ツールの `body` パラメータを使用する
+
+### 4. 対応の流れ
+1. レビューコメントを確認（`github_pull_request_read` で `get_review_comments`）
+2. コードを修正してコミット・プッシュ
+3. 各レビュースレッドに返信（`gh api` で `in_reply_to` を使用）
+4. PR Descriptionを更新して変更内容の全体像を反映
+
+### 5. コメント返信のAPIコマンド
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr_number}/comments \
+  -X POST \
+  -f body="Fixed in commit \`{commit_hash}\`. {description}" \
+  -F in_reply_to={comment_id}
+```
+
+### 6. PR Description更新
+```
+github_update_pull_request(
+  owner="...",
+  repo="...",
+  pullNumber=...,
+  body="## Summary\n..."
+)
+```

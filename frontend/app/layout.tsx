@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Work Log - Time Entry System",
-  description: "Work log time entry and tracking system",
+  title: "Miometry - Time Entry System",
+  description: "Miometry time entry and tracking system",
 };
 
 export default function RootLayout({

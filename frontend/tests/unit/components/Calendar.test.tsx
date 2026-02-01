@@ -1,13 +1,13 @@
 /**
  * Unit tests for Calendar component
- * 
+ *
  * Tests rendering, date selection, hour display, and status indicators.
  * Task: T061 - Calendar component tests
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
 import { Calendar } from "@/components/worklog/Calendar";
 import type { DailyCalendarEntry } from "@/types/worklog";
 
@@ -27,6 +27,7 @@ describe("Calendar Component", () => {
       status: "APPROVED",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-22",
@@ -35,6 +36,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-23",
@@ -43,6 +45,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-24",
@@ -51,6 +54,7 @@ describe("Calendar Component", () => {
       status: "SUBMITTED",
       isWeekend: true,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-25",
@@ -59,6 +63,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: true,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-26",
@@ -67,6 +72,7 @@ describe("Calendar Component", () => {
       status: "REJECTED",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-27",
@@ -75,6 +81,7 @@ describe("Calendar Component", () => {
       status: "MIXED",
       isWeekend: false,
       isHoliday: false,
+      hasProxyEntries: false,
     },
     {
       date: "2026-01-28",
@@ -83,6 +90,7 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: true,
+      hasProxyEntries: false,
     },
   ];
 
@@ -251,7 +259,7 @@ describe("Calendar Component", () => {
         btn.textContent?.includes("24"),
       );
 
-      expect(weekendButton).toHaveClass("bg-gray-50");
+      expect(weekendButton).toHaveClass("bg-weekend-100");
     });
 
     it("should display holiday indicator", () => {
@@ -269,7 +277,7 @@ describe("Calendar Component", () => {
         btn.textContent?.includes("28"),
       );
 
-      expect(holidayButton).toHaveClass("bg-red-50");
+      expect(holidayButton).toHaveClass("bg-holiday-100");
     });
   });
 
@@ -372,6 +380,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 
@@ -390,6 +399,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
         {
           date: "2026-01-22",
@@ -398,6 +408,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 
@@ -416,6 +427,7 @@ describe("Calendar Component", () => {
           status: "UNKNOWN" as any, // Force unknown status
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 
@@ -437,6 +449,7 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          hasProxyEntries: false,
         },
       ];
 

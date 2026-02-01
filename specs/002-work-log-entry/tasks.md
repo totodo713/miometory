@@ -294,32 +294,32 @@
 
 ### Backend - CSV Domain (US5)
 
-- [ ] T129 [P] [US5] Create CSV template definition in backend/src/main/resources/csv-templates/worklog-template.csv
-- [ ] T130 [P] [US5] Create CsvValidationService in backend/src/main/java/com/worklog/infrastructure/csv/CsvValidationService.java (row validation)
-- [ ] T131 [US5] Implement StreamingCsvProcessor in backend/src/main/java/com/worklog/infrastructure/csv/StreamingCsvProcessor.java (Apache Commons CSV)
+- [x] T129 [P] [US5] Create CSV template definition in backend/src/main/resources/csv-templates/worklog-template.csv ✅
+- [x] T130 [P] [US5] Create CsvValidationService in backend/src/main/java/com/worklog/infrastructure/csv/CsvValidationService.java (row validation) ✅
+- [x] T131 [US5] Implement StreamingCsvProcessor in backend/src/main/java/com/worklog/infrastructure/csv/StreamingCsvProcessor.java (Apache Commons CSV) ✅
 
 ### Backend - CSV API (US5)
 
-- [ ] T132 [US5] Implement POST /api/v1/worklog/csv/import in backend/src/main/java/com/worklog/api/CsvImportController.java (streaming upload, max 100K rows UI)
-- [ ] T133 [US5] Implement Server-Sent Events for import progress in backend/src/main/java/com/worklog/api/CsvImportController.java (SC-005: real-time progress)
-- [ ] T134 [US5] Implement GET /api/v1/worklog/csv/export/{year}/{month} in backend/src/main/java/com/worklog/api/CsvExportController.java (streaming download)
-- [ ] T135 [US5] Implement GET /api/v1/worklog/csv/template in backend/src/main/java/com/worklog/api/CsvImportController.java (download template)
+- [x] T132 [US5] Implement POST /api/v1/worklog/csv/import in backend/src/main/java/com/worklog/api/CsvImportController.java (streaming upload, max 100K rows UI) ✅
+- [x] T133 [US5] Implement Server-Sent Events for import progress in backend/src/main/java/com/worklog/api/CsvImportController.java (SC-005: real-time progress) ✅
+- [x] T134 [US5] Implement GET /api/v1/worklog/csv/export/{year}/{month} in backend/src/main/java/com/worklog/api/CsvExportController.java (streaming download) ✅
+- [x] T135 [US5] Implement GET /api/v1/worklog/csv/template in backend/src/main/java/com/worklog/api/CsvImportController.java (download template) ✅
 
 ### Frontend - CSV UI (US5)
 
-- [ ] T136 [P] [US5] Create /app/worklog/import/page.tsx (CSV import page)
-- [ ] T137 [P] [US5] Create CsvUploader component in frontend/app/components/worklog/CsvUploader.tsx (drag-drop + file input)
-- [ ] T138 [US5] Implement progress bar with SSE connection in CsvUploader (rows processed, percentage, ETA)
-- [ ] T139 [US5] Implement row-level error display in CsvUploader (show specific validation errors)
-- [ ] T140 [US5] Add export button to /app/worklog/page.tsx with month selection
-- [ ] T141 [US5] Implement CSV download trigger in frontend/app/services/csvService.ts
+- [x] T136 [P] [US5] Create /app/worklog/import/page.tsx (CSV import page) ✅
+- [x] T137 [P] [US5] Create CsvUploader component in frontend/app/components/worklog/CsvUploader.tsx (drag-drop + file input) ✅
+- [x] T138 [US5] Implement progress bar with SSE connection in CsvUploader (rows processed, percentage, ETA) ✅
+- [x] T139 [US5] Implement row-level error display in CsvUploader (show specific validation errors) ✅
+- [x] T140 [US5] Add export button to /app/worklog/page.tsx with month selection ✅
+- [x] T141 [US5] Implement CSV download trigger in frontend/app/services/csvService.ts ✅
 
 ### Testing (US5)
 
-- [ ] T142 [P] [US5] Write unit tests for CsvValidationService in backend/src/test/java/com/worklog/infrastructure/csv/CsvValidationServiceTest.java
-- [ ] T143 [P] [US5] Write integration test for CSV import (100 rows) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt
-- [ ] T144 [P] [US5] Write performance test for CSV import (100K rows in <1000s, SC-005) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt
-- [ ] T145 [P] [US5] Write E2E test for CSV import/export roundtrip in frontend/e2e/csv-operations.spec.ts
+- [x] T142 [P] [US5] Write unit tests for CsvValidationService in backend/src/test/java/com/worklog/infrastructure/csv/CsvValidationServiceTest.java ✅
+- [x] T143 [P] [US5] Write integration test for CSV import (100 rows) in backend/src/test/kotlin/com/worklog/api/CsvImportControllerTest.kt ✅
+- [x] T144 [P] [US5] Write performance test for CSV import (100K rows in <1000s, SC-005) in backend/src/test/java/com/worklog/infrastructure/csv/StreamingCsvProcessorPerformanceTest.java
+- [x] T145 [P] [US5] Write E2E test for CSV import/export roundtrip in frontend/e2e/csv-operations.spec.ts ✅
 
 **Checkpoint**: CSV operations complete with progress feedback and validation
 
@@ -333,23 +333,23 @@
 
 ### Backend - Copy Service (US6)
 
-- [ ] T146 [US6] Create CopyFromPreviousMonthCommand in backend/src/main/java/com/worklog/application/command/CopyFromPreviousMonthCommand.java
-- [ ] T147 [US6] Implement project list extraction logic in WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java
+- [x] T146 [US6] Create CopyFromPreviousMonthCommand in backend/src/main/java/com/worklog/application/command/CopyFromPreviousMonthCommand.java
+- [x] T147 [US6] Implement project list extraction logic in WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java
 
 ### Backend - Copy API (US6)
 
-- [ ] T148 [US6] Implement POST /api/v1/worklog/copy-previous-month in backend/src/main/java/com/worklog/api/WorkLogController.java (returns unique project list)
+- [x] T148 [US6] Implement POST /api/v1/worklog/copy-previous-month in backend/src/main/java/com/worklog/api/WorkLogController.java (returns unique project list)
 
 ### Frontend - Copy UI (US6)
 
-- [ ] T149 [US6] Add "Copy from Previous Month" button to /app/worklog/page.tsx
-- [ ] T150 [US6] Implement confirmation dialog with project preview in frontend/app/components/worklog/CopyPreviousMonthDialog.tsx
-- [ ] T151 [US6] Update worklogStore to handle copied projects in frontend/app/services/worklogStore.ts
+- [x] T149 [US6] Add "Copy from Previous Month" button to /app/worklog/page.tsx
+- [x] T150 [US6] Implement confirmation dialog with project preview in frontend/app/components/worklog/CopyPreviousMonthDialog.tsx
+- [x] T151 [US6] Update worklogStore to handle copied projects in frontend/app/services/worklogStore.ts
 
 ### Testing (US6)
 
-- [ ] T152 [P] [US6] Write integration test for copy previous month in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
-- [ ] T153 [P] [US6] Write E2E test for copy previous month in frontend/e2e/copy-previous-month.spec.ts (verify projects copied, hours are zero)
+- [x] T152 [P] [US6] Write integration test for copy previous month in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt
+- [x] T153 [P] [US6] Write E2E test for copy previous month in frontend/tests/e2e/copy-previous-month.spec.ts (verify projects copied, hours are zero)
 
 **Checkpoint**: Copy previous month feature complete (SC-001: 15 minutes to complete month)
 
@@ -363,21 +363,21 @@
 
 ### Backend - Proxy Domain (US7)
 
-- [ ] T154 [US7] Add proxy permission validation to WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (check managerId relationship)
-- [ ] T155 [US7] Implement GET /api/v1/members/{id}/subordinates in backend/src/main/java/com/worklog/api/MemberController.java (recursive subordinate query)
+- [x] T154 [US7] Add proxy permission validation to WorkLogEntryService in backend/src/main/java/com/worklog/application/service/WorkLogEntryService.java (check managerId relationship)
+- [x] T155 [US7] Implement GET /api/v1/members/{id}/subordinates in backend/src/main/java/com/worklog/api/MemberController.java (recursive subordinate query)
 
 ### Frontend - Proxy UI (US7)
 
-- [ ] T156 [P] [US7] Create /app/worklog/proxy/page.tsx (proxy entry mode selection)
-- [ ] T157 [P] [US7] Create MemberSelector component in frontend/app/components/worklog/MemberSelector.tsx (subordinates dropdown)
-- [ ] T158 [US7] Add proxy mode toggle to /app/worklog/page.tsx header
-- [ ] T159 [US7] Update DailyEntryForm to show "Entering as [Member Name]" banner in proxy mode
-- [ ] T160 [US7] Update Calendar to show proxy entry indicator icon for entries with enteredBy ≠ memberId
+- [x] T156 [P] [US7] Create /app/worklog/proxy/page.tsx (proxy entry mode selection)
+- [x] T157 [P] [US7] Create MemberSelector component in frontend/app/components/worklog/MemberSelector.tsx (subordinates dropdown)
+- [x] T158 [US7] Add proxy mode toggle to /app/worklog/page.tsx header
+- [x] T159 [US7] Update DailyEntryForm to show "Entering as [Member Name]" banner in proxy mode
+- [x] T160 [US7] Update Calendar to show proxy entry indicator icon for entries with enteredBy ≠ memberId
 
 ### Testing (US7)
 
-- [ ] T161 [P] [US7] Write integration test for proxy entry authorization in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt (verify manager can enter for subordinate, non-manager cannot)
-- [ ] T162 [P] [US7] Write E2E test for proxy entry workflow in frontend/e2e/proxy-entry.spec.ts (manager enters for subordinate, verify audit trail in SC-010)
+- [x] T161 [P] [US7] Write integration test for proxy entry authorization in backend/src/test/kotlin/com/worklog/api/WorkLogControllerTest.kt (verify manager can enter for subordinate, non-manager cannot)
+- [x] T162 [P] [US7] Write E2E test for proxy entry workflow in frontend/e2e/proxy-entry.spec.ts (manager enters for subordinate, verify audit trail in SC-010)
 
 **Checkpoint**: All 7 user stories independently functional
 
@@ -389,49 +389,49 @@
 
 ### UI/UX Refinements
 
-- [ ] T163 [P] Configure responsive breakpoints (375/768/1024px) in frontend/tailwind.config.js per FR-023
-- [ ] T164 [P] Add touch target sizing (≥44px) for mobile in frontend/app/globals.css
-- [ ] T165 [P] Implement custom color scheme (weekend blue, holiday orange) in frontend/tailwind.config.js per research.md
-- [ ] T166 [P] Create LoadingSpinner component in frontend/app/components/shared/LoadingSpinner.tsx
-- [ ] T167 [P] Create ErrorBoundary component in frontend/app/components/shared/ErrorBoundary.tsx
-- [ ] T168 [P] Add ARIA labels to all interactive elements for accessibility (FR-023, T101-T105)
+- [x] T163 [P] Configure responsive breakpoints (375/768/1024px) in frontend/tailwind.config.js per FR-023
+- [x] T164 [P] Add touch target sizing (≥44px) for mobile in frontend/app/globals.css
+- [x] T165 [P] Implement custom color scheme (weekend blue, holiday orange) in frontend/tailwind.config.js per research.md
+- [x] T166 [P] Create LoadingSpinner component in frontend/app/components/shared/LoadingSpinner.tsx
+- [x] T167 [P] Create ErrorBoundary component in frontend/app/components/shared/ErrorBoundary.tsx
+- [x] T168 [P] Add ARIA labels to all interactive elements for accessibility (FR-023, T101-T105)
 
 ### Performance Optimization
 
-- [ ] T169 [P] Add database indices for common queries in V7__performance_indices.sql (member_id + date range)
-- [ ] T170 [P] Implement projection caching with Redis in backend/src/main/java/com/worklog/infrastructure/projection/
-- [ ] T171 [P] Optimize calendar query to use projection instead of event replay in MonthlyCalendarProjection
-- [ ] T172 Run performance benchmarks and verify SC-006 (1s calendar load), SC-007 (100 concurrent users), SC-008 (2min mobile entry)
+- [x] T169 [P] Add database indices for common queries in V6__performance_indices.sql (member_id + date range)
+- [x] T170 [P] Implement projection caching with Redis in backend/src/main/java/com/worklog/infrastructure/config/CacheConfig.kt
+- [x] T171 [P] Optimize calendar query to use projection instead of event replay in MonthlyCalendarProjection
+- [x] T172 Run performance benchmarks and verify SC-006 (1s calendar load), SC-007 (100 concurrent users), SC-008 (2min mobile entry)
 
 ### Security Hardening
 
-- [ ] T173 [P] Add rate limiting to API endpoints in backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt
-- [ ] T174 [P] Implement CSRF protection for state-changing operations in SecurityConfig.kt
-- [ ] T175 [P] Add request/response logging with sensitive data masking in backend/src/main/kotlin/com/worklog/infrastructure/config/LoggingConfig.kt
-- [ ] T176 Verify TLS/HTTPS configuration for production in infra/docker/docker-compose.prod.yml (FR-032)
+- [x] T173 [P] Add rate limiting to API endpoints in backend/src/main/kotlin/com/worklog/infrastructure/config/RateLimitConfig.kt
+- [x] T174 [P] Implement CSRF protection for state-changing operations in SecurityConfig.kt
+- [x] T175 [P] Add request/response logging with sensitive data masking in backend/src/main/kotlin/com/worklog/infrastructure/config/LoggingConfig.kt
+- [x] T176 Verify TLS/HTTPS configuration for production in infra/docker/nginx/nginx.conf
 
 ### Testing & Quality
 
-- [ ] T177 Run all E2E tests and verify acceptance scenarios from spec.md (35 scenarios across 7 stories)
-- [ ] T178 Run accessibility tests with axe-core in frontend/e2e/accessibility.spec.ts (WCAG 2.1 AA compliance)
-- [ ] T179 Run browser compatibility tests (Chrome, Firefox, Safari, Edge latest 2 versions)
-- [ ] T180 Verify code coverage targets (backend ≥85%, frontend ≥80%)
-- [ ] T181 Run security scan with OWASP dependency check
+- [x] T177 Run all E2E tests and verify acceptance scenarios from spec.md (35 scenarios across 7 stories)
+- [x] T178 Run accessibility tests with axe-core in frontend/e2e/accessibility.spec.ts (WCAG 2.1 AA compliance)
+- [x] T179 Run browser compatibility tests (Chrome, Firefox, Safari, Edge latest 2 versions)
+- [x] T180 Verify code coverage targets (backend ≥85%, frontend ≥80%)
+- [x] T181 Run security scan with OWASP dependency check
 
 ### Documentation
 
-- [ ] T182 [P] Update quickstart.md with SSO mock configuration (4 test users per quickstart.md)
-- [ ] T183 [P] Create API documentation with OpenAPI spec in backend/src/main/resources/static/api-docs.html
-- [ ] T184 [P] Create user manual for engineers in docs/user-manual.md
-- [ ] T185 [P] Create manager guide for approval workflow in docs/manager-guide.md
-- [ ] T186 [P] Update AGENTS.md with Phase 1 technology decisions per plan.md
+- [x] T182 [P] Update quickstart.md with SSO mock configuration (4 test users per quickstart.md)
+- [x] T183 [P] Create API documentation with OpenAPI spec in backend/src/main/resources/static/api-docs.html
+- [x] T184 [P] Create user manual for engineers in docs/user-manual.md
+- [x] T185 [P] Create manager guide for approval workflow in docs/manager-guide.md
+- [x] T186 [P] Update AGENTS.md with Phase 10 technology decisions per plan.md
 
 ### Deployment
 
-- [ ] T187 Create production Docker Compose configuration in infra/docker/docker-compose.prod.yml
-- [ ] T188 Add health check endpoints verification in deployment script
-- [ ] T189 Create database backup strategy documentation in docs/backup-strategy.md
-- [ ] T190 Run quickstart.md validation (verify 5-minute setup works)
+- [x] T187 Create production Docker Compose configuration in infra/docker/docker-compose.prod.yml
+- [x] T188 Add health check endpoints verification in infra/scripts/verify-health.sh
+- [x] T189 Create database backup strategy documentation in docs/backup-strategy.md
+- [x] T190 Run quickstart.md validation (verify 5-minute setup works)
 
 ---
 

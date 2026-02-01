@@ -8,13 +8,19 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.*;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Projection for monthly summary view.
  * 
  * Provides aggregated statistics for a member's work entries and absences within a month,
  * including project-level breakdown with hours and percentages.
+ * 
+ * Optimized for performance using projection tables instead of event replay.
  */
 @Component
 public class MonthlySummaryProjection {
@@ -53,7 +59,7 @@ public class MonthlySummaryProjection {
         BigDecimal totalAbsenceHours = getTotalAbsenceHours(memberId, startDate, endDate);
 
         // Get approval status for the month
-        ApprovalStatusData approvalStatus = getApprovalStatus(memberId, startDate, endDate);
+        ApprovalStatusData approvalStatus = getApprovalStatus(memberId, year, month);
 
         return new MonthlySummaryData(
             year,
@@ -70,6 +76,8 @@ public class MonthlySummaryProjection {
     /**
      * Gets project-level summaries with hours and percentages.
      * 
+     * Uses the work_log_entries_projection table for efficient aggregation.
+     * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
@@ -80,23 +88,16 @@ public class MonthlySummaryProjection {
         LocalDate startDate,
         LocalDate endDate
     ) {
+        // Uses idx_work_log_entries_member_date for efficient query
         String sql = """
             WITH project_hours AS (
                 SELECT 
-                    CAST(e.payload->>'projectId' AS UUID) as project_id,
-                    SUM(CAST(e.payload->>'hours' AS DECIMAL)) as total_hours
-                FROM event_store e
-                WHERE e.aggregate_type = 'WorkLogEntry'
-                AND e.event_type = 'WorkLogEntryCreated'
-                AND CAST(e.payload->>'memberId' AS UUID) = ?
-                AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
-                AND e.aggregate_id NOT IN (
-                    SELECT aggregate_id 
-                    FROM event_store 
-                    WHERE aggregate_type = 'WorkLogEntry'
-                    AND event_type = 'WorkLogEntryDeleted'
-                )
-                GROUP BY project_id
+                    w.project_id,
+                    SUM(w.hours) as total_hours
+                FROM work_log_entries_projection w
+                WHERE w.member_id = ?
+                AND w.work_date BETWEEN ? AND ?
+                GROUP BY w.project_id
             ),
             total AS (
                 SELECT COALESCE(SUM(total_hours), 0) as sum
@@ -153,6 +154,8 @@ public class MonthlySummaryProjection {
     /**
      * Gets total absence hours for a member within a date range.
      * 
+     * Uses the absences_projection table for efficient aggregation.
+     * 
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
@@ -163,45 +166,68 @@ public class MonthlySummaryProjection {
         LocalDate startDate,
         LocalDate endDate
     ) {
+        // Uses idx_absences_overlap for efficient overlap detection
+        // For each absence, calculate how many days fall within the requested range
         String sql = """
-            SELECT COALESCE(SUM(CAST(e.payload->>'hours' AS DECIMAL)), 0) as total_hours
-            FROM event_store e
-            WHERE e.aggregate_type = 'Absence'
-            AND e.event_type = 'AbsenceRecorded'
-            AND CAST(e.payload->>'memberId' AS UUID) = ?
-            AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
-            AND e.aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
-                WHERE aggregate_type = 'Absence'
-                AND event_type = 'AbsenceDeleted'
-            )
+            SELECT 
+                id,
+                start_date,
+                end_date,
+                hours_per_day
+            FROM absences_projection
+            WHERE member_id = ?
+            AND start_date <= ?
+            AND end_date >= ?
             """;
 
-        BigDecimal total = jdbcTemplate.queryForObject(
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(
             sql,
-            BigDecimal.class,
             memberId,
-            startDate,
-            endDate
+            endDate,
+            startDate
         );
 
-        return total != null ? total : BigDecimal.ZERO;
+        BigDecimal totalHours = BigDecimal.ZERO;
+        
+        for (Map<String, Object> row : results) {
+            LocalDate absenceStart = ((java.sql.Date) row.get("start_date")).toLocalDate();
+            LocalDate absenceEnd = ((java.sql.Date) row.get("end_date")).toLocalDate();
+            BigDecimal hoursPerDay = (BigDecimal) row.get("hours_per_day");
+            
+            // Calculate intersection with requested date range
+            LocalDate effectiveStart = absenceStart.isBefore(startDate) ? startDate : absenceStart;
+            LocalDate effectiveEnd = absenceEnd.isAfter(endDate) ? endDate : absenceEnd;
+            
+            // Count days in the effective range
+            long days = ChronoUnit.DAYS.between(effectiveStart, effectiveEnd) + 1;
+            
+            totalHours = totalHours.add(hoursPerDay.multiply(BigDecimal.valueOf(days)));
+        }
+
+        return totalHours;
     }
 
     /**
      * Gets approval status for a member's month.
      * 
+     * Note: Currently queries event_store directly. Will be optimized to use
+     * projection tables once event handlers are implemented.
+     * 
      * @param memberId Member ID
-     * @param startDate Start date (inclusive)
-     * @param endDate End date (inclusive)
+     * @param targetYear Calendar year that anchors the fiscal period
+     * @param targetMonth Calendar month (1-12) that anchors the fiscal period
+     *                    (fiscal period runs from 21st of previous month to 20th of this month)
      * @return Approval status data (status and rejection reason)
      */
     private ApprovalStatusData getApprovalStatus(
         UUID memberId,
-        LocalDate startDate,
-        LocalDate endDate
+        int targetYear,
+        int targetMonth
     ) {
+        // Calculate fiscal month date range (21st of previous month to 20th of target month)
+        LocalDate fiscalMonthStart = LocalDate.of(targetYear, targetMonth, 1).minusMonths(1).withDayOfMonth(21);
+        LocalDate fiscalMonthEnd = LocalDate.of(targetYear, targetMonth, 20);
+        
         String sql = """
             WITH latest_approval AS (
                 SELECT 
@@ -237,8 +263,8 @@ public class MonthlySummaryProjection {
         List<Map<String, Object>> results = jdbcTemplate.queryForList(
             sql,
             memberId,
-            startDate,
-            endDate
+            fiscalMonthStart,
+            fiscalMonthEnd
         );
 
         if (results.isEmpty()) {

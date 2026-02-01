@@ -1,4 +1,14 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Miometry Frontend
+
+The frontend application for Miometry (ミオメトリー) - a time entry management system built with Next.js and React.
+
+## Technology Stack
+
+- **Framework**: [Next.js](https://nextjs.org) 16.1.1
+- **UI Library**: React 19.2.3
+- **Language**: TypeScript 5.x
+- **Styling**: Tailwind CSS
+- **Linter/Formatter**: Biome
 
 ## Getting Started
 
@@ -10,27 +20,58 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+frontend/
+├── app/
+│   ├── components/
+│   │   ├── shared/      # Reusable UI components
+│   │   └── worklog/     # Domain-specific components
+│   ├── hooks/           # Custom React hooks
+│   ├── lib/             # Utilities and helpers
+│   ├── services/        # API client and state management
+│   ├── types/           # TypeScript type definitions
+│   └── worklog/         # Page routes
+├── tests/
+│   ├── e2e/             # Playwright end-to-end tests
+│   └── unit/            # Component unit tests
+└── public/              # Static assets
+```
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run Biome linter
+- `npm run format` - Format code with Biome
+- `npm run test` - Run unit tests
+- `npm run test:e2e` - Run E2E tests with Playwright
+
+## Key Features
+
+- **Calendar View**: Monthly calendar with work log entries
+- **Daily Entry Form**: Time entry with multi-project allocation
+- **Absence Tracking**: Vacation, sick leave, and other absences
+- **Auto-Save**: 3-second debounce with optimistic UI updates
+- **CSV Import**: Drag-and-drop file upload with progress tracking
+- **Approval Workflow**: Submit, view status, and manage approvals
+- **Proxy Entry**: Managers can enter time for team members
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js Documentation](https://nextjs.org/docs)
+- [React Documentation](https://react.dev)
+- [Tailwind CSS](https://tailwindcss.com/docs)
+- [Biome](https://biomejs.dev/docs/)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The application can be deployed on Vercel, Docker, or any Node.js hosting platform.
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See the [main README](../README.md) for full deployment instructions.

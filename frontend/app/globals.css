@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/*
+ * Tailwind CSS v4 is used in this project.
+ * @theme directives are processed at build time by Tailwind/PostCSS
+ * and transformed into standard CSS custom properties.
+ * See: https://tailwindcss.com/docs/v4-beta
+ */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -10,6 +17,43 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* T163: Custom responsive breakpoints per FR-023 */
+/* Mobile: 375px-767px, Tablet: 768px-1023px, Desktop: 1024px+ */
+@theme {
+  --breakpoint-xs: 23.4375rem; /* 375px - mobile start */
+  --breakpoint-sm: 40rem; /* 640px - default */
+  --breakpoint-md: 48rem; /* 768px - tablet start */
+  --breakpoint-lg: 64rem; /* 1024px - desktop start */
+  --breakpoint-xl: 80rem; /* 1280px */
+  --breakpoint-2xl: 96rem; /* 1536px */
+
+  /* T165: Custom color scheme for calendar */
+  /* Weekend colors - subtle blue for weekend days */
+  --color-weekend-50: oklch(0.97 0.01 230);
+  --color-weekend-100: oklch(0.94 0.02 230);
+  --color-weekend-200: oklch(0.9 0.04 230);
+
+  /* Holiday colors - warm orange for holidays */
+  --color-holiday-50: oklch(0.98 0.02 60);
+  --color-holiday-100: oklch(0.95 0.04 55);
+  --color-holiday-200: oklch(0.9 0.08 50);
+  --color-holiday-500: oklch(0.7 0.18 45);
+  --color-holiday-600: oklch(0.6 0.2 40);
+
+  /* Status colors for entry states */
+  --color-status-draft: oklch(0.95 0.01 250);
+  --color-status-submitted: oklch(0.92 0.04 230);
+  --color-status-approved: oklch(0.92 0.06 145);
+  --color-status-rejected: oklch(0.92 0.06 25);
+  --color-status-mixed: oklch(0.95 0.08 85);
+
+  /* Absence type colors */
+  --color-absence-vacation: oklch(0.92 0.05 220);
+  --color-absence-sick: oklch(0.94 0.04 25);
+  --color-absence-personal: oklch(0.94 0.04 280);
+  --color-absence-training: oklch(0.92 0.05 145);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +67,67 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* T164: Touch target sizing for mobile (≥44px per FR-023) */
+/* Apply minimum touch targets on mobile devices */
+/* Note: <a> is excluded from global rules to prevent breaking inline links, 
+   navigation, and dense UI like lists/tables. Use .touch-target class for 
+   interactive anchor elements that need larger touch targets. */
+@media (max-width: 47.9375rem) {
+  /* Below tablet breakpoint (768px) */
+  /* Buttons and interactive elements (excluding anchors to preserve layout) */
+  button,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 2.75rem; /* 44px */
+    min-width: 2.75rem; /* 44px */
+  }
+
+  /* Form inputs need comfortable height */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="password"],
+  input[type="date"],
+  input[type="time"],
+  textarea,
+  select {
+    min-height: 2.75rem; /* 44px */
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Calendar day cells */
+  .calendar-day {
+    min-height: 3rem; /* 48px for better touch */
+  }
+}
+
+/* Utility class for touch-friendly targets */
+.touch-target {
+  min-height: 2.75rem; /* 44px */
+  min-width: 2.75rem; /* 44px */
+}
+
+/* Prevent double-tap zoom on form inputs (mobile) */
+@media (max-width: 47.9375rem) {
+  input,
+  textarea,
+  select {
+    font-size: 1rem; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }

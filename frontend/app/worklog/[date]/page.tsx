@@ -1,60 +1,69 @@
 "use client";
 
 /**
- * Daily Work Log Entry Page
+ * Daily Time Entry Page
  *
- * Allows engineers to enter or edit work log entries for a specific date.
+ * Allows engineers to enter or edit time entries for a specific date.
  * Handles routing from calendar view (/worklog -> /worklog/2026-01-15)
  */
 
-import { use } from "react";
 import { useRouter } from "next/navigation";
+import { use } from "react";
 import { DailyEntryForm } from "@/components/worklog/DailyEntryForm";
+import { useAuth } from "@/hooks/useAuth";
+import { useProxyMode } from "@/services/worklogStore";
 
 interface PageProps {
-	params: Promise<{
-		date: string; // Format: YYYY-MM-DD
-	}>;
+  params: Promise<{
+    date: string; // Format: YYYY-MM-DD
+  }>;
 }
 
 export default function DailyEntryPage({ params }: PageProps) {
-	const router = useRouter();
-	const { date } = use(params);
+  const router = useRouter();
+  const { date } = use(params);
 
-	// Parse date string to Date object
-	let parsedDate: Date;
-	try {
-		parsedDate = new Date(date);
-		// Validate date
-		if (Number.isNaN(parsedDate.getTime())) {
-			throw new Error("Invalid date");
-		}
-	} catch (error) {
-		// Invalid date format - redirect back to calendar
-		router.push("/worklog");
-		return null;
-	}
+  // Authentication state
+  const { userId } = useAuth();
 
-	// TODO: Get actual member ID from auth context
-	const memberId = "00000000-0000-0000-0000-000000000001";
+  // Proxy mode state - get effective member ID
+  const { isProxyMode, targetMember } = useProxyMode();
 
-	const handleClose = () => {
-		router.push("/worklog");
-	};
+  // Parse date string to Date object
+  let parsedDate: Date;
+  try {
+    parsedDate = new Date(date);
+    // Validate date
+    if (Number.isNaN(parsedDate.getTime())) {
+      throw new Error("Invalid date");
+    }
+  } catch (error) {
+    // Invalid date format - redirect back to calendar
+    router.push("/worklog");
+    return null;
+  }
 
-	const handleSave = () => {
-		// Navigate back to calendar after successful save
-		router.push("/worklog");
-	};
+  // Use target member ID if in proxy mode, otherwise use current user
+  const memberId =
+    isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
-	return (
-		<div className="min-h-screen bg-gray-50">
-			<DailyEntryForm
-				date={parsedDate}
-				memberId={memberId}
-				onClose={handleClose}
-				onSave={handleSave}
-			/>
-		</div>
-	);
+  const handleClose = () => {
+    router.push("/worklog");
+  };
+
+  const handleSave = () => {
+    // Navigate back to calendar after successful save
+    router.push("/worklog");
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <DailyEntryForm
+        date={parsedDate}
+        memberId={memberId}
+        onClose={handleClose}
+        onSave={handleSave}
+      />
+    </div>
+  );
 }

@@ -37,6 +37,24 @@ public class Member {
             boolean isActive,
             Instant createdAt
     ) {
+        this(id, tenantId, organizationId, email, displayName, managerId, isActive, createdAt, createdAt);
+    }
+    
+    /**
+     * Rehydration constructor for restoring a Member from persistence.
+     * Use this when loading from database where both timestamps are known.
+     */
+    public Member(
+            MemberId id,
+            TenantId tenantId,
+            OrganizationId organizationId,
+            String email,
+            String displayName,
+            MemberId managerId,
+            boolean isActive,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
         this.id = Objects.requireNonNull(id, "Member ID cannot be null");
         this.tenantId = Objects.requireNonNull(tenantId, "Tenant ID cannot be null");
         this.organizationId = Objects.requireNonNull(organizationId, "Organization ID cannot be null");
@@ -45,7 +63,7 @@ public class Member {
         this.managerId = managerId;  // Can be null if no manager
         this.isActive = isActive;
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
-        this.updatedAt = createdAt;
+        this.updatedAt = Objects.requireNonNull(updatedAt, "Updated timestamp cannot be null");
         
         validateEmail(email);
     }

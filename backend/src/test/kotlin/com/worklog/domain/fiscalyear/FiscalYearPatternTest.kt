@@ -9,7 +9,6 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 /**
  * Unit tests for FiscalYearPattern entity.

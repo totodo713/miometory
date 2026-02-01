@@ -8,6 +8,21 @@ spring:
     enabled: true
     locations: classpath:db/migration
 
+  # Redis Configuration - disabled by default for development
+  # Enable with worklog.cache.enabled=true
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          max-wait: -1ms
+
   # OAuth2/OIDC Configuration - DISABLED FOR DEVELOPMENT
   # Configure via environment variables or override in application-{profile}.yaml when needed
   # security:
@@ -53,3 +68,21 @@ server:
         http-only: true  # Prevent XSS attacks
         secure: ${SESSION_COOKIE_SECURE:false}  # Set to true in production (HTTPS)
         same-site: lax  # CSRF protection
+
+# Rate Limiting Configuration
+worklog:
+  # Cache Configuration (Redis)
+  cache:
+    enabled: ${CACHE_ENABLED:false}
+    ttl-minutes: ${CACHE_TTL_MINUTES:5}
+  rate-limit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    requests-per-second: ${RATE_LIMIT_RPS:10}
+    burst-size: ${RATE_LIMIT_BURST:20}
+    cleanup-interval-minutes: 5
+  # Request/Response Logging with sensitive data masking
+  logging:
+    enabled: ${REQUEST_LOGGING_ENABLED:true}
+    include-request-body: ${REQUEST_LOGGING_BODY:true}
+    include-response-body: ${RESPONSE_LOGGING_BODY:false}
+    max-body-length: ${LOGGING_MAX_BODY:1000}

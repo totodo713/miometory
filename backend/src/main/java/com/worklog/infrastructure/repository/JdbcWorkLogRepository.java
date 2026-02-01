@@ -216,4 +216,39 @@ public class JdbcWorkLogRepository {
     public boolean existsById(WorkLogEntryId entryId) {
         return eventStore.getCurrentVersion(entryId.value()) > 0;
     }
+
+    /**
+     * Find unique project IDs for a member within a date range.
+     * This is used for the "Copy from Previous Month" feature.
+     * 
+     * @param memberId Member ID
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return List of unique project IDs
+     */
+    public List<UUID> findUniqueProjectIdsByDateRange(UUID memberId, LocalDate startDate, LocalDate endDate) {
+        String sql = """
+            SELECT DISTINCT CAST(e.payload->>'projectId' AS UUID) as project_id
+            FROM event_store e
+            WHERE e.aggregate_type = 'WorkLogEntry'
+            AND e.event_type = 'WorkLogEntryCreated'
+            AND CAST(e.payload->>'memberId' AS UUID) = ?
+            AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
+            AND e.aggregate_id NOT IN (
+                SELECT aggregate_id 
+                FROM event_store 
+                WHERE aggregate_type = 'WorkLogEntry'
+                AND event_type = 'WorkLogEntryDeleted'
+            )
+            ORDER BY project_id
+            """;
+
+        return jdbcTemplate.query(
+            sql,
+            (rs, rowNum) -> UUID.fromString(rs.getString("project_id")),
+            memberId,
+            startDate,
+            endDate
+        );
+    }
 }

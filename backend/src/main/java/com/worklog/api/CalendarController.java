@@ -89,7 +89,8 @@ public class CalendarController {
                 p.totalAbsenceHours(),
                 p.status(),
                 p.isWeekend(),
-                p.isHoliday()
+                p.isHoliday(),
+                p.hasProxyEntries()
             ))
             .collect(Collectors.toList());
 

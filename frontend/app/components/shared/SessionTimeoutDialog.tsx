@@ -51,7 +51,13 @@ export function SessionTimeoutDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="session-timeout-title"
+      aria-describedby="session-timeout-description"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
@@ -73,10 +79,16 @@ export function SessionTimeoutDialog({
             </svg>
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2
+              id="session-timeout-title"
+              className="text-xl font-semibold text-gray-900"
+            >
               Session Timeout Warning
             </h2>
-            <p className="text-sm text-gray-500">
+            <p
+              id="session-timeout-description"
+              className="text-sm text-gray-500"
+            >
               Your session is about to expire
             </p>
           </div>

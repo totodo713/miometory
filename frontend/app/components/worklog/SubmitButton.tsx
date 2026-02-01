@@ -75,6 +75,8 @@ export function SubmitButton({
         type="button"
         onClick={handleSubmit}
         disabled={!canSubmit || isSubmitting}
+        aria-label={getButtonText()}
+        aria-busy={isSubmitting}
         className={`px-4 py-2 text-white rounded font-medium transition-colors ${getButtonStyle()}`}
       >
         {getButtonText()}

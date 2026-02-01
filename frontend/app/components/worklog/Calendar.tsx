@@ -117,19 +117,30 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
             const statusColor =
               STATUS_COLORS[dateEntry.status as keyof typeof STATUS_COLORS] ||
               STATUS_COLORS.DRAFT;
+            const monthName = date.toLocaleDateString("en-US", {
+              month: "long",
+            });
+            const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;
+
+            // Determine background color (priority: holiday > absence > weekend > white)
+            const backgroundClass = dateEntry.isHoliday
+              ? "bg-holiday-100"
+              : hasAbsenceHours
+                ? "bg-blue-50"
+                : dateEntry.isWeekend
+                  ? "bg-weekend-100"
+                  : "bg-white";
 
             return (
               <button
                 type="button"
                 key={dateEntry.date}
                 onClick={() => handleDateClick(dateEntry.date)}
+                aria-label={ariaLabel}
                 className={`
-                  bg-white p-2 min-h-24 text-left
+                  ${backgroundClass} p-2 min-h-24 text-left calendar-day
                   hover:bg-gray-50 transition-colors
                   focus:outline-none focus:ring-2 focus:ring-blue-500
-                  ${dateEntry.isWeekend ? "bg-gray-50" : ""}
-                  ${dateEntry.isHoliday ? "bg-red-50" : ""}
-                  ${hasAbsenceHours && !dateEntry.isHoliday ? "bg-blue-50" : ""}
                 `}
               >
                 {/* Day number */}
@@ -137,14 +148,26 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                   <span
                     className={`
                     text-sm font-medium
-                    ${dateEntry.isWeekend ? "text-gray-500" : "text-gray-900"}
+                    ${dateEntry.isWeekend ? "text-gray-600" : "text-gray-900"}
                   `}
                   >
                     {dayNum}
                   </span>
-                  {dateEntry.isHoliday && (
-                    <span className="text-xs text-red-600">H</span>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {dateEntry.hasProxyEntries && (
+                      <span
+                        className="text-xs text-amber-600"
+                        title="Contains entries made by manager"
+                        aria-label="Contains entries made by manager"
+                        role="img"
+                      >
+                        👤<span className="sr-only">Proxy entry indicator</span>
+                      </span>
+                    )}
+                    {dateEntry.isHoliday && (
+                      <span className="text-xs text-holiday-600">H</span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Hours display */}

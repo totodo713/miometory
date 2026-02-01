@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16
-    container_name: worklog-postgres
+    container_name: miometry-postgres
     environment:
       POSTGRES_USER: worklog
       POSTGRES_PASSWORD: worklog
@@ -17,7 +17,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: worklog-redis
+    container_name: miometry-redis
     ports:
       - "6379:6379"
     volumes:

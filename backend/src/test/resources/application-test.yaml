@@ -17,8 +17,18 @@ spring:
       name: test
       password: test
 
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
 logging:
   level:
     org.testcontainers: INFO
     com.github.database.rider: DEBUG
     org.flywaydb: INFO
+
+# Disable rate limiting for tests
+worklog:
+  rate-limit:
+    enabled: false

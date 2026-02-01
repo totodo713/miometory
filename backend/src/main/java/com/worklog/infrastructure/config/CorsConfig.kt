@@ -7,7 +7,7 @@ import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 /**
- * CORS configuration for Work-Log application.
+ * CORS configuration for Miometry application.
  *
  * Development mode: Allow requests from frontend dev server (localhost:3000).
  *
@@ -18,50 +18,54 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  */
 @Configuration
 class CorsConfig {
-
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        
+
         // Allow frontend dev server (Next.js default port)
-        configuration.allowedOrigins = listOf(
-            "http://localhost:3000",
-            "http://localhost:3001" // Alternative port if 3000 is busy
-        )
-        
+        configuration.allowedOrigins =
+            listOf(
+                "http://localhost:3000",
+                "http://localhost:3001", // Alternative port if 3000 is busy
+            )
+
         // Allow common HTTP methods
-        configuration.allowedMethods = listOf(
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS"
-        )
-        
+        configuration.allowedMethods =
+            listOf(
+                "GET",
+                "POST",
+                "PUT",
+                "PATCH",
+                "DELETE",
+                "OPTIONS",
+            )
+
         // Allow common headers
-        configuration.allowedHeaders = listOf(
-            "Content-Type",
-            "Authorization",
-            "If-Match",      // For optimistic locking
-            "If-None-Match"  // For caching
-        )
-        
+        configuration.allowedHeaders =
+            listOf(
+                "Content-Type",
+                "Authorization",
+                "If-Match", // For optimistic locking
+                "If-None-Match", // For caching
+                "X-XSRF-TOKEN", // For CSRF protection
+            )
+
         // Expose ETag header for optimistic locking
-        configuration.exposedHeaders = listOf(
-            "ETag",
-            "Location"       // For POST responses
-        )
-        
+        configuration.exposedHeaders =
+            listOf(
+                "ETag",
+                "Location", // For POST responses
+            )
+
         // Allow credentials (cookies, authorization headers)
         configuration.allowCredentials = true
-        
+
         // Cache preflight requests for 1 hour
         configuration.maxAge = 3600L
-        
+
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/api/**", configuration)
-        
+
         return source
     }
 }

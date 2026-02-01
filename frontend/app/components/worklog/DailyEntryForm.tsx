@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
+import { useProxyMode } from "../../services/worklogStore";
 import type { WorkLogEntry, WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
 
@@ -32,6 +33,7 @@ export function DailyEntryForm({
   onClose,
   onSave,
 }: DailyEntryFormProps) {
+  const { isProxyMode, targetMember } = useProxyMode();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
   const [projectRows, setProjectRows] = useState<ProjectRow[]>([
     { projectId: "", hours: 0, comment: "", errors: {} },
@@ -390,12 +392,17 @@ export function DailyEntryForm({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="daily-entry-title"
+    >
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">
+            <h2 id="daily-entry-title" className="text-2xl font-bold">
               Daily Entry -{" "}
               {date.toLocaleDateString("en-US", {
                 year: "numeric",
@@ -406,11 +413,29 @@ export function DailyEntryForm({
             <button
               type="button"
               onClick={handleClose}
+              aria-label="Close daily entry form"
               className="text-gray-500 hover:text-gray-700"
             >
               ✕
             </button>
           </div>
+
+          {/* Proxy Mode Banner */}
+          {isProxyMode && targetMember && (
+            <div className="mb-6 p-4 bg-amber-100 border border-amber-300 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-800 font-medium">
+                  Entering time as:{" "}
+                  <span className="font-bold">{targetMember.displayName}</span>
+                </span>
+              </div>
+              <p className="text-sm text-amber-700 mt-1">
+                This entry will be recorded on behalf of{" "}
+                {targetMember.displayName}. You will be logged as the person who
+                entered this data.
+              </p>
+            </div>
+          )}
 
           {/* Tab Switcher */}
           <div className="mb-6 border-b border-gray-200">
@@ -478,7 +503,7 @@ export function DailyEntryForm({
                   totalExceeds24
                     ? "text-red-600"
                     : totalHours === 0
-                      ? "text-gray-400"
+                      ? "text-gray-500"
                       : "text-green-600"
                 }`}
               >
@@ -589,6 +614,7 @@ export function DailyEntryForm({
                             <button
                               type="button"
                               onClick={() => removeProjectRow(index)}
+                              aria-label={`Remove project entry ${index + 1}`}
                               className="text-red-600 hover:text-red-800"
                             >
                               Remove
@@ -691,10 +717,18 @@ export function DailyEntryForm({
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-confirm-title"
+          aria-describedby="delete-confirm-description"
+        >
           <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 className="text-lg font-bold mb-4">Confirm Delete</h3>
-            <p className="mb-6">
+            <h3 id="delete-confirm-title" className="text-lg font-bold mb-4">
+              Confirm Delete
+            </h3>
+            <p id="delete-confirm-description" className="mb-6">
               Are you sure you want to delete this entry? This action cannot be
               undone.
             </p>

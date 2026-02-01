@@ -8,6 +8,7 @@ plugins {
     kotlin("plugin.spring") version "2.3.0"
     jacoco
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+    id("org.owasp.dependencycheck") version "12.1.1"
 }
 
 group = "com.worklog"
@@ -41,6 +42,9 @@ dependencies {
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.apache.commons:commons-csv:1.11.0")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
     runtimeOnly("org.postgresql:postgresql")
 
     // Test dependencies
@@ -66,7 +70,15 @@ dependencies {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        // Exclude performance tests by default (they are slow and may be flaky in CI)
+        // Run performance tests with: ./gradlew test -PincludeTags=performance
+        if (!project.hasProperty("includeTags")) {
+            excludeTags("performance")
+        } else {
+            includeTags(project.property("includeTags") as String)
+        }
+    }
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

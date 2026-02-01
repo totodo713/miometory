@@ -2,9 +2,7 @@ package com.worklog.application.service
 
 import com.worklog.IntegrationTestBase
 import com.worklog.domain.fiscalyear.FiscalYearPattern
-import com.worklog.domain.fiscalyear.FiscalYearPatternId
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId
 import com.worklog.domain.organization.Organization
 import com.worklog.domain.organization.OrganizationId
 import com.worklog.domain.shared.Code

@@ -12,7 +12,22 @@
  * Session timeout (30 minutes) is handled client-side via session timeout warnings.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+import type { MonthlyCalendarResponse } from "@/types/worklog";
+import { getCsrfToken } from "./csrf";
+
+// Normalize API base URL to ensure consistent URL construction
+// This prevents issues when NEXT_PUBLIC_API_URL contains path prefixes
+const API_BASE_URL = (() => {
+  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  // Remove any trailing path segments to prevent double-prefix issues
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    // Fallback for relative URLs or invalid URLs
+    return url.replace(/\/+$/, "");
+  }
+})();
 
 /**
  * API Error types
@@ -89,6 +104,16 @@ class ApiClient {
     // Add If-Match header for optimistic locking
     if (version !== undefined) {
       headers["If-Match"] = version.toString();
+    }
+
+    // Add CSRF token for non-safe methods (POST, PUT, PATCH, DELETE)
+    // Safe methods (GET, HEAD, OPTIONS, TRACE) don't require CSRF protection
+    const method = fetchOptions.method?.toUpperCase() || "GET";
+    if (!["GET", "HEAD", "OPTIONS", "TRACE"].includes(method)) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        headers["X-XSRF-TOKEN"] = csrfToken;
+      }
     }
 
     try {
@@ -344,20 +369,9 @@ export const api = {
       memberId: string;
     }) => {
       const query = new URLSearchParams({ memberId: params.memberId });
-      return apiClient.get<{
-        memberId: string;
-        memberName: string;
-        periodStart: string;
-        periodEnd: string;
-        dates: Array<{
-          date: string;
-          totalWorkHours: number;
-          totalAbsenceHours: number;
-          status: string;
-          isWeekend: boolean;
-          isHoliday: boolean;
-        }>;
-      }>(`/api/v1/worklog/calendar/${params.year}/${params.month}?${query}`);
+      return apiClient.get<MonthlyCalendarResponse>(
+        `/api/v1/worklog/calendar/${params.year}/${params.month}?${query}`,
+      );
     },
 
     /**
@@ -381,9 +395,37 @@ export const api = {
           totalHours: number;
           percentage: number;
         }>;
+        approvalStatus:
+          | "PENDING"
+          | "SUBMITTED"
+          | "APPROVED"
+          | "REJECTED"
+          | null;
+        rejectionReason: string | null;
       }>(
         `/api/v1/worklog/calendar/${params.year}/${params.month}/summary?${query}`,
       );
+    },
+
+    /**
+     * Get projects from previous fiscal month (for copy feature)
+     */
+    getPreviousMonthProjects: (params: {
+      year: number;
+      month: number;
+      memberId: string;
+    }) => {
+      const query = new URLSearchParams({
+        year: params.year.toString(),
+        month: params.month.toString(),
+        memberId: params.memberId,
+      });
+      return apiClient.get<{
+        projectIds: string[];
+        previousMonthStart: string;
+        previousMonthEnd: string;
+        count: number;
+      }>(`/api/v1/worklog/projects/previous-month?${query}`);
     },
   },
 
@@ -529,10 +571,9 @@ export const api = {
      * Approve a submitted month
      */
     approveMonth: (approvalId: string, reviewedBy: string) =>
-      apiClient.post<void>(
-        `/api/v1/worklog/approvals/${approvalId}/approve`,
-        { reviewedBy },
-      ),
+      apiClient.post<void>(`/api/v1/worklog/approvals/${approvalId}/approve`, {
+        reviewedBy,
+      }),
 
     /**
      * Reject a submitted month with reason
@@ -545,6 +586,50 @@ export const api = {
         `/api/v1/worklog/approvals/${approvalId}/reject`,
         data,
       ),
+  },
+
+  /**
+   * Member endpoints (for proxy entry feature)
+   */
+  members: {
+    /**
+     * Get a member by ID
+     */
+    getMember: (id: string) =>
+      apiClient.get<{
+        id: string;
+        email: string;
+        displayName: string;
+        managerId: string | null;
+        isActive: boolean;
+      }>(`/api/v1/members/${id}`),
+
+    /**
+     * Get subordinates of a manager
+     */
+    getSubordinates: (managerId: string, recursive = false) => {
+      const query = new URLSearchParams({ recursive: recursive.toString() });
+      return apiClient.get<{
+        subordinates: Array<{
+          id: string;
+          email: string;
+          displayName: string;
+          managerId: string | null;
+          isActive: boolean;
+        }>;
+        count: number;
+        includesIndirect: boolean;
+      }>(`/api/v1/members/${managerId}/subordinates?${query}`);
+    },
+
+    /**
+     * Check if manager can enter time on behalf of a member
+     */
+    canProxy: (managerId: string, memberId: string) =>
+      apiClient.get<{
+        canProxy: boolean;
+        reason: string;
+      }>(`/api/v1/members/${managerId}/can-proxy/${memberId}`),
   },
 };
 

@@ -40,6 +40,36 @@ export interface WorkLogEntry {
 }
 
 /**
+ * Copied projects from previous month
+ */
+export interface CopiedProjects {
+  projectIds: string[];
+  year: number;
+  month: number;
+  copiedAt: string;
+}
+
+/**
+ * Subordinate member for proxy entry
+ */
+export interface SubordinateMember {
+  id: string;
+  email: string;
+  displayName: string;
+  managerId: string | null;
+  isActive: boolean;
+}
+
+/**
+ * Proxy entry mode state
+ */
+export interface ProxyMode {
+  enabled: boolean;
+  targetMember: SubordinateMember | null;
+  managerId: string;
+}
+
+/**
  * UI state for the work log application
  */
 interface WorkLogState {
@@ -55,6 +85,12 @@ interface WorkLogState {
   isEntryFormOpen: boolean;
   isLoading: boolean;
 
+  // Copied projects from previous month (T151)
+  copiedProjects: CopiedProjects | null;
+
+  // Proxy entry mode (T156-T160)
+  proxyMode: ProxyMode | null;
+
   // Actions
   setSelectedDate: (date: Date) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -62,9 +98,17 @@ interface WorkLogState {
   setSelectedEntryId: (id: string | null) => void;
   setEntryFormOpen: (isOpen: boolean) => void;
   setLoading: (isLoading: boolean) => void;
+  setCopiedProjects: (projects: CopiedProjects | null) => void;
+  clearCopiedProjects: () => void;
+
+  // Proxy mode actions
+  enableProxyMode: (managerId: string, targetMember: SubordinateMember) => void;
+  disableProxyMode: () => void;
+  setProxyTargetMember: (member: SubordinateMember | null) => void;
 
   // Computed helpers
   getSelectedDateISO: () => string;
+  getEffectiveMemberId: (currentUserId: string) => string;
 
   // Reset state
   reset: () => void;
@@ -80,6 +124,8 @@ const initialState = {
   selectedEntryId: null,
   isEntryFormOpen: false,
   isLoading: false,
+  copiedProjects: null,
+  proxyMode: null,
 };
 
 /**
@@ -110,9 +156,44 @@ export const useWorkLogStore = create<WorkLogState>()(
 
         setLoading: (isLoading) => set({ isLoading }),
 
+        setCopiedProjects: (projects) => set({ copiedProjects: projects }),
+
+        clearCopiedProjects: () => set({ copiedProjects: null }),
+
+        enableProxyMode: (managerId, targetMember) =>
+          set({
+            proxyMode: {
+              enabled: true,
+              targetMember,
+              managerId,
+            },
+          }),
+
+        disableProxyMode: () => set({ proxyMode: null }),
+
+        setProxyTargetMember: (member) => {
+          const current = get().proxyMode;
+          if (current) {
+            set({
+              proxyMode: {
+                ...current,
+                targetMember: member,
+              },
+            });
+          }
+        },
+
         getSelectedDateISO: () => {
           const date = get().selectedDate;
           return date.toISOString().split("T")[0];
+        },
+
+        getEffectiveMemberId: (currentUserId: string) => {
+          const proxyMode = get().proxyMode;
+          if (proxyMode?.enabled && proxyMode.targetMember) {
+            return proxyMode.targetMember.id;
+          }
+          return currentUserId;
         },
 
         reset: () => set(initialState),
@@ -155,4 +236,49 @@ export function useSelectedDate() {
  */
 export function useIsEntryEditable(status: EntryStatus): boolean {
   return status === "DRAFT";
+}
+
+/**
+ * Helper hook to access copied projects state
+ */
+export function useCopiedProjects() {
+  const copiedProjects = useWorkLogStore((state) => state.copiedProjects);
+  const setCopiedProjects = useWorkLogStore((state) => state.setCopiedProjects);
+  const clearCopiedProjects = useWorkLogStore(
+    (state) => state.clearCopiedProjects,
+  );
+
+  return {
+    copiedProjects,
+    setCopiedProjects,
+    clearCopiedProjects,
+    hasProjects:
+      copiedProjects !== null && copiedProjects.projectIds.length > 0,
+  };
+}
+
+/**
+ * Helper hook to access proxy mode state
+ */
+export function useProxyMode() {
+  const proxyMode = useWorkLogStore((state) => state.proxyMode);
+  const enableProxyMode = useWorkLogStore((state) => state.enableProxyMode);
+  const disableProxyMode = useWorkLogStore((state) => state.disableProxyMode);
+  const setProxyTargetMember = useWorkLogStore(
+    (state) => state.setProxyTargetMember,
+  );
+  const getEffectiveMemberId = useWorkLogStore(
+    (state) => state.getEffectiveMemberId,
+  );
+
+  return {
+    proxyMode,
+    isProxyMode: proxyMode?.enabled ?? false,
+    targetMember: proxyMode?.targetMember ?? null,
+    managerId: proxyMode?.managerId ?? null,
+    enableProxyMode,
+    disableProxyMode,
+    setProxyTargetMember,
+    getEffectiveMemberId,
+  };
 }

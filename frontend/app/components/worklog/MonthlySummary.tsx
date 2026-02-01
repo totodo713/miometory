@@ -99,7 +99,9 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       {/* Header with Approval Status */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Monthly Summary</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            Monthly Summary
+          </h2>
           <p className="text-sm text-gray-600 mt-1">
             {new Date(year, month - 1).toLocaleString("en-US", {
               month: "long",
@@ -107,7 +109,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
             })}
           </p>
         </div>
-        
+
         {/* Approval Status Badge */}
         {summary.approvalStatus && (
           <div className="flex flex-col items-end gap-2">
@@ -169,16 +171,16 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
           <div className="text-2xl font-bold text-sky-900 mt-1">
             {summary.totalAbsenceHours}h
           </div>
-          <div className="text-xs text-sky-600 mt-1">Time away from work</div>
+          <div className="text-xs text-sky-700 mt-1">Time away from work</div>
         </div>
         <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-          <div className="text-sm text-green-600 font-medium">
+          <div className="text-sm text-green-700 font-medium">
             Business Days
           </div>
           <div className="text-2xl font-bold text-green-900 mt-1">
             {summary.totalBusinessDays}
           </div>
-          <div className="text-xs text-green-600 mt-1">In this period</div>
+          <div className="text-xs text-green-700 mt-1">In this period</div>
         </div>
       </div>
 
