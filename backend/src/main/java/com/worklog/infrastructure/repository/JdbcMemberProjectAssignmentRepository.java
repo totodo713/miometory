@@ -120,6 +120,9 @@ public class JdbcMemberProjectAssignmentRepository {
     /**
      * Saves an assignment (insert or update).
      * 
+     * Uses the composite unique constraint (tenant_id, member_id, project_id) for conflict detection
+     * to match the table's unique constraint and repeatable migration pattern.
+     * 
      * @param assignment The assignment to save
      */
     public void save(MemberProjectAssignment assignment) {
@@ -127,8 +130,10 @@ public class JdbcMemberProjectAssignmentRepository {
             INSERT INTO member_project_assignments 
                 (id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT (id) DO UPDATE SET
-                is_active = EXCLUDED.is_active
+            ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
+                is_active = EXCLUDED.is_active,
+                assigned_at = EXCLUDED.assigned_at,
+                assigned_by = EXCLUDED.assigned_by
             """;
 
         jdbcTemplate.update(

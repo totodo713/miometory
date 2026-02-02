@@ -111,6 +111,14 @@ export function ProjectSelector({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [selectedProject]);
 
+  // Handle project selection
+  const handleSelect = useCallback((project: AssignedProject) => {
+    onChange(project.id);
+    setSearchText("");
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  }, [onChange]);
+
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -150,16 +158,8 @@ export function ProjectSelector({
           break;
       }
     },
-    [disabled, isOpen, highlightedIndex, filteredProjects]
+    [disabled, isOpen, highlightedIndex, filteredProjects, handleSelect]
   );
-
-  // Handle project selection
-  const handleSelect = (project: AssignedProject) => {
-    onChange(project.id);
-    setSearchText("");
-    setIsOpen(false);
-    setHighlightedIndex(-1);
-  };
 
   // Handle input change for search
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
