@@ -112,6 +112,8 @@ export function ProjectSelector({
   }, [selectedProject]);
 
   // Handle project selection
+  // Note: setSearchText, setIsOpen, setHighlightedIndex are React state setters
+  // which are guaranteed to be stable and don't need to be in the dependency array
   const handleSelect = useCallback((project: AssignedProject) => {
     onChange(project.id);
     setSearchText("");

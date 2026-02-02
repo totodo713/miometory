@@ -45,7 +45,9 @@ BEGIN
             true
         )
         ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
-            is_active = EXCLUDED.is_active;
+            is_active = EXCLUDED.is_active,
+            assigned_at = EXCLUDED.assigned_at,
+            assigned_by = EXCLUDED.assigned_by;
 
         -- Bob -> INFRA-OPS (active)
         INSERT INTO member_project_assignments (
@@ -61,7 +63,9 @@ BEGIN
             true
         )
         ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
-            is_active = EXCLUDED.is_active;
+            is_active = EXCLUDED.is_active,
+            assigned_at = EXCLUDED.assigned_at,
+            assigned_by = EXCLUDED.assigned_by;
 
         -- Alice -> WORKLOG-DEV (manager has access to all)
         INSERT INTO member_project_assignments (
@@ -77,7 +81,9 @@ BEGIN
             true
         )
         ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
-            is_active = EXCLUDED.is_active;
+            is_active = EXCLUDED.is_active,
+            assigned_at = EXCLUDED.assigned_at,
+            assigned_by = EXCLUDED.assigned_by;
 
         -- Alice -> INFRA-OPS
         INSERT INTO member_project_assignments (
@@ -93,7 +99,9 @@ BEGIN
             true
         )
         ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
-            is_active = EXCLUDED.is_active;
+            is_active = EXCLUDED.is_active,
+            assigned_at = EXCLUDED.assigned_at,
+            assigned_by = EXCLUDED.assigned_by;
 
         -- Charlie -> WORKLOG-DEV only (junior engineer)
         INSERT INTO member_project_assignments (
@@ -109,7 +117,9 @@ BEGIN
             true
         )
         ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
-            is_active = EXCLUDED.is_active;
+            is_active = EXCLUDED.is_active,
+            assigned_at = EXCLUDED.assigned_at,
+            assigned_by = EXCLUDED.assigned_by;
 
         -- David -> INFRA-OPS only (infrastructure specialist)
         INSERT INTO member_project_assignments (
@@ -125,7 +135,9 @@ BEGIN
             true
         )
         ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
-            is_active = EXCLUDED.is_active;
+            is_active = EXCLUDED.is_active,
+            assigned_at = EXCLUDED.assigned_at,
+            assigned_by = EXCLUDED.assigned_by;
 
         RAISE NOTICE 'Dev seed data: Member-project assignments inserted/updated';
     ELSE
