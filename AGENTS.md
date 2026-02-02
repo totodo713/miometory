@@ -3,18 +3,40 @@
 This file provides agentic coding agents with complete guidelines for operating in this repository. It covers build, lint, and test commands, exhaustive style recommendations, and critical patterns for maintaining code standardization across backend (Spring Boot/Kotlin) and frontend (Next.js/TypeScript) projects.
 
 ## Table of Contents
-1. [Repository Overview](#repository-overview)
-2. [Directory Structure](#directory-structure)
-3. [Build, Lint, and Test Commands](#build-lint-and-test-commands)
+1. [Language Preferences](#language-preferences)
+2. [Repository Overview](#repository-overview)
+3. [Directory Structure](#directory-structure)
+4. [Build, Lint, and Test Commands](#build-lint-and-test-commands)
    - [Frontend](#frontend-nextjs)
    - [Backend](#backend-spring-boot-kotlin)
-4. [Code Style Guidelines](#code-style-guidelines)
+5. [Code Style Guidelines](#code-style-guidelines)
    - [Frontend: TypeScript/React](#frontend-typescriptreact)
    - [Backend: Kotlin/Java](#backend-kotlinjava)
-5. [Specification Best Practices](#specification-best-practices)
-6. [References](#references)
-7. [Reserved: Copilot/Cursor Rules](#reserved-copilotcursor-rules)
-8. [PR Review Response Rules](#pr-review-response-rules)
+6. [Specification Best Practices](#specification-best-practices)
+7. [References](#references)
+8. [Reserved: Copilot/Cursor Rules](#reserved-copilotcursor-rules)
+9. [PR Review Response Rules](#pr-review-response-rules)
+
+---
+
+## Language Preferences
+
+**Default Language: Japanese (日本語)**
+
+Unless explicitly specified otherwise by the user, all documentation, issues, and pull requests should be created in Japanese.
+
+### Guidelines:
+- **GitHub Issues**: Write title and description in Japanese
+- **Pull Requests**: Write title and description in Japanese
+- **Documentation files** (*.md, README, etc.): Write in Japanese
+- **Commit messages**: Write in English (follows conventional commit format)
+- **Code comments**: Write in English for inline/block comments; Japanese acceptable for complex business logic explanations
+- **User-facing UI text**: Follow project's i18n strategy (currently Japanese)
+
+### Exceptions:
+- When user explicitly requests English (e.g., "Create PR in English")
+- Technical terms and API names should remain in English (e.g., "React", "Spring Boot", "API endpoint")
+- Code itself (variable names, function names, class names) must be in English
 
 ---
 
