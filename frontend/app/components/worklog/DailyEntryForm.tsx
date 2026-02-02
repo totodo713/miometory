@@ -555,6 +555,7 @@ export function DailyEntryForm({
                           Project {renderStatusBadge(row.status)}
                         </label>
                         <ProjectSelector
+                          id={`project-${index}`}
                           memberId={memberId}
                           value={row.projectId}
                           onChange={(projectId) =>

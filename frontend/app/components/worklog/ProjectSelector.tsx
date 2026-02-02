@@ -28,6 +28,8 @@ interface ProjectSelectorProps {
   className?: string;
   /** Placeholder text when no project is selected */
   placeholder?: string;
+  /** Optional ID for the input (for label association) */
+  id?: string;
 }
 
 export function ProjectSelector({
@@ -38,8 +40,10 @@ export function ProjectSelector({
   error,
   className = "",
   placeholder = "Select a project...",
+  id,
 }: ProjectSelectorProps) {
-  const inputId = useId();
+  const generatedInputId = useId();
+  const inputId = id || generatedInputId;
   const listboxId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
