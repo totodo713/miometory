@@ -23,12 +23,12 @@ This file provides agentic coding agents with complete guidelines for operating 
 
 **Default Language: Japanese (日本語)**
 
-Unless explicitly specified otherwise by the user, all documentation, issues, and pull requests should be created in Japanese.
+Unless explicitly specified otherwise by the user, GitHub issues and pull requests should be created in Japanese.
 
 ### Guidelines:
 - **GitHub Issues**: Write title and description in Japanese
 - **Pull Requests**: Write title and description in Japanese
-- **Documentation files** (*.md, README, etc.): Write in Japanese
+- **Documentation files** (*.md, README, etc.): Write in English
 - **Commit messages**: Write in English (follows conventional commit format)
 - **Code comments**: Write in English for inline/block comments; Japanese acceptable for complex business logic explanations
 - **User-facing UI text**: Follow project's i18n strategy (currently Japanese)
