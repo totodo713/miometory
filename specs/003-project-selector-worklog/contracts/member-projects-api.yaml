@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: Work-Log Project Assignment API
+  description: API for managing member project assignments and retrieving assigned projects
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: Work-Log API v1
+
+paths:
+  /members/{memberId}/projects:
+    get:
+      summary: Get projects assigned to a member
+      description: |
+        Retrieves the list of projects assigned to the specified member.
+        Only active assignments and active projects are returned by default.
+        Used in the worklog entry form for project selection dropdown.
+      operationId: getMemberProjects
+      tags:
+        - Member Projects
+      parameters:
+        - name: memberId
+          in: path
+          required: true
+          description: Member UUID
+          schema:
+            type: string
+            format: uuid
+        - name: activeOnly
+          in: query
+          required: false
+          description: If true, only return active projects within their validity period
+          schema:
+            type: boolean
+            default: true
+        - name: date
+          in: query
+          required: false
+          description: Reference date for validity check (defaults to today)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Successfully retrieved assigned projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignedProjectsResponse'
+        '401':
+          description: Unauthorized - session expired or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - cannot access other member's projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Member not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    AssignedProjectsResponse:
+      type: object
+      required:
+        - projects
+        - count
+      properties:
+        projects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignedProject'
+          description: List of projects assigned to the member
+        count:
+          type: integer
+          description: Total number of assigned projects returned
+          example: 5
+
+    AssignedProject:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - isActive
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Project unique identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        code:
+          type: string
+          description: Business identifier for the project
+          example: "PROJ-123"
+          maxLength: 50
+        name:
+          type: string
+          description: Human-readable project name
+          example: "Customer Portal Development"
+          maxLength: 200
+        isActive:
+          type: boolean
+          description: Whether the project is currently active
+          example: true
+        validFrom:
+          type: string
+          format: date
+          nullable: true
+          description: Start date for accepting time entries
+          example: "2025-01-01"
+        validUntil:
+          type: string
+          format: date
+          nullable: true
+          description: End date for accepting time entries
+          example: "2025-12-31"
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: "MEMBER_NOT_FOUND"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Member with ID 123e4567-e89b-12d3-a456-426614174000 not found"
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details

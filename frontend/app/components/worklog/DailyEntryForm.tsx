@@ -5,6 +5,7 @@ import { api } from "../../services/api";
 import { useProxyMode } from "../../services/worklogStore";
 import type { WorkLogEntry, WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
+import { ProjectSelector } from "./ProjectSelector";
 
 interface DailyEntryFormProps {
   date: Date;
@@ -553,24 +554,20 @@ export function DailyEntryForm({
                         >
                           Project {renderStatusBadge(row.status)}
                         </label>
-                        <input
+                        <ProjectSelector
                           id={`project-${index}`}
-                          type="text"
+                          memberId={memberId}
                           value={row.projectId}
-                          onChange={(e) =>
-                            updateProjectRow(index, "projectId", e.target.value)
+                          onChange={(projectId) =>
+                            updateProjectRow(index, "projectId", projectId)
                           }
                           disabled={
-                            row.status !== "DRAFT" && row.status !== undefined
+                            (row.status !== "DRAFT" && row.status !== undefined) ||
+                            !!row.id // Disable for existing entries (FR-008)
                           }
-                          className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
-                          placeholder="Enter project ID"
+                          error={row.errors.project}
+                          placeholder="Select a project..."
                         />
-                        {row.errors.project && (
-                          <div className="text-red-600 text-sm mt-1">
-                            {row.errors.project}
-                          </div>
-                        )}
                       </div>
 
                       {/* Hours Input */}

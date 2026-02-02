@@ -88,6 +88,23 @@ export interface Project {
 }
 
 /**
+ * Assigned project (from member's project assignments)
+ */
+export interface AssignedProject {
+  id: string;
+  code: string;
+  name: string;
+}
+
+/**
+ * Response for assigned projects endpoint
+ */
+export interface AssignedProjectsResponse {
+  projects: AssignedProject[];
+  count: number;
+}
+
+/**
  * Member reference (minimal info for dropdowns)
  */
 export interface Member {
