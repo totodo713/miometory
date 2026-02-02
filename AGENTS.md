@@ -25,6 +25,11 @@ This file provides agentic coding agents with complete guidelines for operating 
 
 Unless explicitly specified otherwise by the user, GitHub issues and pull requests should be created in Japanese.
 
+### Thinking and Response Language Rule
+- **Internal Thinking**: Always think and reason in English when processing user requests
+- **Response to User**: Always respond in Japanese unless explicitly requested otherwise
+- This ensures consistent logical processing while providing localized communication
+
 ### Guidelines:
 - **GitHub Issues**: Write title and description in Japanese
 - **Pull Requests**: Write title and description in Japanese
