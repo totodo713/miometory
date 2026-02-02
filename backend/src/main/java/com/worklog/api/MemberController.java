@@ -1,14 +1,19 @@
 package com.worklog.api;
 
+import com.worklog.api.dto.AssignedProject;
+import com.worklog.api.dto.AssignedProjectsResponse;
 import com.worklog.api.dto.MemberResponse;
 import com.worklog.api.dto.SubordinatesResponse;
 import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainException;
+import com.worklog.infrastructure.projection.AssignedProjectInfo;
+import com.worklog.infrastructure.repository.JdbcMemberProjectAssignmentRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,9 +28,14 @@ import java.util.UUID;
 public class MemberController {
 
     private final JdbcMemberRepository memberRepository;
+    private final JdbcMemberProjectAssignmentRepository memberProjectAssignmentRepository;
 
-    public MemberController(JdbcMemberRepository memberRepository) {
+    public MemberController(
+            JdbcMemberRepository memberRepository,
+            JdbcMemberProjectAssignmentRepository memberProjectAssignmentRepository
+    ) {
         this.memberRepository = memberRepository;
+        this.memberProjectAssignmentRepository = memberProjectAssignmentRepository;
     }
 
     /**
@@ -88,6 +98,40 @@ public class MemberController {
             responses.size(),
             recursive
         ));
+    }
+
+    /**
+     * Get assigned projects for a member.
+     * 
+     * GET /api/v1/members/{id}/projects
+     * 
+     * Returns projects that the member is assigned to and can log time against.
+     * Only returns active assignments for active projects that are valid on today's date.
+     * 
+     * @param id Member UUID
+     * @return 200 OK with list of assigned projects
+     */
+    @GetMapping("/{id}/projects")
+    public ResponseEntity<AssignedProjectsResponse> getAssignedProjects(@PathVariable UUID id) {
+        // Verify the member exists
+        memberRepository.findById(MemberId.of(id))
+            .orElseThrow(() -> new DomainException(
+                "MEMBER_NOT_FOUND",
+                "Member not found: " + id
+            ));
+
+        List<AssignedProjectInfo> projectInfos = memberProjectAssignmentRepository
+            .findActiveProjectsForMember(MemberId.of(id), LocalDate.now());
+
+        List<AssignedProject> projects = projectInfos.stream()
+            .map(info -> new AssignedProject(
+                info.projectId().toString(),
+                info.code(),
+                info.name()
+            ))
+            .toList();
+
+        return ResponseEntity.ok(new AssignedProjectsResponse(projects, projects.size()));
     }
 
     /**

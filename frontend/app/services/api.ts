@@ -630,6 +630,20 @@ export const api = {
         canProxy: boolean;
         reason: string;
       }>(`/api/v1/members/${managerId}/can-proxy/${memberId}`),
+
+    /**
+     * Get assigned projects for a member
+     * Returns projects that the member is assigned to and can log time against
+     */
+    getAssignedProjects: (memberId: string) =>
+      apiClient.get<{
+        projects: Array<{
+          id: string;
+          code: string;
+          name: string;
+        }>;
+        count: number;
+      }>(`/api/v1/members/${memberId}/projects`),
   },
 };
 
