@@ -257,9 +257,27 @@ public class User {
     
     /**
      * Checks if the account is active and can login.
+     * Accounts with LOCKED status but expired lock time are considered loginable.
      */
     public boolean canLogin() {
-        return accountStatus == AccountStatus.ACTIVE && !isLocked();
+        // Deleted accounts cannot login
+        if (accountStatus == AccountStatus.DELETED) {
+            return false;
+        }
+        
+        // Unverified accounts cannot login
+        if (!isVerified()) {
+            return false;
+        }
+        
+        // Locked accounts with non-expired locks cannot login
+        if (isLocked()) {
+            return false;
+        }
+        
+        // ACTIVE accounts can login
+        // LOCKED accounts with expired locks can login (will be auto-unlocked on successful login)
+        return true;
     }
     
     /**
