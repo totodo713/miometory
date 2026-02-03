@@ -3,6 +3,8 @@ package com.worklog.fixtures
 import com.worklog.domain.user.User
 import com.worklog.domain.user.UserId
 import com.worklog.domain.role.RoleId
+import com.worklog.application.auth.RegistrationRequest
+import com.worklog.application.auth.LoginRequest
 import java.time.Instant
 import java.util.UUID
 
@@ -139,39 +141,22 @@ object UserFixtures {
     )
     
     /**
-     * Creates user registration request data.
+     * Creates registration request.
      */
     fun createRegistrationRequest(
         email: String = validEmail(),
-        name: String = validName(),
-        password: String = "Password123!"
-    ): Map<String, Any> = mapOf(
-        "email" to email,
-        "name" to name,
-        "password" to password
-    )
+        name: String = "Test User",
+        password: String = "password123"
+    ): RegistrationRequest = RegistrationRequest(email, name, password)
     
     /**
-     * Creates login request data.
+     * Creates login request.
      */
     fun createLoginRequest(
         email: String = validEmail(),
         password: String = "password123",
         rememberMe: Boolean = false
-    ): Map<String, Any> = mapOf(
-        "email" to email,
-        "password" to password,
-        "rememberMe" to rememberMe
-    )
-    
-    /**
-     * Creates password reset request data.
-     */
-    fun createPasswordResetRequest(
-        email: String = validEmail()
-    ): Map<String, Any> = mapOf(
-        "email" to email
-    )
+    ): LoginRequest = LoginRequest(email, password, rememberMe)
     
     /**
      * Invalid emails for validation testing.
