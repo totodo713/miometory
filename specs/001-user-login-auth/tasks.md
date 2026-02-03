@@ -66,10 +66,10 @@
 
 **Purpose**: Configure testing frameworks per Constitution Principle II
 
-- [ ] T022 [P] Configure JUnit 5 and MockK test infrastructure in `backend/build.gradle.kts` with testImplementation dependencies
-- [ ] T023 [P] Configure Vitest for frontend in `frontend/vitest.config.ts` with React Testing Library
-- [ ] T024 [P] Create test database configuration in `backend/src/test/resources/application-test.yml` with H2 in-memory database
-- [ ] T025 [P] Create test data fixtures in `backend/src/test/kotlin/com/worklog/fixtures/UserFixtures.kt` and `RoleFixtures.kt`
+- [X] T022 [P] Configure JUnit 5 and MockK test infrastructure in `backend/build.gradle.kts` with testImplementation dependencies
+- [X] T023 [P] Configure Vitest for frontend in `frontend/vitest.config.ts` with React Testing Library
+- [X] T024 [P] Create test database configuration in `backend/src/test/resources/application-test.yml` with H2 in-memory database
+- [X] T025 [P] Create test data fixtures in `backend/src/test/kotlin/com/worklog/fixtures/UserFixtures.kt` and `RoleFixtures.kt`
 
 **Checkpoint**: Test infrastructure ready - JUnit 5, Vitest, test database configured
 
@@ -85,61 +85,62 @@
 
 **Backend Tests (17 tasks)**
 
-- [ ] T026 [P] [US1] Write AuthService.signup() unit test in `backend/src/test/kotlin/com/worklog/application/auth/AuthServiceTest.kt` - verify user creation and email sent
-- [ ] T027 [P] [US1] Write AuthService.login() success case test - verify session created and last_login_at updated
-- [ ] T028 [P] [US1] Write AuthService.login() failed attempts test - verify account locks after 5 failures for 15 minutes
-- [ ] T029 [P] [US1] Write AuthService.verifyEmail() test - verify email_verified_at set and account_status updated
-- [ ] T030 [P] [US1] Write AuthController.signup endpoint test in `backend/src/test/kotlin/com/worklog/api/AuthControllerTest.kt` - verify 201 response
-- [ ] T031 [P] [US1] Write AuthController.login endpoint test - verify session cookie and CSRF token returned
-- [ ] T032 [P] [US1] Write AuthController.logout endpoint test - verify session invalidated
-- [ ] T033 [P] [US1] Write AuthController.verifyEmail endpoint test - verify token validation
-- [ ] T034 [P] [US1] Write EmailService test in `backend/src/test/kotlin/com/worklog/infrastructure/email/EmailServiceTest.kt` using GreenMail mock SMTP server
-- [ ] T035 [P] [US1] Write UserRepository integration test in `backend/src/test/kotlin/com/worklog/infrastructure/persistence/UserRepositoryTest.kt` - verify CRUD operations
-- [ ] T036 [P] [US1] Write password validation test - verify BCrypt hashing and strength requirements (8+ chars, mixed case, digit)
-- [ ] T037 [P] [US1] Write email uniqueness validation test - verify duplicate email rejected with 409 conflict
+- [X] T026 [P] [US1] Write User entity unit tests in `backend/src/test/kotlin/com/worklog/domain/user/UserTest.kt` - verify business logic (37 tests covering creation, validation, login tracking, locking, email verification, password management, soft delete, eligibility checks)
+- [ ] T027 [P] [US1] Write AuthService.signup() unit test in `backend/src/test/kotlin/com/worklog/application/auth/AuthServiceTest.kt` - verify user creation and email sent
+- [ ] T028 [P] [US1] Write AuthService.login() success case test - verify session created and last_login_at updated
+- [ ] T029 [P] [US1] Write AuthService.login() failed attempts test - verify account locks after 5 failures for 15 minutes
+- [ ] T030 [P] [US1] Write AuthService.verifyEmail() test - verify email_verified_at set and account_status updated
+- [ ] T031 [P] [US1] Write AuthController.signup endpoint test in `backend/src/test/kotlin/com/worklog/api/AuthControllerTest.kt` - verify 201 response
+- [ ] T032 [P] [US1] Write AuthController.login endpoint test - verify session cookie and CSRF token returned
+- [ ] T033 [P] [US1] Write AuthController.logout endpoint test - verify session invalidated
+- [ ] T034 [P] [US1] Write AuthController.verifyEmail endpoint test - verify token validation
+- [ ] T035 [P] [US1] Write EmailService test in `backend/src/test/kotlin/com/worklog/infrastructure/email/EmailServiceTest.kt` using GreenMail mock SMTP server
+- [ ] T036 [P] [US1] Write UserRepository integration test in `backend/src/test/kotlin/com/worklog/infrastructure/persistence/UserRepositoryTest.kt` - verify CRUD operations
+- [ ] T037 [P] [US1] Write password validation test - verify BCrypt hashing and strength requirements (8+ chars, mixed case, digit)
+- [ ] T038 [P] [US1] Write email uniqueness validation test - verify duplicate email rejected with 409 conflict
 
 **Frontend Tests (5 tasks)**
 
-- [ ] T038 [P] [US1] Write UnverifiedBanner component test in `frontend/app/components/auth/__tests__/UnverifiedBanner.test.tsx` - verify visibility logic
-- [ ] T039 [P] [US1] Write useAuth hook test in `frontend/app/hooks/__tests__/useAuth.test.ts` - verify login/logout state changes
-- [ ] T040 [P] [US1] Write signup page test in `frontend/app/(auth)/signup/__tests__/page.test.tsx` - verify form validation and submission
-- [ ] T041 [P] [US1] Write login page test in `frontend/app/(auth)/login/__tests__/page.test.tsx` - verify remember-me checkbox and error handling
-- [ ] T042 [P] [US1] Write email verification page test in `frontend/app/(auth)/verify-email/__tests__/page.test.tsx` - verify token handling
+- [ ] T039 [P] [US1] Write UnverifiedBanner component test in `frontend/app/components/auth/__tests__/UnverifiedBanner.test.tsx` - verify visibility logic
+- [ ] T040 [P] [US1] Write useAuth hook test in `frontend/app/hooks/__tests__/useAuth.test.ts` - verify login/logout state changes
+- [ ] T041 [P] [US1] Write signup page test in `frontend/app/(auth)/signup/__tests__/page.test.tsx` - verify form validation and submission
+- [ ] T042 [P] [US1] Write login page test in `frontend/app/(auth)/login/__tests__/page.test.tsx` - verify remember-me checkbox and error handling
+- [ ] T043 [P] [US1] Write email verification page test in `frontend/app/(auth)/verify-email/__tests__/page.test.tsx` - verify token handling
 
 **Test Execution**: All tests MUST FAIL initially, then PASS after implementation
 
 ### Backend API Layer (US1)
 
-- [ ] T043 [P] [US1] Create SignupCommand in `backend/src/main/kotlin/com/worklog/application/auth/SignupCommand.kt` (email, password, name)
-- [ ] T044 [P] [US1] Create LoginCommand in `backend/src/main/kotlin/com/worklog/application/auth/LoginCommand.kt` (email, password, rememberMe)
-- [ ] T045 [P] [US1] Create VerifyEmailCommand in `backend/src/main/kotlin/com/worklog/application/auth/VerifyEmailCommand.kt` (token)
-- [ ] T046 [US1] Create AuthService in `backend/src/main/kotlin/com/worklog/application/auth/AuthService.kt` implementing signup, login, logout, verifyEmail logic
-- [ ] T047 [US1] Implement password hashing using BCryptPasswordEncoder (strength: 10) in AuthService
-- [ ] T048 [US1] Implement email uniqueness validation in AuthService.signup
-- [ ] T049 [US1] Implement failed login tracking (max 5 attempts, 15-minute lock) in AuthService.login
-- [ ] T050 [US1] Implement session creation and tracking in UserSessionRepository in `backend/src/main/kotlin/com/worklog/infrastructure/persistence/UserSessionRepository.kt`
-- [ ] T051 [US1] Create EmailService in `backend/src/main/kotlin/com/worklog/infrastructure/email/EmailService.kt` with sendVerificationEmail method
-- [ ] T052 [US1] Add @Async and @Retryable to EmailService for async email sending with 3 retry attempts
-- [ ] T053 [US1] Create AuthController in `backend/src/main/kotlin/com/worklog/api/AuthController.kt` with POST /auth/signup endpoint
-- [ ] T054 [US1] Add POST /auth/login endpoint to AuthController with remember-me cookie handling
-- [ ] T055 [US1] Add POST /auth/logout endpoint to AuthController with session invalidation
-- [ ] T056 [US1] Add POST /auth/verify-email endpoint to AuthController with token validation
-- [ ] T057 [US1] Add GET /auth/csrf endpoint to AuthController returning CSRF token
-- [ ] T058 [US1] Implement audit logging for SIGNUP, LOGIN, LOGOUT, EMAIL_VERIFICATION events in AuthService
-- [ ] T059 [US1] Implement unverified user restrictions in CustomPermissionEvaluator: block work_log.create, work_log.approve, admin.access for account_status='unverified' (FR-017)
+- [ ] T044 [P] [US1] Create SignupCommand in `backend/src/main/kotlin/com/worklog/application/auth/SignupCommand.kt` (email, password, name)
+- [ ] T045 [P] [US1] Create LoginCommand in `backend/src/main/kotlin/com/worklog/application/auth/LoginCommand.kt` (email, password, rememberMe)
+- [ ] T046 [P] [US1] Create VerifyEmailCommand in `backend/src/main/kotlin/com/worklog/application/auth/VerifyEmailCommand.kt` (token)
+- [ ] T047 [US1] Create AuthService in `backend/src/main/kotlin/com/worklog/application/auth/AuthService.kt` implementing signup, login, logout, verifyEmail logic
+- [ ] T048 [US1] Implement password hashing using BCryptPasswordEncoder (strength: 10) in AuthService
+- [ ] T049 [US1] Implement email uniqueness validation in AuthService.signup
+- [ ] T050 [US1] Implement failed login tracking (max 5 attempts, 15-minute lock) in AuthService.login
+- [ ] T051 [US1] Implement session creation and tracking in UserSessionRepository in `backend/src/main/kotlin/com/worklog/infrastructure/persistence/UserSessionRepository.kt`
+- [ ] T052 [US1] Create EmailService in `backend/src/main/kotlin/com/worklog/infrastructure/email/EmailService.kt` with sendVerificationEmail method
+- [ ] T053 [US1] Add @Async and @Retryable to EmailService for async email sending with 3 retry attempts
+- [ ] T054 [US1] Create AuthController in `backend/src/main/kotlin/com/worklog/api/AuthController.kt` with POST /auth/signup endpoint
+- [ ] T055 [US1] Add POST /auth/login endpoint to AuthController with remember-me cookie handling
+- [ ] T056 [US1] Add POST /auth/logout endpoint to AuthController with session invalidation
+- [ ] T057 [US1] Add POST /auth/verify-email endpoint to AuthController with token validation
+- [ ] T058 [US1] Add GET /auth/csrf endpoint to AuthController returning CSRF token
+- [ ] T059 [US1] Implement audit logging for SIGNUP, LOGIN, LOGOUT, EMAIL_VERIFICATION events in AuthService
+- [ ] T060 [US1] Implement unverified user restrictions in CustomPermissionEvaluator: block work_log.create, work_log.approve, admin.access for account_status='unverified' (FR-017)
 
 ### Frontend Components (US1)
 
-- [ ] T060 [P] [US1] Create AuthContext in `frontend/app/lib/context/AuthContext.tsx` with user state, login, logout, signup methods
-- [ ] T061 [P] [US1] Create useAuth hook in `frontend/app/hooks/useAuth.ts` wrapping AuthContext
-- [ ] T062 [P] [US1] Create API client functions in `frontend/app/lib/api/auth.ts` (signup, login, logout, verifyEmail)
-- [ ] T063 [US1] Create signup page in `frontend/app/(auth)/signup/page.tsx` with form (email, name, password)
-- [ ] T064 [US1] Create login page in `frontend/app/(auth)/login/page.tsx` with form (email, password, rememberMe checkbox)
-- [ ] T065 [US1] Create email verification page in `frontend/app/(auth)/verify-email/page.tsx` accepting token query param
-- [ ] T066 [US1] Create UnverifiedBanner component in `frontend/app/components/auth/UnverifiedBanner.tsx` showing warning for unverified users (FR-017)
-- [ ] T067 [US1] Add UnverifiedBanner to main layout in `frontend/app/layout.tsx` conditionally rendered for unverified users
-- [ ] T068 [US1] Implement client-side password strength validation (8+ chars, uppercase, lowercase, digit) in signup form
-- [ ] T069 [US1] Add session timeout warning modal (25-minute warning for 30-minute timeout) in `frontend/app/components/auth/SessionTimeoutModal.tsx`
+- [ ] T061 [P] [US1] Create AuthContext in `frontend/app/lib/context/AuthContext.tsx` with user state, login, logout, signup methods
+- [ ] T062 [P] [US1] Create useAuth hook in `frontend/app/hooks/useAuth.ts` wrapping AuthContext
+- [ ] T063 [P] [US1] Create API client functions in `frontend/app/lib/api/auth.ts` (signup, login, logout, verifyEmail)
+- [ ] T064 [US1] Create signup page in `frontend/app/(auth)/signup/page.tsx` with form (email, name, password)
+- [ ] T065 [US1] Create login page in `frontend/app/(auth)/login/page.tsx` with form (email, password, rememberMe checkbox)
+- [ ] T066 [US1] Create email verification page in `frontend/app/(auth)/verify-email/page.tsx` accepting token query param
+- [ ] T067 [US1] Create UnverifiedBanner component in `frontend/app/components/auth/UnverifiedBanner.tsx` showing warning for unverified users (FR-017)
+- [ ] T068 [US1] Add UnverifiedBanner to main layout in `frontend/app/layout.tsx` conditionally rendered for unverified users
+- [ ] T069 [US1] Implement client-side password strength validation (8+ chars, uppercase, lowercase, digit) in signup form
+- [ ] T070 [US1] Add session timeout warning modal (25-minute warning for 30-minute timeout) in `frontend/app/components/auth/SessionTimeoutModal.tsx`
 
 **Checkpoint**: User Story 1 complete - users can sign up, verify email, login, logout
 
