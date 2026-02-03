@@ -1,0 +1,746 @@
+openapi: 3.0.3
+info:
+  title: Miometry User Management API
+  description: |
+    API endpoints for user profile and administration in the Miometry Work Log system.
+    
+    **Security**:
+    - All endpoints require authentication (valid session cookie)
+    - Permission-based authorization via Spring Security Method Security
+    - CSRF protection via X-XSRF-TOKEN header (required for POST/PUT/DELETE requests)
+    
+    **Prerequisites**:
+    - [spec.md](../spec.md): Feature specification (FR-008, FR-009, FR-019)
+    - [data-model.md](../data-model.md): User, Role, Permission entities
+    - [research.md](../research.md): Permission management pattern (Topic 4)
+  version: 1.0.0
+  contact:
+    name: Miometry Development Team
+servers:
+  - url: http://localhost:8080/api
+    description: Local development server
+  - url: https://api.miometry.example.com/api
+    description: Production server
+
+tags:
+  - name: User Profile
+    description: Endpoints for managing own user profile
+  - name: User Administration
+    description: Admin-only endpoints for managing other users
+  - name: Role Management
+    description: Admin-only endpoints for managing roles and permissions
+
+paths:
+  /users/me:
+    get:
+      tags:
+        - User Profile
+      summary: Get current user profile
+      description: |
+        Retrieves authenticated user's profile information.
+        
+        **Business Rules**:
+        - User must be authenticated (valid session)
+        - Returns user's role and permissions for frontend authorization checks
+        
+        **Permissions**: None (all authenticated users can access)
+      operationId: getCurrentUser
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User profile retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              examples:
+                verifiedUser:
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    email: "user@example.com"
+                    name: "John Doe"
+                    role:
+                      id: "00000000-0000-0000-0000-000000000002"
+                      name: "USER"
+                      description: "Standard user with limited access"
+                    permissions: ["user.view", "report.view", "work_log.create", "work_log.edit", "work_log.view"]
+                    accountStatus: "active"
+                    emailVerified: true
+                    createdAt: "2026-01-15T10:30:00Z"
+                    lastLoginAt: "2026-02-03T14:00:00Z"
+                unverifiedUser:
+                  value:
+                    id: "660e8400-e29b-41d4-a716-446655440001"
+                    email: "newuser@example.com"
+                    name: "Jane Smith"
+                    role:
+                      id: "00000000-0000-0000-0000-000000000002"
+                      name: "USER"
+                      description: "Standard user with limited access"
+                    permissions: []
+                    accountStatus: "unverified"
+                    emailVerified: false
+                    createdAt: "2026-02-03T14:00:00Z"
+                    lastLoginAt: "2026-02-03T14:00:00Z"
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - User Profile
+      summary: Update current user profile
+      description: |
+        Updates authenticated user's own profile information (name, email).
+        
+        **Business Rules**:
+        - User can only update own profile (cannot change others')
+        - Email change requires re-verification (sends new verification email)
+        - Cannot change role or account status via this endpoint
+        
+        **Permissions**: None (all authenticated users can update own profile)
+        
+        **Side Effects**:
+        - If email changed: User.email_verified_at → NULL, new verification email sent
+        - User.updated_at → NOW
+        - Audit log entry: USER_PROFILE_UPDATED
+      operationId: updateCurrentUser
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserProfileRequest'
+            examples:
+              nameOnly:
+                value:
+                  name: "John Smith"
+              emailChange:
+                value:
+                  email: "newemail@example.com"
+              both:
+                value:
+                  name: "John Smith"
+                  email: "newemail@example.com"
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Validation error (invalid email format, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Email already in use by another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/me/password:
+    put:
+      tags:
+        - User Profile
+      summary: Change current user password
+      description: |
+        Changes authenticated user's password.
+        
+        **Business Rules**:
+        - Must provide current password (verification)
+        - New password must meet strength requirements (FR-003)
+        - Edge case: Invalidates all other sessions (except current)
+        
+        **Permissions**: None (all authenticated users can change own password)
+        
+        **Side Effects**:
+        - User.hashed_password updated
+        - All UserSession records deleted (except current)
+        - All PersistentLogin tokens deleted
+        - Audit log entry: PASSWORD_CHANGE
+      operationId: changePassword
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+            examples:
+              valid:
+                value:
+                  currentPassword: "OldPass123"
+                  newPassword: "NewSecurePass456"
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              examples:
+                success:
+                  value:
+                    message: "Password changed successfully. Other sessions have been logged out for security."
+        '400':
+          description: Validation error (weak new password)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Current password incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users:
+    get:
+      tags:
+        - User Administration
+      summary: List all users (admin only)
+      description: |
+        Retrieves paginated list of all users with filtering and sorting.
+        
+        **Business Rules**:
+        - FR-009: Permission check required
+        
+        **Permissions**: `user.view`
+      operationId: listUsers
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Page number (0-indexed)
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Page size
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [createdAt, lastLoginAt, email, name]
+            default: createdAt
+          description: Sort field
+        - name: direction
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort direction
+        - name: accountStatus
+          in: query
+          schema:
+            type: string
+            enum: [active, unverified, locked, deleted]
+          description: Filter by account status
+        - name: roleId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by role ID
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}:
+    get:
+      tags:
+        - User Administration
+      summary: Get user by ID (admin only)
+      description: |
+        Retrieves detailed information about a specific user.
+        
+        **Permissions**: `user.view`
+      operationId: getUserById
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User ID
+      responses:
+        '200':
+          description: User retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - User Administration
+      summary: Update user (admin only)
+      description: |
+        Updates another user's profile (name, email, account status).
+        
+        **Business Rules**:
+        - FR-009: Permission check required
+        - Cannot modify own account via this endpoint (use /users/me)
+        - Email change triggers re-verification
+        
+        **Permissions**: `user.edit`
+        
+        **Side Effects**:
+        - If email changed: User.email_verified_at → NULL
+        - User.updated_at → NOW
+        - Audit log entry: USER_UPDATED
+      operationId: updateUser
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Insufficient permissions or attempting to modify own account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - User Administration
+      summary: Delete user (admin only)
+      description: |
+        Soft-deletes a user (sets account_status to 'deleted').
+        
+        **Business Rules**:
+        - FR-009: Permission check required
+        - Cannot delete own account
+        - Soft delete (account_status → 'deleted', data retained)
+        
+        **Permissions**: `user.delete`
+        
+        **Side Effects**:
+        - User.account_status → 'deleted'
+        - All UserSession records deleted
+        - All PersistentLogin tokens deleted
+        - Audit log entry: USER_DELETED
+      operationId: deleteUser
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User deleted successfully (no content)
+        '403':
+          description: Insufficient permissions or attempting to delete own account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}/role:
+    put:
+      tags:
+        - User Administration
+      summary: Assign role to user (admin only)
+      description: |
+        Changes a user's role.
+        
+        **Business Rules**:
+        - FR-008: Role assignment
+        - FR-019: Role change affects permissions
+        
+        **Permissions**: `user.assign_role`
+        
+        **Side Effects**:
+        - User.role_id updated
+        - User's effective permissions change based on new role
+        - Audit log entry: ROLE_CHANGED
+      operationId: assignRole
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoleRequest'
+            examples:
+              promoteToAdmin:
+                value:
+                  roleId: "00000000-0000-0000-0000-000000000001"
+      responses:
+        '200':
+          description: Role assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User or role not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /roles:
+    get:
+      tags:
+        - Role Management
+      summary: List all roles
+      description: |
+        Retrieves all roles with their associated permissions.
+        
+        **Permissions**: `role.view`
+      operationId: listRoles
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleListResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /permissions:
+    get:
+      tags:
+        - Role Management
+      summary: List all permissions
+      description: |
+        Retrieves all available permissions in the system.
+        
+        **Permissions**: `role.view`
+      operationId: listPermissions
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Permissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionListResponse'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/RoleInfo'
+        permissions:
+          type: array
+          items:
+            type: string
+          description: List of permission names (e.g., "user.create", "report.view")
+        accountStatus:
+          type: string
+          enum: [active, unverified, locked, deleted]
+        emailVerified:
+          type: boolean
+          description: True if email_verified_at is not null
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    UserDetail:
+      allOf:
+        - $ref: '#/components/schemas/UserProfile'
+        - type: object
+          properties:
+            failedLoginAttempts:
+              type: integer
+              description: Number of consecutive failed login attempts
+            lockedUntil:
+              type: string
+              format: date-time
+              nullable: true
+              description: Temporary lock expiration timestamp
+            emailVerifiedAt:
+              type: string
+              format: date-time
+              nullable: true
+            updatedAt:
+              type: string
+              format: date-time
+
+    UpdateUserProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+          description: Must meet password strength requirements
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        accountStatus:
+          type: string
+          enum: [active, unverified, locked, deleted]
+
+    AssignRoleRequest:
+      type: object
+      required:
+        - roleId
+      properties:
+        roleId:
+          type: string
+          format: uuid
+
+    UserListResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserProfile'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    RoleInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    RoleDetail:
+      allOf:
+        - $ref: '#/components/schemas/RoleInfo'
+        - type: object
+          properties:
+            permissions:
+              type: array
+              items:
+                $ref: '#/components/schemas/PermissionInfo'
+            createdAt:
+              type: string
+              format: date-time
+            updatedAt:
+              type: string
+              format: date-time
+
+    RoleListResponse:
+      type: object
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleDetail'
+
+    PermissionInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "user.create"
+        description:
+          type: string
+          nullable: true
+          example: "Create new users"
+
+    PermissionListResponse:
+      type: object
+      properties:
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionInfo'
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          nullable: true
+          description: Additional error context

@@ -151,6 +151,7 @@ _No special Copilot or Cursor agent instructions are present. If present, add th
 - Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend) (001-foundation)
 - PostgreSQL with JSONB for events (001-foundation)
 - PostgreSQL with JSONB for event sourcing, event store for domain events, projection tables for read models (002-work-log-entry)
+- PostgreSQL (既存のMiometry Entry Systemデータベース) (001-user-login-auth)
 
 ## Architecture Patterns (002-work-log-entry)
 
@@ -268,9 +269,9 @@ cd infra/docker && docker compose -f docker-compose.prod.yml --env-file prod.env
 - Keyboard navigation support throughout
 
 ## Recent Changes
+- 001-user-login-auth: Added PostgreSQL (既存のMiometry Entry Systemデータベース)
 - 001-foundation: Added Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend)
 - 002-work-log-entry: Implemented complete Miometry Entry System with 7 user stories (daily entry, multi-project, absences, approval workflow, CSV import/export, copy previous month, proxy entry)
-- 002-work-log-entry (Phase 10): Added Redis caching, ARIA accessibility improvements, performance indices, rate limiting, CSRF protection, TLS configuration, API documentation (OpenAPI/Swagger)
 
 ## Test Results Summary (Phase 10 Validation)
 
