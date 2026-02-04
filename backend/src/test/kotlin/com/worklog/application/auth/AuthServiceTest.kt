@@ -3,7 +3,7 @@ package com.worklog.application.auth
 import com.worklog.domain.user.User
 import com.worklog.domain.user.UserId
 import com.worklog.fixtures.UserFixtures
-import com.worklog.infrastructure.persistence.UserRepository
+import com.worklog.infrastructure.persistence.JdbcUserRepository
 import com.worklog.infrastructure.persistence.UserSessionRepository
 import com.worklog.infrastructure.email.EmailService
 import com.worklog.application.token.EmailVerificationTokenStore
@@ -35,7 +35,7 @@ import kotlin.test.assertFalse
  */
 class AuthServiceTest {
 
-    private val userRepository: UserRepository = mockk(relaxed = true)
+    private val userRepository: JdbcUserRepository = mockk(relaxed = true)
     private val sessionRepository: UserSessionRepository = mockk(relaxed = true)
     private val emailService: EmailService = mockk(relaxed = true)
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
@@ -381,7 +381,7 @@ class AuthServiceTest {
         // Generate a real token
         val token = tokenStore.generateToken(user.id.value)
         
-        every { userRepository.findById(user.id.value) } returns Optional.of(user)
+        every { userRepository.findById(user.id) } returns Optional.of(user)
         every { userRepository.save(any()) } answers { firstArg() }
         every { sessionRepository.save(any()) } answers { firstArg() }
         
@@ -423,7 +423,7 @@ class AuthServiceTest {
         
         val originalVerifiedAt = user.emailVerifiedAt
         
-        every { userRepository.findById(user.id.value) } returns Optional.of(user)
+        every { userRepository.findById(user.id) } returns Optional.of(user)
         every { userRepository.save(any()) } answers { firstArg() }
         every { sessionRepository.save(any()) } answers { firstArg() }
         

@@ -7,7 +7,7 @@ import com.worklog.domain.session.UserSession;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.email.EmailService;
-import com.worklog.infrastructure.persistence.UserRepository;
+import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.persistence.UserSessionRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @Transactional
 public class AuthServiceImpl implements AuthService {
     
-    private final UserRepository userRepository;
+    private final JdbcUserRepository userRepository;
     private final UserSessionRepository sessionRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -35,7 +35,7 @@ public class AuthServiceImpl implements AuthService {
     private static final UUID DEFAULT_ROLE_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
     
     public AuthServiceImpl(
-        UserRepository userRepository,
+        JdbcUserRepository userRepository,
         UserSessionRepository sessionRepository,
         EmailService emailService,
         PasswordEncoder passwordEncoder,
@@ -137,7 +137,7 @@ public class AuthServiceImpl implements AuthService {
         UUID userId = tokenStore.validateAndConsume(token);
         
         // Find user
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(UserId.of(userId))
             .orElseThrow(() -> new IllegalArgumentException("User not found"));
         
         // Verify email (idempotent operation)
