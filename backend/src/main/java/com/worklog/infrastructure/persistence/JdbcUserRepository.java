@@ -95,7 +95,7 @@ public class JdbcUserRepository {
             WHERE account_status = ?
             """;
 
-        return jdbcTemplate.query(sql, new UserRowMapper(), status.name());
+        return jdbcTemplate.query(sql, new UserRowMapper(), status.name().toLowerCase());
     }
 
     /**
@@ -110,7 +110,7 @@ public class JdbcUserRepository {
                    failed_login_attempts, locked_until, created_at, updated_at,
                    last_login_at, email_verified_at
             FROM users
-            WHERE account_status = 'LOCKED' AND locked_until < ?
+            WHERE account_status = 'locked' AND locked_until < ?
             """;
 
         return jdbcTemplate.query(sql, new UserRowMapper(), Timestamp.from(now));
@@ -128,7 +128,7 @@ public class JdbcUserRepository {
                    failed_login_attempts, locked_until, created_at, updated_at,
                    last_login_at, email_verified_at
             FROM users
-            WHERE account_status = 'UNVERIFIED' AND created_at < ?
+            WHERE account_status = 'unverified' AND created_at < ?
             """;
 
         return jdbcTemplate.query(sql, new UserRowMapper(), Timestamp.from(before));
@@ -166,7 +166,7 @@ public class JdbcUserRepository {
             user.getName(),
             user.getHashedPassword(),
             user.getRoleId().value(),
-            user.getAccountStatus().name(),
+            user.getAccountStatus().name().toLowerCase(),
             user.getFailedLoginAttempts(),
             user.getLockedUntil() != null ? Timestamp.from(user.getLockedUntil()) : null,
             Timestamp.from(user.getCreatedAt()),
@@ -213,7 +213,6 @@ public class JdbcUserRepository {
     private static class UserRowMapper implements RowMapper<User> {
         @Override
         public User mapRow(ResultSet rs, int rowNum) throws SQLException {
-            UUID lockedUntilTimestamp = rs.getObject("locked_until", UUID.class);
             Instant lockedUntil = null;
             if (rs.getTimestamp("locked_until") != null) {
                 lockedUntil = rs.getTimestamp("locked_until").toInstant();
@@ -235,7 +234,7 @@ public class JdbcUserRepository {
                 rs.getString("name"),
                 rs.getString("hashed_password"),
                 RoleId.of(rs.getObject("role_id", UUID.class)),
-                User.AccountStatus.valueOf(rs.getString("account_status")),
+                User.AccountStatus.valueOf(rs.getString("account_status").toUpperCase()),
                 rs.getInt("failed_login_attempts"),
                 lockedUntil,
                 rs.getTimestamp("created_at").toInstant(),
