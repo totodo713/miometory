@@ -8,7 +8,7 @@ import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.email.EmailService;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
-import com.worklog.infrastructure.persistence.UserSessionRepository;
+import com.worklog.infrastructure.persistence.JdbcUserSessionRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +26,7 @@ import java.util.UUID;
 public class AuthServiceImpl implements AuthService {
     
     private final JdbcUserRepository userRepository;
-    private final UserSessionRepository sessionRepository;
+    private final JdbcUserSessionRepository sessionRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final EmailVerificationTokenStore tokenStore;
@@ -36,7 +36,7 @@ public class AuthServiceImpl implements AuthService {
     
     public AuthServiceImpl(
         JdbcUserRepository userRepository,
-        UserSessionRepository sessionRepository,
+        JdbcUserSessionRepository sessionRepository,
         EmailService emailService,
         PasswordEncoder passwordEncoder,
         EmailVerificationTokenStore tokenStore

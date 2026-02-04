@@ -4,7 +4,7 @@ import com.worklog.domain.user.User
 import com.worklog.domain.user.UserId
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.persistence.JdbcUserRepository
-import com.worklog.infrastructure.persistence.UserSessionRepository
+import com.worklog.infrastructure.persistence.JdbcUserSessionRepository
 import com.worklog.infrastructure.email.EmailService
 import com.worklog.application.token.EmailVerificationTokenStore
 import io.mockk.every
@@ -36,7 +36,7 @@ import kotlin.test.assertFalse
 class AuthServiceTest {
 
     private val userRepository: JdbcUserRepository = mockk(relaxed = true)
-    private val sessionRepository: UserSessionRepository = mockk(relaxed = true)
+    private val sessionRepository: JdbcUserSessionRepository = mockk(relaxed = true)
     private val emailService: EmailService = mockk(relaxed = true)
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
     private val tokenStore: EmailVerificationTokenStore = EmailVerificationTokenStore()

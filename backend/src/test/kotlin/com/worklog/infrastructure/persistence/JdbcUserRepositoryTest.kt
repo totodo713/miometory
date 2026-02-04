@@ -63,8 +63,13 @@ class JdbcUserRepositoryTest {
         // Clean users table before each test
         jdbcTemplate.update("DELETE FROM users")
         
-        // Set up test role (assuming roles table is populated by migrations)
+        // Ensure test role exists (needed for foreign key constraint)
         testRoleId = RoleId.of(UUID.fromString("00000000-0000-0000-0000-000000000001"))
+        jdbcTemplate.update("""
+            INSERT INTO roles (id, name, description, created_at, updated_at) 
+            VALUES (?, 'TEST_ROLE', 'Test role for integration tests', NOW(), NOW())
+            ON CONFLICT (id) DO NOTHING
+        """, testRoleId.value())
     }
 
     // ============================================================
