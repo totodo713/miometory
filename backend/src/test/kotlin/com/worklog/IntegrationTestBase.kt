@@ -71,6 +71,8 @@ abstract class IntegrationTestBase {
             // Configure MailHog SMTP host/port for tests so mail health indicator can succeed
             registry.add("spring.mail.host") { mailhog.host }
             registry.add("spring.mail.port") { mailhog.getMappedPort(1025).toString() }
+            // If Testcontainers Redis mapping isn't picked up by Lettuce in time, disable Redis health check
+            registry.add("management.health.redis.enabled") { "false" }
         }
     }
 }
