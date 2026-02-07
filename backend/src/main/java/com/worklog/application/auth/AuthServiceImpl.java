@@ -13,6 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.util.Base64;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -148,9 +151,13 @@ public class AuthServiceImpl implements AuthService {
     }
     
     /**
-     * Generates a secure remember-me token (min 32 characters).
+     * Generates a cryptographically secure remember-me token (256-bit).
+     * Uses SecureRandom instead of UUID for better security against prediction attacks.
      */
     private String generateRememberMeToken() {
-        return UUID.randomUUID().toString() + UUID.randomUUID().toString().replace("-", "");
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[32]; // 256 bits
+        random.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 }

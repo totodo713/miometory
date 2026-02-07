@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -21,15 +22,20 @@ public class EmailServiceImpl implements EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailServiceImpl.class);
     
     private final JavaMailSender mailSender;
+    private final String frontendBaseUrl;
     
-    public EmailServiceImpl(JavaMailSender mailSender) {
+    public EmailServiceImpl(
+        JavaMailSender mailSender,
+        @Value("${worklog.frontend.base-url}") String frontendBaseUrl
+    ) {
         this.mailSender = mailSender;
+        this.frontendBaseUrl = frontendBaseUrl;
     }
     
     @Override
     public void sendVerificationEmail(String email, String token) {
         try {
-            String verificationLink = "http://localhost:3000/auth/verify-email?token=" + token;
+            String verificationLink = frontendBaseUrl + "/auth/verify-email?token=" + token;
             
             String htmlBody = buildEmailVerificationHtml(verificationLink);
             
@@ -49,7 +55,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(String email, String token) {
         try {
-            String resetLink = "http://localhost:3000/auth/reset-password?token=" + token;
+            String resetLink = frontendBaseUrl + "/auth/reset-password?token=" + token;
             
             String htmlBody = buildPasswordResetHtml(resetLink);
             

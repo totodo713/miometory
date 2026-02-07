@@ -87,6 +87,9 @@ server:
 
 # Rate Limiting Configuration
 worklog:
+  # Frontend Base URL for email links
+  frontend:
+    base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
   # Cache Configuration (Redis)
   cache:
     enabled: ${CACHE_ENABLED:false}

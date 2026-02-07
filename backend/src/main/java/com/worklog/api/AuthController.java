@@ -66,7 +66,13 @@ public class AuthController {
         
         LoginResponse response = authService.login(request);
         
-        // Create or get existing HTTP session
+        // Prevent session fixation attack: invalidate old session and create new one
+        HttpSession oldSession = httpRequest.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+        
+        // Create new HTTP session after successful login
         HttpSession session = httpRequest.getSession(true);
         session.setAttribute("userId", response.user().getId().value());
         session.setAttribute("sessionId", response.sessionId());
