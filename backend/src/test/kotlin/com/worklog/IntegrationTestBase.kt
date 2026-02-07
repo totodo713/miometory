@@ -49,6 +49,14 @@ abstract class IntegrationTestBase {
                 .withReuse(true)
                 .apply { start() }
 
+        // MailHog Testcontainer to provide an SMTP server for mail health checks
+        @JvmStatic
+        private val mailhog: GenericContainer<*> =
+            GenericContainer("mailhog/mailhog:latest")
+                .withExposedPorts(1025, 8025)
+                .withReuse(true)
+                .apply { start() }
+
         @JvmStatic
         @DynamicPropertySource
         fun configureProperties(registry: DynamicPropertyRegistry) {
@@ -60,6 +68,9 @@ abstract class IntegrationTestBase {
             // Configure Redis Testcontainer host/port for tests
             registry.add("spring.redis.host") { redis.host }
             registry.add("spring.redis.port") { redis.getMappedPort(6379).toString() }
+            // Configure MailHog SMTP host/port for tests so mail health indicator can succeed
+            registry.add("spring.mail.host") { mailhog.host }
+            registry.add("spring.mail.port") { mailhog.getMappedPort(1025).toString() }
         }
     }
 }
