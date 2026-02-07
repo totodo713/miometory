@@ -19,7 +19,7 @@ import java.util.Map;
  * Handles user signup, login, logout, and email verification.
  */
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     private final AuthService authService;

@@ -1,5 +1,5 @@
 import React from 'react'
-import type { AuthUser } from '@/app/hooks/useAuth'
+import type { AuthUser } from '@/hooks/useAuth'
 
 export type UnverifiedBannerProps = {
   user: AuthUser | null

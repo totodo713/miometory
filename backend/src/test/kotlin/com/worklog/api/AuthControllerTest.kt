@@ -31,10 +31,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
  * Integration tests for AuthController (T031-T034)
  * 
  * Tests cover:
- * - T031: POST /auth/signup - 201 response with user details
- * - T032: POST /auth/login - session cookie and CSRF token
- * - T033: POST /auth/logout - session invalidation
- * - T034: POST /auth/verify-email - token validation
+ * - T031: POST /api/v1/auth/signup - 201 response with user details
+ * - T032: POST /api/v1/auth/login - session cookie and CSRF token
+ * - T033: POST /api/v1/auth/logout - session invalidation
+ * - T034: POST /api/v1/auth/verify-email - token validation
  * 
  * Uses MockMvc for HTTP-level testing with mocked AuthService.
  */
@@ -105,7 +105,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/signup")
+                post("/api/v1/auth/signup")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -134,7 +134,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/signup")
+                post("/api/v1/auth/signup")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -158,7 +158,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/signup")
+                post("/api/v1/auth/signup")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -185,7 +185,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/signup")
+                post("/api/v1/auth/signup")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -216,7 +216,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/login")
+                post("/api/v1/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -248,7 +248,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/login")
+                post("/api/v1/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -272,7 +272,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/login")
+                post("/api/v1/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -299,7 +299,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/login")
+                post("/api/v1/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(request))
                     .with(csrf()),
@@ -318,7 +318,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/logout")
+                post("/api/v1/auth/logout")
                     .with(csrf()),
             ).andExpect(status().isNoContent)
         // Note: Cookie invalidation is handled by session.invalidate()
@@ -332,7 +332,7 @@ class AuthControllerTest {
         // would be rejected. For now, we verify the endpoint exists.
         mockMvc
             .perform(
-                post("/auth/logout")
+                post("/api/v1/auth/logout")
                     .with(csrf()),
             ).andExpect(status().isNoContent) // Passes through without security
     }
@@ -352,7 +352,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/verify-email")
+                post("/api/v1/auth/verify-email")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),
@@ -373,7 +373,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/verify-email")
+                post("/api/v1/auth/verify-email")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),
@@ -393,7 +393,7 @@ class AuthControllerTest {
         // When/Then
         mockMvc
             .perform(
-                post("/auth/verify-email")
+                post("/api/v1/auth/verify-email")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),

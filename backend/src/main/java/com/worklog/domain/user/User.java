@@ -258,15 +258,11 @@ public class User {
     /**
      * Checks if the account is active and can login.
      * Accounts with LOCKED status but expired lock time are considered loginable.
+     * UNVERIFIED users can login to see the verification banner (FR-017).
      */
     public boolean canLogin() {
         // Deleted accounts cannot login
         if (accountStatus == AccountStatus.DELETED) {
-            return false;
-        }
-        
-        // Unverified accounts cannot login
-        if (!isVerified()) {
             return false;
         }
         
@@ -275,7 +271,8 @@ public class User {
             return false;
         }
         
-        // ACTIVE accounts can login
+        // ACTIVE and UNVERIFIED accounts can login
+        // UNVERIFIED users can login to see the verification banner (FR-017)
         // LOCKED accounts with expired locks can login (will be auto-unlocked on successful login)
         return true;
     }

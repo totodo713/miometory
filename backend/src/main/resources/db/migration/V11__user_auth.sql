@@ -1,6 +1,6 @@
 -- ==========================================
 -- Miometry User Authentication & Authorization
--- Migration: V003__user_auth.sql
+-- Migration: V11__user_auth.sql
 -- Feature: 001-user-login-auth
 -- Date: 2026-02-03
 -- ==========================================

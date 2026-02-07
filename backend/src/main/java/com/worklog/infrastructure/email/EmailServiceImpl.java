@@ -35,7 +35,8 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendVerificationEmail(String email, String token) {
         try {
-            String verificationLink = frontendBaseUrl + "/auth/verify-email?token=" + token;
+            // Next.js route groups (auth) don't create URL paths, so path is /verify-email
+            String verificationLink = frontendBaseUrl + "/verify-email?token=" + token;
             
             String htmlBody = buildEmailVerificationHtml(verificationLink);
             
@@ -55,7 +56,8 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(String email, String token) {
         try {
-            String resetLink = frontendBaseUrl + "/auth/reset-password?token=" + token;
+            // Next.js route groups (auth) don't create URL paths, so path is /reset-password
+            String resetLink = frontendBaseUrl + "/reset-password?token=" + token;
             
             String htmlBody = buildPasswordResetHtml(resetLink);
             
@@ -132,7 +134,7 @@ public class EmailServiceImpl implements EmailService {
                     </p>
                     <p>Or copy and paste this link into your browser:</p>
                     <p style="word-break: break-all; color: #666;">%s</p>
-                    <p><small>This link will expire in 1 hour.</small></p>
+                    <p><small>This link will expire in 24 hours.</small></p>
                     <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
                     <p><small>If you did not request a password reset, please ignore this email. Your password will remain unchanged.</small></p>
                 </div>
