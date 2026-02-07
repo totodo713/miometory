@@ -1,0 +1,647 @@
+openapi: 3.0.3
+info:
+  title: Miometry Authentication API
+  description: |
+    API endpoints for user authentication and authorization in the Miometry Work Log system.
+    
+    **Security**:
+    - All endpoints use HTTP-only, Secure, SameSite=Strict cookies for session management
+    - CSRF protection via X-XSRF-TOKEN header (required for POST/PUT/DELETE requests)
+    - Password hashing with bcrypt (strength: 10)
+    - Session timeout: 30 minutes (configurable)
+    - Remember-me: 30 days (optional)
+    
+    **Prerequisites**:
+    - [spec.md](../spec.md): Feature specification (FR-001 to FR-020)
+    - [data-model.md](../data-model.md): Entity schemas and validation rules
+    - [research.md](../research.md): Technical decisions
+  version: 1.0.0
+  contact:
+    name: Miometry Development Team
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+  - url: https://api.miometry.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints (signup, login, logout)
+  - name: Password Management
+    description: Password reset and change endpoints
+  - name: Email Verification
+    description: Email verification endpoints
+
+paths:
+  /auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: Create new user account
+      description: |
+        Registers a new user with email, password, and name. 
+        
+        **Business Rules**:
+        - FR-001: User account creation
+        - FR-002: Email format validation
+        - FR-003: Password strength validation (min 8 chars, 1 digit, 1 uppercase)
+        - FR-004: Password hashed with bcrypt before storage
+        - FR-016: Account created in 'unverified' status
+        - FR-016: Verification email sent to provided address
+        
+        **Side Effects**:
+        - User record created in `users` table
+        - Verification email sent (async)
+        - Audit log entry: LOGIN_SUCCESS (if auto-login enabled)
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+            examples:
+              validSignup:
+                value:
+                  email: "user@example.com"
+                  password: "SecurePass123"
+                  name: "John Doe"
+      responses:
+        '201':
+          description: User account created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupResponse'
+              examples:
+                success:
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    email: "user@example.com"
+                    name: "John Doe"
+                    accountStatus: "unverified"
+                    message: "Account created. Please check your email to verify your account."
+        '400':
+          description: Validation error (invalid email format, weak password, or missing fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidEmail:
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Invalid email format"
+                    details:
+                      field: "email"
+                      value: "invalid-email"
+                weakPassword:
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Password must be at least 8 characters with 1 digit and 1 uppercase letter"
+                    details:
+                      field: "password"
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                duplicateEmail:
+                  value:
+                    error: "DUPLICATE_EMAIL"
+                    message: "This email address is already registered"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: |
+        Authenticates user with email and password, creates session.
+        
+        **Business Rules**:
+        - FR-005: Email/password authentication
+        - FR-006: Failed login tracking (lock after 5 failures for 15 minutes)
+        - FR-013: Session timeout 30 minutes
+        - FR-014: Remember-me option for 30-day persistence
+        - FR-017: Unverified accounts can login with restricted access
+        
+        **Side Effects**:
+        - Session cookie set (JSESSIONID)
+        - Remember-me cookie set (if requested)
+        - User.last_login_at updated
+        - User.failed_login_attempts reset to 0 (on success)
+        - User.failed_login_attempts incremented (on failure)
+        - User.account_status → 'locked' if 5 failures reached
+        - UserSession record created
+        - Audit log entry: LOGIN_SUCCESS or LOGIN_FAILURE
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              basicLogin:
+                value:
+                  email: "user@example.com"
+                  password: "SecurePass123"
+                  rememberMe: false
+              rememberMeLogin:
+                value:
+                  email: "user@example.com"
+                  password: "SecurePass123"
+                  rememberMe: true
+      responses:
+        '200':
+          description: Login successful
+          headers:
+            Set-Cookie:
+              description: Session cookie (JSESSIONID) and optional remember-me token
+              schema:
+                type: string
+                example: "JSESSIONID=abc123...; Path=/; HttpOnly; Secure; SameSite=Strict"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                verifiedUser:
+                  value:
+                    user:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      email: "user@example.com"
+                      name: "John Doe"
+                      role: "USER"
+                      permissions: ["user.view", "report.view", "work_log.create"]
+                      accountStatus: "active"
+                    sessionExpiresAt: "2026-02-03T15:30:00Z"
+                unverifiedUser:
+                  value:
+                    user:
+                      id: "550e8400-e29b-41d4-a716-446655440000"
+                      email: "newuser@example.com"
+                      name: "Jane Smith"
+                      role: "USER"
+                      permissions: []
+                      accountStatus: "unverified"
+                    sessionExpiresAt: "2026-02-03T15:30:00Z"
+                    warning: "Email verification required. Please check your email to verify your account."
+        '401':
+          description: Authentication failed (invalid credentials or account locked)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidCredentials:
+                  value:
+                    error: "INVALID_CREDENTIALS"
+                    message: "Invalid email or password"
+                accountLocked:
+                  value:
+                    error: "ACCOUNT_LOCKED"
+                    message: "Account temporarily locked due to multiple failed login attempts. Please try again in 15 minutes."
+                    details:
+                      lockedUntil: "2026-02-03T14:45:00Z"
+        '500':
+          description: Server error (e.g., database connection failure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: End user session
+      description: |
+        Logs out the current user by invalidating their session.
+        
+        **Business Rules**:
+        - FR-007: Session termination
+        
+        **Side Effects**:
+        - Session cookie deleted (JSESSIONID)
+        - Remember-me cookie deleted (if present)
+        - UserSession record deleted
+        - Audit log entry: LOGOUT
+        
+        **Security**:
+        - Requires valid session cookie
+        - Requires CSRF token in X-XSRF-TOKEN header
+      operationId: logout
+      security:
+        - cookieAuth: []
+        - csrfToken: []
+      responses:
+        '204':
+          description: Logout successful (no content)
+        '401':
+          description: Not authenticated (no valid session)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/password-reset/request:
+    post:
+      tags:
+        - Password Management
+      summary: Request password reset
+      description: |
+        Generates a password reset token and sends it via email.
+        
+        **Business Rules**:
+        - FR-010: Password reset initiation
+        - FR-011: Reset token sent via email
+        - FR-011: Security pattern - always return success message (prevents email enumeration)
+        - FR-012: Token valid for 24 hours
+        
+        **Side Effects**:
+        - PasswordResetToken record created
+        - Previous tokens for user invalidated (used_at set to NOW)
+        - Email sent with reset link (async)
+        - Audit log entry: PASSWORD_RESET_REQUEST
+        - If email send fails: EMAIL_SEND_FAILURE audit log (internal only)
+        
+        **Security Note**:
+        - Always returns 200 even if email doesn't exist (anti-enumeration)
+      operationId: requestPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequestRequest'
+            examples:
+              validRequest:
+                value:
+                  email: "user@example.com"
+      responses:
+        '200':
+          description: Password reset email sent (or would be sent if email exists)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              examples:
+                success:
+                  value:
+                    message: "If this email address is registered, you will receive a password reset link shortly. Please check your inbox and spam folder."
+        '400':
+          description: Invalid email format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/password-reset/confirm:
+    post:
+      tags:
+        - Password Management
+      summary: Complete password reset
+      description: |
+        Validates reset token and sets new password.
+        
+        **Business Rules**:
+        - FR-010: Password reset completion
+        - FR-012: Token must be unused and not expired
+        - FR-003: New password must meet strength requirements
+        - Edge case: Invalidate all sessions except current after password change
+        
+        **Side Effects**:
+        - User.hashed_password updated
+        - PasswordResetToken.used_at set to NOW
+        - All UserSession records deleted (except current session if logged in)
+        - All PersistentLogin tokens deleted
+        - Audit log entry: PASSWORD_RESET_COMPLETE
+      operationId: confirmPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+            examples:
+              validConfirm:
+                value:
+                  token: "abc123def456..."
+                  newPassword: "NewSecurePass456"
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              examples:
+                success:
+                  value:
+                    message: "Password reset successful. You can now log in with your new password."
+        '400':
+          description: Validation error (weak password, invalid token format)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                weakPassword:
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Password must be at least 8 characters with 1 digit and 1 uppercase letter"
+        '404':
+          description: Token not found, expired, or already used
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  value:
+                    error: "INVALID_TOKEN"
+                    message: "Password reset token is invalid or has expired"
+
+  /auth/verify-email:
+    post:
+      tags:
+        - Email Verification
+      summary: Verify user email address
+      description: |
+        Verifies user's email address using token from verification email.
+        
+        **Business Rules**:
+        - FR-016: Email verification required for new accounts
+        - FR-018: Verification activates account (status → 'active')
+        
+        **Side Effects**:
+        - User.email_verified_at set to NOW
+        - User.account_status → 'active' (if currently 'unverified')
+        - Audit log entry: EMAIL_VERIFICATION
+        
+        **Note**: Token generation/delivery handled by backend during signup (not exposed in API)
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailVerificationRequest'
+            examples:
+              validToken:
+                value:
+                  token: "email-verify-token-123..."
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              examples:
+                success:
+                  value:
+                    message: "Email verified successfully. Your account is now active."
+        '404':
+          description: Token not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  value:
+                    error: "INVALID_TOKEN"
+                    message: "Email verification token is invalid or has expired"
+
+  /auth/csrf:
+    get:
+      tags:
+        - Authentication
+      summary: Get CSRF token
+      description: |
+        Retrieves CSRF token for subsequent POST/PUT/DELETE requests.
+        
+        **Security**:
+        - Token must be sent in X-XSRF-TOKEN header for state-changing requests
+        - Token tied to session (rotates on login/logout)
+      operationId: getCsrfToken
+      responses:
+        '200':
+          description: CSRF token retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsrfTokenResponse'
+              examples:
+                success:
+                  value:
+                    token: "csrf-token-abc123..."
+                    headerName: "X-XSRF-TOKEN"
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JSESSIONID
+      description: Session cookie set by backend on successful login
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-XSRF-TOKEN
+      description: CSRF token required for POST/PUT/DELETE requests
+
+  schemas:
+    SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "user@example.com"
+          description: User's email address (must be unique)
+        password:
+          type: string
+          minLength: 8
+          maxLength: 255
+          example: "SecurePass123"
+          description: |
+            Password meeting strength requirements:
+            - Minimum 8 characters
+            - At least 1 digit
+            - At least 1 uppercase letter
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "John Doe"
+          description: User's full name
+
+    SignupResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        accountStatus:
+          type: string
+          enum: [active, unverified, locked, deleted]
+          example: "unverified"
+        message:
+          type: string
+          example: "Account created. Please check your email to verify your account."
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        password:
+          type: string
+          example: "SecurePass123"
+        rememberMe:
+          type: boolean
+          default: false
+          description: If true, session persists for 30 days
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserInfo'
+        sessionExpiresAt:
+          type: string
+          format: date-time
+          example: "2026-02-03T15:30:00Z"
+          description: Session expiration timestamp (30 minutes from login, or 30 days if rememberMe)
+        warning:
+          type: string
+          nullable: true
+          example: "Email verification required. Please check your email to verify your account."
+          description: Warning message if account is unverified (FR-017)
+
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        role:
+          type: string
+          example: "USER"
+          description: User's role name (from roles table)
+        permissions:
+          type: array
+          items:
+            type: string
+          example: ["user.view", "report.view", "work_log.create"]
+          description: List of permission names user has through their role
+        accountStatus:
+          type: string
+          enum: [active, unverified, locked, deleted]
+          example: "active"
+
+    PasswordResetRequestRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+
+    PasswordResetConfirmRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          example: "abc123def456..."
+          description: Password reset token from email link
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 255
+          example: "NewSecurePass456"
+          description: New password meeting strength requirements
+
+    EmailVerificationRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          example: "email-verify-token-123..."
+          description: Email verification token from verification email
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    CsrfTokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "csrf-token-abc123..."
+        headerName:
+          type: string
+          example: "X-XSRF-TOKEN"
+          description: Header name to use when sending CSRF token
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "VALIDATION_ERROR"
+          description: Error code for programmatic handling
+        message:
+          type: string
+          example: "Invalid input provided"
+          description: Human-readable error message
+        details:
+          type: object
+          nullable: true
+          description: Additional error context (field-specific errors, etc.)
+          example:
+            field: "email"
+            value: "invalid-email"

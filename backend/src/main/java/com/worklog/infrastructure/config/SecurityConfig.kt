@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Profile
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
@@ -28,6 +30,13 @@ import org.springframework.web.cors.CorsConfigurationSource
 class SecurityConfig(
     private val corsConfigurationSource: CorsConfigurationSource,
 ) {
+    /**
+     * Password encoder bean using BCrypt algorithm.
+     * BCrypt automatically handles salting and uses adaptive hashing.
+     */
+    @Bean
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
     /**
      * Development security filter chain - CSRF disabled for easier testing.
      */

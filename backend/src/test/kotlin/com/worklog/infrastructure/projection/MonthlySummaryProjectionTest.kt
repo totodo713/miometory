@@ -15,7 +15,6 @@ import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
 class MonthlySummaryProjectionTest {
-
     @Mock
     private lateinit var jdbcTemplate: JdbcTemplate
 
@@ -57,14 +56,15 @@ class MonthlySummaryProjectionTest {
     @Test
     fun `getMonthlySummary should return project summaries with hours and percentages`() {
         val projectId = UUID.randomUUID()
-        val projectResults = listOf(
-            mapOf(
-                "project_id" to projectId,
-                "project_name" to "Test Project",
-                "total_hours" to BigDecimal("40.00"),
-                "percentage" to BigDecimal("100.00")
+        val projectResults =
+            listOf(
+                mapOf(
+                    "project_id" to projectId,
+                    "project_name" to "Test Project",
+                    "total_hours" to BigDecimal("40.00"),
+                    "percentage" to BigDecimal("100.00"),
+                ),
             )
-        )
 
         // First call returns project summaries
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
@@ -89,14 +89,15 @@ class MonthlySummaryProjectionTest {
     @Test
     fun `getMonthlySummary should handle null project name as Unknown Project`() {
         val projectId = UUID.randomUUID()
-        val projectResults = listOf(
-            mapOf(
-                "project_id" to projectId,
-                "project_name" to null,
-                "total_hours" to BigDecimal("8.00"),
-                "percentage" to BigDecimal("100.00")
+        val projectResults =
+            listOf(
+                mapOf(
+                    "project_id" to projectId,
+                    "project_name" to null,
+                    "total_hours" to BigDecimal("8.00"),
+                    "percentage" to BigDecimal("100.00"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(projectResults)
@@ -112,20 +113,21 @@ class MonthlySummaryProjectionTest {
 
     @Test
     fun `getMonthlySummary should calculate total work hours from projects`() {
-        val projectResults = listOf(
-            mapOf(
-                "project_id" to UUID.randomUUID(),
-                "project_name" to "Project A",
-                "total_hours" to BigDecimal("20.00"),
-                "percentage" to BigDecimal("50.00")
-            ),
-            mapOf(
-                "project_id" to UUID.randomUUID(),
-                "project_name" to "Project B",
-                "total_hours" to BigDecimal("20.00"),
-                "percentage" to BigDecimal("50.00")
+        val projectResults =
+            listOf(
+                mapOf(
+                    "project_id" to UUID.randomUUID(),
+                    "project_name" to "Project A",
+                    "total_hours" to BigDecimal("20.00"),
+                    "percentage" to BigDecimal("50.00"),
+                ),
+                mapOf(
+                    "project_id" to UUID.randomUUID(),
+                    "project_name" to "Project B",
+                    "total_hours" to BigDecimal("20.00"),
+                    "percentage" to BigDecimal("50.00"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(projectResults)
@@ -142,14 +144,15 @@ class MonthlySummaryProjectionTest {
 
     @Test
     fun `getMonthlySummary should calculate absence hours correctly`() {
-        val absenceResults = listOf(
-            mapOf(
-                "id" to UUID.randomUUID(),
-                "start_date" to Date.valueOf(LocalDate.of(2025, 1, 10)),
-                "end_date" to Date.valueOf(LocalDate.of(2025, 1, 12)),
-                "hours_per_day" to BigDecimal("8.00")
+        val absenceResults =
+            listOf(
+                mapOf(
+                    "id" to UUID.randomUUID(),
+                    "start_date" to Date.valueOf(LocalDate.of(2025, 1, 10)),
+                    "end_date" to Date.valueOf(LocalDate.of(2025, 1, 12)),
+                    "hours_per_day" to BigDecimal("8.00"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -166,14 +169,15 @@ class MonthlySummaryProjectionTest {
 
     @Test
     fun `getMonthlySummary should clip absence to month boundaries`() {
-        val absenceResults = listOf(
-            mapOf(
-                "id" to UUID.randomUUID(),
-                "start_date" to Date.valueOf(LocalDate.of(2024, 12, 25)),  // before January
-                "end_date" to Date.valueOf(LocalDate.of(2025, 2, 5)),      // after January
-                "hours_per_day" to BigDecimal("8.00")
+        val absenceResults =
+            listOf(
+                mapOf(
+                    "id" to UUID.randomUUID(),
+                    "start_date" to Date.valueOf(LocalDate.of(2024, 12, 25)), // before January
+                    "end_date" to Date.valueOf(LocalDate.of(2025, 2, 5)), // after January
+                    "hours_per_day" to BigDecimal("8.00"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -190,12 +194,13 @@ class MonthlySummaryProjectionTest {
 
     @Test
     fun `getMonthlySummary should return approval status SUBMITTED`() {
-        val approvalResults = listOf(
-            mapOf(
-                "event_type" to "MonthSubmittedForApproval",
-                "rejection_reason" to null
+        val approvalResults =
+            listOf(
+                mapOf(
+                    "event_type" to "MonthSubmittedForApproval",
+                    "rejection_reason" to null,
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -212,12 +217,13 @@ class MonthlySummaryProjectionTest {
 
     @Test
     fun `getMonthlySummary should return approval status APPROVED`() {
-        val approvalResults = listOf(
-            mapOf(
-                "event_type" to "MonthApproved",
-                "rejection_reason" to null
+        val approvalResults =
+            listOf(
+                mapOf(
+                    "event_type" to "MonthApproved",
+                    "rejection_reason" to null,
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -233,12 +239,13 @@ class MonthlySummaryProjectionTest {
 
     @Test
     fun `getMonthlySummary should return approval status REJECTED with reason`() {
-        val approvalResults = listOf(
-            mapOf(
-                "event_type" to "MonthRejected",
-                "rejection_reason" to "Missing project allocation"
+        val approvalResults =
+            listOf(
+                mapOf(
+                    "event_type" to "MonthRejected",
+                    "rejection_reason" to "Missing project allocation",
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -255,12 +262,13 @@ class MonthlySummaryProjectionTest {
 
     @Test
     fun `getMonthlySummary should return approval status PENDING`() {
-        val approvalResults = listOf(
-            mapOf(
-                "event_type" to "MonthlyApprovalCreated",
-                "rejection_reason" to null
+        val approvalResults =
+            listOf(
+                mapOf(
+                    "event_type" to "MonthlyApprovalCreated",
+                    "rejection_reason" to null,
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
