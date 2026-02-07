@@ -48,10 +48,6 @@ abstract class IntegrationTestBase {
             registry.add("spring.datasource.password") { postgres.password }
             registry.add("spring.flyway.enabled") { "true" }
             registry.add("spring.flyway.locations") { "classpath:db/migration" }
-            // Disable mail health checks for integration tests (no SMTP server in test env)
-            registry.add("management.health.mail.enabled") { "false" }
-            // Disable Redis health checks for integration tests (no Redis in test env)
-            registry.add("management.health.redis.enabled") { "false" }
         }
     }
 }
