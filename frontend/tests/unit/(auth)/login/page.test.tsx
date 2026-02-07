@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import LoginPage from '@/app/(auth)/login/page'
+import LoginPage from '@/(auth)/login/page'
 
 describe('Login page', () => {
   test('shows error when fields missing', () => {

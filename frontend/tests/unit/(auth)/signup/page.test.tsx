@@ -1,6 +1,6 @@
 import React from 'react'
 import { render, screen, fireEvent } from '@testing-library/react'
-import SignupPage from '@/app/(auth)/signup/page'
+import SignupPage from '@/(auth)/signup/page'
 
 describe('Signup page', () => {
   test('shows validation error for empty fields', () => {
