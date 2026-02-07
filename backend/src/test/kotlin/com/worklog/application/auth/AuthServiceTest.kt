@@ -1,11 +1,15 @@
 package com.worklog.application.auth
 
+import com.worklog.domain.role.Role
+import com.worklog.domain.role.RoleId
 import com.worklog.domain.user.User
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.email.EmailService
+import com.worklog.infrastructure.persistence.AuditLogRepository
 import com.worklog.infrastructure.persistence.JdbcEmailVerificationTokenStore
 import com.worklog.infrastructure.persistence.JdbcUserRepository
 import com.worklog.infrastructure.persistence.JdbcUserSessionRepository
+import com.worklog.infrastructure.persistence.RoleRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -35,6 +39,8 @@ import kotlin.test.assertTrue
 class AuthServiceTest {
     private val userRepository: JdbcUserRepository = mockk(relaxed = true)
     private val sessionRepository: JdbcUserSessionRepository = mockk(relaxed = true)
+    private val roleRepository: RoleRepository = mockk(relaxed = true)
+    private val auditLogRepository: AuditLogRepository = mockk(relaxed = true)
     private val emailService: EmailService = mockk(relaxed = true)
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
     private val tokenStore: JdbcEmailVerificationTokenStore = mockk(relaxed = true)
@@ -45,13 +51,26 @@ class AuthServiceTest {
     @BeforeEach
     fun setUp() {
         tokenStore.clear()
+        
+        // Mock default role lookup
+        val defaultRole = Role(
+            RoleId.of(UUID.fromString("00000000-0000-0000-0000-000000000002")),
+            "USER",
+            "Standard user",
+            Instant.now()
+        )
+        every { roleRepository.findByName("USER") } returns Optional.of(defaultRole)
+        
         authService =
             AuthServiceImpl(
                 userRepository,
                 sessionRepository,
+                roleRepository,
+                auditLogRepository,
                 emailService,
                 passwordEncoder,
                 tokenStore,
+                "USER" // defaultRoleName
             )
     }
 

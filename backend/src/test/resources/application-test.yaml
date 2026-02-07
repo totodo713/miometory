@@ -30,5 +30,7 @@ logging:
 
 # Disable rate limiting for tests
 worklog:
+  auth:
+    default-role-name: USER
   rate-limit:
     enabled: false

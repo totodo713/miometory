@@ -133,6 +133,7 @@ class TokenBucket(
  *
  * Features:
  * - Per-IP rate limiting with configurable requests/second and burst size
+ * - Path-specific rate limits (e.g., stricter limits for /auth endpoints)
  * - Automatic cleanup of stale buckets to prevent memory leaks
  * - Bypass for health check endpoints
  * - Configurable via application properties
@@ -170,10 +171,15 @@ class RateLimitFilter(
         // Get client identifier (IP address, considering X-Forwarded-For for proxied requests)
         val clientId = getClientId(request)
 
-        // Get or create token bucket for this client
+        // Determine rate limit based on path (stricter for auth endpoints)
+        val (rps, burst) = getRateLimitForPath(path)
+
+        // Get or create token bucket for this client (path-specific)
+        // Use path prefix in bucket key to maintain separate limits per path type
+        val bucketKey = if (isAuthPath(path)) "auth:$clientId" else "default:$clientId"
         val bucket =
-            buckets.computeIfAbsent(clientId) {
-                TokenBucket(properties.burstSize, properties.requestsPerSecond)
+            buckets.computeIfAbsent(bucketKey) {
+                TokenBucket(burst, rps)
             }
 
         // Always run cleanup regardless of allow/deny to prevent memory pressure
@@ -219,6 +225,27 @@ class RateLimitFilter(
     }
 
     /**
+     * Determine if path is an authentication endpoint requiring stricter rate limiting.
+     */
+    private fun isAuthPath(path: String): Boolean {
+        return path.startsWith("/auth/") || path == "/auth"
+    }
+
+    /**
+     * Get rate limit parameters for the given path.
+     * Returns (requestsPerSecond, burstSize) tuple.
+     */
+    private fun getRateLimitForPath(path: String): Pair<Int, Int> {
+        return if (isAuthPath(path)) {
+            // Stricter limits for auth endpoints to prevent brute force attacks
+            Pair(properties.authRequestsPerSecond, properties.authBurstSize)
+        } else {
+            // Default limits for other endpoints
+            Pair(properties.requestsPerSecond, properties.burstSize)
+        }
+    }
+
+    /**
      * Periodically clean up stale buckets to prevent memory leaks.
      */
     private fun cleanupIfNeeded() {
@@ -247,6 +274,8 @@ class RateLimitFilter(
  *     enabled: true
  *     requests-per-second: 10
  *     burst-size: 20
+ *     auth-requests-per-second: 3
+ *     auth-burst-size: 5
  *     trusted-proxies: "127.0.0.1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
  * ```
  */
@@ -256,11 +285,17 @@ class RateLimitProperties {
     /** Whether rate limiting is enabled. */
     var enabled: Boolean = true
 
-    /** Maximum sustained requests per second per client. */
+    /** Maximum sustained requests per second per client (default endpoints). */
     var requestsPerSecond: Int = 10
 
-    /** Maximum burst size (token bucket capacity). */
+    /** Maximum burst size (token bucket capacity) for default endpoints. */
     var burstSize: Int = 20
+
+    /** Maximum sustained requests per second per client (auth endpoints). */
+    var authRequestsPerSecond: Int = 3
+
+    /** Maximum burst size for auth endpoints (stricter to prevent brute force). */
+    var authBurstSize: Int = 5
 
     /** Cleanup interval for stale buckets (in minutes). */
     var cleanupIntervalMinutes: Int = 5

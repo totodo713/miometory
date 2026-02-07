@@ -87,6 +87,10 @@ server:
 
 # Rate Limiting Configuration
 worklog:
+  # Authentication Configuration
+  auth:
+    # Default role assigned to new users during signup
+    default-role-name: ${DEFAULT_ROLE_NAME:USER}
   # Frontend Base URL for email links
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
@@ -98,6 +102,9 @@ worklog:
     enabled: ${RATE_LIMIT_ENABLED:true}
     requests-per-second: ${RATE_LIMIT_RPS:10}
     burst-size: ${RATE_LIMIT_BURST:20}
+    # Stricter limits for auth endpoints to prevent brute force attacks
+    auth-requests-per-second: ${AUTH_RATE_LIMIT_RPS:3}
+    auth-burst-size: ${AUTH_RATE_LIMIT_BURST:5}
     cleanup-interval-minutes: 5
   # Request/Response Logging with sensitive data masking
   logging:

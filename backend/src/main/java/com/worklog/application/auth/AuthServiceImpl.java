@@ -1,14 +1,19 @@
 package com.worklog.application.auth;
 
 import com.worklog.application.validation.PasswordValidator;
+import com.worklog.domain.audit.AuditLog;
+import com.worklog.domain.role.Role;
 import com.worklog.domain.role.RoleId;
 import com.worklog.domain.session.UserSession;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.email.EmailService;
+import com.worklog.infrastructure.persistence.AuditLogRepository;
 import com.worklog.infrastructure.persistence.JdbcEmailVerificationTokenStore;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.persistence.JdbcUserSessionRepository;
+import com.worklog.infrastructure.persistence.RoleRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +27,7 @@ import java.util.UUID;
 /**
  * Authentication service implementation.
  * 
- * Handles user registration, login, and email verification.
+ * Handles user registration, login, and email verification with audit logging.
  */
 @Service
 @Transactional
@@ -30,25 +35,31 @@ public class AuthServiceImpl implements AuthService {
     
     private final JdbcUserRepository userRepository;
     private final JdbcUserSessionRepository sessionRepository;
+    private final RoleRepository roleRepository;
+    private final AuditLogRepository auditLogRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JdbcEmailVerificationTokenStore tokenStore;
-    
-    // Default role for new users (TODO: load from database)
-    private static final UUID DEFAULT_ROLE_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private final String defaultRoleName;
     
     public AuthServiceImpl(
         JdbcUserRepository userRepository,
         JdbcUserSessionRepository sessionRepository,
+        RoleRepository roleRepository,
+        AuditLogRepository auditLogRepository,
         EmailService emailService,
         PasswordEncoder passwordEncoder,
-        JdbcEmailVerificationTokenStore tokenStore
+        JdbcEmailVerificationTokenStore tokenStore,
+        @Value("${worklog.auth.default-role-name:USER}") String defaultRoleName
     ) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
+        this.roleRepository = roleRepository;
+        this.auditLogRepository = auditLogRepository;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.tokenStore = tokenStore;
+        this.defaultRoleName = defaultRoleName;
     }
     
     @Override
@@ -67,12 +78,19 @@ public class AuthServiceImpl implements AuthService {
         // Hash password
         String hashedPassword = passwordEncoder.encode(request.password());
         
+        // Load default role from database
+        Role defaultRole = roleRepository.findByName(defaultRoleName)
+            .orElseThrow(() -> new IllegalStateException(
+                "Default role '" + defaultRoleName + "' not found in database. " +
+                "Please ensure roles are properly initialized."
+            ));
+        
         // Create user entity
         User user = User.create(
             normalizedEmail,
             request.name(),
             hashedPassword,
-            RoleId.of(DEFAULT_ROLE_ID)
+            defaultRole.getId()
         );
         
         // Save user
@@ -92,16 +110,27 @@ public class AuthServiceImpl implements AuthService {
         
         // Find user
         User user = userRepository.findByEmail(normalizedEmail)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+            .orElseThrow(() -> {
+                // Log failed login attempt for non-existent user
+                logAuditEvent(null, AuditLog.LOGIN_FAILURE, ipAddress, 
+                    "Failed login attempt for non-existent email: " + normalizedEmail);
+                return new IllegalArgumentException("Invalid email or password");
+            });
         
         // Check if account can login (not deleted, lock expired)
         if (!user.canLogin()) {
             if (user.isLocked()) {
+                // Log account locked login attempt
+                logAuditEvent(user.getId(), AuditLog.LOGIN_FAILURE, ipAddress, 
+                    "Login attempt on locked account. Lock expires at: " + user.getLockedUntil());
                 throw new IllegalStateException(
                     "Account is locked until " + user.getLockedUntil() + 
                     ". Please try again later or contact support."
                 );
             }
+            // Log inactive account login attempt
+            logAuditEvent(user.getId(), AuditLog.LOGIN_FAILURE, ipAddress, 
+                "Login attempt on inactive account. Status: " + user.getAccountStatus());
             throw new IllegalStateException("Account is not active");
         }
         
@@ -110,6 +139,17 @@ public class AuthServiceImpl implements AuthService {
             // Record failed attempt
             user.recordFailedLogin(5, 15); // Lock after 5 failures for 15 minutes
             userRepository.save(user);
+            
+            // Log failed login with wrong password
+            logAuditEvent(user.getId(), AuditLog.LOGIN_FAILURE, ipAddress, 
+                "Failed login attempt: incorrect password. Failed attempts: " + user.getFailedLoginAttempts());
+            
+            // If account got locked due to this failure
+            if (user.isLocked()) {
+                logAuditEvent(user.getId(), AuditLog.ACCOUNT_LOCKED, ipAddress, 
+                    "Account locked due to too many failed login attempts. Lock expires at: " + user.getLockedUntil());
+            }
+            
             throw new IllegalArgumentException("Invalid email or password");
         }
         
@@ -125,6 +165,10 @@ public class AuthServiceImpl implements AuthService {
             30 // 30 minutes timeout
         );
         sessionRepository.save(session);
+        
+        // Log successful login
+        logAuditEvent(user.getId(), AuditLog.LOGIN_SUCCESS, ipAddress, 
+            "User logged in successfully. User-Agent: " + (userAgent != null ? userAgent : "unknown"));
         
         // Generate remember-me token if requested
         String rememberMeToken = request.rememberMe() 
@@ -147,6 +191,10 @@ public class AuthServiceImpl implements AuthService {
         if (!user.isVerified()) {
             user.verifyEmail();
             userRepository.save(user);
+            
+            // Log email verification
+            logAuditEvent(user.getId(), AuditLog.EMAIL_VERIFICATION, null, 
+                "Email verified successfully for user: " + user.getEmail());
         }
     }
     
@@ -159,5 +207,24 @@ public class AuthServiceImpl implements AuthService {
         byte[] bytes = new byte[32]; // 256 bits
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+    
+    /**
+     * Helper method to log audit events.
+     * 
+     * @param userId User ID (can be null for anonymous events)
+     * @param eventType Type of security event
+     * @param ipAddress Client IP address (can be null)
+     * @param details Additional details about the event
+     */
+    private void logAuditEvent(UserId userId, String eventType, String ipAddress, String details) {
+        try {
+            AuditLog auditLog = AuditLog.createUserAction(userId, eventType, ipAddress, details);
+            auditLogRepository.save(auditLog);
+        } catch (Exception e) {
+            // Log to system log but don't fail the operation
+            // In production, this should be sent to a monitoring system
+            System.err.println("Failed to create audit log: " + e.getMessage());
+        }
     }
 }
