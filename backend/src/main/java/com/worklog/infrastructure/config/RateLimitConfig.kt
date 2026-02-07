@@ -227,23 +227,24 @@ class RateLimitFilter(
     /**
      * Determine if path is an authentication endpoint requiring stricter rate limiting.
      */
-    private fun isAuthPath(path: String): Boolean {
-        return path.startsWith("/auth/") || path == "/auth"
-    }
+    private fun isAuthPath(path: String): Boolean =
+        path == "/api/v1/auth" ||
+            path.startsWith("/api/v1/auth/") ||
+            path == "/auth" ||
+            path.startsWith("/auth/")
 
     /**
      * Get rate limit parameters for the given path.
      * Returns (requestsPerSecond, burstSize) tuple.
      */
-    private fun getRateLimitForPath(path: String): Pair<Int, Int> {
-        return if (isAuthPath(path)) {
+    private fun getRateLimitForPath(path: String): Pair<Int, Int> =
+        if (isAuthPath(path)) {
             // Stricter limits for auth endpoints to prevent brute force attacks
             Pair(properties.authRequestsPerSecond, properties.authBurstSize)
         } else {
             // Default limits for other endpoints
             Pair(properties.requestsPerSecond, properties.burstSize)
         }
-    }
 
     /**
      * Periodically clean up stale buckets to prevent memory leaks.

@@ -51,16 +51,17 @@ class AuthServiceTest {
     @BeforeEach
     fun setUp() {
         tokenStore.clear()
-        
+
         // Mock default role lookup
-        val defaultRole = Role(
-            RoleId.of(UUID.fromString("00000000-0000-0000-0000-000000000002")),
-            "USER",
-            "Standard user",
-            Instant.now()
-        )
+        val defaultRole =
+            Role(
+                RoleId.of(UUID.fromString("00000000-0000-0000-0000-000000000002")),
+                "USER",
+                "Standard user",
+                Instant.now(),
+            )
         every { roleRepository.findByName("USER") } returns Optional.of(defaultRole)
-        
+
         authService =
             AuthServiceImpl(
                 userRepository,
@@ -70,7 +71,7 @@ class AuthServiceTest {
                 emailService,
                 passwordEncoder,
                 tokenStore,
-                "USER" // defaultRoleName
+                "USER", // defaultRoleName
             )
     }
 

@@ -4,9 +4,13 @@ import com.worklog.application.auth.AuthService;
 import com.worklog.application.auth.LoginRequest;
 import com.worklog.application.auth.LoginResponse;
 import com.worklog.application.auth.RegistrationRequest;
+import com.worklog.application.password.PasswordResetRequestCommand;
+import com.worklog.application.password.PasswordResetConfirmCommand;
+import com.worklog.application.password.PasswordResetService;
 import com.worklog.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +27,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, PasswordResetService passwordResetService) {
         this.authService = authService;
+        this.passwordResetService = passwordResetService;
     }
 
     /**
@@ -133,7 +139,27 @@ public class AuthController {
         
         return new MessageResponse("Email verified successfully. Your account is now active.");
     }
-    
+
+    /**
+     * Request password reset. Always returns 200 to prevent email enumeration.
+     */
+    @PostMapping("/password-reset/request")
+    @ResponseStatus(HttpStatus.OK)
+    public MessageResponse passwordResetRequest(@Valid @RequestBody PasswordResetRequestCommand cmd) {
+        passwordResetService.requestReset(cmd.getEmail());
+        return new MessageResponse("If the email exists, a password reset link has been sent.");
+    }
+
+    /**
+     * Confirm password reset by token.
+     */
+    @PostMapping("/password-reset/confirm")
+    @ResponseStatus(HttpStatus.OK)
+    public MessageResponse passwordResetConfirm(@Valid @RequestBody PasswordResetConfirmCommand cmd) {
+        passwordResetService.confirmReset(cmd.getToken(), cmd.getNewPassword());
+        return new MessageResponse("Password reset successfully. You may now log in with your new password.");
+    }
+
     /**
      * Extracts the client's IP address from the HTTP request.
      * Handles X-Forwarded-For header for requests behind proxies/load balancers.
