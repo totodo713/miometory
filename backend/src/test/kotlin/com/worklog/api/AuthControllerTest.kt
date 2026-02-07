@@ -1,11 +1,11 @@
 package com.worklog.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.worklog.api.AuthController
 import com.worklog.application.auth.AuthService
 import com.worklog.application.auth.LoginRequest
 import com.worklog.application.auth.LoginResponse
 import com.worklog.application.auth.RegistrationRequest
+import com.worklog.application.password.PasswordResetService
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.config.LoggingProperties
 import com.worklog.infrastructure.config.RateLimitProperties
@@ -54,9 +54,12 @@ class AuthControllerTest {
     @Autowired
     private lateinit var authService: AuthService
 
+    @Autowired
+    private lateinit var passwordResetService: PasswordResetService
+
     @BeforeEach
     fun setup() {
-        clearMocks(authService)
+        clearMocks(authService, passwordResetService)
     }
 
     @TestConfiguration
@@ -64,6 +67,10 @@ class AuthControllerTest {
         @Bean
         @Primary
         fun authService(): AuthService = mockk(relaxed = true)
+
+        @Bean
+        @Primary
+        fun passwordResetService(): PasswordResetService = mockk(relaxed = true)
 
         @Bean
         fun loggingProperties(): LoggingProperties {
@@ -397,8 +404,96 @@ class AuthControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),
-            ).andExpect(status().isNotFound)
+            )            .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.errorCode").value("INVALID_TOKEN"))
             .andExpect(jsonPath("$.message").value("Verification token has expired"))
+    }
+
+    // ============================================================
+    // Password Reset Tests
+    // ============================================================
+
+    @Test
+    fun `passwordResetRequest should return 200 with message`() {
+        // Given
+        val requestBody = mapOf("email" to "user@example.com")
+
+        every { passwordResetService.requestReset("user@example.com") } returns Unit
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/request")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.message").value("If the email exists, a password reset link has been sent."))
+
+        verify(exactly = 1) { passwordResetService.requestReset("user@example.com") }
+    }
+
+    @Test
+    fun `passwordResetRequest should return 200 even for non-existent email (anti-enumeration)`() {
+        // Given
+        val requestBody = mapOf("email" to "nonexistent@example.com")
+
+        every { passwordResetService.requestReset("nonexistent@example.com") } returns Unit
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/request")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.message").value("If the email exists, a password reset link has been sent."))
+
+        verify(exactly = 1) { passwordResetService.requestReset("nonexistent@example.com") }
+    }
+
+    @Test
+    fun `passwordResetConfirm should return 200 with success message`() {
+        // Given
+        val requestBody = mapOf("token" to "valid-token-123", "newPassword" to "NewPassword123")
+
+        every { passwordResetService.confirmReset("valid-token-123", "NewPassword123") } returns Unit
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/confirm")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.message").value("Password reset successfully. You may now log in with your new password."))
+
+        verify(exactly = 1) { passwordResetService.confirmReset("valid-token-123", "NewPassword123") }
+    }
+
+    @Test
+    fun `passwordResetConfirm should return 404 for invalid token`() {
+        // Given
+        val requestBody = mapOf("token" to "invalid-token", "newPassword" to "NewPassword123")
+
+        every {
+            passwordResetService.confirmReset(
+                "invalid-token",
+                "NewPassword123",
+            )
+        } throws IllegalArgumentException("Invalid or expired token")
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/confirm")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("INVALID_TOKEN"))
+            .andExpect(jsonPath("$.message").value("Invalid or expired token"))
     }
 }
