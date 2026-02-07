@@ -5,6 +5,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.containers.GenericContainer
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /**
@@ -40,6 +41,14 @@ abstract class IntegrationTestBase {
                 .withReuse(true)
                 .apply { start() }
 
+        // Redis Testcontainer for integration tests
+        @JvmStatic
+        private val redis: GenericContainer<*> =
+            GenericContainer("redis:8-alpine")
+                .withExposedPorts(6379)
+                .withReuse(true)
+                .apply { start() }
+
         @JvmStatic
         @DynamicPropertySource
         fun configureProperties(registry: DynamicPropertyRegistry) {
@@ -48,6 +57,9 @@ abstract class IntegrationTestBase {
             registry.add("spring.datasource.password") { postgres.password }
             registry.add("spring.flyway.enabled") { "true" }
             registry.add("spring.flyway.locations") { "classpath:db/migration" }
+            // Configure Redis Testcontainer host/port for tests
+            registry.add("spring.redis.host") { redis.host }
+            registry.add("spring.redis.port") { redis.getMappedPort(6379).toString() }
         }
     }
 }
