@@ -25,13 +25,11 @@ public class PasswordResetTokenRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    /** Insert new token */
+    /** Insert new token (fail fast if id already exists) */
     public void save(PasswordResetToken token) {
         String sql = """
             INSERT INTO password_reset_tokens (id, user_id, token, created_at, expires_at, used_at)
             VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT (id) DO UPDATE SET
-                used_at = EXCLUDED.used_at
             """;
         jdbcTemplate.update(
             sql,

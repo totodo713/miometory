@@ -43,6 +43,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
     excludeAutoConfiguration = [
         org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration::class,
     ],
+    excludeFilters = [
+        org.springframework.context.annotation.ComponentScan.Filter(
+            type = org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE,
+            classes = [com.worklog.infrastructure.config.RateLimitFilter::class],
+        ),
+    ],
 )
 class AuthControllerTest {
     @Autowired
@@ -404,7 +410,7 @@ class AuthControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),
-            )            .andExpect(status().isNotFound)
+            ).andExpect(status().isNotFound)
             .andExpect(jsonPath("$.errorCode").value("INVALID_TOKEN"))
             .andExpect(jsonPath("$.message").value("Verification token has expired"))
     }

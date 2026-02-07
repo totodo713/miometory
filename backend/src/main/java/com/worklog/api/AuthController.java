@@ -10,6 +10,7 @@ import com.worklog.application.password.PasswordResetService;
 import com.worklog.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -144,7 +145,7 @@ public class AuthController {
      */
     @PostMapping("/password-reset/request")
     @ResponseStatus(HttpStatus.OK)
-    public MessageResponse passwordResetRequest(@RequestBody PasswordResetRequestCommand cmd) {
+    public MessageResponse passwordResetRequest(@Valid @RequestBody PasswordResetRequestCommand cmd) {
         passwordResetService.requestReset(cmd.getEmail());
         return new MessageResponse("If the email exists, a password reset link has been sent.");
     }
@@ -154,7 +155,7 @@ public class AuthController {
      */
     @PostMapping("/password-reset/confirm")
     @ResponseStatus(HttpStatus.OK)
-    public MessageResponse passwordResetConfirm(@RequestBody PasswordResetConfirmCommand cmd) {
+    public MessageResponse passwordResetConfirm(@Valid @RequestBody PasswordResetConfirmCommand cmd) {
         passwordResetService.confirmReset(cmd.getToken(), cmd.getNewPassword());
         return new MessageResponse("Password reset successfully. You may now log in with your new password.");
     }

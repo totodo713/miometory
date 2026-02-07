@@ -227,7 +227,11 @@ class RateLimitFilter(
     /**
      * Determine if path is an authentication endpoint requiring stricter rate limiting.
      */
-    private fun isAuthPath(path: String): Boolean = path.startsWith("/auth/") || path == "/auth"
+    private fun isAuthPath(path: String): Boolean =
+        path == "/api/v1/auth" ||
+            path.startsWith("/api/v1/auth/") ||
+            path == "/auth" ||
+            path.startsWith("/auth/")
 
     /**
      * Get rate limit parameters for the given path.
