@@ -32,14 +32,14 @@ import java.util.*
 @Testcontainers
 @Transactional
 class JdbcUserRepositoryTest {
-
     companion object {
         @Container
         @JvmStatic
-        val postgresContainer: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16-alpine")
-            .withDatabaseName("worklog_test")
-            .withUsername("test")
-            .withPassword("test")
+        val postgresContainer: PostgreSQLContainer<*> =
+            PostgreSQLContainer("postgres:16-alpine")
+                .withDatabaseName("worklog_test")
+                .withUsername("test")
+                .withPassword("test")
 
         @DynamicPropertySource
         @JvmStatic
@@ -63,14 +63,17 @@ class JdbcUserRepositoryTest {
     fun setUp() {
         // Clean users table before each test
         jdbcTemplate.update("DELETE FROM users")
-        
+
         // Ensure test role exists (needed for foreign key constraint)
         testRoleId = RoleId.of(UUID.fromString("00000000-0000-0000-0000-000000000001"))
-        jdbcTemplate.update("""
+        jdbcTemplate.update(
+            """
             INSERT INTO roles (id, name, description, created_at, updated_at) 
             VALUES (?, 'TEST_ROLE', 'Test role for integration tests', NOW(), NOW())
             ON CONFLICT (id) DO NOTHING
-        """, testRoleId.value())
+        """,
+            testRoleId.value(),
+        )
     }
 
     // ============================================================
@@ -80,18 +83,19 @@ class JdbcUserRepositoryTest {
     @Test
     fun `save and findById - should persist and retrieve user`() {
         // Given
-        val user = try {
-            User.create(
-                "test@example.com",
-                "Test User",
-                "hashed_password_123",
-                testRoleId
-            )
-        } catch (e: IllegalArgumentException) {
-            println("ERROR creating user: ${e.message}")
-            e.printStackTrace()
-            throw e
-        }
+        val user =
+            try {
+                User.create(
+                    "test@example.com",
+                    "Test User",
+                    "hashed_password_123",
+                    testRoleId,
+                )
+            } catch (e: IllegalArgumentException) {
+                println("ERROR creating user: ${e.message}")
+                e.printStackTrace()
+                throw e
+            }
 
         // When
         repository.save(user)
@@ -113,12 +117,13 @@ class JdbcUserRepositoryTest {
     @Test
     fun `save with update - should update existing user`() {
         // Given - create and save initial user
-        val user = User.create(
-            "test@example.com",
-            "Original Name",
-            "hashed_password_123",
-            testRoleId
-        )
+        val user =
+            User.create(
+                "test@example.com",
+                "Original Name",
+                "hashed_password_123",
+                testRoleId,
+            )
         repository.save(user)
 
         // When - update user and save again
@@ -147,12 +152,13 @@ class JdbcUserRepositoryTest {
     @Test
     fun `findByEmail - should find user case-insensitively`() {
         // Given
-        val user = User.create(
-            "test@example.com",
-            "Test User",
-            "hashed_password_123",
-            testRoleId
-        )
+        val user =
+            User.create(
+                "test@example.com",
+                "Test User",
+                "hashed_password_123",
+                testRoleId,
+            )
         repository.save(user)
 
         // When - search with different case
@@ -179,12 +185,13 @@ class JdbcUserRepositoryTest {
     @Test
     fun `existsByEmail - should return true when email exists`() {
         // Given
-        val user = User.create(
-            "test@example.com",
-            "Test User",
-            "hashed_password_123",
-            testRoleId
-        )
+        val user =
+            User.create(
+                "test@example.com",
+                "Test User",
+                "hashed_password_123",
+                testRoleId,
+            )
         repository.save(user)
 
         // When
@@ -197,12 +204,13 @@ class JdbcUserRepositoryTest {
     @Test
     fun `existsByEmail - should be case-insensitive`() {
         // Given
-        val user = User.create(
-            "test@example.com",
-            "Test User",
-            "hashed_password_123",
-            testRoleId
-        )
+        val user =
+            User.create(
+                "test@example.com",
+                "Test User",
+                "hashed_password_123",
+                testRoleId,
+            )
         repository.save(user)
 
         // When
@@ -231,7 +239,7 @@ class JdbcUserRepositoryTest {
         val user1 = User.create("user1@example.com", "User 1", "pass1", testRoleId)
         val user2 = User.create("user2@example.com", "User 2", "pass2", testRoleId)
         user2.verifyEmail()
-        
+
         repository.save(user1)
         repository.save(user2)
 
@@ -242,7 +250,7 @@ class JdbcUserRepositoryTest {
         // Then
         Assertions.assertEquals(1, unverified.size)
         Assertions.assertEquals("user1@example.com", unverified[0].email)
-        
+
         Assertions.assertEquals(1, active.size)
         Assertions.assertEquals("user2@example.com", active[0].email)
     }
@@ -256,34 +264,35 @@ class JdbcUserRepositoryTest {
         // Given - create locked user
         val user = User.create("locked@example.com", "Locked User", "pass", testRoleId)
         user.verifyEmail()
-        
+
         // Lock the user
-        val lockedUser = User(
-            user.id,
-            user.email,
-            user.name,
-            user.hashedPassword,
-            user.roleId,
-            User.AccountStatus.LOCKED,
-            5,
-            Instant.now().plusSeconds(3600), // Set valid future lock time first
-            user.createdAt,
-            user.updatedAt,
-            null,
-            user.emailVerifiedAt
-        )
+        val lockedUser =
+            User(
+                user.id,
+                user.email,
+                user.name,
+                user.hashedPassword,
+                user.roleId,
+                User.AccountStatus.LOCKED,
+                5,
+                Instant.now().plusSeconds(3600), // Set valid future lock time first
+                user.createdAt,
+                user.updatedAt,
+                null,
+                user.emailVerifiedAt,
+            )
         repository.save(lockedUser)
-        
+
         // Temporarily disable the future lock constraint to allow setting past timestamp for testing
         // Note: This will be auto-rolled back by @Transactional
         jdbcTemplate.execute("ALTER TABLE users DROP CONSTRAINT chk_locked_until_future")
-        
+
         // Update locked_until to the past
         val expiredLockTime = Instant.now().minusSeconds(3600) // 1 hour ago
         jdbcTemplate.update(
             "UPDATE users SET locked_until = ? WHERE id = ?",
             Timestamp.from(expiredLockTime),
-            user.id.value()
+            user.id.value(),
         )
 
         // When
@@ -303,23 +312,24 @@ class JdbcUserRepositoryTest {
     fun `findUnverifiedUsersBefore - should find old unverified users`() {
         // Given - create user with old creation timestamp
         val oldCreationTime = Instant.now().minusSeconds(86400 * 8) // 8 days ago
-        val oldUser = User(
-            UserId.generate(),
-            "old@example.com",
-            "Old User",
-            "pass",
-            testRoleId,
-            User.AccountStatus.UNVERIFIED,
-            0,
-            null, // lockedUntil
-            oldCreationTime, // createdAt
-            oldCreationTime, // updatedAt
-            null, // lastLoginAt
-            null  // emailVerifiedAt
-        )
-        
+        val oldUser =
+            User(
+                UserId.generate(),
+                "old@example.com",
+                "Old User",
+                "pass",
+                testRoleId,
+                User.AccountStatus.UNVERIFIED,
+                0,
+                null, // lockedUntil
+                oldCreationTime, // createdAt
+                oldCreationTime, // updatedAt
+                null, // lastLoginAt
+                null, // emailVerifiedAt
+            )
+
         val recentUser = User.create("recent@example.com", "Recent User", "pass", testRoleId)
-        
+
         repository.save(oldUser)
         repository.save(recentUser)
 
@@ -341,7 +351,7 @@ class JdbcUserRepositoryTest {
         // Given
         val user = User.create("test@example.com", "Test User", "pass", testRoleId)
         repository.save(user)
-        
+
         Assertions.assertTrue(repository.findById(user.id).isPresent)
 
         // When
@@ -356,7 +366,7 @@ class JdbcUserRepositoryTest {
         // Given
         repository.save(User.create("user1@example.com", "User 1", "pass1", testRoleId))
         repository.save(User.create("user2@example.com", "User 2", "pass2", testRoleId))
-        
+
         Assertions.assertEquals(2, repository.count())
 
         // When
@@ -374,7 +384,7 @@ class JdbcUserRepositoryTest {
     fun `count - should return correct user count`() {
         // Given
         Assertions.assertEquals(0, repository.count())
-        
+
         repository.save(User.create("user1@example.com", "User 1", "pass1", testRoleId))
         repository.save(User.create("user2@example.com", "User 2", "pass2", testRoleId))
 

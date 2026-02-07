@@ -26,14 +26,14 @@ import java.util.*
 @Testcontainers
 @Transactional
 class JdbcUserEmailUniquenessTest {
-
     companion object {
         @Container
         @JvmStatic
-        val postgresContainer: PostgreSQLContainer<*> = PostgreSQLContainer("postgres:16-alpine")
-            .withDatabaseName("worklog_test")
-            .withUsername("test")
-            .withPassword("test")
+        val postgresContainer: PostgreSQLContainer<*> =
+            PostgreSQLContainer("postgres:16-alpine")
+                .withDatabaseName("worklog_test")
+                .withUsername("test")
+                .withPassword("test")
 
         @DynamicPropertySource
         @JvmStatic
@@ -63,7 +63,8 @@ class JdbcUserEmailUniquenessTest {
             INSERT INTO roles (id, name, description, created_at, updated_at)
             VALUES (?, 'TEST_ROLE', 'Test role for integration tests', NOW(), NOW())
             ON CONFLICT (id) DO NOTHING
-            """, testRoleId.value()
+            """,
+            testRoleId.value(),
         )
     }
 

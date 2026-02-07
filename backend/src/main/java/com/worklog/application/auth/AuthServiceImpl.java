@@ -1,12 +1,12 @@
 package com.worklog.application.auth;
 
-import com.worklog.application.token.EmailVerificationTokenStore;
 import com.worklog.application.validation.PasswordValidator;
 import com.worklog.domain.role.RoleId;
 import com.worklog.domain.session.UserSession;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.email.EmailService;
+import com.worklog.infrastructure.persistence.JdbcEmailVerificationTokenStore;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.persistence.JdbcUserSessionRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,7 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private final JdbcUserSessionRepository sessionRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
-    private final EmailVerificationTokenStore tokenStore;
+    private final JdbcEmailVerificationTokenStore tokenStore;
     
     // Default role for new users (TODO: load from database)
     private static final UUID DEFAULT_ROLE_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
         JdbcUserSessionRepository sessionRepository,
         EmailService emailService,
         PasswordEncoder passwordEncoder,
-        EmailVerificationTokenStore tokenStore
+        JdbcEmailVerificationTokenStore tokenStore
     ) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
@@ -86,7 +86,7 @@ public class AuthServiceImpl implements AuthService {
     }
     
     @Override
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request, String ipAddress, String userAgent) {
         // Normalize email
         String normalizedEmail = request.email().toLowerCase();
         
@@ -117,11 +117,11 @@ public class AuthServiceImpl implements AuthService {
         user.recordSuccessfulLogin();
         userRepository.save(user);
         
-        // Create session (TODO: capture IP address and user agent from HTTP request)
+        // Create session with IP address and user agent for security audit
         UserSession session = UserSession.create(
             UserId.of(user.getId().value()),
-            null, // ipAddress - will be captured from HttpServletRequest in controller
-            null, // userAgent - will be captured from HttpServletRequest in controller
+            ipAddress,
+            userAgent,
             30 // 30 minutes timeout
         );
         sessionRepository.save(session);

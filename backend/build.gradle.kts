@@ -68,7 +68,7 @@ dependencies {
     // Kotlin test support
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("io.mockk:mockk:1.14.2")
-    
+
     // GreenMail for email testing
     testImplementation("com.icegreen:greenmail-junit5:2.0.1")
 }

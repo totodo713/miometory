@@ -4,7 +4,6 @@ import com.worklog.domain.absence.Absence
 import com.worklog.domain.absence.AbsenceId
 import com.worklog.domain.absence.AbsenceStatus
 import com.worklog.domain.absence.AbsenceType
-import com.worklog.domain.approval.ApprovalStatus
 import com.worklog.domain.approval.MonthlyApproval
 import com.worklog.domain.approval.MonthlyApprovalId
 import com.worklog.domain.member.MemberId
@@ -24,10 +23,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mock
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.any
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
 import java.time.LocalDate
 import java.util.Optional
@@ -48,7 +47,6 @@ import kotlin.test.assertNotNull
  */
 @ExtendWith(MockitoExtension::class)
 class ApprovalServiceTest {
-
     @Mock
     private lateinit var approvalRepository: JdbcApprovalRepository
 
@@ -64,24 +62,25 @@ class ApprovalServiceTest {
     private val memberId = MemberId.of(UUID.randomUUID())
     private val managerId = MemberId.of(UUID.randomUUID())
     private val projectId = ProjectId.of(UUID.randomUUID())
-    private val fiscalMonth = FiscalMonthPeriod(
-        LocalDate.of(2024, 1, 21),
-        LocalDate.of(2024, 2, 20)
-    )
+    private val fiscalMonth =
+        FiscalMonthPeriod(
+            LocalDate.of(2024, 1, 21),
+            LocalDate.of(2024, 2, 20),
+        )
 
     @BeforeEach
     fun setUp() {
-        approvalService = ApprovalService(
-            approvalRepository,
-            workLogRepository,
-            absenceRepository
-        )
+        approvalService =
+            ApprovalService(
+                approvalRepository,
+                workLogRepository,
+                absenceRepository,
+            )
     }
 
     @Nested
     @DisplayName("submitMonth")
     inner class SubmitMonthTests {
-
         @Test
         fun `should create new approval when none exists and submit successfully`() {
             // Given
@@ -92,17 +91,21 @@ class ApprovalServiceTest {
             `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
                 .thenReturn(Optional.empty())
 
-            `when`(approvalRepository.findWorkLogEntryIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(listOf(workLogEntryId))
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(listOf(workLogEntryId))
 
-            `when`(approvalRepository.findAbsenceIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(listOf(absenceId))
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(listOf(absenceId))
 
             val workLogEntry = createWorkLogEntry(workLogEntryId)
             `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId)))
@@ -131,17 +134,21 @@ class ApprovalServiceTest {
             `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
                 .thenReturn(Optional.of(existingApproval))
 
-            `when`(approvalRepository.findWorkLogEntryIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
 
-            `when`(approvalRepository.findAbsenceIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
 
             // When
             val result = approvalService.submitMonth(command)
@@ -159,17 +166,21 @@ class ApprovalServiceTest {
             `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
                 .thenReturn(Optional.empty())
 
-            `when`(approvalRepository.findWorkLogEntryIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
 
-            `when`(approvalRepository.findAbsenceIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
 
             // When
             val result = approvalService.submitMonth(command)
@@ -188,25 +199,30 @@ class ApprovalServiceTest {
             `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
                 .thenReturn(Optional.empty())
 
-            `when`(approvalRepository.findWorkLogEntryIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(listOf(workLogEntryId))
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(listOf(workLogEntryId))
 
-            `when`(approvalRepository.findAbsenceIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
 
             `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId)))
                 .thenReturn(Optional.empty())
 
             // When/Then
-            val exception = assertFailsWith<DomainException> {
-                approvalService.submitMonth(command)
-            }
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.submitMonth(command)
+                }
             assertEquals("WORK_LOG_ENTRY_NOT_FOUND", exception.errorCode)
         }
 
@@ -219,25 +235,30 @@ class ApprovalServiceTest {
             `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
                 .thenReturn(Optional.empty())
 
-            `when`(approvalRepository.findWorkLogEntryIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
 
-            `when`(approvalRepository.findAbsenceIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(listOf(absenceId))
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(listOf(absenceId))
 
             `when`(absenceRepository.findById(AbsenceId.of(absenceId)))
                 .thenReturn(Optional.empty())
 
             // When/Then
-            val exception = assertFailsWith<DomainException> {
-                approvalService.submitMonth(command)
-            }
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.submitMonth(command)
+                }
             assertEquals("ABSENCE_NOT_FOUND", exception.errorCode)
         }
 
@@ -252,17 +273,21 @@ class ApprovalServiceTest {
             `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
                 .thenReturn(Optional.empty())
 
-            `when`(approvalRepository.findWorkLogEntryIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(listOf(workLogEntryId1, workLogEntryId2, workLogEntryId3))
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(listOf(workLogEntryId1, workLogEntryId2, workLogEntryId3))
 
-            `when`(approvalRepository.findAbsenceIds(
-                memberId.value(),
-                fiscalMonth.startDate(),
-                fiscalMonth.endDate()
-            )).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
 
             `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId1)))
                 .thenReturn(Optional.of(createWorkLogEntry(workLogEntryId1)))
@@ -283,7 +308,6 @@ class ApprovalServiceTest {
     @Nested
     @DisplayName("approveMonth")
     inner class ApproveMonthTests {
-
         @Test
         fun `should approve submitted month successfully`() {
             // Given
@@ -311,9 +335,10 @@ class ApprovalServiceTest {
                 .thenReturn(Optional.empty())
 
             // When/Then
-            val exception = assertFailsWith<DomainException> {
-                approvalService.approveMonth(command)
-            }
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.approveMonth(command)
+                }
             assertEquals("APPROVAL_NOT_FOUND", exception.errorCode)
         }
 
@@ -362,9 +387,10 @@ class ApprovalServiceTest {
                 .thenReturn(Optional.empty())
 
             // When/Then
-            val exception = assertFailsWith<DomainException> {
-                approvalService.approveMonth(command)
-            }
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.approveMonth(command)
+                }
             assertEquals("WORK_LOG_ENTRY_NOT_FOUND", exception.errorCode)
         }
     }
@@ -372,7 +398,6 @@ class ApprovalServiceTest {
     @Nested
     @DisplayName("rejectMonth")
     inner class RejectMonthTests {
-
         @Test
         fun `should reject submitted month successfully`() {
             // Given
@@ -400,9 +425,10 @@ class ApprovalServiceTest {
                 .thenReturn(Optional.empty())
 
             // When/Then
-            val exception = assertFailsWith<DomainException> {
-                approvalService.rejectMonth(command)
-            }
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.rejectMonth(command)
+                }
             assertEquals("APPROVAL_NOT_FOUND", exception.errorCode)
         }
 
@@ -458,9 +484,10 @@ class ApprovalServiceTest {
                 .thenReturn(Optional.empty())
 
             // When/Then
-            val exception = assertFailsWith<DomainException> {
-                approvalService.rejectMonth(command)
-            }
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.rejectMonth(command)
+                }
             assertEquals("ABSENCE_NOT_FOUND", exception.errorCode)
         }
     }
@@ -468,7 +495,6 @@ class ApprovalServiceTest {
     @Nested
     @DisplayName("Command validation")
     inner class CommandValidationTests {
-
         @Test
         fun `SubmitMonthForApprovalCommand should reject null memberId`() {
             assertFailsWith<IllegalArgumentException> {
@@ -550,50 +576,50 @@ class ApprovalServiceTest {
 
     // Helper methods to create test fixtures
 
-    private fun createWorkLogEntry(id: UUID): WorkLogEntry {
-        return WorkLogEntry.create(
+    private fun createWorkLogEntry(id: UUID): WorkLogEntry =
+        WorkLogEntry.create(
             memberId,
             projectId,
             LocalDate.of(2024, 1, 25),
             TimeAmount.of(java.math.BigDecimal("8.00")),
             "Test work",
-            memberId
+            memberId,
         )
-    }
 
     private fun createSubmittedWorkLogEntry(id: UUID): WorkLogEntry {
-        val entry = WorkLogEntry.create(
-            memberId,
-            projectId,
-            LocalDate.of(2024, 1, 25),
-            TimeAmount.of(java.math.BigDecimal("8.00")),
-            "Test work",
-            memberId
-        )
+        val entry =
+            WorkLogEntry.create(
+                memberId,
+                projectId,
+                LocalDate.of(2024, 1, 25),
+                TimeAmount.of(java.math.BigDecimal("8.00")),
+                "Test work",
+                memberId,
+            )
         entry.changeStatus(WorkLogStatus.SUBMITTED, memberId)
         return entry
     }
 
-    private fun createAbsence(id: UUID): Absence {
-        return Absence.record(
+    private fun createAbsence(id: UUID): Absence =
+        Absence.record(
             memberId,
             LocalDate.of(2024, 1, 26),
             TimeAmount.of(java.math.BigDecimal("8.00")),
             AbsenceType.PAID_LEAVE,
             "Vacation",
-            memberId
+            memberId,
         )
-    }
 
     private fun createSubmittedAbsence(id: UUID): Absence {
-        val absence = Absence.record(
-            memberId,
-            LocalDate.of(2024, 1, 26),
-            TimeAmount.of(java.math.BigDecimal("8.00")),
-            AbsenceType.PAID_LEAVE,
-            "Vacation",
-            memberId
-        )
+        val absence =
+            Absence.record(
+                memberId,
+                LocalDate.of(2024, 1, 26),
+                TimeAmount.of(java.math.BigDecimal("8.00")),
+                AbsenceType.PAID_LEAVE,
+                "Vacation",
+                memberId,
+            )
         absence.changeStatus(AbsenceStatus.SUBMITTED, memberId)
         return absence
     }
@@ -606,13 +632,15 @@ class ApprovalServiceTest {
 
     private fun createSubmittedApprovalWithEntries(): MonthlyApproval {
         val approval = MonthlyApproval.create(memberId, fiscalMonth)
-        val workLogIds = setOf(
-            WorkLogEntryId.of(UUID.randomUUID()),
-            WorkLogEntryId.of(UUID.randomUUID())
-        )
-        val absenceIds = setOf(
-            AbsenceId.of(UUID.randomUUID())
-        )
+        val workLogIds =
+            setOf(
+                WorkLogEntryId.of(UUID.randomUUID()),
+                WorkLogEntryId.of(UUID.randomUUID()),
+            )
+        val absenceIds =
+            setOf(
+                AbsenceId.of(UUID.randomUUID()),
+            )
         approval.submit(memberId, workLogIds, absenceIds)
         return approval
     }

@@ -15,7 +15,6 @@ import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
 class MonthlyCalendarProjectionTest {
-
     @Mock
     private lateinit var jdbcTemplate: JdbcTemplate
 
@@ -42,16 +41,17 @@ class MonthlyCalendarProjectionTest {
 
     @Test
     fun `getDailyTotals should aggregate hours by date`() {
-        val mockResults = listOf(
-            mapOf(
-                "work_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "total_hours" to BigDecimal("8.00")
-            ),
-            mapOf(
-                "work_date" to Date.valueOf(LocalDate.of(2025, 1, 26)),
-                "total_hours" to BigDecimal("4.50")
+        val mockResults =
+            listOf(
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "total_hours" to BigDecimal("8.00"),
+                ),
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 26)),
+                    "total_hours" to BigDecimal("4.50"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(anyString(), any(), any(), any()))
             .thenReturn(mockResults)
@@ -75,14 +75,15 @@ class MonthlyCalendarProjectionTest {
 
     @Test
     fun `getAbsenceTotals should expand absence date ranges`() {
-        val mockResults = listOf(
-            mapOf(
-                "id" to UUID.randomUUID(),
-                "start_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "end_date" to Date.valueOf(LocalDate.of(2025, 1, 27)),
-                "hours_per_day" to BigDecimal("8.00")
+        val mockResults =
+            listOf(
+                mapOf(
+                    "id" to UUID.randomUUID(),
+                    "start_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "end_date" to Date.valueOf(LocalDate.of(2025, 1, 27)),
+                    "hours_per_day" to BigDecimal("8.00"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(anyString(), any(), any(), any()))
             .thenReturn(mockResults)
@@ -98,14 +99,15 @@ class MonthlyCalendarProjectionTest {
     @Test
     fun `getAbsenceTotals should clip absence to requested date range`() {
         // Absence spans before and after the requested range
-        val mockResults = listOf(
-            mapOf(
-                "id" to UUID.randomUUID(),
-                "start_date" to Date.valueOf(LocalDate.of(2025, 1, 19)), // before startDate
-                "end_date" to Date.valueOf(LocalDate.of(2025, 2, 25)),   // after endDate
-                "hours_per_day" to BigDecimal("4.00")
+        val mockResults =
+            listOf(
+                mapOf(
+                    "id" to UUID.randomUUID(),
+                    "start_date" to Date.valueOf(LocalDate.of(2025, 1, 19)), // before startDate
+                    "end_date" to Date.valueOf(LocalDate.of(2025, 2, 25)), // after endDate
+                    "hours_per_day" to BigDecimal("4.00"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(anyString(), any(), any(), any()))
             .thenReturn(mockResults)
@@ -121,20 +123,21 @@ class MonthlyCalendarProjectionTest {
 
     @Test
     fun `getAbsenceTotals should merge hours for overlapping absences`() {
-        val mockResults = listOf(
-            mapOf(
-                "id" to UUID.randomUUID(),
-                "start_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "end_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "hours_per_day" to BigDecimal("4.00")
-            ),
-            mapOf(
-                "id" to UUID.randomUUID(),
-                "start_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "end_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "hours_per_day" to BigDecimal("2.00")
+        val mockResults =
+            listOf(
+                mapOf(
+                    "id" to UUID.randomUUID(),
+                    "start_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "end_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "hours_per_day" to BigDecimal("4.00"),
+                ),
+                mapOf(
+                    "id" to UUID.randomUUID(),
+                    "start_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "end_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "hours_per_day" to BigDecimal("2.00"),
+                ),
             )
-        )
 
         `when`(jdbcTemplate.queryForList(anyString(), any(), any(), any()))
             .thenReturn(mockResults)
@@ -157,10 +160,11 @@ class MonthlyCalendarProjectionTest {
 
     @Test
     fun `getProxyEntryDates should return set of dates with proxy entries`() {
-        val mockResults = listOf(
-            mapOf("work_date" to Date.valueOf(LocalDate.of(2025, 1, 25))),
-            mapOf("work_date" to Date.valueOf(LocalDate.of(2025, 1, 28)))
-        )
+        val mockResults =
+            listOf(
+                mapOf("work_date" to Date.valueOf(LocalDate.of(2025, 1, 25))),
+                mapOf("work_date" to Date.valueOf(LocalDate.of(2025, 1, 28))),
+            )
 
         `when`(jdbcTemplate.queryForList(anyString(), any(), any(), any()))
             .thenReturn(mockResults)
@@ -209,35 +213,39 @@ class MonthlyCalendarProjectionTest {
     @Test
     fun `getDailyEntries should populate hours from totals`() {
         // Mock getDailyTotals
-        val workResults = listOf(
-            mapOf(
-                "work_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "total_hours" to BigDecimal("8.00")
+        val workResults =
+            listOf(
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "total_hours" to BigDecimal("8.00"),
+                ),
             )
-        )
 
         // Mock getAbsenceTotals - different query
-        val absenceResults = listOf(
-            mapOf(
-                "id" to UUID.randomUUID(),
-                "start_date" to Date.valueOf(LocalDate.of(2025, 1, 26)),
-                "end_date" to Date.valueOf(LocalDate.of(2025, 1, 26)),
-                "hours_per_day" to BigDecimal("4.00")
+        val absenceResults =
+            listOf(
+                mapOf(
+                    "id" to UUID.randomUUID(),
+                    "start_date" to Date.valueOf(LocalDate.of(2025, 1, 26)),
+                    "end_date" to Date.valueOf(LocalDate.of(2025, 1, 26)),
+                    "hours_per_day" to BigDecimal("4.00"),
+                ),
             )
-        )
 
         // Mock proxy dates
-        val proxyResults = listOf(
-            mapOf("work_date" to Date.valueOf(LocalDate.of(2025, 1, 25)))
-        )
+        val proxyResults =
+            listOf(
+                mapOf("work_date" to Date.valueOf(LocalDate.of(2025, 1, 25))),
+            )
 
         // Mock status
-        val statusResults = listOf(
-            mapOf(
-                "work_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
-                "status" to "SUBMITTED"
+        val statusResults =
+            listOf(
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 25)),
+                    "status" to "SUBMITTED",
+                ),
             )
-        )
 
         // Configure mock to return different results for different SQL patterns
         `when`(jdbcTemplate.queryForList(contains("SUM(hours)"), any(), any(), any()))

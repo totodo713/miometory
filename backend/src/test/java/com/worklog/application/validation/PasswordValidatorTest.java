@@ -8,8 +8,9 @@ import org.junit.jupiter.api.Test;
  * 
  * Tests password strength validation rules per FR-003:
  * - Minimum 8 characters
- * - At least 1 digit
+ * - At least 1 lowercase letter
  * - At least 1 uppercase letter
+ * - At least 1 digit
  */
 class PasswordValidatorTest {
 
@@ -111,7 +112,7 @@ class PasswordValidatorTest {
             () -> PasswordValidator.validate(shortPassword)
         );
         Assertions.assertEquals(
-            "Password must be at least 8 characters long and contain at least one digit and one uppercase letter",
+            "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
             exception.getMessage()
         );
     }
@@ -143,7 +144,7 @@ class PasswordValidatorTest {
             () -> PasswordValidator.validate(noDigitPassword)
         );
         Assertions.assertEquals(
-            "Password must be at least 8 characters long and contain at least one digit and one uppercase letter",
+            "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
             exception.getMessage()
         );
     }
@@ -175,18 +176,21 @@ class PasswordValidatorTest {
             () -> PasswordValidator.validate(noUppercasePassword)
         );
         Assertions.assertEquals(
-            "Password must be at least 8 characters long and contain at least one digit and one uppercase letter",
+            "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
             exception.getMessage()
         );
     }
 
     @Test
-    void validate_withOnlyUppercaseAndDigits_shouldNotThrow() {
-        // Given - all uppercase with digits is valid
+    void validate_withOnlyUppercaseAndDigits_shouldThrowException() {
+        // Given - all uppercase with digits but no lowercase (invalid with new requirements)
         String allUppercase = "PASSWORD1";
 
         // When/Then
-        Assertions.assertDoesNotThrow(() -> PasswordValidator.validate(allUppercase));
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> PasswordValidator.validate(allUppercase)
+        );
     }
 
     // ============================================================

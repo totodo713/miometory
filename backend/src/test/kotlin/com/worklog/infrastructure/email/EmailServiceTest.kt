@@ -37,18 +37,15 @@ import kotlin.test.assertTrue
         "spring.mail.username=test",
         "spring.mail.password=test",
         "spring.mail.properties.mail.smtp.auth=false",
-        "spring.mail.properties.mail.smtp.starttls.enable=false"
-    ]
+        "spring.mail.properties.mail.smtp.starttls.enable=false",
+    ],
 )
 class EmailServiceTest {
-
     @Configuration
     @Import(MailSenderAutoConfiguration::class)
     class TestConfig {
         @Bean
-        fun emailService(mailSender: JavaMailSender): EmailService {
-            return EmailServiceImpl(mailSender)
-        }
+        fun emailService(mailSender: JavaMailSender): EmailService = EmailServiceImpl(mailSender, "http://localhost:3000")
     }
 
     companion object {
@@ -58,9 +55,10 @@ class EmailServiceTest {
          */
         @JvmField
         @RegisterExtension
-        val greenMail: GreenMailExtension = GreenMailExtension(ServerSetupTest.SMTP)
-            .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "test"))
-            .withPerMethodLifecycle(true)
+        val greenMail: GreenMailExtension =
+            GreenMailExtension(ServerSetupTest.SMTP)
+                .withConfiguration(GreenMailConfiguration.aConfig().withUser("test", "test"))
+                .withPerMethodLifecycle(true)
     }
 
     @Autowired
@@ -119,11 +117,11 @@ class EmailServiceTest {
 
         assertTrue(
             body.contains(token),
-            "Email body should contain the verification token"
+            "Email body should contain the verification token",
         )
         assertTrue(
             body.contains("verify-email"),
-            "Email body should contain verify-email link"
+            "Email body should contain verify-email link",
         )
     }
 
@@ -144,7 +142,7 @@ class EmailServiceTest {
         val contentType = message.contentType.lowercase()
         assertTrue(
             contentType.contains("text/html") || contentType.contains("multipart"),
-            "Email should be HTML or multipart (for both text and HTML)"
+            "Email should be HTML or multipart (for both text and HTML)",
         )
     }
 
@@ -182,11 +180,11 @@ class EmailServiceTest {
         // Then
         greenMail.waitForIncomingEmail(5000, 1)
         val message = greenMail.receivedMessages[0]
-        
+
         assertTrue(
             message.subject.contains("password", ignoreCase = true) &&
-            message.subject.contains("reset", ignoreCase = true),
-            "Subject should mention password reset"
+                message.subject.contains("reset", ignoreCase = true),
+            "Subject should mention password reset",
         )
     }
 
@@ -206,11 +204,11 @@ class EmailServiceTest {
 
         assertTrue(
             body.contains(token),
-            "Email body should contain the reset token"
+            "Email body should contain the reset token",
         )
         assertTrue(
             body.contains("reset-password"),
-            "Email body should contain reset-password link"
+            "Email body should contain reset-password link",
         )
     }
 
@@ -222,7 +220,7 @@ class EmailServiceTest {
      * Extracts email body text from MimeMessage.
      * Handles both plain text and HTML emails.
      */
-    private fun getEmailBody(message: MimeMessage): String {
-        return com.icegreen.greenmail.util.GreenMailUtil.getBody(message)
-    }
+    private fun getEmailBody(message: MimeMessage): String =
+        com.icegreen.greenmail.util.GreenMailUtil
+            .getBody(message)
 }

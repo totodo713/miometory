@@ -1,12 +1,12 @@
 package com.worklog.domain.user
 
-import com.worklog.fixtures.UserFixtures
 import com.worklog.domain.role.RoleId
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import com.worklog.fixtures.UserFixtures
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -18,20 +18,19 @@ import java.time.temporal.ChronoUnit
  */
 @DisplayName("User Entity Tests")
 class UserTest {
-
     @Nested
     @DisplayName("User Creation and Validation")
     inner class CreationAndValidation {
-
         @Test
         fun `should create new user with valid data`() {
             // Arrange & Act
-            val user = User.create(
-                UserFixtures.validEmail(),
-                UserFixtures.validName(),
-                UserFixtures.validHashedPassword(),
-                RoleId.generate()
-            )
+            val user =
+                User.create(
+                    UserFixtures.validEmail(),
+                    UserFixtures.validName(),
+                    UserFixtures.validHashedPassword(),
+                    RoleId.generate(),
+                )
 
             // Assert
             assertNotNull(user.id)
@@ -53,7 +52,7 @@ class UserTest {
                         invalidEmail,
                         UserFixtures.validName(),
                         UserFixtures.validHashedPassword(),
-                        RoleId.generate()
+                        RoleId.generate(),
                     )
                 }
             }
@@ -70,7 +69,7 @@ class UserTest {
                     UserFixtures.validEmail(),
                     tooLongName,
                     UserFixtures.validHashedPassword(),
-                    RoleId.generate()
+                    RoleId.generate(),
                 )
             }
         }
@@ -84,7 +83,7 @@ class UserTest {
                         UserFixtures.validEmail(),
                         invalidName,
                         UserFixtures.validHashedPassword(),
-                        RoleId.generate()
+                        RoleId.generate(),
                     )
                 }
             }
@@ -96,12 +95,13 @@ class UserTest {
             val mixedCaseEmail = "Test.User@EXAMPLE.COM"
 
             // Act
-            val user = User.create(
-                mixedCaseEmail,
-                UserFixtures.validName(),
-                UserFixtures.validHashedPassword(),
-                RoleId.generate()
-            )
+            val user =
+                User.create(
+                    mixedCaseEmail,
+                    UserFixtures.validName(),
+                    UserFixtures.validHashedPassword(),
+                    RoleId.generate(),
+                )
 
             // Assert
             assertEquals("test.user@example.com", user.email)
@@ -111,7 +111,6 @@ class UserTest {
     @Nested
     @DisplayName("Login Tracking and Account Locking")
     inner class LoginTrackingAndLocking {
-
         @Test
         fun `should record successful login and reset failed attempts`() {
             // Arrange
@@ -162,7 +161,7 @@ class UserTest {
             assertEquals(5, user.failedLoginAttempts)
             assertNotNull(user.lockedUntil)
             assertEquals(User.AccountStatus.LOCKED, user.accountStatus)
-            
+
             // Verify lock duration is approximately 30 minutes
             val expectedUnlockTime = Instant.now().plus(lockDurationMinutes.toLong(), ChronoUnit.MINUTES)
             val actualUnlockTime = user.lockedUntil!!
@@ -182,7 +181,7 @@ class UserTest {
             // Assert
             assertEquals(User.AccountStatus.LOCKED, user.accountStatus)
             assertNotNull(user.lockedUntil)
-            
+
             val expectedUnlockTime = Instant.now().plus(lockDurationMinutes.toLong(), ChronoUnit.MINUTES)
             val actualUnlockTime = user.lockedUntil!!
             val diffSeconds = ChronoUnit.SECONDS.between(expectedUnlockTime, actualUnlockTime)
@@ -215,20 +214,21 @@ class UserTest {
         @Test
         fun `isLocked should return false when lock has expired`() {
             // Arrange - Create user with expired lock (1 hour ago)
-            val user = User(
-                UserId.generate(),
-                UserFixtures.validEmail(),
-                UserFixtures.validName(),
-                UserFixtures.validHashedPassword(),
-                RoleId.generate(),
-                User.AccountStatus.LOCKED,
-                5,
-                Instant.now().minus(1, ChronoUnit.HOURS), // Lock expired
-                Instant.now(),
-                Instant.now(),
-                null,
-                null
-            )
+            val user =
+                User(
+                    UserId.generate(),
+                    UserFixtures.validEmail(),
+                    UserFixtures.validName(),
+                    UserFixtures.validHashedPassword(),
+                    RoleId.generate(),
+                    User.AccountStatus.LOCKED,
+                    5,
+                    Instant.now().minus(1, ChronoUnit.HOURS), // Lock expired
+                    Instant.now(),
+                    Instant.now(),
+                    null,
+                    null,
+                )
 
             // Act & Assert
             assertFalse(user.isLocked())
@@ -247,7 +247,6 @@ class UserTest {
     @Nested
     @DisplayName("Email Verification")
     inner class EmailVerification {
-
         @Test
         fun `should verify email and activate account`() {
             // Arrange
@@ -294,7 +293,6 @@ class UserTest {
     @Nested
     @DisplayName("Password Management")
     inner class PasswordManagement {
-
         @Test
         fun `should change password successfully`() {
             // Arrange
@@ -323,7 +321,6 @@ class UserTest {
     @Nested
     @DisplayName("Account Soft Delete")
     inner class AccountSoftDelete {
-
         @Test
         fun `should soft delete account`() {
             // Arrange
@@ -352,7 +349,6 @@ class UserTest {
     @Nested
     @DisplayName("Login Eligibility Checks")
     inner class LoginEligibilityChecks {
-
         @Test
         fun `canLogin should return true for active verified user`() {
             // Arrange
@@ -392,20 +388,21 @@ class UserTest {
         @Test
         fun `canLogin should return true for user with expired lock`() {
             // Arrange - User with expired lock
-            val user = User(
-                UserId.generate(),
-                UserFixtures.validEmail(),
-                UserFixtures.validName(),
-                UserFixtures.validHashedPassword(),
-                RoleId.generate(),
-                User.AccountStatus.LOCKED,
-                5,
-                Instant.now().minus(1, ChronoUnit.HOURS), // Expired lock
-                Instant.now(),
-                Instant.now(),
-                null,
-                Instant.now().minus(1, ChronoUnit.DAYS) // Verified
-            )
+            val user =
+                User(
+                    UserId.generate(),
+                    UserFixtures.validEmail(),
+                    UserFixtures.validName(),
+                    UserFixtures.validHashedPassword(),
+                    RoleId.generate(),
+                    User.AccountStatus.LOCKED,
+                    5,
+                    Instant.now().minus(1, ChronoUnit.HOURS), // Expired lock
+                    Instant.now(),
+                    Instant.now(),
+                    null,
+                    Instant.now().minus(1, ChronoUnit.DAYS), // Verified
+                )
 
             // Act & Assert
             assertTrue(user.canLogin()) // Lock expired, should be able to login
@@ -415,7 +412,6 @@ class UserTest {
     @Nested
     @DisplayName("Account Status Transitions")
     inner class AccountStatusTransitions {
-
         @Test
         fun `should transition from UNVERIFIED to ACTIVE on email verification`() {
             // Arrange
@@ -469,19 +465,19 @@ class UserTest {
     @Nested
     @DisplayName("Edge Cases and Boundary Conditions")
     inner class EdgeCasesAndBoundaryConditions {
-
         @Test
         fun `should handle maximum name length (100 characters)`() {
             // Arrange
             val maxLengthName = "a".repeat(100)
 
             // Act
-            val user = User.create(
-                UserFixtures.validEmail(),
-                maxLengthName,
-                UserFixtures.validHashedPassword(),
-                RoleId.generate()
-            )
+            val user =
+                User.create(
+                    UserFixtures.validEmail(),
+                    maxLengthName,
+                    UserFixtures.validHashedPassword(),
+                    RoleId.generate(),
+                )
 
             // Assert
             assertEquals(maxLengthName, user.name)
@@ -494,12 +490,13 @@ class UserTest {
             val maxLengthEmail = "$localPart@example.com"
 
             // Act
-            val user = User.create(
-                maxLengthEmail,
-                UserFixtures.validName(),
-                UserFixtures.validHashedPassword(),
-                RoleId.generate()
-            )
+            val user =
+                User.create(
+                    maxLengthEmail,
+                    UserFixtures.validName(),
+                    UserFixtures.validHashedPassword(),
+                    RoleId.generate(),
+                )
 
             // Assert
             assertEquals(maxLengthEmail.lowercase(), user.email)

@@ -16,7 +16,6 @@ import kotlin.test.assertTrue
  * Tests the calendar view API endpoints for viewing work log data.
  */
 class CalendarControllerTest : IntegrationTestBase() {
-
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
 
@@ -25,10 +24,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET calendar should return 400 for invalid year below range`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2019/1?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2019/1?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -39,10 +39,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET calendar should return 400 for invalid year above range`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2101/1?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2101/1?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -53,10 +54,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET calendar should return 400 for invalid month below range`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/0?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/0?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -67,10 +69,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET calendar should return 400 for invalid month above range`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/13?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/13?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -81,10 +84,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET calendar should return 400 when memberId is missing`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/1",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -95,10 +99,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET calendar should return 200 for valid request`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -108,10 +113,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET calendar should calculate correct fiscal month period`() {
         // Act - Request January 2024
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert - Period should be Dec 21, 2023 to Jan 20, 2024
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -123,10 +129,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET summary should return 400 for invalid year`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2019/1/summary?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2019/1/summary?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -137,10 +144,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET summary should return 400 for invalid month`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/13/summary?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/13/summary?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -151,10 +159,11 @@ class CalendarControllerTest : IntegrationTestBase() {
     @Test
     fun `GET summary should return 400 when memberId is missing`() {
         // Act
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/1/summary",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1/summary",
+                Map::class.java,
+            )
 
         // Assert
         assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
@@ -166,49 +175,54 @@ class CalendarControllerTest : IntegrationTestBase() {
     fun `GET summary should return response for valid request`() {
         // Act - Note: Summary may return 200 with empty data or 500 if member doesn't exist
         // This tests that the endpoint is accessible and returns a valid response format
-        val response = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/1/summary?memberId=$testMemberId",
-            Map::class.java
-        )
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1/summary?memberId=$testMemberId",
+                Map::class.java,
+            )
 
         // Assert - Accept 200 (data found) or check that error handling works
         assertTrue(
             response.statusCode == HttpStatus.OK || response.statusCode == HttpStatus.INTERNAL_SERVER_ERROR,
-            "Expected 200 or 500 status code"
+            "Expected 200 or 500 status code",
         )
     }
 
     @Test
     fun `GET calendar for boundary year should work correctly`() {
         // Test minimum valid year
-        val minResponse = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2020/6?memberId=$testMemberId",
-            Map::class.java
-        )
+        val minResponse =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2020/6?memberId=$testMemberId",
+                Map::class.java,
+            )
         assertEquals(HttpStatus.OK, minResponse.statusCode)
 
         // Test maximum valid year
-        val maxResponse = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2100/6?memberId=$testMemberId",
-            Map::class.java
-        )
+        val maxResponse =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2100/6?memberId=$testMemberId",
+                Map::class.java,
+            )
         assertEquals(HttpStatus.OK, maxResponse.statusCode)
     }
 
     @Test
     fun `GET calendar for boundary months should work correctly`() {
         // Test January
-        val janResponse = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
-            Map::class.java
-        )
+        val janResponse =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
+                Map::class.java,
+            )
         assertEquals(HttpStatus.OK, janResponse.statusCode)
 
         // Test December
-        val decResponse = restTemplate.getForEntity(
-            "/api/v1/worklog/calendar/2024/12?memberId=$testMemberId",
-            Map::class.java
-        )
+        val decResponse =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/12?memberId=$testMemberId",
+                Map::class.java,
+            )
         assertEquals(HttpStatus.OK, decResponse.statusCode)
     }
 }

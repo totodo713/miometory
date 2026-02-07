@@ -64,7 +64,14 @@ public class AuthController {
             @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
         
-        LoginResponse response = authService.login(request);
+        // Extract client IP address (handles X-Forwarded-For for proxy/load balancer)
+        String ipAddress = getClientIpAddress(httpRequest);
+        
+        // Extract user agent
+        String userAgent = httpRequest.getHeader("User-Agent");
+        
+        // Authenticate with IP and user agent for audit trail
+        LoginResponse response = authService.login(request, ipAddress, userAgent);
         
         // Prevent session fixation attack: invalidate old session and create new one
         HttpSession oldSession = httpRequest.getSession(false);
@@ -125,6 +132,23 @@ public class AuthController {
         authService.verifyEmail(token);
         
         return new MessageResponse("Email verified successfully. Your account is now active.");
+    }
+    
+    /**
+     * Extracts the client's IP address from the HTTP request.
+     * Handles X-Forwarded-For header for requests behind proxies/load balancers.
+     * 
+     * @param request HTTP request
+     * @return Client IP address
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+            // X-Forwarded-For can contain multiple IPs (client, proxy1, proxy2, ...)
+            // The first IP is the original client
+            return xForwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     /**

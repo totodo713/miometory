@@ -7,14 +7,15 @@ import java.util.regex.Pattern;
  * 
  * Enforces password strength requirements per FR-003:
  * - Minimum 8 characters
- * - At least 1 digit
+ * - At least 1 lowercase letter
  * - At least 1 uppercase letter
+ * - At least 1 digit
  */
 public class PasswordValidator {
     
-    // Password strength pattern: min 8 chars, 1 digit, 1 uppercase
+    // Password strength pattern: min 8 chars, 1 lowercase, 1 uppercase, 1 digit
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
-        "^(?=.*[0-9])(?=.*[A-Z]).{8,}$"
+        "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9]).{8,}$"
     );
     
     /**
@@ -30,7 +31,7 @@ public class PasswordValidator {
         
         if (!PASSWORD_PATTERN.matcher(password).matches()) {
             throw new IllegalArgumentException(
-                "Password must be at least 8 characters long and contain at least one digit and one uppercase letter"
+                "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit"
             );
         }
     }

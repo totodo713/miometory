@@ -19,8 +19,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  */
 @Configuration
 @EnableMethodSecurity(
-    prePostEnabled = true,  // Enable @PreAuthorize and @PostAuthorize
-    securedEnabled = true,   // Enable @Secured
-    jsr250Enabled = true     // Enable @RolesAllowed
+    prePostEnabled = true, // Enable @PreAuthorize and @PostAuthorize
+    securedEnabled = true, // Enable @Secured
+    jsr250Enabled = true, // Enable @RolesAllowed
 )
 class MethodSecurityConfig

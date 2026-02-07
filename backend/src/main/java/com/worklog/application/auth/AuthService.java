@@ -16,8 +16,12 @@ public interface AuthService {
     
     /**
      * Authenticate user and create session
+     * 
+     * @param request Login credentials
+     * @param ipAddress Client IP address for audit logging
+     * @param userAgent Client user agent for audit logging
      */
-    LoginResponse login(LoginRequest request);
+    LoginResponse login(LoginRequest request, String ipAddress, String userAgent);
     
     /**
      * Verify email with token

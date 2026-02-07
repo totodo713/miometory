@@ -35,10 +35,8 @@ class SecurityConfig(
      * BCrypt automatically handles salting and uses adaptive hashing.
      */
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
-    
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+
     /**
      * Development security filter chain - CSRF disabled for easier testing.
      */

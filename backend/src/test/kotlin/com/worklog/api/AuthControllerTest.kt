@@ -1,15 +1,14 @@
 package com.worklog.api
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.worklog.api.AuthController
 import com.worklog.application.auth.AuthService
+import com.worklog.application.auth.LoginRequest
 import com.worklog.application.auth.LoginResponse
 import com.worklog.application.auth.RegistrationRequest
-import com.worklog.application.auth.LoginRequest
-import com.worklog.domain.user.User
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.config.LoggingProperties
 import com.worklog.infrastructure.config.RateLimitProperties
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -42,11 +41,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 @WebMvcTest(
     controllers = [AuthController::class],
     excludeAutoConfiguration = [
-        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration::class
-    ]
+        org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration::class,
+    ],
 )
 class AuthControllerTest {
-
     @Autowired
     private lateinit var mockMvc: MockMvc
 
@@ -55,7 +53,7 @@ class AuthControllerTest {
 
     @Autowired
     private lateinit var authService: AuthService
-    
+
     @BeforeEach
     fun setup() {
         clearMocks(authService)
@@ -66,18 +64,18 @@ class AuthControllerTest {
         @Bean
         @Primary
         fun authService(): AuthService = mockk(relaxed = true)
-        
+
         @Bean
         fun loggingProperties(): LoggingProperties {
             val props = LoggingProperties()
-            props.enabled = false  // Disable logging in tests
+            props.enabled = false // Disable logging in tests
             return props
         }
-        
+
         @Bean
         fun rateLimitProperties(): RateLimitProperties {
             val props = RateLimitProperties()
-            props.enabled = false  // Disable rate limiting in tests
+            props.enabled = false // Disable rate limiting in tests
             return props
         }
     }
@@ -89,55 +87,58 @@ class AuthControllerTest {
     @Test
     fun `signup should return 201 with user details`() {
         // Given
-        val request = RegistrationRequest(
-            "newuser@example.com",
-            "New User",
-            "Password123"
-        )
-        
-        val createdUser = UserFixtures.createUnverifiedUser(
-            email = "newuser@example.com",
-            name = "New User"
-        )
-        
+        val request =
+            RegistrationRequest(
+                "newuser@example.com",
+                "New User",
+                "Password123",
+            )
+
+        val createdUser =
+            UserFixtures.createUnverifiedUser(
+                email = "newuser@example.com",
+                name = "New User",
+            )
+
         every { authService.signup(any()) } returns createdUser
-        
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isCreated)
+        mockMvc
+            .perform(
+                post("/auth/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isCreated)
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.email").value("newuser@example.com"))
             .andExpect(jsonPath("$.name").value("New User"))
             .andExpect(jsonPath("$.accountStatus").value("UNVERIFIED"))
             .andExpect(jsonPath("$.message").exists())
-        
+
         verify(exactly = 1) { authService.signup(any()) }
     }
 
     @Test
     fun `signup should return 400 for invalid email`() {
         // Given
-        val request = RegistrationRequest(
-            "invalid-email",
-            "User",
-            "Password123"
-        )
-        
+        val request =
+            RegistrationRequest(
+                "invalid-email",
+                "User",
+                "Password123",
+            )
+
         every { authService.signup(any()) } throws IllegalArgumentException("Invalid email format")
-        
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isBadRequest)
+        mockMvc
+            .perform(
+                post("/auth/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.errorCode").value("validation_error"))
             .andExpect(jsonPath("$.message").value("Invalid email format"))
     }
@@ -145,22 +146,23 @@ class AuthControllerTest {
     @Test
     fun `signup should return 409 for duplicate email`() {
         // Given
-        val request = RegistrationRequest(
-            "existing@example.com",
-            "User",
-            "Password123"
-        )
-        
+        val request =
+            RegistrationRequest(
+                "existing@example.com",
+                "User",
+                "Password123",
+            )
+
         every { authService.signup(any()) } throws IllegalStateException("Email already exists")
-        
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isConflict)
+        mockMvc
+            .perform(
+                post("/auth/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isConflict)
             .andExpect(jsonPath("$.errorCode").value("duplicate_email"))
             .andExpect(jsonPath("$.message").value("Email already exists"))
     }
@@ -168,24 +170,26 @@ class AuthControllerTest {
     @Test
     fun `signup should return 400 for weak password`() {
         // Given
-        val request = RegistrationRequest(
-            "user@example.com",
-            "User",
-            "weak"
-        )
-        
-        every { authService.signup(any()) } throws IllegalArgumentException(
-            "Password must be at least 8 characters long and contain at least one digit and one uppercase letter"
-        )
-        
+        val request =
+            RegistrationRequest(
+                "user@example.com",
+                "User",
+                "weak",
+            )
+
+        every { authService.signup(any()) } throws
+            IllegalArgumentException(
+                "Password must be at least 8 characters long and contain at least one digit and one uppercase letter",
+            )
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isBadRequest)
+        mockMvc
+            .perform(
+                post("/auth/signup")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.errorCode").value("validation_error"))
             .andExpect(jsonPath("$.message").exists())
     }
@@ -197,79 +201,82 @@ class AuthControllerTest {
     @Test
     fun `login should return 200 with session cookie and user details`() {
         // Given
-        val request = LoginRequest(
-            "user@example.com",
-            "Password123",
-            false
-        )
-        
+        val request =
+            LoginRequest(
+                "user@example.com",
+                "Password123",
+                false,
+            )
+
         val user = UserFixtures.createActiveUser(email = "user@example.com")
         val response = LoginResponse(user, "session-123", null)
-        
-        every { authService.login(any()) } returns response
-        
+
+        every { authService.login(any(), any(), any()) } returns response
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$.user.email").value("user@example.com"))
             .andExpect(jsonPath("$.user.accountStatus").value("ACTIVE"))
             .andExpect(jsonPath("$.sessionExpiresAt").exists())
-            // Note: JSESSIONID cookie verification skipped - requires full Spring Security context
-        
-        verify(exactly = 1) { authService.login(any()) }
+        // Note: JSESSIONID cookie verification skipped - requires full Spring Security context
+
+        verify(exactly = 1) { authService.login(any(), any(), any()) }
     }
 
     @Test
     fun `login should return 200 with remember-me token when requested`() {
         // Given
-        val request = LoginRequest(
-            "user@example.com",
-            "Password123",
-            true
-        )
-        
+        val request =
+            LoginRequest(
+                "user@example.com",
+                "Password123",
+                true,
+            )
+
         val user = UserFixtures.createActiveUser(email = "user@example.com")
         val rememberMeToken = "remember-me-token-" + "a".repeat(40)
         val response = LoginResponse(user, "session-123", rememberMeToken)
-        
-        every { authService.login(any()) } returns response
-        
+
+        every { authService.login(any(), any(), any()) } returns response
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$.rememberMeToken").value(rememberMeToken))
-            // Note: JSESSIONID cookie verification skipped - requires full Spring Security context
+        // Note: JSESSIONID cookie verification skipped - requires full Spring Security context
     }
 
     @Test
     fun `login should return 401 for invalid credentials`() {
         // Given
-        val request = LoginRequest(
-            "user@example.com",
-            "WrongPassword",
-            false
-        )
-        
-        every { authService.login(any()) } throws IllegalArgumentException("Invalid email or password")
-        
+        val request =
+            LoginRequest(
+                "user@example.com",
+                "WrongPassword",
+                false,
+            )
+
+        every { authService.login(any(), any(), any()) } throws IllegalArgumentException("Invalid email or password")
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isUnauthorized)
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.errorCode").value("INVALID_CREDENTIALS"))
             .andExpect(jsonPath("$.message").value("Invalid email or password"))
     }
@@ -277,24 +284,26 @@ class AuthControllerTest {
     @Test
     fun `login should return 401 for locked account`() {
         // Given
-        val request = LoginRequest(
-            "locked@example.com",
-            "Password123",
-            false
-        )
-        
-        every { authService.login(any()) } throws IllegalStateException(
-            "Account is locked until 2026-02-03T15:00:00Z. Please try again later or contact support."
-        )
-        
+        val request =
+            LoginRequest(
+                "locked@example.com",
+                "Password123",
+                false,
+            )
+
+        every { authService.login(any(), any(), any()) } throws
+            IllegalStateException(
+                "Account is locked until 2026-02-03T15:00:00Z. Please try again later or contact support.",
+            )
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))
-                .with(csrf())
-        )
-            .andExpect(status().isUnauthorized)
+        mockMvc
+            .perform(
+                post("/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.errorCode").value("ACCOUNT_LOCKED"))
             .andExpect(jsonPath("$.message").exists())
     }
@@ -307,13 +316,13 @@ class AuthControllerTest {
     @WithMockUser
     fun `logout should return 204 and invalidate session`() {
         // When/Then
-        mockMvc.perform(
-            post("/auth/logout")
-                .with(csrf())
-        )
-            .andExpect(status().isNoContent)
-            // Note: Cookie invalidation is handled by session.invalidate()
-            // but can't be easily verified in @WebMvcTest without full Security context
+        mockMvc
+            .perform(
+                post("/auth/logout")
+                    .with(csrf()),
+            ).andExpect(status().isNoContent)
+        // Note: Cookie invalidation is handled by session.invalidate()
+        // but can't be easily verified in @WebMvcTest without full Security context
     }
 
     @Test
@@ -321,11 +330,11 @@ class AuthControllerTest {
         // Note: With Security auto-configuration excluded, this test cannot verify 401
         // In full integration tests with Security enabled, unauthenticated requests
         // would be rejected. For now, we verify the endpoint exists.
-        mockMvc.perform(
-            post("/auth/logout")
-                .with(csrf())
-        )
-            .andExpect(status().isNoContent)  // Passes through without security
+        mockMvc
+            .perform(
+                post("/auth/logout")
+                    .with(csrf()),
+            ).andExpect(status().isNoContent) // Passes through without security
     }
 
     // ============================================================
@@ -337,19 +346,19 @@ class AuthControllerTest {
         // Given
         val token = "valid-verification-token-123"
         val requestBody = mapOf("token" to token)
-        
+
         every { authService.verifyEmail(token) } returns Unit
-        
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/verify-email")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .with(csrf())
-        )
-            .andExpect(status().isOk)
+        mockMvc
+            .perform(
+                post("/auth/verify-email")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
             .andExpect(jsonPath("$.message").value("Email verified successfully. Your account is now active."))
-        
+
         verify(exactly = 1) { authService.verifyEmail(token) }
     }
 
@@ -358,17 +367,17 @@ class AuthControllerTest {
         // Given
         val token = "invalid-token"
         val requestBody = mapOf("token" to token)
-        
+
         every { authService.verifyEmail(token) } throws IllegalArgumentException("Invalid or already used verification token")
-        
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/verify-email")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .with(csrf())
-        )
-            .andExpect(status().isNotFound)
+        mockMvc
+            .perform(
+                post("/auth/verify-email")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isNotFound)
             .andExpect(jsonPath("$.errorCode").value("INVALID_TOKEN"))
             .andExpect(jsonPath("$.message").exists())
     }
@@ -378,17 +387,17 @@ class AuthControllerTest {
         // Given
         val token = "expired-token-123"
         val requestBody = mapOf("token" to token)
-        
+
         every { authService.verifyEmail(token) } throws IllegalArgumentException("Verification token has expired")
-        
+
         // When/Then
-        mockMvc.perform(
-            post("/auth/verify-email")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody))
-                .with(csrf())
-        )
-            .andExpect(status().isNotFound)
+        mockMvc
+            .perform(
+                post("/auth/verify-email")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isNotFound)
             .andExpect(jsonPath("$.errorCode").value("INVALID_TOKEN"))
             .andExpect(jsonPath("$.message").value("Verification token has expired"))
     }

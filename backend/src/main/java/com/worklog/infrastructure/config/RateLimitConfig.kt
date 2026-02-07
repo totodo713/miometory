@@ -15,10 +15,12 @@ import java.util.concurrent.TimeUnit
  * Helper class to check if an IP address is from a trusted proxy.
  * Supports both exact IP addresses and CIDR notation.
  */
-class TrustedProxyChecker(trustedProxiesConfig: String) {
+class TrustedProxyChecker(
+    trustedProxiesConfig: String,
+) {
     private val trustedAddresses = mutableSetOf<String>()
     private val trustedCidrs = mutableListOf<CidrRange>()
-    
+
     init {
         trustedProxiesConfig.split(",").map { it.trim() }.filter { it.isNotEmpty() }.forEach { entry ->
             if (entry.contains("/")) {
@@ -34,30 +36,32 @@ class TrustedProxyChecker(trustedProxiesConfig: String) {
             }
         }
     }
-    
+
     fun isTrusted(ipAddress: String): Boolean {
         // Check exact match first
         if (trustedAddresses.contains(ipAddress)) {
             return true
         }
-        
+
         // Check CIDR ranges
         return trustedCidrs.any { it.contains(ipAddress) }
     }
-    
+
     /**
      * Simple CIDR range representation for IPv4.
      */
-    private data class CidrRange(val networkAddress: Long, val mask: Long) {
-        fun contains(ipAddress: String): Boolean {
-            return try {
+    private data class CidrRange(
+        val networkAddress: Long,
+        val mask: Long,
+    ) {
+        fun contains(ipAddress: String): Boolean =
+            try {
                 val ip = ipToLong(ipAddress)
                 (ip and mask) == networkAddress
             } catch (e: Exception) {
                 false
             }
-        }
-        
+
         companion object {
             fun parse(cidr: String): CidrRange {
                 val parts = cidr.split("/")
@@ -67,7 +71,7 @@ class TrustedProxyChecker(trustedProxiesConfig: String) {
                 val network = ip and mask
                 return CidrRange(network, mask)
             }
-            
+
             private fun ipToLong(ip: String): Long {
                 val octets = ip.split(".")
                 if (octets.size != 4) throw IllegalArgumentException("Invalid IPv4 address: $ip")
@@ -139,7 +143,7 @@ class RateLimitFilter(
 ) : OncePerRequestFilter() {
     private val buckets = ConcurrentHashMap<String, TokenBucket>()
     private var lastCleanupTime: Long = System.currentTimeMillis()
-    
+
     // Lazy-initialized set of trusted proxy addresses/ranges
     private val trustedProxyChecker: TrustedProxyChecker by lazy {
         TrustedProxyChecker(properties.trustedProxies)
@@ -204,7 +208,7 @@ class RateLimitFilter(
     private fun getClientId(request: HttpServletRequest): String {
         val remoteAddr = request.remoteAddr ?: "unknown"
         val xForwardedFor = request.getHeader("X-Forwarded-For")
-        
+
         // Only trust X-Forwarded-For if request comes from a trusted proxy
         return if (!xForwardedFor.isNullOrBlank() && trustedProxyChecker.isTrusted(remoteAddr)) {
             // Take the first IP in the X-Forwarded-For chain (original client)
