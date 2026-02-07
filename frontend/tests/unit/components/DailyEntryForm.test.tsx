@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DailyEntryForm } from "../../../app/components/worklog/DailyEntryForm";
 
 // Mock API module - must return mock functions directly in the factory
+// IMPORTANT: mock before importing components that import the API
 vi.mock("../../../app/services/api", () => ({
   api: {
     worklog: {
@@ -24,8 +24,31 @@ vi.mock("../../../app/services/api", () => ({
   },
 }));
 
-// Import mocked API after vi.mock
+// Also mock the aliased path used by some components (tsconfig paths '@/...')
+vi.mock("@/services/api", () => ({
+  api: {
+    worklog: {
+      getEntries: vi.fn(),
+      createEntry: vi.fn(),
+      updateEntry: vi.fn(),
+      deleteEntry: vi.fn(),
+    },
+    absence: {
+      getAbsences: vi.fn(),
+      createAbsence: vi.fn(),
+      updateAbsence: vi.fn(),
+      deleteAbsence: vi.fn(),
+    },
+    members: {
+      getAssignedProjects: vi.fn(),
+    },
+  },
+}));
+
+// Import mocked API and the component under test
 import { api } from "../../../app/services/api";
+import { api as apiAlias } from "@/services/api";
+import { DailyEntryForm } from "../../../app/components/worklog/DailyEntryForm";
 
 const mockGetEntries = api.worklog.getEntries as any;
 const mockCreateEntry = api.worklog.createEntry as any;
@@ -36,6 +59,7 @@ const mockCreateAbsence = api.absence.createAbsence as any;
 const mockUpdateAbsence = api.absence.updateAbsence as any;
 const mockDeleteAbsence = api.absence.deleteAbsence as any;
 const mockGetAssignedProjects = api.members.getAssignedProjects as any;
+const mockGetAssignedProjectsAlias = apiAlias.members.getAssignedProjects as any;
 
 describe("DailyEntryForm", () => {
   const mockDate = new Date("2026-01-15");
@@ -64,6 +88,13 @@ describe("DailyEntryForm", () => {
     (mockGetEntries as any).mockResolvedValue({ entries: [], total: 0 });
     (mockGetAbsences as any).mockResolvedValue({ absences: [], total: 0 });
     (mockGetAssignedProjects as any).mockResolvedValue({
+      projects: [
+        { id: "project-1", code: "PROJ1", name: "Project One" },
+        { id: "project-2", code: "PROJ2", name: "Project Two" },
+      ],
+      count: 2,
+    });
+    (mockGetAssignedProjectsAlias as any).mockResolvedValue({
       projects: [
         { id: "project-1", code: "PROJ1", name: "Project One" },
         { id: "project-2", code: "PROJ2", name: "Project Two" },
