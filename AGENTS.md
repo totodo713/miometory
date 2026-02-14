@@ -152,6 +152,8 @@ _No special Copilot or Cursor agent instructions are present. If present, add th
 - PostgreSQL with JSONB for events (001-foundation)
 - PostgreSQL with JSONB for event sourcing, event store for domain events, projection tables for read models (002-work-log-entry)
 - PostgreSQL (既存のMiometry Entry Systemデータベース) (001-user-login-auth)
+- TypeScript 5.x, React 19.2.3 + Next.js 16.1.6, Zod 3.22.4 (validation), date-fns 3.3.1, @tanstack/react-query 5.28.0, zustand 4.5.1 (005-password-reset-frontend)
+- Browser localStorage/sessionStorage (for client-side rate limiting state), no persistent client-side data (005-password-reset-frontend)
 
 ## Architecture Patterns (002-work-log-entry)
 
@@ -269,9 +271,9 @@ cd infra/docker && docker compose -f docker-compose.prod.yml --env-file prod.env
 - Keyboard navigation support throughout
 
 ## Recent Changes
+- 005-password-reset-frontend: Added TypeScript 5.x, React 19.2.3 + Next.js 16.1.6, Zod 3.22.4 (validation), date-fns 3.3.1, @tanstack/react-query 5.28.0, zustand 4.5.1
 - 001-user-login-auth: Added PostgreSQL (既存のMiometry Entry Systemデータベース)
 - 001-foundation: Added Kotlin 2.3.0, Java 21 (backend); TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Flyway (backend); Next.js 16.1.1, React 19.x (frontend)
-- 002-work-log-entry: Implemented complete Miometry Entry System with 7 user stories (daily entry, multi-project, absences, approval workflow, CSV import/export, copy previous month, proxy entry)
 
 ## Test Results Summary (Phase 10 Validation)
 
