@@ -1,7 +1,7 @@
 # Implementation Plan: ユーザーログイン認証・認可システム
 
-**Branch**: `001-user-login-auth` | **Date**: 2026-02-03 | **Spec**: [spec.md](./spec.md)
-**Input**: Feature specification from `/specs/001-user-login-auth/spec.md`
+**Branch**: `004-user-login-auth` | **Date**: 2026-02-03 | **Spec**: [spec.md](./spec.md)
+**Input**: Feature specification from `/specs/004-user-login-auth/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 

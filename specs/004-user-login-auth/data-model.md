@@ -1,6 +1,6 @@
 # Data Model: ユーザーログイン認証・認可システム
 
-**Feature Branch**: `001-user-login-auth`  
+**Feature Branch**: `004-user-login-auth`  
 **Date**: 2026-02-03  
 **Status**: Phase 1 Complete  
 **Prerequisites**: [spec.md](./spec.md), [plan.md](./plan.md), [research.md](./research.md)

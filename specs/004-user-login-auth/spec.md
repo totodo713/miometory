@@ -1,6 +1,6 @@
 # Feature Specification: ユーザーログイン認証・認可システム
 
-**Feature Branch**: `001-user-login-auth`  
+**Feature Branch**: `004-user-login-auth`  
 **Created**: 2026-02-03  
 **Status**: Draft  
 **Input**: User description: "ユーザーのログインを作成したい。認証と認可を実装"
