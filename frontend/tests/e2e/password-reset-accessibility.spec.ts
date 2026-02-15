@@ -21,9 +21,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
     await page.goto(`${baseURL}/password-reset/request`);
     await page.waitForLoadState("networkidle");
 
-    const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa"])
-      .analyze();
+    const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);
   });
@@ -33,9 +31,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
     await page.goto(`${baseURL}/password-reset/confirm?token=TEST_TOKEN`);
     await page.waitForLoadState("networkidle");
 
-    const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa"])
-      .analyze();
+    const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);
   });
@@ -97,16 +93,12 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
 
     // Tab to email input
     await page.keyboard.press("Tab");
-    let focusedElement = await page.evaluate(
-      () => document.activeElement?.id,
-    );
+    let focusedElement = await page.evaluate(() => document.activeElement?.id);
     expect(focusedElement).toBe("email");
 
     // Tab to submit button
     await page.keyboard.press("Tab");
-    focusedElement = await page.evaluate(
-      () => document.activeElement?.tagName,
-    );
+    focusedElement = await page.evaluate(() => document.activeElement?.tagName);
     expect(focusedElement).toBe("BUTTON");
   });
 
@@ -116,23 +108,17 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
 
     // Tab to new password input
     await page.keyboard.press("Tab");
-    let focusedElement = await page.evaluate(
-      () => document.activeElement?.id,
-    );
+    let focusedElement = await page.evaluate(() => document.activeElement?.id);
     expect(focusedElement).toBe("new-password");
 
     // Tab to confirm password input
     await page.keyboard.press("Tab");
-    focusedElement = await page.evaluate(
-      () => document.activeElement?.id,
-    );
+    focusedElement = await page.evaluate(() => document.activeElement?.id);
     expect(focusedElement).toBe("confirm-password");
 
     // Tab to submit button
     await page.keyboard.press("Tab");
-    focusedElement = await page.evaluate(
-      () => document.activeElement?.tagName,
-    );
+    focusedElement = await page.evaluate(() => document.activeElement?.tagName);
     expect(focusedElement).toBe("BUTTON");
   });
 

@@ -185,13 +185,8 @@ export function PasswordStrengthIndicator({
       </div>
 
       {/* Strength label (screen reader friendly) */}
-      <output
-        className="strength-label"
-        aria-live="polite"
-        aria-label={`${t("strength.label")}: ${config.label}`}
-      >
-        {t("strength.label")}:{" "}
-        <span className="strength-value">{config.label}</span>
+      <output className="strength-label" aria-live="polite" aria-label={`${t("strength.label")}: ${config.label}`}>
+        {t("strength.label")}: <span className="strength-value">{config.label}</span>
       </output>
 
       {/* Feedback messages */}

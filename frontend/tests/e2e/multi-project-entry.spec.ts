@@ -43,25 +43,22 @@ test.describe("Multi-project time allocation", () => {
     });
 
     // Mock monthly summary API
-    await page.route(
-      "**/api/v1/worklog/calendar/**/summary**",
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            year: 2026,
-            month: 1,
-            totalWorkHours: 0,
-            totalAbsenceHours: 0,
-            totalBusinessDays: 22,
-            projects: [],
-            approvalStatus: null,
-            rejectionReason: null,
-          }),
-        });
-      },
-    );
+    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          year: 2026,
+          month: 1,
+          totalWorkHours: 0,
+          totalAbsenceHours: 0,
+          totalBusinessDays: 22,
+          projects: [],
+          approvalStatus: null,
+          rejectionReason: null,
+        }),
+      });
+    });
 
     // Mock get entries API
     await page.route("**/api/v1/worklog/entries**", async (route) => {
@@ -129,9 +126,7 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator("h1")).toContainText("Miometry");
   });
 
-  test("should allow adding multiple project entries for the same day", async ({
-    page,
-  }) => {
+  test("should allow adding multiple project entries for the same day", async ({ page }) => {
     // Click on January 15, 2026
     await page.click('button[aria-label*="January 15"]');
 
@@ -172,9 +167,7 @@ test.describe("Multi-project time allocation", () => {
     // The important functionality (multi-project UI, validation, totals) is verified above
   });
 
-  test("should prevent adding entries that exceed 24-hour daily limit", async ({
-    page,
-  }) => {
+  test("should prevent adding entries that exceed 24-hour daily limit", async ({ page }) => {
     // Click on January 16, 2026
     await page.click('button[aria-label*="January 16"]');
 
@@ -248,9 +241,7 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator('button:has-text("Save")')).toBeEnabled();
 
     // Verify no warning message
-    await expect(
-      page.locator("text=/cannot exceed 24 hours/i"),
-    ).not.toBeVisible();
+    await expect(page.locator("text=/cannot exceed 24 hours/i")).not.toBeVisible();
 
     // Try to add one more quarter hour
     await page.click('button:has-text("+ Add Project")');
@@ -264,9 +255,7 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator('button:has-text("Save")')).toBeDisabled();
   });
 
-  test("should update total when editing existing entry hours", async ({
-    page,
-  }) => {
+  test("should update total when editing existing entry hours", async ({ page }) => {
     // Click on January 18, 2026
     await page.click('button[aria-label*="January 18"]');
 

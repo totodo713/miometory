@@ -44,8 +44,7 @@ export default function DailyEntryPage({ params }: PageProps) {
   }
 
   // Use target member ID if in proxy mode, otherwise use current user
-  const memberId =
-    isProxyMode && targetMember ? targetMember.id : (userId ?? "");
+  const memberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
   const handleClose = () => {
     router.push("/worklog");
@@ -58,12 +57,7 @@ export default function DailyEntryPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DailyEntryForm
-        date={parsedDate}
-        memberId={memberId}
-        onClose={handleClose}
-        onSave={handleSave}
-      />
+      <DailyEntryForm date={parsedDate} memberId={memberId} onClose={handleClose} onSave={handleSave} />
     </div>
   );
 }

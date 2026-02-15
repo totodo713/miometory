@@ -65,10 +65,7 @@ export async function downloadTemplate(): Promise<void> {
  * Returns an import ID that can be used to track progress.
  * Uses credentials: "include" for session cookie authentication (CSRF protection).
  */
-export async function importCsv(
-  file: File,
-  memberId: string,
-): Promise<CsvImportResult> {
+export async function importCsv(file: File, memberId: string): Promise<CsvImportResult> {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("memberId", memberId);
@@ -158,19 +155,12 @@ export function subscribeToImportProgress(
  * @param month Month (1-12)
  * @param memberId Member ID to export entries for
  */
-export async function exportCsv(
-  year: number,
-  month: number,
-  memberId: string,
-): Promise<void> {
+export async function exportCsv(year: number, month: number, memberId: string): Promise<void> {
   // Use URLSearchParams to properly encode the memberId parameter
   const params = new URLSearchParams({ memberId });
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/worklog/csv/export/${year}/${month}?${params}`,
-    {
-      credentials: "include", // Include session cookies for cross-origin requests
-    },
-  );
+  const response = await fetch(`${API_BASE_URL}/api/v1/worklog/csv/export/${year}/${month}?${params}`, {
+    credentials: "include", // Include session cookies for cross-origin requests
+  });
 
   if (!response.ok) {
     throw new Error("Failed to export CSV");

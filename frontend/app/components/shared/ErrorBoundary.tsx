@@ -25,10 +25,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -40,6 +37,7 @@ export class ErrorBoundary extends Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log error to console in development
+    // biome-ignore lint/suspicious/noConsole: error boundary must log caught errors
     console.error("ErrorBoundary caught an error:", error, errorInfo);
 
     // Call optional error callback
@@ -61,9 +59,7 @@ export class ErrorBoundary extends Component<
       return (
         <ErrorFallback
           error={this.state.error}
-          onRetry={
-            this.props.showRetry !== false ? this.handleRetry : undefined
-          }
+          onRetry={this.props.showRetry !== false ? this.handleRetry : undefined}
         />
       );
     }
@@ -90,12 +86,8 @@ export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
       <div className="mb-4 text-4xl" aria-hidden="true">
         :(
       </div>
-      <h2 className="mb-2 text-lg font-semibold text-red-800">
-        Something went wrong
-      </h2>
-      <p className="mb-4 text-center text-sm text-red-600">
-        {error?.message || "An unexpected error occurred"}
-      </p>
+      <h2 className="mb-2 text-lg font-semibold text-red-800">Something went wrong</h2>
+      <p className="mb-4 text-center text-sm text-red-600">{error?.message || "An unexpected error occurred"}</p>
       {onRetry && (
         <button
           type="button"
@@ -119,16 +111,9 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-export function ErrorMessage({
-  message,
-  onRetry,
-  className = "",
-}: ErrorMessageProps) {
+export function ErrorMessage({ message, onRetry, className = "" }: ErrorMessageProps) {
   return (
-    <div
-      className={`flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 ${className}`}
-      role="alert"
-    >
+    <div className={`flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 ${className}`} role="alert">
       <span className="text-red-500" aria-hidden="true">
         !
       </span>
@@ -157,12 +142,7 @@ interface AsyncErrorProps {
   children: ReactNode;
 }
 
-export function AsyncErrorHandler({
-  error,
-  isLoading,
-  onRetry,
-  children,
-}: AsyncErrorProps) {
+export function AsyncErrorHandler({ error, isLoading, onRetry, children }: AsyncErrorProps) {
   if (isLoading) {
     return null; // Parent should handle loading state
   }

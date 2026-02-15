@@ -3,17 +3,13 @@ import UnverifiedBanner from "@/components/auth/UnverifiedBanner";
 
 describe("UnverifiedBanner", () => {
   test("does not render when no user", () => {
-    const { container } = render(
-      <UnverifiedBanner user={null} isVerified={false} />,
-    );
+    const { container } = render(<UnverifiedBanner user={null} isVerified={false} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   test("does not render when user is verified", () => {
     const user = { id: "1", email: "a@example.com", displayName: "A" };
-    const { container } = render(
-      <UnverifiedBanner user={user} isVerified={true} />,
-    );
+    const { container } = render(<UnverifiedBanner user={user} isVerified={true} />);
     expect(container).toBeEmptyDOMElement();
   });
 

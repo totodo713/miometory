@@ -101,13 +101,7 @@ export interface ApiResponse<T = unknown> {
  */
 export interface ErrorState {
   /** Error type for UI rendering */
-  type:
-    | "network"
-    | "validation"
-    | "expired_token"
-    | "rate_limit"
-    | "server"
-    | null;
+  type: "network" | "validation" | "expired_token" | "rate_limit" | "server" | null;
   /** User-friendly error message (localized) */
   message: string;
   /** Whether error is retryable (show retry button) */

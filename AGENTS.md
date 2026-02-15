@@ -82,6 +82,11 @@ work-log/
 - Lint single file: `npx biome check <file>`
 - Format single file: `npx biome format <file> --write`
 
+**Additional Commands:**
+- Lint with auto-fix        : `npm run lint:fix`
+- Combined check (CI)       : `npm run check:ci`
+- Format check (no write)   : `npm run format:check`
+
 ### Backend (Spring Boot, Kotlin)
 
 **Build/JAR:**
@@ -106,7 +111,7 @@ work-log/
 
 ### Frontend (TypeScript/React)
 - **Imports:** Prefer absolute paths via TSconfig (`@/module`). Group external then internal imports. 
-- **Formatting:** Enforced via Biome; 2 spaces, no semicolons, single quotes preferred.
+- **Formatting:** Enforced via Biome; 2 spaces, semicolons always, double quotes, trailing commas. See `frontend/biome.json` for full config.
 - **Naming:** Use camelCase for variables/functions; PascalCase for components.
 - **Types:** Always type public functions/props/exports. Prefer interfaces for objects; use types for unions.
 - **JSX:** Keep JSX expressions concise. Spread props only with clear intent. Use functional, stateless components where possible.

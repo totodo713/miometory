@@ -132,6 +132,7 @@ function getAttempts(): number[] {
     return parsed.filter((item) => typeof item === "number");
   } catch (error) {
     // Invalid JSON or quota exceeded
+    // biome-ignore lint/suspicious/noConsole: log storage errors for debugging
     console.error("Failed to read rate limit data:", error);
     return [];
   }
@@ -147,6 +148,7 @@ function saveAttempts(attempts: number[]): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
   } catch (error) {
     // Quota exceeded or storage disabled
+    // biome-ignore lint/suspicious/noConsole: log storage errors for debugging
     console.error("Failed to save rate limit data:", error);
   }
 }
@@ -168,6 +170,7 @@ export function clearAttempts(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
+    // biome-ignore lint/suspicious/noConsole: log storage errors for debugging
     console.error("Failed to clear rate limit data:", error);
   }
 }

@@ -88,10 +88,7 @@ class ApiClient {
   /**
    * Makes an authenticated API request
    */
-  private async request<T>(
-    endpoint: string,
-    options: ApiRequestOptions = {},
-  ): Promise<T> {
+  private async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
     const { version, ...fetchOptions } = options;
 
     const url = `${this.baseUrl}${endpoint}`;
@@ -134,19 +131,12 @@ class ApiClient {
 
       if (response.status === 400) {
         const errorData = await response.json().catch(() => ({}));
-        throw new ValidationError(
-          errorData.message || "Validation failed",
-          errorData.errors,
-        );
+        throw new ValidationError(errorData.message || "Validation failed", errorData.errors);
       }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new ApiError(
-          errorData.message || "API request failed",
-          response.status,
-          errorData.code,
-        );
+        throw new ApiError(errorData.message || "API request failed", response.status, errorData.code);
       }
 
       // Handle 204 No Content
@@ -170,10 +160,7 @@ class ApiClient {
       }
 
       // Network or other errors
-      throw new ApiError(
-        error instanceof Error ? error.message : "Network error",
-        0,
-      );
+      throw new ApiError(error instanceof Error ? error.message : "Network error", 0);
     }
   }
 
@@ -187,11 +174,7 @@ class ApiClient {
   /**
    * POST request
    */
-  async post<T>(
-    endpoint: string,
-    data?: unknown,
-    options?: ApiRequestOptions,
-  ): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: "POST",
@@ -202,11 +185,7 @@ class ApiClient {
   /**
    * PUT request
    */
-  async put<T>(
-    endpoint: string,
-    data: unknown,
-    options?: ApiRequestOptions,
-  ): Promise<T> {
+  async put<T>(endpoint: string, data: unknown, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: "PUT",
@@ -217,11 +196,7 @@ class ApiClient {
   /**
    * PATCH request (for partial updates, e.g., auto-save)
    */
-  async patch<T>(
-    endpoint: string,
-    data: unknown,
-    options?: ApiRequestOptions,
-  ): Promise<T> {
+  async patch<T>(endpoint: string, data: unknown, options?: ApiRequestOptions): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: "PATCH",
@@ -258,8 +233,7 @@ export const api = {
    * Health check endpoint (public, no auth required)
    */
   health: {
-    check: () =>
-      apiClient.get<{ status: string }>("/api/v1/health", { skipAuth: true }),
+    check: () => apiClient.get<{ status: string }>("/api/v1/health", { skipAuth: true }),
   },
 
   /**
@@ -294,12 +268,7 @@ export const api = {
     /**
      * Get work log entries by date range
      */
-    getEntries: (params: {
-      memberId: string;
-      startDate: string;
-      endDate: string;
-      status?: string;
-    }) => {
+    getEntries: (params: { memberId: string; startDate: string; endDate: string; status?: string }) => {
       const query = new URLSearchParams({
         memberId: params.memberId,
         startDate: params.startDate,
@@ -345,11 +314,7 @@ export const api = {
     /**
      * Update a work log entry (PATCH)
      */
-    updateEntry: (
-      id: string,
-      data: { hours: number; comment?: string },
-      options: { version: number },
-    ) =>
+    updateEntry: (id: string, data: { hours: number; comment?: string }, options: { version: number }) =>
       apiClient.patch<void>(`/api/v1/worklog/entries/${id}`, data, {
         version: options.version,
       }),
@@ -357,31 +322,20 @@ export const api = {
     /**
      * Delete a work log entry
      */
-    deleteEntry: (id: string) =>
-      apiClient.delete<void>(`/api/v1/worklog/entries/${id}`),
+    deleteEntry: (id: string) => apiClient.delete<void>(`/api/v1/worklog/entries/${id}`),
 
     /**
      * Get monthly calendar view
      */
-    getCalendar: (params: {
-      year: number;
-      month: number;
-      memberId: string;
-    }) => {
+    getCalendar: (params: { year: number; month: number; memberId: string }) => {
       const query = new URLSearchParams({ memberId: params.memberId });
-      return apiClient.get<MonthlyCalendarResponse>(
-        `/api/v1/worklog/calendar/${params.year}/${params.month}?${query}`,
-      );
+      return apiClient.get<MonthlyCalendarResponse>(`/api/v1/worklog/calendar/${params.year}/${params.month}?${query}`);
     },
 
     /**
      * Get monthly summary with project breakdown
      */
-    getMonthlySummary: (params: {
-      year: number;
-      month: number;
-      memberId: string;
-    }) => {
+    getMonthlySummary: (params: { year: number; month: number; memberId: string }) => {
       const query = new URLSearchParams({ memberId: params.memberId });
       return apiClient.get<{
         year: number;
@@ -395,26 +349,15 @@ export const api = {
           totalHours: number;
           percentage: number;
         }>;
-        approvalStatus:
-          | "PENDING"
-          | "SUBMITTED"
-          | "APPROVED"
-          | "REJECTED"
-          | null;
+        approvalStatus: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | null;
         rejectionReason: string | null;
-      }>(
-        `/api/v1/worklog/calendar/${params.year}/${params.month}/summary?${query}`,
-      );
+      }>(`/api/v1/worklog/calendar/${params.year}/${params.month}/summary?${query}`);
     },
 
     /**
      * Get projects from previous fiscal month (for copy feature)
      */
-    getPreviousMonthProjects: (params: {
-      year: number;
-      month: number;
-      memberId: string;
-    }) => {
+    getPreviousMonthProjects: (params: { year: number; month: number; memberId: string }) => {
       const query = new URLSearchParams({
         year: params.year.toString(),
         month: params.month.toString(),
@@ -461,12 +404,7 @@ export const api = {
     /**
      * Get absences by date range
      */
-    getAbsences: (params: {
-      memberId: string;
-      startDate: string;
-      endDate: string;
-      status?: string;
-    }) => {
+    getAbsences: (params: { memberId: string; startDate: string; endDate: string; status?: string }) => {
       const query = new URLSearchParams({
         memberId: params.memberId,
         startDate: params.startDate,
@@ -524,8 +462,7 @@ export const api = {
     /**
      * Delete an absence
      */
-    deleteAbsence: (id: string) =>
-      apiClient.delete<void>(`/api/v1/absences/${id}`),
+    deleteAbsence: (id: string) => apiClient.delete<void>(`/api/v1/absences/${id}`),
   },
 
   /**
@@ -535,16 +472,8 @@ export const api = {
     /**
      * Submit a fiscal month for approval
      */
-    submitMonth: (data: {
-      memberId: string;
-      fiscalMonthStart: string;
-      fiscalMonthEnd: string;
-      submittedBy?: string;
-    }) =>
-      apiClient.post<{ approvalId: string }>(
-        "/api/v1/worklog/submissions",
-        data,
-      ),
+    submitMonth: (data: { memberId: string; fiscalMonthStart: string; fiscalMonthEnd: string; submittedBy?: string }) =>
+      apiClient.post<{ approvalId: string }>("/api/v1/worklog/submissions", data),
 
     /**
      * Get manager's approval queue
@@ -578,14 +507,8 @@ export const api = {
     /**
      * Reject a submitted month with reason
      */
-    rejectMonth: (
-      approvalId: string,
-      data: { reviewedBy: string; rejectionReason: string },
-    ) =>
-      apiClient.post<void>(
-        `/api/v1/worklog/approvals/${approvalId}/reject`,
-        data,
-      ),
+    rejectMonth: (approvalId: string, data: { reviewedBy: string; rejectionReason: string }) =>
+      apiClient.post<void>(`/api/v1/worklog/approvals/${approvalId}/reject`, data),
   },
 
   /**
@@ -597,21 +520,13 @@ export const api = {
      * Always returns 200 OK to prevent email enumeration
      */
     requestPasswordReset: (data: { email: string }) =>
-      apiClient.post<{ message: string }>(
-        "/api/v1/auth/password-reset/request",
-        data,
-        { skipAuth: true },
-      ),
+      apiClient.post<{ message: string }>("/api/v1/auth/password-reset/request", data, { skipAuth: true }),
 
     /**
      * Confirm password reset with token
      */
     confirmPasswordReset: (data: { token: string; newPassword: string }) =>
-      apiClient.post<{ message: string }>(
-        "/api/v1/auth/password-reset/confirm",
-        data,
-        { skipAuth: true },
-      ),
+      apiClient.post<{ message: string }>("/api/v1/auth/password-reset/confirm", data, { skipAuth: true }),
   },
 
   /**

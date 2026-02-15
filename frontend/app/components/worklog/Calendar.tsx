@@ -87,10 +87,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
       {/* Day of week headers */}
       <div className="grid grid-cols-7 gap-px bg-gray-200 border-b">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div
-            key={day}
-            className="bg-gray-50 px-2 py-2 text-center text-sm font-medium text-gray-700"
-          >
+          <div key={day} className="bg-gray-50 px-2 py-2 text-center text-sm font-medium text-gray-700">
             {day}
           </div>
         ))}
@@ -100,9 +97,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
       <div className="grid grid-cols-7 gap-px bg-gray-200">
         {weeks.flatMap((week, weekIdx) =>
           week.map((dateEntry, dayIdx) => {
-            const cellKey = dateEntry
-              ? dateEntry.date
-              : `empty-w${weekIdx}-d${dayIdx}`;
+            const cellKey = dateEntry ? dateEntry.date : `empty-w${weekIdx}-d${dayIdx}`;
 
             if (!dateEntry) {
               // Empty cell (padding)
@@ -114,9 +109,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
             const hasWorkHours = dateEntry.totalWorkHours > 0;
             const hasAbsenceHours = dateEntry.totalAbsenceHours > 0;
             const hasAnyHours = hasWorkHours || hasAbsenceHours;
-            const statusColor =
-              STATUS_COLORS[dateEntry.status as keyof typeof STATUS_COLORS] ||
-              STATUS_COLORS.DRAFT;
+            const statusColor = STATUS_COLORS[dateEntry.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.DRAFT;
             const monthName = date.toLocaleDateString("en-US", {
               month: "long",
             });
@@ -164,9 +157,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                         👤<span className="sr-only">Proxy entry indicator</span>
                       </span>
                     )}
-                    {dateEntry.isHoliday && (
-                      <span className="text-xs text-holiday-600">H</span>
-                    )}
+                    {dateEntry.isHoliday && <span className="text-xs text-holiday-600">H</span>}
                   </div>
                 </div>
 
@@ -177,9 +168,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                     {hasWorkHours && (
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-gray-600">Work:</span>
-                        <span className="text-sm font-semibold text-gray-900">
-                          {dateEntry.totalWorkHours}h
-                        </span>
+                        <span className="text-sm font-semibold text-gray-900">{dateEntry.totalWorkHours}h</span>
                       </div>
                     )}
 
@@ -187,9 +176,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                     {hasAbsenceHours && (
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-blue-600">🏖️</span>
-                        <span className="text-sm font-semibold text-blue-600">
-                          {dateEntry.totalAbsenceHours}h
-                        </span>
+                        <span className="text-sm font-semibold text-blue-600">{dateEntry.totalAbsenceHours}h</span>
                       </div>
                     )}
                   </div>

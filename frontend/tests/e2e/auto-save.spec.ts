@@ -116,9 +116,7 @@ test.describe("Auto-Save Reliability", () => {
     });
   });
 
-  test("should persist data after auto-save on page reload", async ({
-    page,
-  }) => {
+  test("should persist data after auto-save on page reload", async ({ page }) => {
     // Install fake timers
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
@@ -149,9 +147,7 @@ test.describe("Auto-Save Reliability", () => {
     await expect(page.locator('input[id="hours-0"]')).toHaveValue(/.+/);
   });
 
-  test("should NOT auto-save if there are validation errors", async ({
-    page,
-  }) => {
+  test("should NOT auto-save if there are validation errors", async ({ page }) => {
     // Install fake timers
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
@@ -179,9 +175,7 @@ test.describe("Auto-Save Reliability", () => {
     await expect(page.locator("text=/Auto-saved at/i")).not.toBeVisible();
   });
 
-  test("should reset auto-save timer on subsequent changes", async ({
-    page,
-  }) => {
+  test("should reset auto-save timer on subsequent changes", async ({ page }) => {
     // Install fake timers
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
@@ -223,9 +217,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Verify auto-save indicator with timestamp
-    await expect(
-      page.locator("text=/Auto-saved at (14:31|2:31)/i"),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Auto-saved at (14:31|2:31)/i")).toBeVisible({ timeout: 5000 });
   });
 
   test("should NOT auto-save for read-only entries", async ({ page }) => {
@@ -313,9 +305,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Verify conflict warning appears
-    await expect(
-      page.locator("text=/Entry was modified|Conflict|Refresh/i"),
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Entry was modified|Conflict|Refresh/i")).toBeVisible({ timeout: 5000 });
 
     // User can resolve by refreshing
     await page.reload();

@@ -45,10 +45,9 @@ export function SubmitButton({
 
       onSubmitSuccess?.();
     } catch (err) {
+      // biome-ignore lint/suspicious/noConsole: log API failure for debugging
       console.error("Failed to submit month:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to submit for approval",
-      );
+      setError(err instanceof Error ? err.message : "Failed to submit for approval");
     } finally {
       setIsSubmitting(false);
     }
@@ -83,9 +82,7 @@ export function SubmitButton({
       </button>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {approvalStatus === "REJECTED" && (
-        <p className="text-sm text-amber-600">
-          Month was rejected. Make corrections and resubmit.
-        </p>
+        <p className="text-sm text-amber-600">Month was rejected. Make corrections and resubmit.</p>
       )}
     </div>
   );

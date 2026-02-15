@@ -19,17 +19,8 @@
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useState } from "react";
-import type {
-  ErrorState,
-  RateLimitState,
-  ValidationError,
-} from "@/lib/types/password-reset";
-import {
-  checkRateLimit,
-  getMinutesUntilReset,
-  recordAttempt,
-  setupStorageListener,
-} from "@/lib/utils/rate-limit";
+import type { ErrorState, RateLimitState, ValidationError } from "@/lib/types/password-reset";
+import { checkRateLimit, getMinutesUntilReset, recordAttempt, setupStorageListener } from "@/lib/utils/rate-limit";
 import { validateEmail } from "@/lib/validation/password";
 import { api } from "@/services/api";
 
@@ -37,13 +28,10 @@ export default function PasswordResetRequestPage() {
   // Form state
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [validationError, setValidationError] =
-    useState<ValidationError | null>(null);
+  const [validationError, setValidationError] = useState<ValidationError | null>(null);
 
   // Rate limiting state
-  const [rateLimitState, setRateLimitState] = useState<RateLimitState>(() =>
-    checkRateLimit(),
-  );
+  const [rateLimitState, setRateLimitState] = useState<RateLimitState>(() => checkRateLimit());
 
   // Success state
   const [isSuccess, setIsSuccess] = useState(false);
@@ -86,9 +74,7 @@ export default function PasswordResetRequestPage() {
     setRateLimitState(rateLimitCheck);
 
     if (!rateLimitCheck.isAllowed) {
-      const minutes = rateLimitCheck.resetTime
-        ? getMinutesUntilReset(rateLimitCheck.resetTime)
-        : 5;
+      const minutes = rateLimitCheck.resetTime ? getMinutesUntilReset(rateLimitCheck.resetTime) : 5;
       setError({
         type: "rate_limit",
         message: `リクエストが多すぎます。${minutes}分後に再試行してください。`,
@@ -113,8 +99,7 @@ export default function PasswordResetRequestPage() {
     } catch (err) {
       // Handle API errors
       if (err instanceof Error) {
-        const isNetworkError =
-          err.message.includes("network") || err.message.includes("Network");
+        const isNetworkError = err.message.includes("network") || err.message.includes("Network");
 
         setError({
           type: isNetworkError ? "network" : "server",
@@ -162,9 +147,7 @@ export default function PasswordResetRequestPage() {
         {isSuccess && (
           <div className="success-message" role="alert" aria-live="assertive">
             <h2>メールを送信しました</h2>
-            <p>
-              パスワード再設定用のリンクをメールでお送りしました。受信トレイをご確認ください。
-            </p>
+            <p>パスワード再設定用のリンクをメールでお送りしました。受信トレイをご確認ください。</p>
             <Link href="/login" className="back-to-login-link">
               ログインに戻る
             </Link>
@@ -176,11 +159,7 @@ export default function PasswordResetRequestPage() {
           <div className="error-message" role="alert" aria-live="assertive">
             <p>{error.message}</p>
             {error.isRetryable && (
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="retry-button"
-              >
+              <button type="button" onClick={handleRetry} className="retry-button">
                 再試行
               </button>
             )}
@@ -231,11 +210,7 @@ export default function PasswordResetRequestPage() {
             </div>
 
             <div className="form-actions">
-              <button
-                type="submit"
-                disabled={isLoading || !rateLimitState.isAllowed}
-                aria-busy={isLoading}
-              >
+              <button type="submit" disabled={isLoading || !rateLimitState.isAllowed} aria-busy={isLoading}>
                 {isLoading ? "送信中..." : "リセットリンクを送信"}
               </button>
             </div>
@@ -244,12 +219,11 @@ export default function PasswordResetRequestPage() {
               <Link href="/login" className="back-to-login-link">
                 ログインに戻る
               </Link>
-              {rateLimitState.isAllowed &&
-                rateLimitState.remainingAttempts < 3 && (
-                  <p className="rate-limit-info" aria-live="polite">
-                    残り試行回数: {rateLimitState.remainingAttempts}
-                  </p>
-                )}
+              {rateLimitState.isAllowed && rateLimitState.remainingAttempts < 3 && (
+                <p className="rate-limit-info" aria-live="polite">
+                  残り試行回数: {rateLimitState.remainingAttempts}
+                </p>
+              )}
             </div>
           </form>
         )}

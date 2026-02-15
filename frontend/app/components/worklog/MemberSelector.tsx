@@ -50,15 +50,10 @@ export function MemberSelector({
       setError(null);
 
       try {
-        const response = await api.members.getSubordinates(
-          managerId,
-          includeIndirect,
-        );
+        const response = await api.members.getSubordinates(managerId, includeIndirect);
         setSubordinates(response.subordinates);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load team members",
-        );
+        setError(err instanceof Error ? err.message : "Failed to load team members");
         setSubordinates([]);
       } finally {
         setIsLoading(false);
@@ -82,12 +77,8 @@ export function MemberSelector({
   if (error) {
     return (
       <div className={`flex flex-col gap-1 ${className}`}>
-        {label && (
-          <span className="text-sm font-medium text-gray-700">{label}</span>
-        )}
-        <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
-          {error}
-        </div>
+        {label && <span className="text-sm font-medium text-gray-700">{label}</span>}
+        <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">{error}</div>
       </div>
     );
   }
@@ -95,10 +86,7 @@ export function MemberSelector({
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
       {label && (
-        <label
-          htmlFor={selectorId}
-          className="text-sm font-medium text-gray-700"
-        >
+        <label htmlFor={selectorId} className="text-sm font-medium text-gray-700">
           {label}
         </label>
       )}
@@ -118,10 +106,7 @@ export function MemberSelector({
         ))}
       </select>
       {subordinates.length === 0 && !isLoading && (
-        <p className="text-xs text-gray-500">
-          No team members found. You can only enter time for your direct
-          reports.
-        </p>
+        <p className="text-xs text-gray-500">No team members found. You can only enter time for your direct reports.</p>
       )}
     </div>
   );

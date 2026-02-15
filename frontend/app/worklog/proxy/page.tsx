@@ -21,10 +21,8 @@ import { type SubordinateMember, useProxyMode } from "@/services/worklogStore";
 export default function ProxyEntryPage() {
   const router = useRouter();
   const { userId } = useAuth();
-  const { enableProxyMode, isProxyMode, targetMember, disableProxyMode } =
-    useProxyMode();
-  const [selectedMember, setSelectedMember] =
-    useState<SubordinateMember | null>(targetMember);
+  const { enableProxyMode, isProxyMode, targetMember, disableProxyMode } = useProxyMode();
+  const [selectedMember, setSelectedMember] = useState<SubordinateMember | null>(targetMember);
 
   // Guard: require authentication
   if (!userId) {
@@ -56,13 +54,10 @@ export default function ProxyEntryPage() {
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Enter Time for Team Member
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Enter Time for Team Member</h1>
           <p className="mt-2 text-gray-600">
-            As a manager, you can enter time on behalf of your direct reports.
-            The system will record that you entered the time while attributing
-            the hours to the selected team member.
+            As a manager, you can enter time on behalf of your direct reports. The system will record that you entered
+            the time while attributing the hours to the selected team member.
           </p>
         </div>
 
@@ -71,14 +66,9 @@ export default function ProxyEntryPage() {
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium text-yellow-800">
-                  Currently in Proxy Mode
-                </h3>
+                <h3 className="font-medium text-yellow-800">Currently in Proxy Mode</h3>
                 <p className="text-sm text-yellow-700">
-                  Entering time for:{" "}
-                  <span className="font-semibold">
-                    {targetMember.displayName}
-                  </span>
+                  Entering time for: <span className="font-semibold">{targetMember.displayName}</span>
                 </p>
               </div>
               <button
@@ -125,23 +115,13 @@ export default function ProxyEntryPage() {
 
         {/* Info Box */}
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-medium text-blue-800 mb-2">
-            How Proxy Entry Works
-          </h3>
+          <h3 className="font-medium text-blue-800 mb-2">How Proxy Entry Works</h3>
           <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
             <li>Select a team member from your direct reports</li>
             <li>Click &quot;Enter Time&quot; to switch to proxy entry mode</li>
-            <li>
-              Create entries as normal - they will be attributed to the selected
-              member
-            </li>
-            <li>
-              The audit trail records that you entered the time on their behalf
-            </li>
-            <li>
-              Exit proxy mode when you&apos;re done to return to your own
-              timesheet
-            </li>
+            <li>Create entries as normal - they will be attributed to the selected member</li>
+            <li>The audit trail records that you entered the time on their behalf</li>
+            <li>Exit proxy mode when you&apos;re done to return to your own timesheet</li>
           </ul>
         </div>
       </div>

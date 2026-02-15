@@ -16,14 +16,7 @@ const COUNTDOWN_DURATION_MS = 2 * 60 * 1000; // 2 minutes
  * Events that should reset the idle timer.
  * Tracks user activity: mouse, keyboard, and touch interactions.
  */
-const ACTIVITY_EVENTS = [
-  "mousedown",
-  "mousemove",
-  "keypress",
-  "scroll",
-  "touchstart",
-  "click",
-] as const;
+const ACTIVITY_EVENTS = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"] as const;
 
 export interface UseSessionTimeoutOptions {
   /** Called when warning should be shown (at 28 minutes) */
@@ -63,9 +56,7 @@ export interface UseSessionTimeoutReturn {
  * });
  * ```
  */
-export function useSessionTimeout(
-  options: UseSessionTimeoutOptions = {},
-): UseSessionTimeoutReturn {
+export function useSessionTimeout(options: UseSessionTimeoutOptions = {}): UseSessionTimeoutReturn {
   const { onWarning, onTimeout, enabled = true } = options;
 
   const [isWarning, setIsWarning] = useState(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { SubmitButton } from "./SubmitButton";
 
@@ -38,7 +38,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSummary = async () => {
+  const loadSummary = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -52,13 +52,11 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
 
       setSummary(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load monthly summary",
-      );
+      setError(err instanceof Error ? err.message : "Failed to load monthly summary");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [year, month, memberId]);
 
   useEffect(() => {
     loadSummary();
@@ -99,9 +97,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       {/* Header with Approval Status */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">
-            Monthly Summary
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900">Monthly Summary</h2>
           <p className="text-sm text-gray-600 mt-1">
             {new Date(year, month - 1).toLocaleString("en-US", {
               month: "long",
@@ -127,9 +123,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
               {summary.approvalStatus}
             </span>
             {summary.rejectionReason && (
-              <p className="text-xs text-red-600 max-w-xs text-right">
-                Reason: {summary.rejectionReason}
-              </p>
+              <p className="text-xs text-red-600 max-w-xs text-right">Reason: {summary.rejectionReason}</p>
             )}
           </div>
         )}
@@ -152,12 +146,8 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       {/* Overall Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-          <div className="text-sm text-blue-600 font-medium">
-            Total Work Hours
-          </div>
-          <div className="text-2xl font-bold text-blue-900 mt-1">
-            {summary.totalWorkHours}h
-          </div>
+          <div className="text-sm text-blue-600 font-medium">Total Work Hours</div>
+          <div className="text-2xl font-bold text-blue-900 mt-1">{summary.totalWorkHours}h</div>
           <div className="text-xs text-blue-600 mt-1">
             {summary.projects.length} project
             {summary.projects.length !== 1 ? "s" : ""}
@@ -168,18 +158,12 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
             <span>🏖️</span>
             <span>Absence Hours</span>
           </div>
-          <div className="text-2xl font-bold text-sky-900 mt-1">
-            {summary.totalAbsenceHours}h
-          </div>
+          <div className="text-2xl font-bold text-sky-900 mt-1">{summary.totalAbsenceHours}h</div>
           <div className="text-xs text-sky-700 mt-1">Time away from work</div>
         </div>
         <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-          <div className="text-sm text-green-700 font-medium">
-            Business Days
-          </div>
-          <div className="text-2xl font-bold text-green-900 mt-1">
-            {summary.totalBusinessDays}
-          </div>
+          <div className="text-sm text-green-700 font-medium">Business Days</div>
+          <div className="text-2xl font-bold text-green-900 mt-1">{summary.totalBusinessDays}</div>
           <div className="text-xs text-green-700 mt-1">In this period</div>
         </div>
       </div>
@@ -189,12 +173,8 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
         <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-gray-700">
-                Total Hours Recorded
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Work + Absence combined
-              </p>
+              <h3 className="text-sm font-semibold text-gray-700">Total Hours Recorded</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Work + Absence combined</p>
             </div>
             <div className="text-2xl font-bold text-gray-900">
               {(summary.totalWorkHours + summary.totalAbsenceHours).toFixed(2)}h
@@ -206,11 +186,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
                 <div className="w-3 h-3 bg-blue-500 rounded-full" />
                 <span className="text-gray-600">
                   Work: {summary.totalWorkHours}h (
-                  {(
-                    (summary.totalWorkHours /
-                      (summary.totalWorkHours + summary.totalAbsenceHours)) *
-                    100
-                  ).toFixed(1)}
+                  {((summary.totalWorkHours / (summary.totalWorkHours + summary.totalAbsenceHours)) * 100).toFixed(1)}
                   %)
                 </span>
               </div>
@@ -218,11 +194,9 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
                 <div className="w-3 h-3 bg-sky-500 rounded-full" />
                 <span className="text-gray-600">
                   Absence: {summary.totalAbsenceHours}h (
-                  {(
-                    (summary.totalAbsenceHours /
-                      (summary.totalWorkHours + summary.totalAbsenceHours)) *
-                    100
-                  ).toFixed(1)}
+                  {((summary.totalAbsenceHours / (summary.totalWorkHours + summary.totalAbsenceHours)) * 100).toFixed(
+                    1,
+                  )}
                   %)
                 </span>
               </div>
@@ -236,41 +210,23 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                Project
-              </th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                Hours
-              </th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                Percentage
-              </th>
-              <th className="py-3 px-4 text-sm font-semibold text-gray-700">
-                Distribution
-              </th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Project</th>
+              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Hours</th>
+              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Percentage</th>
+              <th className="py-3 px-4 text-sm font-semibold text-gray-700">Distribution</th>
             </tr>
           </thead>
           <tbody>
             {summary.projects.map((project) => (
-              <tr
-                key={project.projectId}
-                className="border-b border-gray-100 hover:bg-gray-50"
-              >
-                <td className="py-3 px-4 text-sm text-gray-900">
-                  {project.projectName}
-                </td>
+              <tr key={project.projectId} className="border-b border-gray-100 hover:bg-gray-50">
+                <td className="py-3 px-4 text-sm text-gray-900">{project.projectName}</td>
                 <td className="py-3 px-4 text-sm text-right font-medium text-gray-900">
                   {project.totalHours.toFixed(2)}h
                 </td>
-                <td className="py-3 px-4 text-sm text-right text-gray-600">
-                  {project.percentage.toFixed(1)}%
-                </td>
+                <td className="py-3 px-4 text-sm text-right text-gray-600">{project.percentage.toFixed(1)}%</td>
                 <td className="py-3 px-4">
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full"
-                      style={{ width: `${project.percentage}%` }}
-                    />
+                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${project.percentage}%` }} />
                   </div>
                 </td>
               </tr>
@@ -278,15 +234,11 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-gray-300">
-              <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                Total
-              </td>
+              <td className="py-3 px-4 text-sm font-semibold text-gray-900">Total</td>
               <td className="py-3 px-4 text-sm text-right font-bold text-gray-900">
                 {summary.totalWorkHours.toFixed(2)}h
               </td>
-              <td className="py-3 px-4 text-sm text-right font-semibold text-gray-900">
-                100%
-              </td>
+              <td className="py-3 px-4 text-sm text-right font-semibold text-gray-900">100%</td>
               <td className="py-3 px-4" />
             </tr>
           </tfoot>

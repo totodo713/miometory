@@ -18,9 +18,7 @@ export default function CsvImportPage() {
     try {
       await downloadTemplate();
     } catch (error) {
-      setDownloadError(
-        error instanceof Error ? error.message : "Failed to download template",
-      );
+      setDownloadError(error instanceof Error ? error.message : "Failed to download template");
     } finally {
       setIsDownloading(false);
     }
@@ -35,18 +33,11 @@ export default function CsvImportPage() {
       <div className="max-w-4xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/worklog"
-            className="text-blue-600 hover:text-blue-800 mb-4 inline-block"
-          >
+          <Link href="/worklog" className="text-blue-600 hover:text-blue-800 mb-4 inline-block">
             ← Back to Miometry
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Import Miometry CSV
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Upload a CSV file to bulk import time entries
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Import Miometry CSV</h1>
+          <p className="text-gray-600 mt-2">Upload a CSV file to bulk import time entries</p>
         </div>
 
         {/* Instructions */}
@@ -54,9 +45,7 @@ export default function CsvImportPage() {
           <h2 className="text-xl font-semibold mb-4">How to Import</h2>
           <ol className="list-decimal list-inside space-y-2 text-gray-700">
             <li>Download the CSV template or prepare your own CSV file</li>
-            <li>
-              Fill in your work log entries (Date, Project Code, Hours, Notes)
-            </li>
+            <li>Fill in your work log entries (Date, Project Code, Hours, Notes)</li>
             <li>Upload the file using the form below</li>
             <li>Wait for the import to complete and review any errors</li>
           </ol>
@@ -70,9 +59,7 @@ export default function CsvImportPage() {
             >
               {isDownloading ? "Downloading..." : "Download CSV Template"}
             </button>
-            {downloadError && (
-              <p className="text-sm text-red-600 mt-2">{downloadError}</p>
-            )}
+            {downloadError && <p className="text-sm text-red-600 mt-2">{downloadError}</p>}
           </div>
         </div>
 
@@ -87,8 +74,7 @@ export default function CsvImportPage() {
               <strong>Project Code:</strong> Valid project code (e.g., PRJ-001)
             </p>
             <p>
-              <strong>Hours:</strong> 0.25 increments, 0-24 range (e.g., 8.00,
-              4.50)
+              <strong>Hours:</strong> 0.25 increments, 0-24 range (e.g., 8.00, 4.50)
             </p>
             <p>
               <strong>Notes:</strong> Optional text, max 500 characters
@@ -99,10 +85,7 @@ export default function CsvImportPage() {
         {/* Upload Form */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Upload CSV File</h2>
-          <CsvUploader
-            memberId={memberId}
-            onImportComplete={handleImportComplete}
-          />
+          <CsvUploader memberId={memberId} onImportComplete={handleImportComplete} />
         </div>
       </div>
     </div>

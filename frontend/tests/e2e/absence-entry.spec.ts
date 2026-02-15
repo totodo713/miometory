@@ -156,9 +156,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Wait for calendar to be fully rendered with data
-    await expect(
-      page.locator('button[aria-label*="January 20"]'),
-    ).toBeVisible();
+    await expect(page.locator('button[aria-label*="January 20"]')).toBeVisible();
 
     // Step 2: Click on date (20th)
     await page.locator('button[aria-label*="January 20"]').click();
@@ -179,9 +177,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.fill('textarea[id="reason"]', "Annual vacation");
 
     // Step 7: Verify form shows correct data
-    await expect(page.locator('select[id="absenceType"]')).toHaveValue(
-      "PAID_LEAVE",
-    );
+    await expect(page.locator('select[id="absenceType"]')).toHaveValue("PAID_LEAVE");
     await expect(page.locator('input[id="hours"]')).toHaveValue("8");
 
     // Step 8: Save absence
@@ -226,9 +222,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForTimeout(500);
   });
 
-  test("should validate 24-hour limit for combined work and absence", async ({
-    page,
-  }) => {
+  test("should validate 24-hour limit for combined work and absence", async ({ page }) => {
     // Navigate to daily entry form
     await page.goto(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
@@ -243,9 +237,7 @@ test.describe("Absence Entry Workflow", () => {
 
     // Step 3: The Work Hours save button should be enabled
     // (individual entry hours <=24 is valid, combined check happens on save)
-    const workSaveButton = page.locator(
-      'button:has-text("Save"):not(:has-text("Absence"))',
-    );
+    const workSaveButton = page.locator('button:has-text("Save"):not(:has-text("Absence"))');
     await expect(workSaveButton).not.toBeDisabled();
 
     // Step 4: Switch to Absence tab
@@ -263,9 +255,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(saveButton).not.toBeDisabled();
   });
 
-  test("should allow combined work and absence up to 24 hours", async ({
-    page,
-  }) => {
+  test("should allow combined work and absence up to 24 hours", async ({ page }) => {
     // Navigate to daily entry form
     await page.goto(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
@@ -321,9 +311,7 @@ test.describe("Absence Entry Workflow", () => {
       await page.fill('textarea[id="reason"]', `Testing ${absenceType.label}`);
 
       // Verify selection
-      await expect(page.locator('select[id="absenceType"]')).toHaveValue(
-        absenceType.value,
-      );
+      await expect(page.locator('select[id="absenceType"]')).toHaveValue(absenceType.value);
 
       // Save should be enabled
       const saveButton = page.locator('button:has-text("Save Absence")');
@@ -331,9 +319,7 @@ test.describe("Absence Entry Workflow", () => {
     }
   });
 
-  test("should support quarter-hour increments for absences", async ({
-    page,
-  }) => {
+  test("should support quarter-hour increments for absences", async ({ page }) => {
     // Navigate to daily entry form
     await page.goto(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
@@ -353,15 +339,11 @@ test.describe("Absence Entry Workflow", () => {
       await expect(page.locator('input[id="hours"]')).toHaveValue(hours);
 
       // No error should be shown
-      await expect(
-        page.locator("text=/Invalid hours/i, text=/must be.*0.25/i"),
-      ).not.toBeVisible();
+      await expect(page.locator("text=/Invalid hours/i, text=/must be.*0.25/i")).not.toBeVisible();
     }
   });
 
-  test("should validate absence reason length (max 500 characters)", async ({
-    page,
-  }) => {
+  test("should validate absence reason length (max 500 characters)", async ({ page }) => {
     // Navigate to daily entry form
     await page.goto(`${baseURL}/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
@@ -387,9 +369,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(page.locator("text=/500\\/500/")).toBeVisible();
 
     // The textarea should contain exactly 500 characters (not 501)
-    const textareaValue = await page
-      .locator('textarea[id="reason"]')
-      .inputValue();
+    const textareaValue = await page.locator('textarea[id="reason"]').inputValue();
     expect(textareaValue.length).toBe(500);
 
     // Save button should still be enabled (500 chars is valid)
@@ -417,9 +397,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForTimeout(200);
 
     // Should NOT show validation error
-    await expect(
-      page.locator("text=/Reason cannot exceed 500 characters/i"),
-    ).not.toBeVisible();
+    await expect(page.locator("text=/Reason cannot exceed 500 characters/i")).not.toBeVisible();
 
     // Save button should be enabled
     const saveButton = page.locator('button:has-text("Save Absence")');
@@ -502,9 +480,7 @@ test.describe("Absence Entry Workflow", () => {
     // Success - new absence created
   });
 
-  test("should show absence visual indicators in calendar", async ({
-    page,
-  }) => {
+  test("should show absence visual indicators in calendar", async ({ page }) => {
     // Mock calendar with absence data - override beforeEach route
     await page.route("**/api/v1/worklog/calendar/**", async (route) => {
       const url = route.request().url();
@@ -567,9 +543,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(dateButton.locator("text=8h")).toBeVisible();
   });
 
-  test("should show combined work and absence in monthly summary", async ({
-    page,
-  }) => {
+  test("should show combined work and absence in monthly summary", async ({ page }) => {
     // Mock calendar with mixed data - override beforeEach route
     await page.route("**/api/v1/worklog/calendar/**", async (route) => {
       const url = route.request().url();

@@ -25,12 +25,7 @@ export interface SessionTimeoutDialogProps {
  * - "Logout" button for immediate logout
  * - Auto-logout when countdown reaches 0
  */
-export function SessionTimeoutDialog({
-  isOpen,
-  remainingTime,
-  onContinue,
-  onLogout,
-}: SessionTimeoutDialogProps) {
+export function SessionTimeoutDialog({ isOpen, remainingTime, onContinue, onLogout }: SessionTimeoutDialogProps) {
   const [displayTime, setDisplayTime] = useState("");
 
   // Format remaining time as MM:SS
@@ -79,16 +74,10 @@ export function SessionTimeoutDialog({
             </svg>
           </div>
           <div>
-            <h2
-              id="session-timeout-title"
-              className="text-xl font-semibold text-gray-900"
-            >
+            <h2 id="session-timeout-title" className="text-xl font-semibold text-gray-900">
               Session Timeout Warning
             </h2>
-            <p
-              id="session-timeout-description"
-              className="text-sm text-gray-500"
-            >
+            <p id="session-timeout-description" className="text-sm text-gray-500">
               Your session is about to expire
             </p>
           </div>
@@ -96,14 +85,10 @@ export function SessionTimeoutDialog({
 
         {/* Countdown */}
         <div className="mb-6 text-center">
-          <p className="text-gray-700 mb-2">
-            Your session will expire due to inactivity.
-          </p>
+          <p className="text-gray-700 mb-2">Your session will expire due to inactivity.</p>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
             <p className="text-sm text-gray-600 mb-1">Time remaining:</p>
-            <p className="text-4xl font-bold text-gray-900 tabular-nums">
-              {displayTime}
-            </p>
+            <p className="text-4xl font-bold text-gray-900 tabular-nums">{displayTime}</p>
           </div>
         </div>
 
@@ -127,8 +112,7 @@ export function SessionTimeoutDialog({
 
         {/* Additional info */}
         <p className="mt-4 text-xs text-gray-500 text-center">
-          Click "Continue Session" to extend your session, or "Logout" to sign
-          out now.
+          Click "Continue Session" to extend your session, or "Logout" to sign out now.
         </p>
       </div>
     </div>
