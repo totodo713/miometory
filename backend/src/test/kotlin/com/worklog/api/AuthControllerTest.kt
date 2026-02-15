@@ -24,18 +24,19 @@ import org.springframework.http.MediaType
 import org.springframework.security.test.context.support.WithMockUser
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 /**
  * Integration tests for AuthController (T031-T034)
- * 
+ *
  * Tests cover:
  * - T031: POST /api/v1/auth/signup - 201 response with user details
  * - T032: POST /api/v1/auth/login - session cookie and CSRF token
  * - T033: POST /api/v1/auth/logout - session invalidation
  * - T034: POST /api/v1/auth/verify-email - token validation
- * 
+ *
  * Uses MockMvc for HTTP-level testing with mocked AuthService.
  */
 @WebMvcTest(
@@ -381,7 +382,8 @@ class AuthControllerTest {
         val token = "invalid-token"
         val requestBody = mapOf("token" to token)
 
-        every { authService.verifyEmail(token) } throws IllegalArgumentException("Invalid or already used verification token")
+        every { authService.verifyEmail(token) } throws
+            IllegalArgumentException("Invalid or already used verification token")
 
         // When/Then
         mockMvc
@@ -474,7 +476,9 @@ class AuthControllerTest {
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),
             ).andExpect(status().isOk)
-            .andExpect(jsonPath("$.message").value("Password reset successfully. You may now log in with your new password."))
+            .andExpect(
+                jsonPath("$.message").value("Password reset successfully. You may now log in with your new password."),
+            )
 
         verify(exactly = 1) { passwordResetService.confirmReset("valid-token-123", "NewPassword123") }
     }

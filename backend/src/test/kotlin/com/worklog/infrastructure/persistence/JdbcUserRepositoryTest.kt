@@ -3,7 +3,9 @@ package com.worklog.infrastructure.persistence
 import com.worklog.domain.role.RoleId
 import com.worklog.domain.user.User
 import com.worklog.domain.user.UserId
-import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.jdbc.core.JdbcTemplate
@@ -16,11 +18,11 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.sql.Timestamp
 import java.time.Instant
-import java.util.*
+import java.util.UUID
 
 /**
  * Integration tests for JdbcUserRepository (T036).
- * 
+ *
  * Tests repository operations against a real PostgreSQL database using Testcontainers:
  * - CRUD operations (save, findById, findByEmail, delete)
  * - Custom queries (findByAccountStatus, findExpiredLockedUsers, findUnverifiedUsersBefore)
@@ -68,7 +70,7 @@ class JdbcUserRepositoryTest {
         testRoleId = RoleId.of(UUID.fromString("00000000-0000-0000-0000-000000000001"))
         jdbcTemplate.update(
             """
-            INSERT INTO roles (id, name, description, created_at, updated_at) 
+            INSERT INTO roles (id, name, description, created_at, updated_at)
             VALUES (?, 'TEST_ROLE', 'Test role for integration tests', NOW(), NOW())
             ON CONFLICT (id) DO NOTHING
         """,
