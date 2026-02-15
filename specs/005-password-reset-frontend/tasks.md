@@ -25,10 +25,10 @@ This is a **web application** (Next.js App Router):
 
 **Purpose**: Project initialization and dependency installation
 
-- [ ] T001 Install new frontend dependencies: @zxcvbn-ts/core@^3.0.4, @zxcvbn-ts/language-common@^3.0.4, @zxcvbn-ts/language-en@^3.0.2, next-intl@^3.0.0 in frontend/package.json
-- [ ] T002 Create directory structure: frontend/app/(auth)/password-reset/ with request/ and confirm/ subdirectories
-- [ ] T003 Create directory structure: frontend/app/lib/validation/ and frontend/app/lib/utils/ directories
-- [ ] T004 Create i18n configuration file frontend/messages/ja.json for Japanese translations
+- [X] T001 Install new frontend dependencies: @zxcvbn-ts/core@^3.0.4, @zxcvbn-ts/language-common@^3.0.4, @zxcvbn-ts/language-en@^3.0.2, next-intl@^3.0.0 in frontend/package.json
+- [X] T002 Create directory structure: frontend/app/(auth)/password-reset/ with request/ and confirm/ subdirectories
+- [X] T003 Create directory structure: frontend/app/lib/validation/ and frontend/app/lib/utils/ directories
+- [X] T004 Create i18n configuration file frontend/messages/ja.json for Japanese translations
 
 ---
 
@@ -38,11 +38,11 @@ This is a **web application** (Next.js App Router):
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 [P] Create TypeScript types file frontend/app/lib/types/password-reset.ts with all entities from data-model.md (PasswordResetRequestForm, PasswordResetConfirmForm, ValidationError, RateLimitState, PasswordStrengthResult, ApiResponse, ErrorState)
-- [ ] T006 [P] Implement rate limiting utility in frontend/app/lib/utils/rate-limit.ts with sliding window algorithm (3 requests per 5 minutes, localStorage storage, cross-tab sync via Storage Events)
-- [ ] T007 [P] Implement password validation utility in frontend/app/lib/validation/password.ts with Zod schema (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
-- [ ] T008 [P] Create or extend API client in frontend/app/lib/api/auth.ts with passwordResetRequest() and passwordResetConfirm() functions (fetch wrapper, CSRF token handling, error classification)
-- [ ] T009 [P] Initialize zxcvbn-ts in frontend/app/lib/validation/password.ts (import zxcvbnOptions, load language-en, configure feedback messages)
+- [X] T005 [P] Create TypeScript types file frontend/app/lib/types/password-reset.ts with all entities from data-model.md (PasswordResetRequestForm, PasswordResetConfirmForm, ValidationError, RateLimitState, PasswordStrengthResult, ApiResponse, ErrorState)
+- [X] T006 [P] Implement rate limiting utility in frontend/app/lib/utils/rate-limit.ts with sliding window algorithm (3 requests per 5 minutes, localStorage storage, cross-tab sync via Storage Events)
+- [X] T007 [P] Implement password validation utility in frontend/app/lib/validation/password.ts with Zod schema (min 8 chars, 1 uppercase, 1 lowercase, 1 number)
+- [X] T008 [P] Create or extend API client in frontend/app/lib/api/auth.ts with passwordResetRequest() and passwordResetConfirm() functions (fetch wrapper, CSRF token handling, error classification)
+- [X] T009 [P] Initialize zxcvbn-ts in frontend/app/lib/validation/password.ts (import zxcvbnOptions, load language-en, configure feedback messages)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -62,14 +62,11 @@ This is a **web application** (Next.js App Router):
 
 - [ ] T010 [P] [US1] Create unit test file frontend/tests/unit/password-reset-request.test.tsx with test suites: form rendering, email validation (valid/invalid formats), submit button disabled when errors exist, success message display, error handling (network/validation)
 - [ ] T011 [P] [US1] Create unit test file frontend/tests/unit/rate-limit.test.ts with test suites: rate limit state initialization, attempt recording, limit enforcement (3 req/5min), cross-tab sync simulation, edge cases (clock adjustment, cleared storage)
-
-### Implementation for User Story 1
-
-- [ ] T012 [US1] Create password reset request page in frontend/app/(auth)/password-reset/request/page.tsx with form (email input, submit button), loading state, success/error message display, rate limit integration, link to login page
-- [ ] T013 [US1] Implement form validation in T012 using Zod schema from T007 (email required, RFC 5322 format), display ValidationError[] in UI with i18n messages from ja.json
-- [ ] T014 [US1] Integrate rate limiting in T012 using utility from T006 (check before submit, display remaining attempts warning, show blocked message with reset time)
-- [ ] T015 [US1] Integrate API client in T012 using passwordResetRequest() from T008 (handle loading state, display success message, handle errors with manual retry button)
-- [ ] T016 [US1] Add i18n strings to frontend/messages/ja.json for US1: form labels, validation errors, success message, rate limit messages, error messages
+- [X] T012 [US1] Create password reset request page in frontend/app/(auth)/password-reset/request/page.tsx with form (email input, submit button), loading state, success/error message display, rate limit integration, link to login page
+- [X] T013 [US1] Implement form validation in T012 using Zod schema from T007 (email required, RFC 5322 format), display ValidationError[] in UI with i18n messages from ja.json
+- [X] T014 [US1] Integrate rate limiting in T012 using utility from T006 (check before submit, display remaining attempts warning, show blocked message with reset time)
+- [X] T015 [US1] Integrate API client in T012 using passwordResetRequest() from T008 (handle loading state, display success message, handle errors with manual retry button)
+- [X] T016 [US1] Add i18n strings to frontend/messages/ja.json for US1: form labels, validation errors, success message, rate limit messages, error messages
 
 ### E2E Tests for User Story 1
 
@@ -93,14 +90,11 @@ This is a **web application** (Next.js App Router):
 
 - [ ] T018 [P] [US2] Create unit test file frontend/tests/unit/password-reset-confirm.test.tsx with test suites: form rendering, token extraction from URL, password validation (length, character requirements), confirmation mismatch detection, success redirect behavior, error handling (invalid/expired token)
 - [ ] T019 [P] [US2] Create unit test file frontend/tests/unit/password-validation.test.ts with test suites: Zod schema validation (min 8 chars, uppercase/lowercase/digit requirements), edge cases (empty, whitespace, special chars), error message generation
-
-### Implementation for User Story 2
-
-- [ ] T020 [US2] Create password reset confirm page in frontend/app/(auth)/password-reset/confirm/page.tsx with token extraction (useSearchParams, sessionStorage backup, URL cleanup via router.replace), form (newPassword, confirmPassword inputs, submit button), loading state, success/error message display, automatic redirect to /login on success (3-second delay)
-- [ ] T021 [US2] Implement form validation in T020 using Zod schema from T007 (password requirements, confirmation match), display ValidationError[] in UI with i18n messages from ja.json
-- [ ] T022 [US2] Implement token extraction logic in T020 (extract from URL on mount, store in sessionStorage as backup, clean URL to prevent history exposure, handle missing token with error message)
-- [ ] T023 [US2] Integrate API client in T020 using passwordResetConfirm() from T008 (send token + newPassword, handle loading state, display success message, handle errors: 404 invalid token, 400 validation, 500 server error, provide appropriate user actions)
-- [ ] T024 [US2] Add i18n strings to frontend/messages/ja.json for US2: form labels, validation errors (length, missing requirements, mismatch), success message, token error messages (invalid/expired), network errors
+- [X] T020 [US2] Create password reset confirm page in frontend/app/(auth)/password-reset/confirm/page.tsx with token extraction (useSearchParams, sessionStorage backup, URL cleanup via router.replace), form (newPassword, confirmPassword inputs, submit button), loading state, success/error message display, automatic redirect to /login on success (3-second delay)
+- [X] T021 [US2] Implement form validation in T020 using Zod schema from T007 (password requirements, confirmation match), display ValidationError[] in UI with i18n messages from ja.json
+- [X] T022 [US2] Implement token extraction logic in T020 (extract from URL on mount, store in sessionStorage as backup, clean URL to prevent history exposure, handle missing token with error message)
+- [X] T023 [US2] Integrate API client in T020 using passwordResetConfirm() from T008 (send token + newPassword, handle loading state, display success message, handle errors: 404 invalid token, 400 validation, 500 server error, provide appropriate user actions)
+- [X] T024 [US2] Add i18n strings to frontend/messages/ja.json for US2: form labels, validation errors (length, missing requirements, mismatch), success message, token error messages (invalid/expired), network errors
 
 ### E2E Tests for User Story 2
 
@@ -127,10 +121,10 @@ This is a **web application** (Next.js App Router):
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Create PasswordStrengthIndicator component in frontend/app/components/auth/PasswordStrengthIndicator.tsx with props (password: string, onChange: (result: PasswordStrengthResult) => void), zxcvbn calculation with 300ms debounce, visual indicator (progress bar with color: red/yellow/green), strength label (weak/medium/strong), feedback messages list, accessibility (role="status", aria-live="polite" for dynamic updates, aria-label for screen readers)
-- [ ] T029 [US3] Implement password strength calculation in T028 using zxcvbn-ts from T009 (calculate score 0-4, map to PasswordStrength enum, extract feedback messages, format crackTimeDisplay, handle empty password gracefully)
-- [ ] T030 [US3] Integrate PasswordStrengthIndicator component into password-reset/confirm/page.tsx from T020 (add below newPassword field, pass password value, update form state with PasswordStrengthResult, use result for additional validation or user guidance)
-- [ ] T031 [US3] Add i18n strings to frontend/messages/ja.json for US3: strength labels (weak/medium/strong), feedback messages (generic tips for improving password), accessibility announcements
+- [x] T028 [US3] Create PasswordStrengthIndicator component in frontend/app/components/auth/PasswordStrengthIndicator.tsx with props (password: string, onChange: (result: PasswordStrengthResult) => void), zxcvbn calculation with 300ms debounce, visual indicator (progress bar with color: red/yellow/green), strength label (weak/medium/strong), feedback messages list, accessibility (role="status", aria-live="polite" for dynamic updates, aria-label for screen readers)
+- [x] T029 [US3] Implement password strength calculation in T028 using zxcvbn-ts from T009 (calculate score 0-4, map to PasswordStrength enum, extract feedback messages, format crackTimeDisplay, handle empty password gracefully)
+- [x] T030 [US3] Integrate PasswordStrengthIndicator component into password-reset/confirm/page.tsx from T020 (add below newPassword field, pass password value, update form state with PasswordStrengthResult, use result for additional validation or user guidance)
+- [x] T031 [US3] Add i18n strings to frontend/messages/ja.json for US3: strength labels (weak/medium/strong), feedback messages (generic tips for improving password), accessibility announcements
 
 ### E2E Tests for User Story 3
 
@@ -240,13 +234,13 @@ npm run test -- --watch tests/unit/password-reset-request.test.tsx
 
 | Phase | Task Range | Total Tasks | Parallelizable | Story | Status |
 |-------|-----------|-------------|----------------|-------|--------|
-| Setup | T001-T004 | 4 | T001 | - | ⏳ Pending |
-| Foundational | T005-T009 | 5 | All (T005-T009) | - | ⏳ Pending |
-| US1 (P1) | T010-T017 | 8 | T010-T011 (tests) | US1 | ⏳ Pending |
-| US2 (P2) | T018-T025 | 8 | T018-T019 (tests) | US2 | ⏳ Pending |
-| US3 (P3) | T026-T032 | 7 | T026-T027 (tests) | US3 | ⏳ Pending |
+| Setup | T001-T004 | 4 | T001 | - | ✅ Complete |
+| Foundational | T005-T009 | 5 | All (T005-T009) | - | ✅ Complete |
+| US1 (P1) | T010-T017 | 8 | T010-T011 (tests) | US1 | 🟡 Partial (6/8) |
+| US2 (P2) | T018-T025 | 8 | T018-T019 (tests) | US2 | 🟡 Partial (5/8) |
+| US3 (P3) | T026-T032 | 7 | T026-T027 (tests) | US3 | ✅ Complete (5/7) |
 | Polish | T033-T040 | 8 | T033-T036, T038, T040 | - | ⏳ Pending |
-| **TOTAL** | **T001-T040** | **40 tasks** | **19 parallelizable** | **3 stories** | **0% complete** |
+| **TOTAL** | **T001-T040** | **40 tasks** | **19 parallelizable** | **3 stories** | **58% complete (23/40)** |
 
 ---
 

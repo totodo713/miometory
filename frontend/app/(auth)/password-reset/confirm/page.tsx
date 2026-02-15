@@ -23,7 +23,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { Suspense, useEffect, useState } from "react";
+import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 import type { ErrorState, ValidationError } from "@/lib/types/password-reset";
+import type { PasswordStrengthResult } from "@/lib/validation/password";
 import { validatePasswordConfirm } from "@/lib/validation/password";
 import { api } from "@/services/api";
 
@@ -45,6 +47,8 @@ function PasswordResetConfirmForm() {
   // Form state
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [_passwordStrength, setPasswordStrength] =
+    useState<PasswordStrengthResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<
     Record<string, ValidationError>
@@ -453,6 +457,12 @@ function PasswordResetConfirmForm() {
                 {validationErrors.newPassword.message}
               </p>
             )}
+
+            {/* Password Strength Indicator */}
+            <PasswordStrengthIndicator
+              password={newPassword}
+              onChange={(result) => setPasswordStrength(result)}
+            />
           </div>
 
           {/* Confirm Password Field */}

@@ -24,6 +24,9 @@ import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
 import type { PasswordStrengthResult, ValidationError } from '../types/password-reset';
 
+// Re-export types for external consumers
+export type { PasswordStrengthResult, ValidationError };
+
 /**
  * Initialize zxcvbn with English language dictionary
  * 
