@@ -115,41 +115,51 @@ test.describe("Daily Entry Workflow", () => {
     });
 
     // Mock monthly summary API (used by MonthlySummary component on calendar page)
-    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          year: 2026,
-          month: 1,
-          totalWorkHours: 0,
-          totalAbsenceHours: 0,
-          totalBusinessDays: 22,
-          projects: [],
-          approvalStatus: null,
-          rejectionReason: null,
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/calendar/**/summary**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            year: 2026,
+            month: 1,
+            totalWorkHours: 0,
+            totalAbsenceHours: 0,
+            totalBusinessDays: 22,
+            projects: [],
+            approvalStatus: null,
+            rejectionReason: null,
+          }),
+        });
+      },
+    );
 
     // Mock previous month projects API (used by CopyPreviousMonthDialog)
-    await page.route("**/api/v1/worklog/previous-month-projects**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          projects: [],
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/previous-month-projects**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            projects: [],
+          }),
+        });
+      },
+    );
   });
 
   test("should complete full daily entry workflow", async ({ page }) => {
     // Log all requests that fail to be mocked
     page.on("requestfailed", (request) => {
-      console.log("Request failed:", request.url(), request.failure()?.errorText);
+      console.log(
+        "Request failed:",
+        request.url(),
+        request.failure()?.errorText,
+      );
     });
-    
+
     // Log console errors
     page.on("console", (msg) => {
       if (msg.type() === "error") {
@@ -158,11 +168,13 @@ test.describe("Daily Entry Workflow", () => {
     });
 
     // Step 1: Navigate to calendar view for January 2026
-    await page.goto(`${baseURL}/worklog?year=2026&month=1`, { waitUntil: "networkidle" });
-    
+    await page.goto(`${baseURL}/worklog?year=2026&month=1`, {
+      waitUntil: "networkidle",
+    });
+
     // Wait for page load and calendar render
     await page.waitForLoadState("domcontentloaded");
-    
+
     // Debug: capture page content if h1 not found
     const h1Element = page.locator("h1");
     const h1Count = await h1Element.count();
@@ -171,12 +183,14 @@ test.describe("Daily Entry Workflow", () => {
     }
 
     // Verify calendar is loaded
-    await expect(page.locator("h1")).toContainText("Miometry", { timeout: 10000 });
+    await expect(page.locator("h1")).toContainText("Miometry", {
+      timeout: 10000,
+    });
 
     // Wait for calendar to be fully rendered with data
-    await expect(
-      page.locator('button[aria-label*="January 15"]'),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('button[aria-label*="January 15"]')).toBeVisible({
+      timeout: 10000,
+    });
 
     // Step 2: Click on a specific date (15th)
     // The calendar should have clickable date cells

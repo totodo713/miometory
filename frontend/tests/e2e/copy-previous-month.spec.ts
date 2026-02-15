@@ -44,22 +44,25 @@ test.describe("Copy Previous Month", () => {
     });
 
     // Mock calendar summary API
-    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          year: 2026,
-          month: 1,
-          totalWorkHours: 0,
-          totalAbsenceHours: 0,
-          totalBusinessDays: 22,
-          projects: [],
-          approvalStatus: null,
-          rejectionReason: null,
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/calendar/**/summary**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            year: 2026,
+            month: 1,
+            totalWorkHours: 0,
+            totalAbsenceHours: 0,
+            totalBusinessDays: 22,
+            projects: [],
+            approvalStatus: null,
+            rejectionReason: null,
+          }),
+        });
+      },
+    );
 
     // Mock entries API
     await page.route("**/api/v1/worklog/entries**", async (route) => {
@@ -94,18 +97,21 @@ test.describe("Copy Previous Month", () => {
     });
 
     // Mock previous month projects API
-    await page.route("**/api/v1/worklog/projects/previous-month**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          projectIds: ["PRJ-001", "PRJ-002"],
-          previousMonthStart: "2025-12-21",
-          previousMonthEnd: "2026-01-20",
-          count: 2,
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/projects/previous-month**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            projectIds: ["PRJ-001", "PRJ-002"],
+            previousMonthStart: "2025-12-21",
+            previousMonthEnd: "2026-01-20",
+            count: 2,
+          }),
+        });
+      },
+    );
 
     // Navigate to worklog page
     await page.goto("/worklog");
@@ -138,18 +144,21 @@ test.describe("Copy Previous Month", () => {
     page,
   }) => {
     // Override the previous-month-projects mock to return empty
-    await page.route("**/api/v1/worklog/projects/previous-month**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          projectIds: [],
-          previousMonthStart: "2029-12-21",
-          previousMonthEnd: "2030-01-20",
-          count: 0,
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/projects/previous-month**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            projectIds: [],
+            previousMonthStart: "2029-12-21",
+            previousMonthEnd: "2030-01-20",
+            count: 0,
+          }),
+        });
+      },
+    );
 
     // Navigate to a month with no entries
     await page.goto("/worklog?year=2030&month=1");

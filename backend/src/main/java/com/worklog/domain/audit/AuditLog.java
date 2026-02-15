@@ -12,6 +12,10 @@ import java.util.UUID;
  * Immutable audit trail for security and compliance.
  * Records user actions and system events for accountability.
  */
+import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.annotation.Id;
+
+@Table("audit_logs")
 public class AuditLog {
     
     // Event type constants
@@ -29,6 +33,7 @@ public class AuditLog {
     public static final String EMAIL_SEND_FAILURE = "EMAIL_SEND_FAILURE";
     public static final String AUDIT_LOG_CLEANUP = "AUDIT_LOG_CLEANUP";
     
+    @Id
     private final UUID id;
     private final UserId userId;  // Can be null for system events
     private final String eventType;

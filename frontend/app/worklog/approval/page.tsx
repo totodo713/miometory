@@ -45,7 +45,7 @@ export default function ApprovalPage() {
 
   useEffect(() => {
     loadApprovalQueue();
-  }, []);
+  }, [loadApprovalQueue]);
 
   const handleApprove = async (approvalId: string) => {
     setActionInProgress(approvalId);

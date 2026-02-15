@@ -45,10 +45,10 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
-// Import mocked API and the component under test
-import { api } from "../../../app/services/api";
 import { api as apiAlias } from "@/services/api";
 import { DailyEntryForm } from "../../../app/components/worklog/DailyEntryForm";
+// Import mocked API and the component under test
+import { api } from "../../../app/services/api";
 
 const mockGetEntries = api.worklog.getEntries as any;
 const mockCreateEntry = api.worklog.createEntry as any;
@@ -59,7 +59,8 @@ const mockCreateAbsence = api.absence.createAbsence as any;
 const mockUpdateAbsence = api.absence.updateAbsence as any;
 const mockDeleteAbsence = api.absence.deleteAbsence as any;
 const mockGetAssignedProjects = api.members.getAssignedProjects as any;
-const mockGetAssignedProjectsAlias = apiAlias.members.getAssignedProjects as any;
+const mockGetAssignedProjectsAlias = apiAlias.members
+  .getAssignedProjects as any;
 
 describe("DailyEntryForm", () => {
   const mockDate = new Date("2026-01-15");
@@ -78,7 +79,9 @@ describe("DailyEntryForm", () => {
   // Helper function to wait for project selector to be ready (combobox visible)
   const waitForProjectSelector = async () => {
     await waitFor(() => {
-      expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("combobox", { name: /project/i }),
+      ).toBeInTheDocument();
     });
   };
 
@@ -148,7 +151,9 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForProjectSelector();
-      expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("combobox", { name: /project/i }),
+      ).toBeInTheDocument();
       expect(screen.getByLabelText(/hours/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/comment/i)).toBeInTheDocument();
     });
@@ -486,9 +491,9 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      expect(screen.getAllByRole("combobox", { name: /project/i })).toHaveLength(
-        1,
-      );
+      expect(
+        screen.getAllByRole("combobox", { name: /project/i }),
+      ).toHaveLength(1);
 
       await user.click(screen.getByRole("button", { name: /add project/i }));
 
@@ -587,7 +592,9 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       // Select project from dropdown
-      const projectCombobox = screen.getByRole("combobox", { name: /project/i });
+      const projectCombobox = screen.getByRole("combobox", {
+        name: /project/i,
+      });
       await user.click(projectCombobox);
       // Wait for dropdown to open and select first option
       const option = await screen.findByRole("option", { name: /PROJ1/i });
@@ -664,7 +671,9 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       // Select project from dropdown
-      const projectCombobox = screen.getByRole("combobox", { name: /project/i });
+      const projectCombobox = screen.getByRole("combobox", {
+        name: /project/i,
+      });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
@@ -693,7 +702,9 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       // Select project from dropdown
-      const projectCombobox = screen.getByRole("combobox", { name: /project/i });
+      const projectCombobox = screen.getByRole("combobox", {
+        name: /project/i,
+      });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
@@ -753,7 +764,9 @@ describe("DailyEntryForm", () => {
       await waitForProjectSelector();
 
       // Select project from dropdown
-      const projectCombobox = screen.getByRole("combobox", { name: /project/i });
+      const projectCombobox = screen.getByRole("combobox", {
+        name: /project/i,
+      });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
@@ -775,10 +788,10 @@ describe("DailyEntryForm", () => {
       // React async state updates and Promise resolution timing. The auto-save
       // mechanism itself is tested in "should auto-save after 60 seconds" and
       // the indicator display is better verified in E2E tests (T063-T064).
-      
+
       // This test verifies the component works with the auto-save feature enabled
-      const user = userEvent.setup();
-      
+      const _user = userEvent.setup();
+
       render(
         <DailyEntryForm
           date={mockDate}
@@ -790,9 +803,11 @@ describe("DailyEntryForm", () => {
 
       // Wait for project selector to load
       await waitForProjectSelector();
-      
+
       // Verify form is interactive (auto-save wouldn't work if form wasn't working)
-      const projectCombobox = screen.getByRole("combobox", { name: /project/i });
+      const projectCombobox = screen.getByRole("combobox", {
+        name: /project/i,
+      });
       expect(projectCombobox).toBeInTheDocument();
     });
 
@@ -849,7 +864,9 @@ describe("DailyEntryForm", () => {
       // Wait for loading with real timers
       vi.useRealTimers();
       await waitFor(() => {
-        expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole("combobox", { name: /project/i }),
+        ).toBeInTheDocument();
       });
       vi.useFakeTimers();
 
@@ -1028,7 +1045,9 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       // Select project from dropdown
-      const projectCombobox = screen.getByRole("combobox", { name: /project/i });
+      const projectCombobox = screen.getByRole("combobox", {
+        name: /project/i,
+      });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);

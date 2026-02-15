@@ -15,8 +15,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { MemberSelector } from "@/components/worklog/MemberSelector";
-import { type SubordinateMember, useProxyMode } from "@/services/worklogStore";
 import { useAuth } from "@/hooks/useAuth";
+import { type SubordinateMember, useProxyMode } from "@/services/worklogStore";
 
 export default function ProxyEntryPage() {
   const router = useRouter();

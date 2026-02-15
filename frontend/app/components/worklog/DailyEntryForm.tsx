@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
 import { useProxyMode } from "../../services/worklogStore";
-import type { WorkLogEntry, WorkLogStatus } from "../../types/worklog";
+import type { WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
 import { ProjectSelector } from "./ProjectSelector";
 
@@ -120,7 +120,7 @@ export function DailyEntryForm({
 
     loadEntries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memberId, date]);
+  }, [memberId, date, projectRows]);
 
   // Track unsaved changes
   useEffect(() => {
@@ -340,7 +340,7 @@ export function DailyEntryForm({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [projectRows, memberId, date, totalExceeds24, onSave],
+    [projectRows, memberId, date, totalExceeds24, onSave, validateField],
   );
 
   // Handle close with unsaved changes warning
@@ -562,7 +562,8 @@ export function DailyEntryForm({
                             updateProjectRow(index, "projectId", projectId)
                           }
                           disabled={
-                            (row.status !== "DRAFT" && row.status !== undefined) ||
+                            (row.status !== "DRAFT" &&
+                              row.status !== undefined) ||
                             !!row.id // Disable for existing entries (FR-008)
                           }
                           error={row.errors.project}

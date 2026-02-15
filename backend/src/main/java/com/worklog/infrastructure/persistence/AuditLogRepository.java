@@ -25,16 +25,15 @@ public interface AuditLogRepository extends CrudRepository<AuditLog, UUID> {
      */
     @Query("SELECT * FROM audit_logs WHERE user_id = :userId ORDER BY timestamp DESC LIMIT :limit")
     List<AuditLog> findByUserIdOrderByTimestampDesc(
-        @Param("userId") UUID userId, 
+        @Param("userId") UserId userId, 
         @Param("limit") int limit
     );
     
     /**
      * Find audit logs by user using UserId.
      */
-    default List<AuditLog> findByUser(UserId userId, int limit) {
-        return findByUserIdOrderByTimestampDesc(userId.value(), limit);
-    }
+    // UserId converter is now registered; you can use UserId directly in queries if needed.
+// Remove this default method to simplify repository.
     
     /**
      * Find audit logs by event type.

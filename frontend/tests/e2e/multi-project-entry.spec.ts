@@ -43,22 +43,25 @@ test.describe("Multi-project time allocation", () => {
     });
 
     // Mock monthly summary API
-    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          year: 2026,
-          month: 1,
-          totalWorkHours: 0,
-          totalAbsenceHours: 0,
-          totalBusinessDays: 22,
-          projects: [],
-          approvalStatus: null,
-          rejectionReason: null,
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/calendar/**/summary**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            year: 2026,
+            month: 1,
+            totalWorkHours: 0,
+            totalAbsenceHours: 0,
+            totalBusinessDays: 22,
+            projects: [],
+            approvalStatus: null,
+            rejectionReason: null,
+          }),
+        });
+      },
+    );
 
     // Mock get entries API
     await page.route("**/api/v1/worklog/entries**", async (route) => {

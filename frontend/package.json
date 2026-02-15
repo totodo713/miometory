@@ -15,8 +15,12 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.28.0",
+    "@zxcvbn-ts/core": "^3.0.4",
+    "@zxcvbn-ts/language-common": "^3.0.4",
+    "@zxcvbn-ts/language-en": "^3.0.2",
     "date-fns": "^3.3.1",
     "next": "16.1.6",
+    "next-intl": "^4.8.2",
     "papaparse": "^5.4.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",

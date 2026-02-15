@@ -1,6 +1,6 @@
 # Technical Research: ユーザーログイン認証・認可システム
 
-**Feature Branch**: `001-user-login-auth`  
+**Feature Branch**: `004-user-login-auth`  
 **Date**: 2026-02-03  
 **Status**: Phase 0 Complete  
 **Prerequisites**: [spec.md](./spec.md), [plan.md](./plan.md)

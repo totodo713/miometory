@@ -1,6 +1,6 @@
 # Quickstart Guide: ユーザーログイン認証・認可システム
 
-**Feature Branch**: `001-user-login-auth`  
+**Feature Branch**: `004-user-login-auth`  
 **Date**: 2026-02-03  
 **Status**: Development Setup Guide  
 **Prerequisites**: [spec.md](./spec.md), [plan.md](./plan.md), [research.md](./research.md), [data-model.md](./data-model.md)

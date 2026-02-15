@@ -1,6 +1,6 @@
 /**
  * Application configuration constants.
- * 
+ *
  * Loads environment variables and provides type-safe access to configuration values.
  */
 
@@ -13,7 +13,8 @@ export const API_CONFIG = {
    * Loaded from NEXT_PUBLIC_API_BASE_URL environment variable.
    * Defaults to http://localhost:8080/api/v1 for development.
    */
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api/v1',
+  baseURL:
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1",
 
   /**
    * Request timeout in milliseconds

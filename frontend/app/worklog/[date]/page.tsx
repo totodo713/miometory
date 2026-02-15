@@ -37,7 +37,7 @@ export default function DailyEntryPage({ params }: PageProps) {
     if (Number.isNaN(parsedDate.getTime())) {
       throw new Error("Invalid date");
     }
-  } catch (error) {
+  } catch (_error) {
     // Invalid date format - redirect back to calendar
     router.push("/worklog");
     return null;

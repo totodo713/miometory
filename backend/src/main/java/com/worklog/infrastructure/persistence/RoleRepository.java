@@ -16,7 +16,7 @@ import java.util.UUID;
  * Provides CRUD operations and custom queries for role management.
  */
 @Repository
-public interface RoleRepository extends CrudRepository<Role, UUID> {
+public interface RoleRepository extends CrudRepository<Role, RoleId> {
     
     /**
      * Find a role by name (case-insensitive).
@@ -24,23 +24,11 @@ public interface RoleRepository extends CrudRepository<Role, UUID> {
     @Query("SELECT * FROM roles WHERE UPPER(name) = UPPER(:name)")
     Optional<Role> findByName(@Param("name") String name);
     
-    /**
-     * Find a role by RoleId.
-     */
-    default Optional<Role> findById(RoleId roleId) {
-        return findById(roleId.value());
-    }
-    
+
     /**
      * Check if a role exists by name.
      */
     @Query("SELECT COUNT(*) > 0 FROM roles WHERE UPPER(name) = UPPER(:name)")
     boolean existsByName(@Param("name") String name);
     
-    /**
-     * Delete a role by RoleId.
-     */
-    default void deleteById(RoleId roleId) {
-        deleteById(roleId.value());
-    }
 }

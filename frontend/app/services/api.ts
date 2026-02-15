@@ -589,6 +589,32 @@ export const api = {
   },
 
   /**
+   * Authentication endpoints
+   */
+  auth: {
+    /**
+     * Request password reset email
+     * Always returns 200 OK to prevent email enumeration
+     */
+    requestPasswordReset: (data: { email: string }) =>
+      apiClient.post<{ message: string }>(
+        "/api/v1/auth/password-reset/request",
+        data,
+        { skipAuth: true },
+      ),
+
+    /**
+     * Confirm password reset with token
+     */
+    confirmPasswordReset: (data: { token: string; newPassword: string }) =>
+      apiClient.post<{ message: string }>(
+        "/api/v1/auth/password-reset/confirm",
+        data,
+        { skipAuth: true },
+      ),
+  },
+
+  /**
    * Member endpoints (for proxy entry feature)
    */
   members: {

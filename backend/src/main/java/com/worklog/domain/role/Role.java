@@ -9,8 +9,13 @@ import java.util.Objects;
  * Represents a role in the system that groups permissions for authorization.
  * Examples: ADMIN, USER, MODERATOR
  */
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+@Table("roles")
 public class Role {
     
+    @Id
     private final RoleId id;
     private String name;
     private String description;

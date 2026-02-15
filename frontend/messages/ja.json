@@ -1,0 +1,64 @@
+{
+  "passwordReset": {
+    "request": {
+      "title": "パスワードリセット",
+      "description": "登録されたメールアドレスを入力してください。パスワード再設定用のリンクをお送りします。",
+      "emailLabel": "メールアドレス",
+      "emailPlaceholder": "example@company.com",
+      "submitButton": "リセットリンクを送信",
+      "backToLogin": "ログインに戻る",
+      "successTitle": "メールを送信しました",
+      "successMessage": "パスワード再設定用のリンクをメールでお送りしました。受信トレイをご確認ください。",
+      "errors": {
+        "emailRequired": "メールアドレスを入力してください",
+        "emailInvalid": "有効なメールアドレスを入力してください",
+        "rateLimitExceeded": "リクエストが多すぎます。{minutes}分後に再試行してください。",
+        "networkError": "ネットワークエラーが発生しました。接続を確認して再試行してください。",
+        "serverError": "サーバーエラーが発生しました。しばらくしてから再試行してください。",
+        "unknownError": "予期しないエラーが発生しました。"
+      }
+    },
+    "confirm": {
+      "title": "新しいパスワードを設定",
+      "description": "新しいパスワードを入力してください。",
+      "newPasswordLabel": "新しいパスワード",
+      "newPasswordPlaceholder": "8文字以上で入力してください",
+      "confirmPasswordLabel": "パスワードの確認",
+      "confirmPasswordPlaceholder": "もう一度入力してください",
+      "submitButton": "パスワードを変更",
+      "successTitle": "パスワードを変更しました",
+      "successMessage": "新しいパスワードでログインできます。",
+      "redirecting": "ログインページにリダイレクトしています...",
+      "errors": {
+        "passwordRequired": "パスワードを入力してください",
+        "passwordTooShort": "パスワードは8文字以上で入力してください",
+        "passwordTooLong": "パスワードは128文字以内で入力してください",
+        "confirmPasswordRequired": "確認用パスワードを入力してください",
+        "passwordMismatch": "パスワードが一致しません",
+        "tokenInvalid": "無効なリンクです。パスワードリセットを再度リクエストしてください。",
+        "tokenExpired": "リンクの有効期限が切れています。パスワードリセットを再度リクエストしてください。",
+        "networkError": "ネットワークエラーが発生しました。接続を確認して再試行してください。",
+        "serverError": "サーバーエラーが発生しました。しばらくしてから再試行してください。",
+        "unknownError": "予期しないエラーが発生しました。"
+      }
+    },
+    "strength": {
+      "label": "パスワード強度",
+      "weak": "弱い",
+      "medium": "普通",
+      "strong": "強い",
+      "feedback": {
+        "tooShort": "短すぎます",
+        "common": "よく使われるパスワードです",
+        "straightRow": "キーボードの並び順です",
+        "dates": "日付は推測されやすいです",
+        "repeats": "繰り返しは推測されやすいです",
+        "sequences": "連続した文字は推測されやすいです"
+      }
+    },
+    "common": {
+      "loading": "処理中...",
+      "retry": "再試行"
+    }
+  }
+}

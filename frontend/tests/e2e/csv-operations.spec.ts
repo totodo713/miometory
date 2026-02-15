@@ -19,7 +19,7 @@ test.describe("CSV Import/Export", () => {
     // Mock calendar API
     await page.route("**/api/v1/worklog/calendar/**", async (route) => {
       const url = route.request().url();
-      
+
       // Handle summary endpoint
       if (url.includes("/summary")) {
         await route.fulfill({
@@ -38,7 +38,7 @@ test.describe("CSV Import/Export", () => {
         });
         return;
       }
-      
+
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -100,18 +100,21 @@ test.describe("CSV Import/Export", () => {
     });
 
     // Mock previous month projects API
-    await page.route("**/api/v1/worklog/projects/previous-month**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          projectIds: [],
-          previousMonthStart: "2025-12-21",
-          previousMonthEnd: "2026-01-20",
-          count: 0,
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/projects/previous-month**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            projectIds: [],
+            previousMonthStart: "2025-12-21",
+            previousMonthEnd: "2026-01-20",
+            count: 0,
+          }),
+        });
+      },
+    );
 
     // Mock import API - POST to start import
     await page.route("**/api/v1/worklog/csv/import", async (route) => {
@@ -129,18 +132,21 @@ test.describe("CSV Import/Export", () => {
     });
 
     // Mock import progress SSE endpoint - return completed immediately
-    await page.route("**/api/v1/worklog/csv/import/*/progress", async (route) => {
-      // Return SSE response with completed status
-      await route.fulfill({
-        status: 200,
-        contentType: "text/event-stream",
-        headers: {
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive",
-        },
-        body: `event: progress\ndata: {"status":"completed","totalRows":3,"validRows":3,"errorRows":0,"errors":[]}\n\n`,
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/csv/import/*/progress",
+      async (route) => {
+        // Return SSE response with completed status
+        await route.fulfill({
+          status: 200,
+          contentType: "text/event-stream",
+          headers: {
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+          body: `event: progress\ndata: {"status":"completed","totalRows":3,"validRows":3,"errorRows":0,"errors":[]}\n\n`,
+        });
+      },
+    );
 
     // Mock export API
     await page.route("**/api/v1/worklog/export**", async (route) => {
@@ -289,17 +295,20 @@ test.describe("CSV Import/Export", () => {
 
   test("should handle import errors gracefully", async ({ page }) => {
     // Override the progress mock to return errors for this test
-    await page.route("**/api/v1/worklog/csv/import/*/progress", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "text/event-stream",
-        headers: {
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive",
-        },
-        body: `event: progress\ndata: {"status":"completed","totalRows":3,"validRows":0,"errorRows":3,"errors":[{"row":1,"errors":["Future date not allowed"]},{"row":2,"errors":["Invalid date format"]},{"row":3,"errors":["Missing project code"]}]}\n\n`,
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/csv/import/*/progress",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "text/event-stream",
+          headers: {
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
+          },
+          body: `event: progress\ndata: {"status":"completed","totalRows":3,"validRows":0,"errorRows":3,"errors":[{"row":1,"errors":["Future date not allowed"]},{"row":2,"errors":["Invalid date format"]},{"row":3,"errors":["Missing project code"]}]}\n\n`,
+        });
+      },
+    );
 
     await page.goto("/worklog/import");
 
