@@ -1,8 +1,5 @@
 package com.worklog.infrastructure.projection;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -12,14 +9,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 /**
  * Projection for manager's approval queue view.
- * 
+ *
  * Provides a list of pending monthly approvals that require manager review.
  * Shows team members who have submitted their time entries for a fiscal month,
  * along with summary information to help the manager make approval decisions.
- * 
+ *
  * Note: Currently queries event_store directly. Will be optimized to use
  * projection tables once event handlers are implemented.
  */
@@ -34,27 +33,27 @@ public class ApprovalQueueProjection {
 
     /**
      * Gets pending approvals for a manager to review.
-     * 
+     *
      * @param managerId Manager ID (currently not filtered by manager relationship)
      * @return Approval queue data with pending approvals
      */
     public ApprovalQueueData getPendingApprovals(UUID managerId) {
         // TODO: Filter by manager relationship when Member aggregate includes manager field
         // For now, returns all pending approvals in the system
-        
+
         List<ApprovalQueueData.PendingApproval> pendingApprovals = getPendingApprovalsList();
         return new ApprovalQueueData(pendingApprovals);
     }
 
     /**
      * Gets list of all pending monthly approvals with summary information.
-     * 
+     *
      * @return List of pending approvals
      */
     private List<ApprovalQueueData.PendingApproval> getPendingApprovalsList() {
         String sql = """
             WITH approval_created AS (
-                SELECT 
+                SELECT
                     aggregate_id,
                     CAST(payload->>'memberId' AS UUID) as member_id,
                     CAST(payload->>'fiscalMonthStart' AS DATE) as fiscal_month_start,
@@ -65,7 +64,7 @@ public class ApprovalQueueProjection {
                 AND event_type = 'MonthlyApprovalCreated'
             ),
             approval_submitted AS (
-                SELECT 
+                SELECT
                     aggregate_id,
                     CAST(payload->>'submittedAt' AS TIMESTAMP) as submitted_at,
                     CAST(payload->>'submittedBy' AS UUID) as submitted_by
@@ -80,7 +79,7 @@ public class ApprovalQueueProjection {
                 AND event_type IN ('MonthApproved', 'MonthRejected')
             ),
             pending_approvals AS (
-                SELECT 
+                SELECT
                     ac.aggregate_id,
                     ac.member_id,
                     ac.fiscal_month_start,
@@ -91,7 +90,7 @@ public class ApprovalQueueProjection {
                 INNER JOIN approval_submitted asub ON ac.aggregate_id = asub.aggregate_id
                 WHERE ac.aggregate_id NOT IN (SELECT aggregate_id FROM approval_finalized)
             )
-            SELECT 
+            SELECT
                 pa.aggregate_id,
                 pa.member_id,
                 pa.member_id::text as member_name,
@@ -123,16 +122,15 @@ public class ApprovalQueueProjection {
             BigDecimal totalAbsenceHours = getTotalAbsenceHours(memberId, fiscalMonthStart, fiscalMonthEnd);
 
             approvals.add(new ApprovalQueueData.PendingApproval(
-                approvalId.toString(),
-                memberId.toString(),
-                memberName,
-                fiscalMonthStart,
-                fiscalMonthEnd,
-                totalWorkHours,
-                totalAbsenceHours,
-                submittedAt,
-                submittedByName
-            ));
+                    approvalId.toString(),
+                    memberId.toString(),
+                    memberName,
+                    fiscalMonthStart,
+                    fiscalMonthEnd,
+                    totalWorkHours,
+                    totalAbsenceHours,
+                    submittedAt,
+                    submittedByName));
         }
 
         return approvals;
@@ -140,9 +138,9 @@ public class ApprovalQueueProjection {
 
     /**
      * Gets total work hours for a member within a fiscal month.
-     * 
+     *
      * Uses work_log_entries_projection for efficient aggregation.
-     * 
+     *
      * @param memberId Member ID
      * @param startDate Fiscal month start date
      * @param endDate Fiscal month end date
@@ -157,22 +155,16 @@ public class ApprovalQueueProjection {
             AND work_date BETWEEN ? AND ?
             """;
 
-        BigDecimal total = jdbcTemplate.queryForObject(
-            sql,
-            BigDecimal.class,
-            memberId,
-            startDate,
-            endDate
-        );
+        BigDecimal total = jdbcTemplate.queryForObject(sql, BigDecimal.class, memberId, startDate, endDate);
 
         return total != null ? total : BigDecimal.ZERO;
     }
 
     /**
      * Gets total absence hours for a member within a fiscal month.
-     * 
+     *
      * Uses absences_projection for efficient aggregation.
-     * 
+     *
      * @param memberId Member ID
      * @param startDate Fiscal month start date
      * @param endDate Fiscal month end date
@@ -181,7 +173,7 @@ public class ApprovalQueueProjection {
     private BigDecimal getTotalAbsenceHours(UUID memberId, LocalDate startDate, LocalDate endDate) {
         // Uses idx_absences_overlap for efficient overlap detection
         String sql = """
-            SELECT 
+            SELECT
                 id,
                 start_date,
                 end_date,
@@ -192,27 +184,22 @@ public class ApprovalQueueProjection {
             AND end_date >= ?
             """;
 
-        List<Map<String, Object>> results = jdbcTemplate.queryForList(
-            sql,
-            memberId,
-            endDate,
-            startDate
-        );
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, memberId, endDate, startDate);
 
         BigDecimal totalHours = BigDecimal.ZERO;
-        
+
         for (Map<String, Object> row : results) {
             LocalDate absenceStart = ((java.sql.Date) row.get("start_date")).toLocalDate();
             LocalDate absenceEnd = ((java.sql.Date) row.get("end_date")).toLocalDate();
             BigDecimal hoursPerDay = (BigDecimal) row.get("hours_per_day");
-            
+
             // Calculate intersection with requested date range
             LocalDate effectiveStart = absenceStart.isBefore(startDate) ? startDate : absenceStart;
             LocalDate effectiveEnd = absenceEnd.isAfter(endDate) ? endDate : absenceEnd;
-            
+
             // Count days in the effective range
             long days = ChronoUnit.DAYS.between(effectiveStart, effectiveEnd) + 1;
-            
+
             totalHours = totalHours.add(hoursPerDay.multiply(BigDecimal.valueOf(days)));
         }
 

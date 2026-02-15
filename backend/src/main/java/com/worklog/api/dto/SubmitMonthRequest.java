@@ -8,11 +8,7 @@ import java.util.UUID;
  * Contains the member ID, fiscal month period, and the ID of the person submitting.
  */
 public record SubmitMonthRequest(
-    UUID memberId,
-    LocalDate fiscalMonthStart,
-    LocalDate fiscalMonthEnd,
-    UUID submittedBy
-) {
+        UUID memberId, LocalDate fiscalMonthStart, LocalDate fiscalMonthEnd, UUID submittedBy) {
     public SubmitMonthRequest {
         if (memberId == null) {
             throw new IllegalArgumentException("memberId is required");

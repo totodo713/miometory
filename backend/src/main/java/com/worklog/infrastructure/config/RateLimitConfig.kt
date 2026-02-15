@@ -15,9 +15,7 @@ import java.util.concurrent.TimeUnit
  * Helper class to check if an IP address is from a trusted proxy.
  * Supports both exact IP addresses and CIDR notation.
  */
-class TrustedProxyChecker(
-    trustedProxiesConfig: String,
-) {
+class TrustedProxyChecker(trustedProxiesConfig: String) {
     private val trustedAddresses = mutableSetOf<String>()
     private val trustedCidrs = mutableListOf<CidrRange>()
 
@@ -50,17 +48,13 @@ class TrustedProxyChecker(
     /**
      * Simple CIDR range representation for IPv4.
      */
-    private data class CidrRange(
-        val networkAddress: Long,
-        val mask: Long,
-    ) {
-        fun contains(ipAddress: String): Boolean =
-            try {
-                val ip = ipToLong(ipAddress)
-                (ip and mask) == networkAddress
-            } catch (e: Exception) {
-                false
-            }
+    private data class CidrRange(val networkAddress: Long, val mask: Long) {
+        fun contains(ipAddress: String): Boolean = try {
+            val ip = ipToLong(ipAddress)
+            (ip and mask) == networkAddress
+        } catch (e: Exception) {
+            false
+        }
 
         companion object {
             fun parse(cidr: String): CidrRange {
@@ -87,10 +81,7 @@ class TrustedProxyChecker(
  * Each bucket has a capacity (burst size) and refills at a configured rate.
  * Tokens are consumed on each request; if no tokens are available, the request is rejected.
  */
-class TokenBucket(
-    private val capacity: Int,
-    private val refillRatePerSecond: Int,
-) {
+class TokenBucket(private val capacity: Int, private val refillRatePerSecond: Int) {
     private var tokens: Double = capacity.toDouble()
     private var lastRefillTime: Long = System.nanoTime()
 
@@ -139,9 +130,7 @@ class TokenBucket(
  * - Configurable via application properties
  */
 @Component
-class RateLimitFilter(
-    private val properties: RateLimitProperties,
-) : OncePerRequestFilter() {
+class RateLimitFilter(private val properties: RateLimitProperties) : OncePerRequestFilter() {
     private val buckets = ConcurrentHashMap<String, TokenBucket>()
     private var lastCleanupTime: Long = System.currentTimeMillis()
 
@@ -227,24 +216,22 @@ class RateLimitFilter(
     /**
      * Determine if path is an authentication endpoint requiring stricter rate limiting.
      */
-    private fun isAuthPath(path: String): Boolean =
-        path == "/api/v1/auth" ||
-            path.startsWith("/api/v1/auth/") ||
-            path == "/auth" ||
-            path.startsWith("/auth/")
+    private fun isAuthPath(path: String): Boolean = path == "/api/v1/auth" ||
+        path.startsWith("/api/v1/auth/") ||
+        path == "/auth" ||
+        path.startsWith("/auth/")
 
     /**
      * Get rate limit parameters for the given path.
      * Returns (requestsPerSecond, burstSize) tuple.
      */
-    private fun getRateLimitForPath(path: String): Pair<Int, Int> =
-        if (isAuthPath(path)) {
-            // Stricter limits for auth endpoints to prevent brute force attacks
-            Pair(properties.authRequestsPerSecond, properties.authBurstSize)
-        } else {
-            // Default limits for other endpoints
-            Pair(properties.requestsPerSecond, properties.burstSize)
-        }
+    private fun getRateLimitForPath(path: String): Pair<Int, Int> = if (isAuthPath(path)) {
+        // Stricter limits for auth endpoints to prevent brute force attacks
+        Pair(properties.authRequestsPerSecond, properties.authBurstSize)
+    } else {
+        // Default limits for other endpoints
+        Pair(properties.requestsPerSecond, properties.burstSize)
+    }
 
     /**
      * Periodically clean up stale buckets to prevent memory leaks.
@@ -301,7 +288,7 @@ class RateLimitProperties {
     /** Cleanup interval for stale buckets (in minutes). */
     var cleanupIntervalMinutes: Int = 5
 
-    /** 
+    /**
      * Comma-separated list of trusted proxy IP addresses or CIDR ranges.
      * X-Forwarded-For header is only trusted from these IPs.
      * Default includes loopback and private network ranges.

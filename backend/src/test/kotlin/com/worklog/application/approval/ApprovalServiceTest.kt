@@ -576,15 +576,14 @@ class ApprovalServiceTest {
 
     // Helper methods to create test fixtures
 
-    private fun createWorkLogEntry(id: UUID): WorkLogEntry =
-        WorkLogEntry.create(
-            memberId,
-            projectId,
-            LocalDate.of(2024, 1, 25),
-            TimeAmount.of(java.math.BigDecimal("8.00")),
-            "Test work",
-            memberId,
-        )
+    private fun createWorkLogEntry(id: UUID): WorkLogEntry = WorkLogEntry.create(
+        memberId,
+        projectId,
+        LocalDate.of(2024, 1, 25),
+        TimeAmount.of(java.math.BigDecimal("8.00")),
+        "Test work",
+        memberId,
+    )
 
     private fun createSubmittedWorkLogEntry(id: UUID): WorkLogEntry {
         val entry =
@@ -600,15 +599,14 @@ class ApprovalServiceTest {
         return entry
     }
 
-    private fun createAbsence(id: UUID): Absence =
-        Absence.record(
-            memberId,
-            LocalDate.of(2024, 1, 26),
-            TimeAmount.of(java.math.BigDecimal("8.00")),
-            AbsenceType.PAID_LEAVE,
-            "Vacation",
-            memberId,
-        )
+    private fun createAbsence(id: UUID): Absence = Absence.record(
+        memberId,
+        LocalDate.of(2024, 1, 26),
+        TimeAmount.of(java.math.BigDecimal("8.00")),
+        AbsenceType.PAID_LEAVE,
+        "Vacation",
+        memberId,
+    )
 
     private fun createSubmittedAbsence(id: UUID): Absence {
         val absence =

@@ -7,12 +7,9 @@ import jakarta.validation.constraints.Size;
  * Command object for confirming a password reset.
  */
 public class PasswordResetConfirmCommand {
-    @NotBlank
-    private String token;
+    @NotBlank private String token;
 
-    @NotBlank
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    private String newPassword;
+    @NotBlank @Size(min = 8, message = "Password must be at least 8 characters") private String newPassword;
 
     public PasswordResetConfirmCommand() {}
 

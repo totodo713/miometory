@@ -1,9 +1,7 @@
 package com.worklog.infrastructure.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
-import com.worklog.domain.shared.TimeAmount;
 import com.worklog.domain.worklog.WorkLogEntry;
 import com.worklog.domain.worklog.WorkLogEntryId;
 import com.worklog.domain.worklog.events.WorkLogEntryCreated;
@@ -12,20 +10,19 @@ import com.worklog.domain.worklog.events.WorkLogEntryStatusChanged;
 import com.worklog.domain.worklog.events.WorkLogEntryUpdated;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Repository for WorkLogEntry aggregates.
- * 
+ *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
@@ -52,12 +49,7 @@ public class JdbcWorkLogRepository {
             return;
         }
 
-        eventStore.append(
-                entry.getId().value(),
-                entry.getAggregateType(),
-                events,
-                entry.getVersion()
-        );
+        eventStore.append(entry.getId().value(), entry.getAggregateType(), events, entry.getVersion());
 
         entry.clearUncommittedEvents();
         entry.setVersion(entry.getVersion() + events.size());
@@ -65,7 +57,7 @@ public class JdbcWorkLogRepository {
 
     /**
      * Find a work log entry by ID.
-     * 
+     *
      * Reconstructs the aggregate from events in the event store.
      */
     public Optional<WorkLogEntry> findById(WorkLogEntryId entryId) {
@@ -84,19 +76,19 @@ public class JdbcWorkLogRepository {
         }
 
         entry.clearUncommittedEvents();
-        
+
         // Return empty if the aggregate is marked as deleted
         if (entry.isDeleted()) {
             return Optional.empty();
         }
-        
+
         return Optional.of(entry);
     }
 
     /**
      * Calculate total hours for a member on a specific date across all projects.
      * This is used for the 24-hour daily limit validation.
-     * 
+     *
      * @param memberId Member ID
      * @param date Date to check
      * @param excludeEntryId Optional entry ID to exclude (for updates)
@@ -111,8 +103,8 @@ public class JdbcWorkLogRepository {
             AND CAST(payload->>'date' AS DATE) = ?
             AND event_type = 'WorkLogEntryCreated'
             AND aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
+                SELECT aggregate_id
+                FROM event_store
                 WHERE aggregate_type = 'WorkLogEntry'
                 AND event_type = 'WorkLogEntryDeleted'
             )
@@ -125,7 +117,7 @@ public class JdbcWorkLogRepository {
     /**
      * Find work log entries by date range with optional status filter.
      * Reconstructs aggregates from events.
-     * 
+     *
      * @param memberId Member ID to filter by
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
@@ -133,11 +125,7 @@ public class JdbcWorkLogRepository {
      * @return List of work log entries matching criteria
      */
     public List<WorkLogEntry> findByDateRange(
-        UUID memberId,
-        LocalDate startDate,
-        LocalDate endDate,
-        com.worklog.domain.worklog.WorkLogStatus status
-    ) {
+            UUID memberId, LocalDate startDate, LocalDate endDate, com.worklog.domain.worklog.WorkLogStatus status) {
         // Query for aggregate IDs matching criteria
         String sql = """
             SELECT DISTINCT e.aggregate_id, CAST(e.payload->>'date' AS DATE) as entry_date
@@ -147,8 +135,8 @@ public class JdbcWorkLogRepository {
             AND CAST(e.payload->>'memberId' AS UUID) = ?
             AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
             AND e.aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
+                SELECT aggregate_id
+                FROM event_store
                 WHERE aggregate_type = 'WorkLogEntry'
                 AND event_type = 'WorkLogEntryDeleted'
             )
@@ -156,18 +144,13 @@ public class JdbcWorkLogRepository {
             """;
 
         List<UUID> aggregateIds = jdbcTemplate.query(
-            sql,
-            (rs, rowNum) -> UUID.fromString(rs.getString("aggregate_id")),
-            memberId,
-            startDate,
-            endDate
-        );
+                sql, (rs, rowNum) -> UUID.fromString(rs.getString("aggregate_id")), memberId, startDate, endDate);
 
         // Reconstruct each aggregate from events
         List<WorkLogEntry> entries = new java.util.ArrayList<>();
         for (UUID aggregateId : aggregateIds) {
             Optional<WorkLogEntry> entry = findById(WorkLogEntryId.of(aggregateId));
-            
+
             // Apply status filter if specified
             if (entry.isPresent()) {
                 if (status == null || entry.get().getStatus() == status) {
@@ -188,7 +171,8 @@ public class JdbcWorkLogRepository {
                 case "WorkLogEntryCreated" -> objectMapper.readValue(storedEvent.payload(), WorkLogEntryCreated.class);
                 case "WorkLogEntryUpdated" -> objectMapper.readValue(storedEvent.payload(), WorkLogEntryUpdated.class);
                 case "WorkLogEntryDeleted" -> objectMapper.readValue(storedEvent.payload(), WorkLogEntryDeleted.class);
-                case "WorkLogEntryStatusChanged" -> objectMapper.readValue(storedEvent.payload(), WorkLogEntryStatusChanged.class);
+                case "WorkLogEntryStatusChanged" ->
+                    objectMapper.readValue(storedEvent.payload(), WorkLogEntryStatusChanged.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {
@@ -220,7 +204,7 @@ public class JdbcWorkLogRepository {
     /**
      * Find unique project IDs for a member within a date range.
      * This is used for the "Copy from Previous Month" feature.
-     * 
+     *
      * @param memberId Member ID
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
@@ -235,8 +219,8 @@ public class JdbcWorkLogRepository {
             AND CAST(e.payload->>'memberId' AS UUID) = ?
             AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
             AND e.aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
+                SELECT aggregate_id
+                FROM event_store
                 WHERE aggregate_type = 'WorkLogEntry'
                 AND event_type = 'WorkLogEntryDeleted'
             )
@@ -244,11 +228,6 @@ public class JdbcWorkLogRepository {
             """;
 
         return jdbcTemplate.query(
-            sql,
-            (rs, rowNum) -> UUID.fromString(rs.getString("project_id")),
-            memberId,
-            startDate,
-            endDate
-        );
+                sql, (rs, rowNum) -> UUID.fromString(rs.getString("project_id")), memberId, startDate, endDate);
     }
 }

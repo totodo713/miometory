@@ -18,13 +18,13 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for CSV Import Controller.
- * 
+ *
  * Tests CSV import functionality including:
  * - Template download
  * - CSV file upload
  * - Import progress tracking
  * - Validation error handling
- * 
+ *
  * Task: T143 - CSV import integration tests
  */
 class CsvImportControllerTest : IntegrationTestBase() {
@@ -266,11 +266,11 @@ class CsvImportControllerTest : IntegrationTestBase() {
 
     /**
      * Performance test for CSV import with 10K rows via HTTP endpoint.
-     * 
+     *
      * This test validates the full HTTP pipeline for CSV import.
      * For the full 100K row SC-005 performance test, see:
      * StreamingCsvProcessorPerformanceTest.java
-     * 
+     *
      * Task: T144 - Performance test for CSV import (100K rows in <1000s, SC-005)
      */
     @Test
@@ -339,7 +339,9 @@ class CsvImportControllerTest : IntegrationTestBase() {
         // Should be much faster than minimum requirement
         assertTrue(
             rowsPerSecond >= 100,
-            "CSV import rate ${"%.2f".format(rowsPerSecond)} rows/sec is below minimum 100 rows/sec requirement (SC-005)",
+            "CSV import rate ${"%.2f".format(
+                rowsPerSecond,
+            )} rows/sec is below minimum 100 rows/sec requirement (SC-005)",
         )
     }
 }

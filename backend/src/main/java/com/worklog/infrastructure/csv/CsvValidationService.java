@@ -1,12 +1,11 @@
 package com.worklog.infrastructure.csv;
 
-import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.stereotype.Service;
 
 /**
  * Service for validating CSV rows during import.
@@ -23,7 +22,7 @@ public class CsvValidationService {
 
     /**
      * Validates a single CSV row.
-     * 
+     *
      * @param rowNumber The row number (1-based, excluding header)
      * @param date The date string (expected format: YYYY-MM-DD)
      * @param projectCode The project code
@@ -58,7 +57,7 @@ public class CsvValidationService {
         } else {
             try {
                 BigDecimal hoursValue = new BigDecimal(hours);
-                
+
                 if (hoursValue.compareTo(MIN_HOURS) < 0) {
                     errors.add("Hours must be 0 or greater");
                 } else if (hoursValue.compareTo(MAX_HOURS) > 0) {

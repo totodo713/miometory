@@ -8,10 +8,4 @@ import java.util.UUID;
  * Response DTO for monthly calendar view.
  */
 public record MonthlyCalendarResponse(
-    UUID memberId,
-    String memberName,
-    LocalDate periodStart,
-    LocalDate periodEnd,
-    List<DailyCalendarEntry> dates
-) {
-}
+        UUID memberId, String memberName, LocalDate periodStart, LocalDate periodEnd, List<DailyCalendarEntry> dates) {}

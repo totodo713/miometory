@@ -12,19 +12,18 @@ import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.FiscalMonthPeriod;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Constructor;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Repository for MonthlyApproval aggregates.
- * 
+ *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
@@ -51,12 +50,7 @@ public class JdbcApprovalRepository {
             return;
         }
 
-        eventStore.append(
-                approval.getId().value(),
-                approval.getAggregateType(),
-                events,
-                approval.getVersion()
-        );
+        eventStore.append(approval.getId().value(), approval.getAggregateType(), events, approval.getVersion());
 
         approval.clearUncommittedEvents();
         approval.setVersion(approval.getVersion() + events.size());
@@ -64,7 +58,7 @@ public class JdbcApprovalRepository {
 
     /**
      * Find a monthly approval by ID.
-     * 
+     *
      * Reconstructs the aggregate from events in the event store.
      */
     public Optional<MonthlyApproval> findById(MonthlyApprovalId approvalId) {
@@ -89,7 +83,7 @@ public class JdbcApprovalRepository {
     /**
      * Find a monthly approval by member and fiscal month.
      * Returns the approval record if it exists, otherwise empty.
-     * 
+     *
      * @param memberId Member ID
      * @param fiscalMonth Fiscal month period
      * @return Optional containing the approval if found
@@ -108,12 +102,7 @@ public class JdbcApprovalRepository {
             """;
 
         List<UUID> aggregateIds = jdbcTemplate.queryForList(
-            sql,
-            UUID.class,
-            memberId.value(),
-            fiscalMonth.startDate(),
-            fiscalMonth.endDate()
-        );
+                sql, UUID.class, memberId.value(), fiscalMonth.startDate(), fiscalMonth.endDate());
 
         if (aggregateIds.isEmpty()) {
             return Optional.empty();
@@ -125,7 +114,7 @@ public class JdbcApprovalRepository {
     /**
      * Find all work log entry IDs for a member within a fiscal month.
      * Used when submitting a month for approval.
-     * 
+     *
      * @param memberId Member ID
      * @param startDate Fiscal month start date
      * @param endDate Fiscal month end date
@@ -140,8 +129,8 @@ public class JdbcApprovalRepository {
             AND CAST(payload->>'memberId' AS UUID) = ?
             AND CAST(payload->>'date' AS DATE) BETWEEN ? AND ?
             AND aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
+                SELECT aggregate_id
+                FROM event_store
                 WHERE aggregate_type = 'WorkLogEntry'
                 AND event_type = 'WorkLogEntryDeleted'
             )
@@ -154,7 +143,7 @@ public class JdbcApprovalRepository {
     /**
      * Find all absence IDs for a member within a fiscal month.
      * Used when submitting a month for approval.
-     * 
+     *
      * @param memberId Member ID
      * @param startDate Fiscal month start date
      * @param endDate Fiscal month end date
@@ -169,8 +158,8 @@ public class JdbcApprovalRepository {
             AND CAST(payload->>'memberId' AS UUID) = ?
             AND CAST(payload->>'date' AS DATE) BETWEEN ? AND ?
             AND aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
+                SELECT aggregate_id
+                FROM event_store
                 WHERE aggregate_type = 'Absence'
                 AND event_type = 'AbsenceDeleted'
             )
@@ -200,22 +189,12 @@ public class JdbcApprovalRepository {
     private DomainEvent deserializeEvent(StoredEvent storedEvent) {
         try {
             return switch (storedEvent.eventType()) {
-                case "MonthlyApprovalCreated" -> objectMapper.readValue(
-                    storedEvent.payload(), 
-                    MonthlyApprovalCreated.class
-                );
-                case "MonthSubmittedForApproval" -> objectMapper.readValue(
-                    storedEvent.payload(), 
-                    MonthSubmittedForApproval.class
-                );
-                case "MonthApproved" -> objectMapper.readValue(
-                    storedEvent.payload(), 
-                    MonthApproved.class
-                );
-                case "MonthRejected" -> objectMapper.readValue(
-                    storedEvent.payload(), 
-                    MonthRejected.class
-                );
+                case "MonthlyApprovalCreated" ->
+                    objectMapper.readValue(storedEvent.payload(), MonthlyApprovalCreated.class);
+                case "MonthSubmittedForApproval" ->
+                    objectMapper.readValue(storedEvent.payload(), MonthSubmittedForApproval.class);
+                case "MonthApproved" -> objectMapper.readValue(storedEvent.payload(), MonthApproved.class);
+                case "MonthRejected" -> objectMapper.readValue(storedEvent.payload(), MonthRejected.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {

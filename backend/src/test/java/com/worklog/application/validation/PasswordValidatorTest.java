@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for PasswordValidator (T037).
- * 
+ *
  * Tests password strength validation rules per FR-003:
  * - Minimum 8 characters
  * - At least 1 lowercase letter
@@ -64,10 +64,8 @@ class PasswordValidatorTest {
         String nullPassword = null;
 
         // When/Then
-        IllegalArgumentException exception = Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(nullPassword)
-        );
+        IllegalArgumentException exception =
+                Assertions.assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate(nullPassword));
         Assertions.assertEquals("Password cannot be blank", exception.getMessage());
     }
 
@@ -78,9 +76,7 @@ class PasswordValidatorTest {
 
         // When/Then
         IllegalArgumentException exception = Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(emptyPassword)
-        );
+                IllegalArgumentException.class, () -> PasswordValidator.validate(emptyPassword));
         Assertions.assertEquals("Password cannot be blank", exception.getMessage());
     }
 
@@ -91,9 +87,7 @@ class PasswordValidatorTest {
 
         // When/Then
         IllegalArgumentException exception = Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(blankPassword)
-        );
+                IllegalArgumentException.class, () -> PasswordValidator.validate(blankPassword));
         Assertions.assertEquals("Password cannot be blank", exception.getMessage());
     }
 
@@ -108,13 +102,10 @@ class PasswordValidatorTest {
 
         // When/Then
         IllegalArgumentException exception = Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(shortPassword)
-        );
+                IllegalArgumentException.class, () -> PasswordValidator.validate(shortPassword));
         Assertions.assertEquals(
-            "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
-            exception.getMessage()
-        );
+                "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
+                exception.getMessage());
     }
 
     @Test
@@ -123,10 +114,7 @@ class PasswordValidatorTest {
         String tooShort = "P";
 
         // When/Then
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(tooShort)
-        );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate(tooShort));
     }
 
     // ============================================================
@@ -140,13 +128,10 @@ class PasswordValidatorTest {
 
         // When/Then
         IllegalArgumentException exception = Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(noDigitPassword)
-        );
+                IllegalArgumentException.class, () -> PasswordValidator.validate(noDigitPassword));
         Assertions.assertEquals(
-            "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
-            exception.getMessage()
-        );
+                "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
+                exception.getMessage());
     }
 
     @Test
@@ -155,10 +140,7 @@ class PasswordValidatorTest {
         String noUppercase = "password123";
 
         // When/Then
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(noUppercase)
-        );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate(noUppercase));
     }
 
     // ============================================================
@@ -172,13 +154,10 @@ class PasswordValidatorTest {
 
         // When/Then
         IllegalArgumentException exception = Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(noUppercasePassword)
-        );
+                IllegalArgumentException.class, () -> PasswordValidator.validate(noUppercasePassword));
         Assertions.assertEquals(
-            "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
-            exception.getMessage()
-        );
+                "Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, and one digit",
+                exception.getMessage());
     }
 
     @Test
@@ -187,10 +166,7 @@ class PasswordValidatorTest {
         String allUppercase = "PASSWORD1";
 
         // When/Then
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(allUppercase)
-        );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate(allUppercase));
     }
 
     // ============================================================
@@ -361,10 +337,7 @@ class PasswordValidatorTest {
         String spacesOnly = "        ";
 
         // When/Then
-        Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> PasswordValidator.validate(spacesOnly)
-        );
+        Assertions.assertThrows(IllegalArgumentException.class, () -> PasswordValidator.validate(spacesOnly));
     }
 
     @Test

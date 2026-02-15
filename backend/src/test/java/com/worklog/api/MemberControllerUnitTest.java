@@ -1,5 +1,9 @@
 package com.worklog.api;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 import com.worklog.api.dto.AssignedProjectsResponse;
 import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
@@ -9,6 +13,12 @@ import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.projection.AssignedProjectInfo;
 import com.worklog.infrastructure.repository.JdbcMemberProjectAssignmentRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,20 +29,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 /**
  * Unit tests for MemberController.
- * 
+ *
  * Tests the member-related REST endpoints with mocked repositories.
  * These are pure unit tests with no Spring context or HTTP layer.
  */
@@ -70,14 +69,12 @@ class MemberControllerUnitTest {
         @DisplayName("should return assigned projects for existing member")
         void shouldReturnAssignedProjectsForExistingMember() {
             List<AssignedProjectInfo> projectInfos = List.of(
-                new AssignedProjectInfo(UUID.randomUUID(), "PROJ1", "Project One"),
-                new AssignedProjectInfo(UUID.randomUUID(), "PROJ2", "Project Two")
-            );
+                    new AssignedProjectInfo(UUID.randomUUID(), "PROJ1", "Project One"),
+                    new AssignedProjectInfo(UUID.randomUUID(), "PROJ2", "Project Two"));
 
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.of(testMember));
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.of(testMember));
             when(memberProjectAssignmentRepository.findActiveProjectsForMember(any(), any()))
-                .thenReturn(projectInfos);
+                    .thenReturn(projectInfos);
 
             ResponseEntity<AssignedProjectsResponse> response = controller.getAssignedProjects(memberId);
 
@@ -92,10 +89,9 @@ class MemberControllerUnitTest {
         @Test
         @DisplayName("should return empty list when member has no projects")
         void shouldReturnEmptyListWhenNoProjects() {
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.of(testMember));
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.of(testMember));
             when(memberProjectAssignmentRepository.findActiveProjectsForMember(any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
             ResponseEntity<AssignedProjectsResponse> response = controller.getAssignedProjects(memberId);
 
@@ -108,13 +104,10 @@ class MemberControllerUnitTest {
         @Test
         @DisplayName("should throw exception for non-existent member")
         void shouldThrowExceptionForNonExistentMember() {
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.empty());
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.empty());
 
-            DomainException exception = assertThrows(
-                DomainException.class,
-                () -> controller.getAssignedProjects(memberId)
-            );
+            DomainException exception =
+                    assertThrows(DomainException.class, () -> controller.getAssignedProjects(memberId));
 
             assertEquals("MEMBER_NOT_FOUND", exception.getErrorCode());
             assertTrue(exception.getMessage().contains(memberId.toString()));
@@ -123,67 +116,55 @@ class MemberControllerUnitTest {
         @Test
         @DisplayName("should call repository with correct member ID")
         void shouldCallRepositoryWithCorrectMemberId() {
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.of(testMember));
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.of(testMember));
             when(memberProjectAssignmentRepository.findActiveProjectsForMember(any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
             controller.getAssignedProjects(memberId);
 
-            verify(memberProjectAssignmentRepository).findActiveProjectsForMember(
-                eq(MemberId.of(memberId)),
-                any(LocalDate.class)
-            );
+            verify(memberProjectAssignmentRepository)
+                    .findActiveProjectsForMember(eq(MemberId.of(memberId)), any(LocalDate.class));
         }
 
         @Test
         @DisplayName("should use today's date for validity check")
         void shouldUseTodaysDateForValidityCheck() {
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.of(testMember));
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.of(testMember));
             when(memberProjectAssignmentRepository.findActiveProjectsForMember(any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
             LocalDate today = LocalDate.now();
-            
+
             controller.getAssignedProjects(memberId);
 
-            verify(memberProjectAssignmentRepository).findActiveProjectsForMember(
-                any(),
-                eq(today)
-            );
+            verify(memberProjectAssignmentRepository).findActiveProjectsForMember(any(), eq(today));
         }
 
         @Test
         @DisplayName("should not call assignment repository if member not found")
         void shouldNotCallAssignmentRepositoryIfMemberNotFound() {
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.empty());
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.empty());
 
             assertThrows(DomainException.class, () -> controller.getAssignedProjects(memberId));
 
-            verify(memberProjectAssignmentRepository, never())
-                .findActiveProjectsForMember(any(), any());
+            verify(memberProjectAssignmentRepository, never()).findActiveProjectsForMember(any(), any());
         }
 
         @Test
         @DisplayName("should map project info to response correctly")
         void shouldMapProjectInfoToResponseCorrectly() {
             UUID projectId = UUID.randomUUID();
-            List<AssignedProjectInfo> projectInfos = List.of(
-                new AssignedProjectInfo(projectId, "ABC", "Test Project")
-            );
+            List<AssignedProjectInfo> projectInfos = List.of(new AssignedProjectInfo(projectId, "ABC", "Test Project"));
 
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.of(testMember));
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.of(testMember));
             when(memberProjectAssignmentRepository.findActiveProjectsForMember(any(), any()))
-                .thenReturn(projectInfos);
+                    .thenReturn(projectInfos);
 
             ResponseEntity<AssignedProjectsResponse> response = controller.getAssignedProjects(memberId);
 
             assertNotNull(response.getBody());
             assertEquals(1, response.getBody().projects().size());
-            
+
             var project = response.getBody().projects().get(0);
             assertEquals(projectId.toString(), project.id());
             assertEquals("ABC", project.code());
@@ -201,8 +182,7 @@ class MemberControllerUnitTest {
             UUID memberId = UUID.randomUUID();
             Member member = createTestMember(memberId, "user@example.com", "Test User");
 
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.of(member));
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.of(member));
 
             var response = controller.getMember(memberId);
 
@@ -218,13 +198,9 @@ class MemberControllerUnitTest {
         void shouldThrowExceptionWhenMemberNotFound() {
             UUID memberId = UUID.randomUUID();
 
-            when(memberRepository.findById(MemberId.of(memberId)))
-                .thenReturn(Optional.empty());
+            when(memberRepository.findById(MemberId.of(memberId))).thenReturn(Optional.empty());
 
-            DomainException exception = assertThrows(
-                DomainException.class,
-                () -> controller.getMember(memberId)
-            );
+            DomainException exception = assertThrows(DomainException.class, () -> controller.getMember(memberId));
 
             assertEquals("MEMBER_NOT_FOUND", exception.getErrorCode());
         }
@@ -254,7 +230,7 @@ class MemberControllerUnitTest {
             UUID memberId = UUID.randomUUID();
 
             when(memberRepository.isSubordinateOf(MemberId.of(managerId), MemberId.of(memberId)))
-                .thenReturn(true);
+                    .thenReturn(true);
 
             var response = controller.canProxy(managerId, memberId);
 
@@ -270,7 +246,7 @@ class MemberControllerUnitTest {
             UUID memberId = UUID.randomUUID();
 
             when(memberRepository.isSubordinateOf(MemberId.of(managerId), MemberId.of(memberId)))
-                .thenReturn(false);
+                    .thenReturn(false);
 
             var response = controller.canProxy(managerId, memberId);
 
@@ -286,15 +262,14 @@ class MemberControllerUnitTest {
      */
     private Member createTestMember(UUID id, String email, String displayName) {
         return new Member(
-            MemberId.of(id),
-            TenantId.of(UUID.randomUUID()),
-            OrganizationId.of(UUID.randomUUID()),
-            email,
-            displayName,
-            null,  // managerId
-            true,  // isActive
-            Instant.now(),
-            Instant.now()
-        );
+                MemberId.of(id),
+                TenantId.of(UUID.randomUUID()),
+                OrganizationId.of(UUID.randomUUID()),
+                email,
+                displayName,
+                null, // managerId
+                true, // isActive
+                Instant.now(),
+                Instant.now());
     }
 }

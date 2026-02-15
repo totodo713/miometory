@@ -1,24 +1,23 @@
 package com.worklog.infrastructure.csv;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Tag;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 /**
  * Performance tests for StreamingCsvProcessor.
- * 
+ *
  * Verifies SC-005: CSV import processes 100 rows/second minimum
  * (100K rows should complete in <1000 seconds)
- * 
+ *
  * Task: T144 - Performance test for CSV import (100K rows in <1000s, SC-005)
  */
 @Tag("performance")
@@ -40,7 +39,7 @@ class StreamingCsvProcessorPerformanceTest {
         int rowCount = 100_000;
         String csvContent = generateCsvWithRows(rowCount);
         byte[] csvBytes = csvContent.getBytes(StandardCharsets.UTF_8);
-        
+
         System.out.println("Generated CSV with " + rowCount + " rows, size: " + (csvBytes.length / 1024) + " KB");
 
         AtomicInteger processedRows = new AtomicInteger(0);
@@ -82,27 +81,23 @@ class StreamingCsvProcessorPerformanceTest {
 
         // Verify all rows were processed
         assertEquals(rowCount, result.getTotalRows(), "All rows should be processed");
-        
+
         // SC-005: CSV import processes 100 rows/second minimum
         // 100K rows should complete in <1000 seconds
         double maxAllowedTimeSeconds = 1000.0;
         assertTrue(
-            elapsedTimeSeconds < maxAllowedTimeSeconds,
-            String.format(
-                "CSV processing too slow: %.2fs exceeds %.0fs limit. Rate: %.2f rows/sec (minimum required: 100 rows/sec)",
-                elapsedTimeSeconds, maxAllowedTimeSeconds, rowsPerSecond
-            )
-        );
+                elapsedTimeSeconds < maxAllowedTimeSeconds,
+                String.format(
+                        "CSV processing too slow: %.2fs exceeds %.0fs limit. Rate: %.2f rows/sec (minimum required: 100 rows/sec)",
+                        elapsedTimeSeconds, maxAllowedTimeSeconds, rowsPerSecond));
 
         // Additional assertion: should actually be much faster than minimum
         // Typical streaming CSV should process 10,000+ rows/second
         assertTrue(
-            rowsPerSecond >= 100,
-            String.format(
-                "CSV processing rate %.2f rows/sec is below minimum 100 rows/sec requirement (SC-005)",
-                rowsPerSecond
-            )
-        );
+                rowsPerSecond >= 100,
+                String.format(
+                        "CSV processing rate %.2f rows/sec is below minimum 100 rows/sec requirement (SC-005)",
+                        rowsPerSecond));
 
         // Progress should be reported periodically
         assertTrue(progressUpdates.get() > 0, "Progress should be reported during processing");
@@ -149,12 +144,11 @@ class StreamingCsvProcessorPerformanceTest {
 
         assertEquals(totalRows, result.getTotalRows(), "All rows should be processed");
         assertTrue(result.getErrorRows() > 0, "Some rows should have validation errors");
-        
+
         // Performance should still meet minimum requirement
         assertTrue(
-            rowsPerSecond >= 100,
-            String.format("Processing rate %.2f rows/sec is below minimum (SC-005)", rowsPerSecond)
-        );
+                rowsPerSecond >= 100,
+                String.format("Processing rate %.2f rows/sec is below minimum (SC-005)", rowsPerSecond));
     }
 
     @Test
@@ -181,9 +175,7 @@ class StreamingCsvProcessorPerformanceTest {
             timesPerThousand[i] = (elapsedTimeSeconds / rowCount) * 1000;
 
             System.out.println(String.format(
-                "%d rows: %.3fs (%.4f seconds per 1K rows)",
-                rowCount, elapsedTimeSeconds, timesPerThousand[i]
-            ));
+                    "%d rows: %.3fs (%.4f seconds per 1K rows)", rowCount, elapsedTimeSeconds, timesPerThousand[i]));
         }
 
         // Verify scaling is approximately linear (later runs shouldn't be much slower per row)
@@ -191,12 +183,10 @@ class StreamingCsvProcessorPerformanceTest {
         double maxVariance = 3.0; // Allow 3x variance
         for (int i = 1; i < timesPerThousand.length; i++) {
             assertTrue(
-                timesPerThousand[i] < timesPerThousand[0] * maxVariance,
-                String.format(
-                    "Processing time should scale linearly. First: %.4f, Current: %.4f (variance: %.2fx)",
-                    timesPerThousand[0], timesPerThousand[i], timesPerThousand[i] / timesPerThousand[0]
-                )
-            );
+                    timesPerThousand[i] < timesPerThousand[0] * maxVariance,
+                    String.format(
+                            "Processing time should scale linearly. First: %.4f, Current: %.4f (variance: %.2fx)",
+                            timesPerThousand[0], timesPerThousand[i], timesPerThousand[i] / timesPerThousand[0]));
         }
     }
 
@@ -218,9 +208,7 @@ class StreamingCsvProcessorPerformanceTest {
             String hours = hoursOptions[i % hoursOptions.length];
 
             csv.append(String.format(
-                "%04d-%02d-%02d,%s,%s,Performance test row %d\n",
-                year, month, day, projectCode, hours, i
-            ));
+                    "%04d-%02d-%02d,%s,%s,Performance test row %d\n", year, month, day, projectCode, hours, i));
         }
 
         return csv.toString();
@@ -243,10 +231,7 @@ class StreamingCsvProcessorPerformanceTest {
         for (int i = 1; i <= totalRows; i++) {
             if (i % invalidInterval == 0 && invalidCount < invalidRows) {
                 // Generate invalid row
-                csv.append(String.format(
-                    "INVALID-DATE,INVALID-PRJ,999.99,Invalid row %d\n",
-                    i
-                ));
+                csv.append(String.format("INVALID-DATE,INVALID-PRJ,999.99,Invalid row %d\n", i));
                 invalidCount++;
             } else if (validCount < validRows) {
                 // Generate valid row
@@ -255,10 +240,7 @@ class StreamingCsvProcessorPerformanceTest {
                 int year = 2025 - ((i - 1) / (28 * 12));
                 String projectCode = projectCodes[i % projectCodes.length];
 
-                csv.append(String.format(
-                    "%04d-%02d-%02d,%s,8.00,Valid row %d\n",
-                    year, month, day, projectCode, i
-                ));
+                csv.append(String.format("%04d-%02d-%02d,%s,8.00,Valid row %d\n", year, month, day, projectCode, i));
                 validCount++;
             }
         }

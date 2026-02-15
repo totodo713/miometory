@@ -5,8 +5,4 @@ import java.math.BigDecimal;
 /**
  * Request DTO for updating a work log entry via PATCH.
  */
-public record PatchWorkLogEntryRequest(
-    BigDecimal hours,
-    String comment
-) {
-}
+public record PatchWorkLogEntryRequest(BigDecimal hours, String comment) {}

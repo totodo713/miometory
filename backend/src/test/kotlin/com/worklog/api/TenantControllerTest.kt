@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for TenantController.
- * 
+ *
  * Tests the full stack from HTTP API through to database persistence.
  */
 class TenantControllerTest : IntegrationTestBase() {

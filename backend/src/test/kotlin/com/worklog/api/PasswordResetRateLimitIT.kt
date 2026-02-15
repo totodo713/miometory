@@ -3,23 +3,24 @@ package com.worklog.api
 import com.worklog.IntegrationTestBase
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.context.TestPropertySource
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient
 
 @AutoConfigureWebTestClient
-@TestPropertySource(properties = [
-    "worklog.rate-limit.enabled=true",
-    "worklog.rate-limit.auth-requests-per-second=2",
-    "worklog.rate-limit.auth-burst-size=2"
-])
+@TestPropertySource(
+    properties = [
+        "worklog.rate-limit.enabled=true",
+        "worklog.rate-limit.auth-requests-per-second=2",
+        "worklog.rate-limit.auth-burst-size=2",
+    ],
+)
 class PasswordResetRateLimitIT : IntegrationTestBase() {
 
     @Autowired
     lateinit var webTestClient: WebTestClient
-
 
     @Test
     fun `パスワードリセット依頼APIがレートリミット超過で429を返す`() {

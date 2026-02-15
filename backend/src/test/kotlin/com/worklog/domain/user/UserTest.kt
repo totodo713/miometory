@@ -2,7 +2,11 @@ package com.worklog.domain.user
 
 import com.worklog.domain.role.RoleId
 import com.worklog.fixtures.UserFixtures
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -13,7 +17,7 @@ import java.time.temporal.ChronoUnit
 /**
  * Unit tests for User entity business logic.
  * Tests all domain behaviors without database dependencies.
- * 
+ *
  * Note: User is a mutable entity with void methods that modify state in-place.
  */
 @DisplayName("User Entity Tests")

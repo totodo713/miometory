@@ -187,7 +187,8 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         val childMonthlyPatternId = createMonthlyPeriodPattern(tenantId, 15)
 
         val parentOrgId = createOrganization(tenantId, null, parentFiscalPatternId, parentMonthlyPatternId)
-        val childOrgId = createOrganization(tenantId, parentOrgId, childFiscalPatternId, childMonthlyPatternId, level = 2)
+        val childOrgId =
+            createOrganization(tenantId, parentOrgId, childFiscalPatternId, childMonthlyPatternId, level = 2)
 
         // When: request date info for child org
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -356,8 +357,8 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // (until proper event projections are implemented)
         jdbcTemplate.update(
             """
-            INSERT INTO tenant (id, code, name, status, created_at) 
-            VALUES (?, ?, ?, 'ACTIVE', NOW()) 
+            INSERT INTO tenant (id, code, name, status, created_at)
+            VALUES (?, ?, ?, 'ACTIVE', NOW())
             ON CONFLICT (id) DO NOTHING
             """,
             tenantId,
@@ -368,21 +369,19 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         return tenantId
     }
 
-    private fun createFiscalYearPattern(
-        tenantId: UUID,
-        startMonth: Int,
-        startDay: Int,
-    ): UUID {
-        val pattern = FiscalYearPattern.create(TenantId.of(tenantId), "FY-$startMonth-$startDay-${System.nanoTime()}", startMonth, startDay)
+    private fun createFiscalYearPattern(tenantId: UUID, startMonth: Int, startDay: Int): UUID {
+        val pattern = FiscalYearPattern.create(
+            TenantId.of(tenantId),
+            "FY-$startMonth-$startDay-${System.nanoTime()}",
+            startMonth,
+            startDay,
+        )
         // Save using repository to persist in event store
         fiscalYearPatternRepository.save(pattern)
         return pattern.id.value()
     }
 
-    private fun createMonthlyPeriodPattern(
-        tenantId: UUID,
-        startDay: Int,
-    ): UUID {
+    private fun createMonthlyPeriodPattern(tenantId: UUID, startDay: Int): UUID {
         val pattern = MonthlyPeriodPattern.create(TenantId.of(tenantId), "MP-$startDay-${System.nanoTime()}", startDay)
         // Save using repository to persist in event store
         monthlyPeriodPatternRepository.save(pattern)

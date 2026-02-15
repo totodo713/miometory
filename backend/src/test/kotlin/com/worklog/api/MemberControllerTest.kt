@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for MemberController.
- * 
+ *
  * Tests the proxy entry authorization endpoints.
  * Task: T161 - Integration test for proxy entry authorization
  */

@@ -3,7 +3,6 @@ package com.worklog.domain.approval.events;
 import com.worklog.domain.approval.MonthlyApprovalId;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
-
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
@@ -14,33 +13,28 @@ import java.util.UUID;
  * absences transition to SUBMITTED status and become read-only for the member.
  */
 public record MonthSubmittedForApproval(
-    UUID eventId,
-    Instant occurredAt,
-    UUID aggregateId,
-    Instant submittedAt,
-    UUID submittedBy,
-    Set<UUID> workLogEntryIds,
-    Set<UUID> absenceIds
-) implements DomainEvent {
-    
-    public static MonthSubmittedForApproval create(
-        MonthlyApprovalId id,
-        MemberId submittedBy,
+        UUID eventId,
+        Instant occurredAt,
+        UUID aggregateId,
+        Instant submittedAt,
+        UUID submittedBy,
         Set<UUID> workLogEntryIds,
-        Set<UUID> absenceIds
-    ) {
+        Set<UUID> absenceIds)
+        implements DomainEvent {
+
+    public static MonthSubmittedForApproval create(
+            MonthlyApprovalId id, MemberId submittedBy, Set<UUID> workLogEntryIds, Set<UUID> absenceIds) {
         Instant now = Instant.now();
         return new MonthSubmittedForApproval(
-            UUID.randomUUID(),
-            now,
-            id.value(),
-            now,
-            submittedBy.value(),
-            Set.copyOf(workLogEntryIds),
-            Set.copyOf(absenceIds)
-        );
+                UUID.randomUUID(),
+                now,
+                id.value(),
+                now,
+                submittedBy.value(),
+                Set.copyOf(workLogEntryIds),
+                Set.copyOf(absenceIds));
     }
-    
+
     @Override
     public String eventType() {
         return "MonthSubmittedForApproval";

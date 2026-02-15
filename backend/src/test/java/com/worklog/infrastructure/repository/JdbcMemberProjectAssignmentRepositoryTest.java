@@ -1,11 +1,21 @@
 package com.worklog.infrastructure.repository;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.project.MemberProjectAssignment;
 import com.worklog.domain.project.MemberProjectAssignmentId;
 import com.worklog.domain.project.ProjectId;
 import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.projection.AssignedProjectInfo;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -18,20 +28,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-
 /**
  * Unit tests for JdbcMemberProjectAssignmentRepository.
- * 
+ *
  * Tests repository methods with mocked JdbcTemplate.
  * These are pure unit tests with no database dependency.
  */
@@ -61,14 +60,13 @@ class JdbcMemberProjectAssignmentRepositoryTest {
         void shouldReturnAssignedProjects() {
             MemberId memberId = MemberId.of(UUID.randomUUID());
             LocalDate validOn = LocalDate.now();
-            
+
             List<AssignedProjectInfo> expectedProjects = List.of(
-                new AssignedProjectInfo(UUID.randomUUID(), "PROJ1", "Project One"),
-                new AssignedProjectInfo(UUID.randomUUID(), "PROJ2", "Project Two")
-            );
+                    new AssignedProjectInfo(UUID.randomUUID(), "PROJ1", "Project One"),
+                    new AssignedProjectInfo(UUID.randomUUID(), "PROJ2", "Project Two"));
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
-                .thenReturn(expectedProjects);
+                    .thenReturn(expectedProjects);
 
             List<AssignedProjectInfo> result = repository.findActiveProjectsForMember(memberId, validOn);
 
@@ -86,7 +84,7 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             LocalDate validOn = LocalDate.now();
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
             List<AssignedProjectInfo> result = repository.findActiveProjectsForMember(memberId, validOn);
 
@@ -100,17 +98,17 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             LocalDate validOn = LocalDate.of(2024, 6, 15);
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
             repository.findActiveProjectsForMember(memberId, validOn);
 
-            verify(jdbcTemplate).query(
-                contains("member_project_assignments"),
-                any(RowMapper.class),
-                eq(memberId.value()),
-                eq(validOn),
-                eq(validOn)
-            );
+            verify(jdbcTemplate)
+                    .query(
+                            contains("member_project_assignments"),
+                            any(RowMapper.class),
+                            eq(memberId.value()),
+                            eq(validOn),
+                            eq(validOn));
         }
 
         @Test
@@ -120,16 +118,12 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             LocalDate validOn = LocalDate.now();
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
             repository.findActiveProjectsForMember(memberId, validOn);
 
             ArgumentCaptor<String> sqlCaptor = ArgumentCaptor.forClass(String.class);
-            verify(jdbcTemplate).query(
-                sqlCaptor.capture(),
-                any(RowMapper.class),
-                any(), any(), any()
-            );
+            verify(jdbcTemplate).query(sqlCaptor.capture(), any(RowMapper.class), any(), any(), any());
 
             String sql = sqlCaptor.getValue();
             assertTrue(sql.contains("INNER JOIN projects"));
@@ -149,17 +143,15 @@ class JdbcMemberProjectAssignmentRepositoryTest {
         void shouldReturnAssignmentWhenFound() {
             MemberProjectAssignmentId id = MemberProjectAssignmentId.generate();
             MemberProjectAssignment expectedAssignment = new MemberProjectAssignment(
-                id,
-                TenantId.of(UUID.randomUUID()),
-                MemberId.of(UUID.randomUUID()),
-                ProjectId.of(UUID.randomUUID()),
-                Instant.now(),
-                null,
-                true
-            );
+                    id,
+                    TenantId.of(UUID.randomUUID()),
+                    MemberId.of(UUID.randomUUID()),
+                    ProjectId.of(UUID.randomUUID()),
+                    Instant.now(),
+                    null,
+                    true);
 
-            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any()))
-                .thenReturn(List.of(expectedAssignment));
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any())).thenReturn(List.of(expectedAssignment));
 
             Optional<MemberProjectAssignment> result = repository.findById(id);
 
@@ -172,8 +164,7 @@ class JdbcMemberProjectAssignmentRepositoryTest {
         void shouldReturnEmptyWhenNotFound() {
             MemberProjectAssignmentId id = MemberProjectAssignmentId.generate();
 
-            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any()))
-                .thenReturn(Collections.emptyList());
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any())).thenReturn(Collections.emptyList());
 
             Optional<MemberProjectAssignment> result = repository.findById(id);
 
@@ -185,16 +176,11 @@ class JdbcMemberProjectAssignmentRepositoryTest {
         void shouldPassIdToQuery() {
             MemberProjectAssignmentId id = MemberProjectAssignmentId.generate();
 
-            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any()))
-                .thenReturn(Collections.emptyList());
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any())).thenReturn(Collections.emptyList());
 
             repository.findById(id);
 
-            verify(jdbcTemplate).query(
-                anyString(),
-                any(RowMapper.class),
-                eq(id.value())
-            );
+            verify(jdbcTemplate).query(anyString(), any(RowMapper.class), eq(id.value()));
         }
     }
 
@@ -208,23 +194,14 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             TenantId tenantId = TenantId.of(UUID.randomUUID());
             MemberId memberId = MemberId.of(UUID.randomUUID());
             ProjectId projectId = ProjectId.of(UUID.randomUUID());
-            
+
             MemberProjectAssignment expectedAssignment = new MemberProjectAssignment(
-                MemberProjectAssignmentId.generate(),
-                tenantId,
-                memberId,
-                projectId,
-                Instant.now(),
-                null,
-                true
-            );
+                    MemberProjectAssignmentId.generate(), tenantId, memberId, projectId, Instant.now(), null, true);
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
-                .thenReturn(List.of(expectedAssignment));
+                    .thenReturn(List.of(expectedAssignment));
 
-            Optional<MemberProjectAssignment> result = repository.findByMemberAndProject(
-                tenantId, memberId, projectId
-            );
+            Optional<MemberProjectAssignment> result = repository.findByMemberAndProject(tenantId, memberId, projectId);
 
             assertTrue(result.isPresent());
             assertEquals(memberId, result.get().getMemberId());
@@ -239,11 +216,9 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             ProjectId projectId = ProjectId.of(UUID.randomUUID());
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
-            Optional<MemberProjectAssignment> result = repository.findByMemberAndProject(
-                tenantId, memberId, projectId
-            );
+            Optional<MemberProjectAssignment> result = repository.findByMemberAndProject(tenantId, memberId, projectId);
 
             assertTrue(result.isEmpty());
         }
@@ -256,17 +231,17 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             ProjectId projectId = ProjectId.of(UUID.randomUUID());
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
-                .thenReturn(Collections.emptyList());
+                    .thenReturn(Collections.emptyList());
 
             repository.findByMemberAndProject(tenantId, memberId, projectId);
 
-            verify(jdbcTemplate).query(
-                anyString(),
-                any(RowMapper.class),
-                eq(tenantId.value()),
-                eq(memberId.value()),
-                eq(projectId.value())
-            );
+            verify(jdbcTemplate)
+                    .query(
+                            anyString(),
+                            any(RowMapper.class),
+                            eq(tenantId.value()),
+                            eq(memberId.value()),
+                            eq(projectId.value()));
         }
     }
 
@@ -283,67 +258,62 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             ProjectId projectId = ProjectId.of(UUID.randomUUID());
             MemberId assignedBy = MemberId.of(UUID.randomUUID());
             Instant assignedAt = Instant.now();
-            
-            MemberProjectAssignment assignment = new MemberProjectAssignment(
-                id,
-                tenantId,
-                memberId,
-                projectId,
-                assignedAt,
-                assignedBy,
-                true
-            );
+
+            MemberProjectAssignment assignment =
+                    new MemberProjectAssignment(id, tenantId, memberId, projectId, assignedAt, assignedBy, true);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
             repository.save(assignment);
 
-            verify(jdbcTemplate).update(
-                contains("INSERT INTO member_project_assignments"),
-                eq(id.value()),
-                eq(tenantId.value()),
-                eq(memberId.value()),
-                eq(projectId.value()),
-                any(),  // Timestamp
-                eq(assignedBy.value()),
-                eq(true)
-            );
+            verify(jdbcTemplate)
+                    .update(
+                            contains("INSERT INTO member_project_assignments"),
+                            eq(id.value()),
+                            eq(tenantId.value()),
+                            eq(memberId.value()),
+                            eq(projectId.value()),
+                            any(), // Timestamp
+                            eq(assignedBy.value()),
+                            eq(true));
         }
 
         @Test
         @DisplayName("should save assignment with null assignedBy")
         void shouldSaveAssignmentWithNullAssignedBy() {
             MemberProjectAssignment assignment = new MemberProjectAssignment(
-                MemberProjectAssignmentId.generate(),
-                TenantId.of(UUID.randomUUID()),
-                MemberId.of(UUID.randomUUID()),
-                ProjectId.of(UUID.randomUUID()),
-                Instant.now(),
-                null,  // No assignedBy
-                true
-            );
+                    MemberProjectAssignmentId.generate(),
+                    TenantId.of(UUID.randomUUID()),
+                    MemberId.of(UUID.randomUUID()),
+                    ProjectId.of(UUID.randomUUID()),
+                    Instant.now(),
+                    null, // No assignedBy
+                    true);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
             repository.save(assignment);
 
-            verify(jdbcTemplate).update(
-                anyString(),
-                any(), any(), any(), any(), any(),
-                isNull(),  // assignedBy should be null
-                any()
-            );
+            verify(jdbcTemplate)
+                    .update(
+                            anyString(),
+                            any(),
+                            any(),
+                            any(),
+                            any(),
+                            any(),
+                            isNull(), // assignedBy should be null
+                            any());
         }
 
         @Test
         @DisplayName("should use upsert SQL")
         void shouldUseUpsertSql() {
             MemberProjectAssignment assignment = MemberProjectAssignment.create(
-                TenantId.of(UUID.randomUUID()),
-                MemberId.of(UUID.randomUUID()),
-                ProjectId.of(UUID.randomUUID()),
-                null
-            );
+                    TenantId.of(UUID.randomUUID()),
+                    MemberId.of(UUID.randomUUID()),
+                    ProjectId.of(UUID.randomUUID()),
+                    null);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
@@ -371,10 +341,7 @@ class JdbcMemberProjectAssignmentRepositoryTest {
 
             repository.delete(id);
 
-            verify(jdbcTemplate).update(
-                contains("DELETE FROM member_project_assignments"),
-                (Object) eq(id.value())
-            );
+            verify(jdbcTemplate).update(contains("DELETE FROM member_project_assignments"), (Object) eq(id.value()));
         }
 
         @Test

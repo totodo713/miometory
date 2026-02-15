@@ -5,10 +5,10 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 
 /**
  * Method-level security configuration.
- * 
+ *
  * Enables @PreAuthorize, @PostAuthorize, @PreFilter, @PostFilter annotations
  * for fine-grained authorization control on service methods and controllers.
- * 
+ *
  * Example usage:
  * ```kotlin
  * @PreAuthorize("hasPermission(null, 'user.view')")

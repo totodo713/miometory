@@ -25,22 +25,17 @@ object TenantFixtures {
     /**
      * Creates tenant creation request data.
      */
-    fun createTenantRequest(
-        code: String = validCode(),
-        name: String = validName(),
-    ): Map<String, Any> =
-        mapOf(
-            "code" to code,
-            "name" to name,
-        )
+    fun createTenantRequest(code: String = validCode(), name: String = validName()): Map<String, Any> = mapOf(
+        "code" to code,
+        "name" to name,
+    )
 
     /**
      * Creates tenant update request data.
      */
-    fun updateTenantRequest(name: String = validName("Updated")): Map<String, Any> =
-        mapOf(
-            "name" to name,
-        )
+    fun updateTenantRequest(name: String = validName("Updated")): Map<String, Any> = mapOf(
+        "name" to name,
+    )
 
     /**
      * Invalid codes for validation testing.

@@ -5,16 +5,15 @@ import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.tenant.*;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Repository for Tenant aggregates.
- * 
+ *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
@@ -39,12 +38,7 @@ public class TenantRepository {
             return;
         }
 
-        eventStore.append(
-                tenant.getId().value(),
-                tenant.getAggregateType(),
-                events,
-                tenant.getVersion()
-        );
+        eventStore.append(tenant.getId().value(), tenant.getAggregateType(), events, tenant.getVersion());
 
         tenant.clearUncommittedEvents();
         tenant.setVersion(tenant.getVersion() + events.size());
@@ -52,7 +46,7 @@ public class TenantRepository {
 
     /**
      * Find a tenant by ID.
-     * 
+     *
      * Reconstructs the aggregate from events in the event store.
      */
     public Optional<Tenant> findById(TenantId tenantId) {

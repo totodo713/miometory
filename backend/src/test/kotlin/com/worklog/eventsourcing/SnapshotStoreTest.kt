@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for JdbcSnapshotStore.
- * 
+ *
  * Tests snapshot save/load operations and upsert behavior.
  */
 class SnapshotStoreTest : IntegrationTestBase() {

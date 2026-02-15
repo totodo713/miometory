@@ -5,16 +5,12 @@ import com.worklog.domain.member.MemberId;
 
 /**
  * Command to reject a submitted month's time entries with a reason.
- * 
+ *
  * Triggered when a manager reviews a team member's submitted time entries
  * and rejects them with feedback. This will transition all associated work log
  * entries and absences back to DRAFT status (editable by the engineer again).
  */
-public record RejectMonthCommand(
-    MonthlyApprovalId approvalId,
-    MemberId reviewedBy,
-    String rejectionReason
-) {
+public record RejectMonthCommand(MonthlyApprovalId approvalId, MemberId reviewedBy, String rejectionReason) {
     public RejectMonthCommand {
         if (approvalId == null) {
             throw new IllegalArgumentException("approvalId cannot be null");

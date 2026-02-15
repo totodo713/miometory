@@ -120,7 +120,9 @@ class OrganizationTest {
             assertThrows<DomainException> {
                 Organization.create(id, tenantId, parentId, code, name, 1)
             }
-        assertTrue(exception.message!!.contains("Root organization") && exception.message!!.contains("cannot have a parent"))
+        assertTrue(
+            exception.message!!.contains("Root organization") && exception.message!!.contains("cannot have a parent"),
+        )
     }
 
     @Test

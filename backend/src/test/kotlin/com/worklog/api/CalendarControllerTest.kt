@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for CalendarController.
- * 
+ *
  * Tests the calendar view API endpoints for viewing work log data.
  */
 class CalendarControllerTest : IntegrationTestBase() {

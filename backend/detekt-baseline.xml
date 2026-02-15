@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:RateLimitConfig.kt:RateLimitFilter$path.startsWith("/actuator") || path == "/health" || path == "/api/v1/health" || path == "/ready"</ID>
+    <ID>FunctionOnlyReturningConstant:UserFixtures.kt:UserFixtures$fun validHashedPassword: String</ID>
+    <ID>LargeClass:AbsenceControllerTest.kt:AbsenceControllerTest : IntegrationTestBase</ID>
+    <ID>LargeClass:WorkLogControllerTest.kt:WorkLogControllerTest : IntegrationTestBase</ID>
+    <ID>LongMethod:MemberControllerTest.kt:MemberControllerTest$@BeforeEach fun setup</ID>
+    <ID>LongMethod:ProjectControllerTest.kt:ProjectControllerTest$@Test fun `GET previous-month should return unique projects from previous fiscal month`</ID>
+    <ID>MagicNumber:CorsConfig.kt:CorsConfig$3600L</ID>
+    <ID>MagicNumber:RateLimitConfig.kt:RateLimitFilter$1000L</ID>
+    <ID>MagicNumber:RateLimitConfig.kt:RateLimitFilter$60</ID>
+    <ID>MagicNumber:RateLimitConfig.kt:TrustedProxyChecker.CidrRange.Companion$0xFFFFFFFFL</ID>
+    <ID>MagicNumber:RateLimitConfig.kt:TrustedProxyChecker.CidrRange.Companion$32</ID>
+    <ID>MagicNumber:RateLimitConfig.kt:TrustedProxyChecker.CidrRange.Companion$8</ID>
+    <ID>MagicNumber:WebConfig.kt:WebConfig$3600</ID>
+    <ID>MaxLineLength:FiscalYearPatternControllerTest.kt:FiscalYearPatternControllerTest$"INSERT INTO tenant (id, code, name, status, created_at) VALUES (?, ?, ?, 'ACTIVE', NOW()) ON CONFLICT (id) DO NOTHING"</ID>
+    <ID>MaxLineLength:MonthlyPeriodPatternControllerTest.kt:MonthlyPeriodPatternControllerTest$"INSERT INTO tenant (id, code, name, status, created_at) VALUES (?, ?, ?, 'ACTIVE', NOW()) ON CONFLICT (id) DO NOTHING"</ID>
+    <ID>PrintStackTrace:JdbcUserRepositoryTest.kt:JdbcUserRepositoryTest$e</ID>
+    <ID>SwallowedException:PerformanceBenchmarkTest.kt:PerformanceBenchmarkTest$e: Exception</ID>
+    <ID>SwallowedException:RateLimitConfig.kt:TrustedProxyChecker$e: Exception</ID>
+    <ID>SwallowedException:RateLimitConfig.kt:TrustedProxyChecker.CidrRange$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RateLimitConfig.kt:TrustedProxyChecker$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RateLimitConfig.kt:TrustedProxyChecker.CidrRange$e: Exception</ID>
+    <ID>UnusedParameter:ApprovalServiceTest.kt:ApprovalServiceTest$id: UUID</ID>
+    <ID>UnusedParameter:OrganizationFixtures.kt:OrganizationFixtures.Companion$tenantId: UUID</ID>
+    <ID>UtilityClassWithPublicConstructor:IntegrationTestBase.kt:IntegrationTestBase</ID>
+    <ID>UtilityClassWithPublicConstructor:OrganizationFixtures.kt:OrganizationFixtures</ID>
+  </CurrentIssues>
+</SmellBaseline>

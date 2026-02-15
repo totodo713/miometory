@@ -12,12 +12,8 @@ object FiscalYearPatternFixtures {
     /**
      * Kotlin-friendly wrapper for creating FiscalYearPattern with named arguments.
      */
-    fun createPattern(
-        tenantId: TenantId,
-        name: String,
-        startMonth: Int,
-        startDay: Int,
-    ): FiscalYearPattern = FiscalYearPattern.create(tenantId, name, startMonth, startDay)
+    fun createPattern(tenantId: TenantId, name: String, startMonth: Int, startDay: Int): FiscalYearPattern =
+        FiscalYearPattern.create(tenantId, name, startMonth, startDay)
 
     /**
      * Creates a valid fiscal year pattern name.
@@ -32,41 +28,34 @@ object FiscalYearPatternFixtures {
     /**
      * Creates a fiscal year pattern creation request with April 1st start (Japanese standard).
      */
-    fun createAprilStartRequest(name: String = "4月開始"): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "startMonth" to 4,
-            "startDay" to 1,
-        )
+    fun createAprilStartRequest(name: String = "4月開始"): Map<String, Any> = mapOf(
+        "name" to name,
+        "startMonth" to 4,
+        "startDay" to 1,
+    )
 
     /**
      * Creates a fiscal year pattern creation request with November 1st start (year boundary crossing).
      */
-    fun createNovemberStartRequest(name: String = "11月開始"): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "startMonth" to 11,
-            "startDay" to 1,
-        )
+    fun createNovemberStartRequest(name: String = "11月開始"): Map<String, Any> = mapOf(
+        "name" to name,
+        "startMonth" to 11,
+        "startDay" to 1,
+    )
 
     /**
      * Creates a fiscal year pattern creation request with January 1st start (calendar year).
      */
-    fun createJanuaryStartRequest(name: String = "1月開始"): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "startMonth" to 1,
-            "startDay" to 1,
-        )
+    fun createJanuaryStartRequest(name: String = "1月開始"): Map<String, Any> = mapOf(
+        "name" to name,
+        "startMonth" to 1,
+        "startDay" to 1,
+    )
 
     /**
      * Creates a fiscal year pattern creation request with custom start date.
      */
-    fun createPatternRequest(
-        name: String = validName(),
-        startMonth: Int = 4,
-        startDay: Int = 1,
-    ): Map<String, Any> =
+    fun createPatternRequest(name: String = validName(), startMonth: Int = 4, startDay: Int = 1): Map<String, Any> =
         mapOf(
             "name" to name,
             "startMonth" to startMonth,

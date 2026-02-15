@@ -3,10 +3,6 @@ package com.worklog.infrastructure.persistence;
 import com.worklog.domain.role.RoleId;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -14,10 +10,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 /**
  * JDBC-based repository for User aggregate.
- * 
+ *
  * Provides CRUD operations and custom queries for user management,
  * authentication, and account status tracking.
  */
@@ -32,7 +31,7 @@ public class JdbcUserRepository {
 
     /**
      * Finds a user by ID.
-     * 
+     *
      * @param id User ID
      * @return Optional containing the user if found
      */
@@ -51,7 +50,7 @@ public class JdbcUserRepository {
 
     /**
      * Find a user by email (case-insensitive).
-     * 
+     *
      * @param email Email address
      * @return Optional containing the user if found
      */
@@ -70,7 +69,7 @@ public class JdbcUserRepository {
 
     /**
      * Check if a user exists by email (case-insensitive).
-     * 
+     *
      * @param email Email address
      * @return true if a user with this email exists
      */
@@ -82,7 +81,7 @@ public class JdbcUserRepository {
 
     /**
      * Find all users with a specific account status.
-     * 
+     *
      * @param status Account status
      * @return List of users with the specified status
      */
@@ -100,7 +99,7 @@ public class JdbcUserRepository {
 
     /**
      * Find all locked users whose lock has expired.
-     * 
+     *
      * @param now Current timestamp
      * @return List of users with expired locks
      */
@@ -118,7 +117,7 @@ public class JdbcUserRepository {
 
     /**
      * Find all unverified users created before a certain date.
-     * 
+     *
      * @param before Cutoff timestamp
      * @return List of unverified users created before the specified date
      */
@@ -136,7 +135,7 @@ public class JdbcUserRepository {
 
     /**
      * Saves a user (insert or update using UPSERT).
-     * 
+     *
      * @param user The user to save
      * @return The saved user
      */
@@ -160,27 +159,26 @@ public class JdbcUserRepository {
             """;
 
         jdbcTemplate.update(
-            upsertSql,
-            user.getId().value(),
-            user.getEmail(),
-            user.getName(),
-            user.getHashedPassword(),
-            user.getRoleId().value(),
-            user.getAccountStatus().name().toLowerCase(),
-            user.getFailedLoginAttempts(),
-            user.getLockedUntil() != null ? Timestamp.from(user.getLockedUntil()) : null,
-            Timestamp.from(user.getCreatedAt()),
-            Timestamp.from(user.getUpdatedAt()),
-            user.getLastLoginAt() != null ? Timestamp.from(user.getLastLoginAt()) : null,
-            user.getEmailVerifiedAt() != null ? Timestamp.from(user.getEmailVerifiedAt()) : null
-        );
-        
+                upsertSql,
+                user.getId().value(),
+                user.getEmail(),
+                user.getName(),
+                user.getHashedPassword(),
+                user.getRoleId().value(),
+                user.getAccountStatus().name().toLowerCase(),
+                user.getFailedLoginAttempts(),
+                user.getLockedUntil() != null ? Timestamp.from(user.getLockedUntil()) : null,
+                Timestamp.from(user.getCreatedAt()),
+                Timestamp.from(user.getUpdatedAt()),
+                user.getLastLoginAt() != null ? Timestamp.from(user.getLastLoginAt()) : null,
+                user.getEmailVerifiedAt() != null ? Timestamp.from(user.getEmailVerifiedAt()) : null);
+
         return user;
     }
 
     /**
      * Deletes a user by ID.
-     * 
+     *
      * @param id User ID
      */
     public void deleteById(UserId id) {
@@ -198,7 +196,7 @@ public class JdbcUserRepository {
 
     /**
      * Counts total number of users.
-     * 
+     *
      * @return Total user count
      */
     public long count() {
@@ -229,19 +227,18 @@ public class JdbcUserRepository {
             }
 
             return new User(
-                UserId.of(rs.getObject("id", UUID.class)),
-                rs.getString("email"),
-                rs.getString("name"),
-                rs.getString("hashed_password"),
-                RoleId.of(rs.getObject("role_id", UUID.class)),
-                User.AccountStatus.valueOf(rs.getString("account_status").toUpperCase()),
-                rs.getInt("failed_login_attempts"),
-                lockedUntil,
-                rs.getTimestamp("created_at").toInstant(),
-                rs.getTimestamp("updated_at").toInstant(),
-                lastLoginAt,
-                emailVerifiedAt
-            );
+                    UserId.of(rs.getObject("id", UUID.class)),
+                    rs.getString("email"),
+                    rs.getString("name"),
+                    rs.getString("hashed_password"),
+                    RoleId.of(rs.getObject("role_id", UUID.class)),
+                    User.AccountStatus.valueOf(rs.getString("account_status").toUpperCase()),
+                    rs.getInt("failed_login_attempts"),
+                    lockedUntil,
+                    rs.getTimestamp("created_at").toInstant(),
+                    rs.getTimestamp("updated_at").toInstant(),
+                    lastLoginAt,
+                    emailVerifiedAt);
         }
     }
 }

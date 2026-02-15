@@ -27,14 +27,13 @@ object RoleFixtures {
         id: RoleId = randomRoleId(),
         name: String = "ADMIN",
         description: String = "System administrator with full access",
-    ): Role =
-        Role(
-            id,
-            name,
-            description,
-            Instant.now().minusSeconds(86400),
-            Instant.now().minusSeconds(3600),
-        )
+    ): Role = Role(
+        id,
+        name,
+        description,
+        Instant.now().minusSeconds(86400),
+        Instant.now().minusSeconds(3600),
+    )
 
     /**
      * Creates a USER role for testing.
@@ -43,14 +42,13 @@ object RoleFixtures {
         id: RoleId = randomRoleId(),
         name: String = "USER",
         description: String = "Standard user with limited access",
-    ): Role =
-        Role(
-            id,
-            name,
-            description,
-            Instant.now().minusSeconds(86400),
-            Instant.now().minusSeconds(3600),
-        )
+    ): Role = Role(
+        id,
+        name,
+        description,
+        Instant.now().minusSeconds(86400),
+        Instant.now().minusSeconds(3600),
+    )
 
     /**
      * Creates a MODERATOR role for testing.
@@ -59,14 +57,13 @@ object RoleFixtures {
         id: RoleId = randomRoleId(),
         name: String = "MODERATOR",
         description: String = "Content moderator with approval permissions",
-    ): Role =
-        Role(
-            id,
-            name,
-            description,
-            Instant.now().minusSeconds(86400),
-            Instant.now().minusSeconds(3600),
-        )
+    ): Role = Role(
+        id,
+        name,
+        description,
+        Instant.now().minusSeconds(86400),
+        Instant.now().minusSeconds(3600),
+    )
 
     /**
      * Creates a custom role for testing.
@@ -75,14 +72,13 @@ object RoleFixtures {
         id: RoleId = randomRoleId(),
         name: String = validName(),
         description: String = "Custom test role",
-    ): Role =
-        Role(
-            id,
-            name,
-            description,
-            Instant.now(),
-            Instant.now(),
-        )
+    ): Role = Role(
+        id,
+        name,
+        description,
+        Instant.now(),
+        Instant.now(),
+    )
 
     /**
      * Creates role creation request data.
@@ -90,11 +86,10 @@ object RoleFixtures {
     fun createRoleRequest(
         name: String = validName(),
         description: String = "Test role description",
-    ): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "description" to description,
-        )
+    ): Map<String, Any> = mapOf(
+        "name" to name,
+        "description" to description,
+    )
 
     /**
      * Invalid role names for validation testing.

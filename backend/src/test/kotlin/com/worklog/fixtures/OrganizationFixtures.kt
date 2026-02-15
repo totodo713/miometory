@@ -14,7 +14,8 @@ class OrganizationFixtures {
         /**
          * Creates a valid organization code.
          */
-        fun validCode(prefix: String = "ORG"): String = "${prefix}_${UUID.randomUUID().toString().replace("-", "").take(8).uppercase()}"
+        fun validCode(prefix: String = "ORG"): String =
+            "${prefix}_${UUID.randomUUID().toString().replace("-", "").take(8).uppercase()}"
 
         /**
          * Creates a random Code value object.
@@ -56,24 +57,20 @@ class OrganizationFixtures {
             name: String = validName(),
             parentId: UUID? = null,
             level: Int = 1,
-        ): Map<String, Any?> =
-            mutableMapOf<String, Any?>(
-                "code" to code,
-                "name" to name,
-                "level" to level,
-            ).apply {
-                if (parentId != null) {
-                    this["parentId"] = parentId.toString()
-                }
+        ): Map<String, Any?> = mutableMapOf<String, Any?>(
+            "code" to code,
+            "name" to name,
+            "level" to level,
+        ).apply {
+            if (parentId != null) {
+                this["parentId"] = parentId.toString()
             }
+        }
 
         /**
          * Creates organization update request data.
          */
-        fun updateOrganizationRequest(
-            name: String = validName("Updated"),
-            parentId: UUID? = null,
-        ): Map<String, Any?> =
+        fun updateOrganizationRequest(name: String = validName("Updated"), parentId: UUID? = null): Map<String, Any?> =
             mutableMapOf<String, Any?>(
                 "name" to name,
             ).apply {
@@ -90,10 +87,7 @@ class OrganizationFixtures {
         /**
          * Creates a hierarchy of organization requests for testing.
          */
-        fun createHierarchy(
-            tenantId: UUID,
-            depth: Int = 3,
-        ): List<Map<String, Any?>> {
+        fun createHierarchy(tenantId: UUID, depth: Int = 3): List<Map<String, Any?>> {
             val organizations = mutableListOf<Map<String, Any?>>()
             var parentId: UUID? = null
 

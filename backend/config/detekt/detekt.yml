@@ -1,0 +1,77 @@
+# detekt configuration for WorkLog backend
+# Customized for Spring Boot + Kotlin project
+# Builds upon default config (buildUponDefaultConfig = true in build.gradle.kts)
+
+comments:
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+  UndocumentedPublicProperty:
+    active: false
+
+complexity:
+  LongParameterList:
+    # Spring Boot DI constructors often have many parameters
+    allowedConstructorParameters: 12
+    allowedFunctionParameters: 6
+    ignoreDefaultParameters: true
+    ignoreAnnotatedParameter:
+      - "org.springframework.beans.factory.annotation.Value"
+      - "org.springframework.beans.factory.annotation.Qualifier"
+  TooManyFunctions:
+    excludes: ['**/test/**']
+    allowedFunctionsPerFile: 25
+    allowedFunctionsPerClass: 25
+    allowedFunctionsPerInterface: 25
+  CyclomaticComplexMethod:
+    allowedComplexity: 15
+
+style:
+  MagicNumber:
+    # Allow common HTTP status codes and typical constants
+    ignoreNumbers:
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '10'
+      - '100'
+      - '200'
+      - '201'
+      - '204'
+      - '301'
+      - '302'
+      - '400'
+      - '401'
+      - '403'
+      - '404'
+      - '409'
+      - '422'
+      - '429'
+      - '500'
+    ignorePropertyDeclaration: true
+    ignoreAnnotation: true
+    ignoreEnums: true
+    ignoreRanges: true
+  MaxLineLength:
+    maxLineLength: 120
+    excludeCommentStatements: true
+  ForbiddenComment:
+    active: false
+  WildcardImport:
+    active: true
+
+naming:
+  FunctionNaming:
+    # Allow backtick-quoted test method names (e.g., `should return 200 when valid`)
+    excludes: ['**/test/**']
+
+potential-bugs:
+  DoubleMutabilityForCollection:
+    active: true
+  HasPlatformType:
+    active: true

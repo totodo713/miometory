@@ -2,10 +2,6 @@ package com.worklog.infrastructure.persistence;
 
 import com.worklog.domain.password.PasswordResetToken;
 import com.worklog.domain.user.UserId;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -13,6 +9,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
 
 /**
  * Repository for managing password reset tokens.
@@ -32,14 +31,13 @@ public class PasswordResetTokenRepository {
             VALUES (?, ?, ?, ?, ?, ?)
             """;
         jdbcTemplate.update(
-            sql,
-            token.getId(),
-            token.getUserId().value(),
-            token.getToken(),
-            Timestamp.from(token.getCreatedAt()),
-            Timestamp.from(token.getExpiresAt()),
-            token.getUsedAt() != null ? Timestamp.from(token.getUsedAt()) : null
-        );
+                sql,
+                token.getId(),
+                token.getUserId().value(),
+                token.getToken(),
+                Timestamp.from(token.getCreatedAt()),
+                Timestamp.from(token.getExpiresAt()),
+                token.getUsedAt() != null ? Timestamp.from(token.getUsedAt()) : null);
     }
 
     /**
@@ -93,14 +91,15 @@ public class PasswordResetTokenRepository {
         @Override
         public PasswordResetToken mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new PasswordResetToken(
-                rs.getObject("id", UUID.class),
-                new UserId(rs.getObject("user_id", UUID.class)),
-                rs.getString("token"),
-                rs.getTimestamp("created_at").toInstant(),
-                rs.getTimestamp("expires_at").toInstant(),
-                rs.getTimestamp("used_at") != null,
-                rs.getTimestamp("used_at") != null ? rs.getTimestamp("used_at").toInstant() : null
-            );
+                    rs.getObject("id", UUID.class),
+                    new UserId(rs.getObject("user_id", UUID.class)),
+                    rs.getString("token"),
+                    rs.getTimestamp("created_at").toInstant(),
+                    rs.getTimestamp("expires_at").toInstant(),
+                    rs.getTimestamp("used_at") != null,
+                    rs.getTimestamp("used_at") != null
+                            ? rs.getTimestamp("used_at").toInstant()
+                            : null);
         }
     }
 }

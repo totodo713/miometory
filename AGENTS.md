@@ -1,6 +1,7 @@
 # AGENTS.md – Agentic Coding Rules for Miometry
 
 This file provides agentic coding agents with complete guidelines for operating in this repository. It covers build, lint, and test commands, exhaustive style recommendations, and critical patterns for maintaining code standardization across backend (Spring Boot/Kotlin) and frontend (Next.js/TypeScript) projects.
+Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 
 ## Table of Contents
 1. [Language Preferences](#language-preferences)
@@ -93,8 +94,11 @@ work-log/
 - Run single test (method): `./gradlew test --tests "com.worklog.api.HealthControllerTest.healthEndpointReturnsOK"`
 
 **Linting/Formatting:**
-- **[Biome not used for backend]**
-- Use IDE formatting or configure Spotless/Ktlint plugins as per team convention.
+- Format all files: `./gradlew formatAll` (runs Spotless auto-fix)
+- Check formatting: `./gradlew checkFormat` (runs Spotless check + detekt)
+- Format Java only: `./gradlew spotlessJavaApply`
+- Format Kotlin only: `./gradlew spotlessKotlinApply`
+- Run detekt only: `./gradlew detekt`
 
 ---
 
@@ -113,8 +117,9 @@ work-log/
 - **Linting:** Address all Biome warnings before PRs.
 
 ### Backend (Kotlin/Java)
-- **Imports:** Group Java, third-party, and project imports separately; no wildcard imports.
-- **Formatting:** 4 spaces for indentation. Curly braces on same line. Use idiomatic Kotlin—prefer `val` over `var` unless mutation is required.
+- **Imports:** Group Java, third-party, and project imports separately; no wildcard imports. Enforced by Spotless (ktlint for Kotlin, palantir-java-format for Java).
+- **Formatting:** Enforced via Spotless. 4 spaces, 120-char max line length. Run `./gradlew formatAll` before committing. palantir-java-format for Java; ktlint (intellij_idea style) for Kotlin.
+- **Static Analysis:** detekt for Kotlin static analysis. Run `./gradlew detekt` to check. Baseline file (`detekt-baseline.xml`) suppresses existing violations; new code must pass.
 - **Naming:** PascalCase for classes/types; camelCase for functions/params/local vars.
 - **Types:** Explicitly declare return types for all public functions.
 - **Null Safety:** Use Kotlin nullability. Prefer explicit handling with `?` and `?:` operators.

@@ -4,12 +4,8 @@ import java.util.UUID;
 
 /**
  * Command to delete an absence record.
- * 
+ *
  * @param id Absence ID to delete
  * @param deletedBy Who is deleting the absence
  */
-public record DeleteAbsenceCommand(
-    UUID id,
-    UUID deletedBy
-) {
-}
+public record DeleteAbsenceCommand(UUID id, UUID deletedBy) {}

@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for JdbcAuditLogger.
- * 
+ *
  * Tests audit logging with various scenarios.
  */
 class AuditLoggerTest : IntegrationTestBase() {

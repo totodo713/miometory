@@ -27,13 +27,13 @@ import kotlin.test.assertTrue
 
 /**
  * Unit tests for AuthService (US1 - Account Creation & Login)
- * 
+ *
  * Tests cover:
  * - T027: signup() - verify user creation and email sent
  * - T028: login() success case - verify session created and last_login_at updated
  * - T029: login() failed attempts - verify account locks after 5 failures for 15 minutes
  * - T030: verifyEmail() - verify email_verified_at set and account_status updated
- * 
+ *
  * TDD: These tests are written FIRST and will FAIL until AuthService is implemented.
  */
 class AuthServiceTest {
@@ -435,7 +435,8 @@ class AuthServiceTest {
         // Given
         val invalidToken = "invalid-token"
 
-        every { tokenStore.validateAndConsume(invalidToken) } throws IllegalArgumentException("Invalid verification token")
+        every { tokenStore.validateAndConsume(invalidToken) } throws
+            IllegalArgumentException("Invalid verification token")
 
         // When/Then
         val exception =

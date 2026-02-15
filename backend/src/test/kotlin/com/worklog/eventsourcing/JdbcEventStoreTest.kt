@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for JdbcEventStore.
- * 
+ *
  * Tests event append/load operations and optimistic locking behavior.
  */
 class JdbcEventStoreTest : IntegrationTestBase() {
