@@ -7,7 +7,8 @@ plugins {
     kotlin("jvm") version "2.3.0"
     kotlin("plugin.spring") version "2.3.0"
     jacoco
-    id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+    id("com.diffplug.spotless") version "8.2.1"
+    id("dev.detekt") version "2.0.0-alpha.2"
     id("org.owasp.dependencycheck") version "12.1.1"
 }
 
@@ -100,13 +101,13 @@ jacoco {
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
-	
+
     reports {
         xml.required.set(true)
         html.required.set(true)
         html.outputLocation.set(layout.buildDirectory.dir("reports/jacoco"))
     }
-	
+
     // Exclude auto-generated and framework classes
     classDirectories.setFrom(
         files(
@@ -125,14 +126,14 @@ tasks.jacocoTestReport {
 
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.jacocoTestReport)
-	
+
     violationRules {
         rule {
             limit {
                 minimum = "0.80".toBigDecimal()
             }
         }
-		
+
         rule {
             element = "PACKAGE"
             limit {
@@ -145,10 +146,66 @@ tasks.jacocoTestCoverageVerification {
     }
 }
 
-// ktlint configuration
-ktlint {
-    version.set("1.5.0")
-    android.set(false)
-    outputToConsole.set(true)
-    ignoreFailures.set(false)
+// Spotless configuration for Java/Kotlin formatting
+spotless {
+    java {
+        importOrder("com.worklog", "", "java|javax", "\\#")
+        removeUnusedImports()
+        palantirJavaFormat()
+        formatAnnotations()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    kotlin {
+        target("src/*/java/**/*.kt", "src/*/kotlin/**/*.kt")
+        targetExclude("${layout.buildDirectory.get()}/**/*.kt")
+        ktlint()
+            .editorConfigOverride(
+                mapOf(
+                    "indent_size" to "4",
+                    "max_line_length" to "120",
+                    "ktlint_code_style" to "intellij_idea",
+                ),
+            )
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint()
+            .editorConfigOverride(
+                mapOf(
+                    "indent_size" to "4",
+                    "max_line_length" to "120",
+                    "ktlint_code_style" to "intellij_idea",
+                ),
+            )
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+// detekt configuration for Kotlin static analysis
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom("$projectDir/config/detekt/detekt.yml")
+    baseline = file("$projectDir/detekt-baseline.xml")
+    parallel = true
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    jvmTarget = "21"
+}
+
+// Convenience tasks
+tasks.register("formatAll") {
+    description = "Formats all Java and Kotlin source files"
+    group = "formatting"
+    dependsOn("spotlessApply")
+}
+
+tasks.register("checkFormat") {
+    description = "Checks formatting (Spotless) and runs Kotlin static analysis (detekt)"
+    group = "verification"
+    dependsOn("spotlessCheck", "detekt")
 }
