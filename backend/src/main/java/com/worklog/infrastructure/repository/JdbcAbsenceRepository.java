@@ -10,20 +10,19 @@ import com.worklog.domain.absence.events.AbsenceUpdated;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Repository for Absence aggregates.
- * 
+ *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
@@ -50,12 +49,7 @@ public class JdbcAbsenceRepository {
             return;
         }
 
-        eventStore.append(
-                absence.getId().value(),
-                absence.getAggregateType(),
-                events,
-                absence.getVersion()
-        );
+        eventStore.append(absence.getId().value(), absence.getAggregateType(), events, absence.getVersion());
 
         absence.clearUncommittedEvents();
         absence.setVersion(absence.getVersion() + events.size());
@@ -63,7 +57,7 @@ public class JdbcAbsenceRepository {
 
     /**
      * Find an absence by ID.
-     * 
+     *
      * Reconstructs the aggregate from events in the event store.
      */
     public Optional<Absence> findById(AbsenceId absenceId) {
@@ -82,19 +76,19 @@ public class JdbcAbsenceRepository {
         }
 
         absence.clearUncommittedEvents();
-        
+
         // Return empty if the aggregate is marked as deleted
         if (absence.isDeleted()) {
             return Optional.empty();
         }
-        
+
         return Optional.of(absence);
     }
 
     /**
      * Calculate total absence hours for a member on a specific date.
      * This is used for the 24-hour daily limit validation (work + absence).
-     * 
+     *
      * @param memberId Member ID
      * @param date Date to check
      * @param excludeAbsenceId Optional absence ID to exclude (for updates)
@@ -109,8 +103,8 @@ public class JdbcAbsenceRepository {
             AND CAST(payload->>'date' AS DATE) = ?
             AND event_type = 'AbsenceRecorded'
             AND aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
+                SELECT aggregate_id
+                FROM event_store
                 WHERE aggregate_type = 'Absence'
                 AND event_type = 'AbsenceDeleted'
             )
@@ -123,7 +117,7 @@ public class JdbcAbsenceRepository {
     /**
      * Find absences by date range with optional status filter.
      * Reconstructs aggregates from events.
-     * 
+     *
      * @param memberId Member ID to filter by
      * @param startDate Start date (inclusive)
      * @param endDate End date (inclusive)
@@ -131,11 +125,7 @@ public class JdbcAbsenceRepository {
      * @return List of absences matching criteria
      */
     public List<Absence> findByDateRange(
-        UUID memberId,
-        LocalDate startDate,
-        LocalDate endDate,
-        com.worklog.domain.absence.AbsenceStatus status
-    ) {
+            UUID memberId, LocalDate startDate, LocalDate endDate, com.worklog.domain.absence.AbsenceStatus status) {
         // Query for aggregate IDs matching criteria
         String sql = """
             SELECT DISTINCT e.aggregate_id, CAST(e.payload->>'date' AS DATE) as absence_date
@@ -145,8 +135,8 @@ public class JdbcAbsenceRepository {
             AND CAST(e.payload->>'memberId' AS UUID) = ?
             AND CAST(e.payload->>'date' AS DATE) BETWEEN ? AND ?
             AND e.aggregate_id NOT IN (
-                SELECT aggregate_id 
-                FROM event_store 
+                SELECT aggregate_id
+                FROM event_store
                 WHERE aggregate_type = 'Absence'
                 AND event_type = 'AbsenceDeleted'
             )
@@ -154,18 +144,13 @@ public class JdbcAbsenceRepository {
             """;
 
         List<UUID> aggregateIds = jdbcTemplate.query(
-            sql,
-            (rs, rowNum) -> UUID.fromString(rs.getString("aggregate_id")),
-            memberId,
-            startDate,
-            endDate
-        );
+                sql, (rs, rowNum) -> UUID.fromString(rs.getString("aggregate_id")), memberId, startDate, endDate);
 
         // Reconstruct each aggregate from events
         List<Absence> absences = new java.util.ArrayList<>();
         for (UUID aggregateId : aggregateIds) {
             Optional<Absence> absence = findById(AbsenceId.of(aggregateId));
-            
+
             // Apply status filter if specified
             if (absence.isPresent()) {
                 if (status == null || absence.get().getStatus() == status) {
@@ -186,7 +171,8 @@ public class JdbcAbsenceRepository {
                 case "AbsenceRecorded" -> objectMapper.readValue(storedEvent.payload(), AbsenceRecorded.class);
                 case "AbsenceUpdated" -> objectMapper.readValue(storedEvent.payload(), AbsenceUpdated.class);
                 case "AbsenceDeleted" -> objectMapper.readValue(storedEvent.payload(), AbsenceDeleted.class);
-                case "AbsenceStatusChanged" -> objectMapper.readValue(storedEvent.payload(), AbsenceStatusChanged.class);
+                case "AbsenceStatusChanged" ->
+                    objectMapper.readValue(storedEvent.payload(), AbsenceStatusChanged.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {

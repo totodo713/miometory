@@ -10,16 +10,14 @@ import com.worklog.domain.worklog.events.WorkLogEntryCreated;
 import com.worklog.domain.worklog.events.WorkLogEntryDeleted;
 import com.worklog.domain.worklog.events.WorkLogEntryStatusChanged;
 import com.worklog.domain.worklog.events.WorkLogEntryUpdated;
-
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 
 /**
  * WorkLogEntry aggregate root.
- * 
+ *
  * Represents hours worked by a member on a specific project on a specific date.
- * 
+ *
  * Invariants:
  * - Hours must be in 0.25h increments (enforced by TimeAmount)
  * - Hours must be ≥ 0 and ≤ 24 (enforced by TimeAmount)
@@ -32,12 +30,12 @@ import java.time.LocalDate;
  * - SUBMITTED/APPROVED entries are read-only
  * - Can only delete entries in DRAFT status
  * - Comment max 500 characters
- * 
+ *
  * Note: The 24-hour daily limit across all projects is validated at the service layer,
  * not in this aggregate (as it requires cross-aggregate validation).
  */
 public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
-    
+
     private WorkLogEntryId id;
     private MemberId memberId;
     private ProjectId projectId;
@@ -49,14 +47,13 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
     private Instant createdAt;
     private Instant updatedAt;
     private boolean deleted;
-    
+
     // Private constructor for factory methods
-    private WorkLogEntry() {
-    }
-    
+    private WorkLogEntry() {}
+
     /**
      * Creates a new work log entry in DRAFT status.
-     * 
+     *
      * @param memberId Member who worked (or attributed member for proxy entries)
      * @param projectId Project worked on
      * @param date Date of work
@@ -66,36 +63,28 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
      * @return New WorkLogEntry instance with WorkLogEntryCreated event
      */
     public static WorkLogEntry create(
-        MemberId memberId,
-        ProjectId projectId,
-        LocalDate date,
-        TimeAmount hours,
-        String comment,
-        MemberId enteredBy
-    ) {
+            MemberId memberId,
+            ProjectId projectId,
+            LocalDate date,
+            TimeAmount hours,
+            String comment,
+            MemberId enteredBy) {
         validateDate(date);
         validateComment(comment);
-        
+
         WorkLogEntry entry = new WorkLogEntry();
         WorkLogEntryId entryId = WorkLogEntryId.generate();
-        
-        WorkLogEntryCreated event = WorkLogEntryCreated.create(
-            entryId,
-            memberId,
-            projectId,
-            date,
-            hours,
-            comment,
-            enteredBy
-        );
-        
+
+        WorkLogEntryCreated event =
+                WorkLogEntryCreated.create(entryId, memberId, projectId, date, hours, comment, enteredBy);
+
         entry.raiseEvent(event);
         return entry;
     }
-    
+
     /**
      * Updates hours and/or comment of the entry.
-     * 
+     *
      * @param hours New hours value
      * @param comment New comment
      * @param updatedBy Who is updating
@@ -104,44 +93,37 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
     public void update(TimeAmount hours, String comment, MemberId updatedBy) {
         if (!isEditable()) {
             throw new DomainException(
-                "ENTRY_NOT_EDITABLE",
-                "Cannot update entry in " + status + " status. Only DRAFT entries can be edited."
-            );
+                    "ENTRY_NOT_EDITABLE",
+                    "Cannot update entry in " + status + " status. Only DRAFT entries can be edited.");
         }
-        
+
         validateComment(comment);
-        
-        WorkLogEntryUpdated event = WorkLogEntryUpdated.create(
-            this.id,
-            hours,
-            comment,
-            updatedBy
-        );
-        
+
+        WorkLogEntryUpdated event = WorkLogEntryUpdated.create(this.id, hours, comment, updatedBy);
+
         raiseEvent(event);
     }
-    
+
     /**
      * Deletes the entry.
-     * 
+     *
      * @param deletedBy Who is deleting
      * @throws DomainException if entry cannot be deleted
      */
     public void delete(MemberId deletedBy) {
         if (!isDeletable()) {
             throw new DomainException(
-                "ENTRY_NOT_DELETABLE",
-                "Cannot delete entry in " + status + " status. Only DRAFT entries can be deleted."
-            );
+                    "ENTRY_NOT_DELETABLE",
+                    "Cannot delete entry in " + status + " status. Only DRAFT entries can be deleted.");
         }
-        
+
         WorkLogEntryDeleted event = WorkLogEntryDeleted.create(this.id, deletedBy);
         raiseEvent(event);
     }
-    
+
     /**
      * Changes the status of the entry.
-     * 
+     *
      * @param newStatus New status
      * @param changedBy Who is changing the status
      * @throws DomainException if transition is not allowed
@@ -149,21 +131,14 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
     public void changeStatus(WorkLogStatus newStatus, MemberId changedBy) {
         if (!status.canTransitionTo(newStatus)) {
             throw new DomainException(
-                "INVALID_STATUS_TRANSITION",
-                "Cannot transition from " + status + " to " + newStatus
-            );
+                    "INVALID_STATUS_TRANSITION", "Cannot transition from " + status + " to " + newStatus);
         }
-        
-        WorkLogEntryStatusChanged event = WorkLogEntryStatusChanged.create(
-            this.id,
-            this.status,
-            newStatus,
-            changedBy
-        );
-        
+
+        WorkLogEntryStatusChanged event = WorkLogEntryStatusChanged.create(this.id, this.status, newStatus, changedBy);
+
         raiseEvent(event);
     }
-    
+
     /**
      * Checks if the entry can be edited.
      * Only DRAFT entries are editable.
@@ -171,7 +146,7 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
     public boolean isEditable() {
         return status == WorkLogStatus.DRAFT;
     }
-    
+
     /**
      * Checks if the entry can be deleted.
      * Only DRAFT entries can be deleted.
@@ -179,14 +154,14 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
     public boolean isDeletable() {
         return status == WorkLogStatus.DRAFT;
     }
-    
+
     /**
      * Checks if this is a proxy entry (entered by someone other than the member).
      */
     public boolean isProxyEntry() {
         return !enteredBy.equals(memberId);
     }
-    
+
     @Override
     protected void apply(DomainEvent event) {
         switch (event) {
@@ -216,79 +191,76 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
                 this.deleted = true;
                 this.updatedAt = e.occurredAt();
             }
-            default -> throw new IllegalArgumentException(
-                "Unknown event type: " + event.getClass().getName()
-            );
+            default ->
+                throw new IllegalArgumentException(
+                        "Unknown event type: " + event.getClass().getName());
         }
     }
-    
+
     private static void validateDate(LocalDate date) {
         if (date == null) {
             throw new DomainException("DATE_REQUIRED", "Date cannot be null");
         }
-        
+
         if (date.isAfter(LocalDate.now())) {
             throw new DomainException("DATE_IN_FUTURE", "Date cannot be in the future");
         }
     }
-    
+
     private static void validateComment(String comment) {
         if (comment != null && comment.length() > 500) {
-            throw new DomainException(
-                "COMMENT_TOO_LONG",
-                "Comment cannot exceed 500 characters"
-            );
+            throw new DomainException("COMMENT_TOO_LONG", "Comment cannot exceed 500 characters");
         }
     }
-    
+
     // Getters
-    
+
     @Override
     public WorkLogEntryId getId() {
         return id;
     }
-    
+
     @Override
     public String getAggregateType() {
         return "WorkLogEntry";
     }
-    
+
     public MemberId getMemberId() {
         return memberId;
     }
-    
+
     public ProjectId getProjectId() {
         return projectId;
     }
-    
+
     public LocalDate getDate() {
         return date;
     }
-    
+
     public TimeAmount getHours() {
         return hours;
     }
-    
+
     public String getComment() {
         return comment;
     }
-    
+
     public WorkLogStatus getStatus() {
         return status;
     }
-    
+
     public MemberId getEnteredBy() {
         return enteredBy;
     }
-    
+
     public Instant getCreatedAt() {
         return createdAt;
     }
-    
+
     public Instant getUpdatedAt() {
         return updatedAt;
     }
-    
+
     public boolean isDeleted() {
         return deleted;
     }

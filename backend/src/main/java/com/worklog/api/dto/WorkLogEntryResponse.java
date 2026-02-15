@@ -9,16 +9,14 @@ import java.util.UUID;
  * Response DTO for work log entry details.
  */
 public record WorkLogEntryResponse(
-    UUID id,
-    UUID memberId,
-    UUID projectId,
-    LocalDate date,
-    BigDecimal hours,
-    String comment,
-    String status,
-    UUID enteredBy,
-    Instant createdAt,
-    Instant updatedAt,
-    Long version
-) {
-}
+        UUID id,
+        UUID memberId,
+        UUID projectId,
+        LocalDate date,
+        BigDecimal hours,
+        String comment,
+        String status,
+        UUID enteredBy,
+        Instant createdAt,
+        Instant updatedAt,
+        Long version) {}

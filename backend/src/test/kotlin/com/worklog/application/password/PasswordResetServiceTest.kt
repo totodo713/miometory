@@ -47,7 +47,8 @@ class PasswordResetServiceTest {
 
     @BeforeEach
     fun setup() {
-        service = PasswordResetService(userRepository, tokenRepository, emailService, userSessionRepository, passwordEncoder)
+        service =
+            PasswordResetService(userRepository, tokenRepository, emailService, userSessionRepository, passwordEncoder)
     }
 
     @Test

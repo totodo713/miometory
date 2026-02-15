@@ -21,13 +21,12 @@ object PermissionFixtures {
         id: PermissionId = randomPermissionId(),
         name: String = "user.create",
         description: String = "Create new users",
-    ): Permission =
-        Permission(
-            id,
-            name,
-            description,
-            Instant.now().minusSeconds(86400),
-        )
+    ): Permission = Permission(
+        id,
+        name,
+        description,
+        Instant.now().minusSeconds(86400),
+    )
 
     /**
      * Creates a user.delete permission for testing.
@@ -36,13 +35,12 @@ object PermissionFixtures {
         id: PermissionId = randomPermissionId(),
         name: String = "user.delete",
         description: String = "Delete users",
-    ): Permission =
-        Permission(
-            id,
-            name,
-            description,
-            Instant.now().minusSeconds(86400),
-        )
+    ): Permission = Permission(
+        id,
+        name,
+        description,
+        Instant.now().minusSeconds(86400),
+    )
 
     /**
      * Creates a report.view permission for testing.
@@ -51,13 +49,12 @@ object PermissionFixtures {
         id: PermissionId = randomPermissionId(),
         name: String = "report.view",
         description: String = "View reports",
-    ): Permission =
-        Permission(
-            id,
-            name,
-            description,
-            Instant.now().minusSeconds(86400),
-        )
+    ): Permission = Permission(
+        id,
+        name,
+        description,
+        Instant.now().minusSeconds(86400),
+    )
 
     /**
      * Creates an admin.access permission for testing.
@@ -66,13 +63,12 @@ object PermissionFixtures {
         id: PermissionId = randomPermissionId(),
         name: String = "admin.access",
         description: String = "Access admin panel",
-    ): Permission =
-        Permission(
-            id,
-            name,
-            description,
-            Instant.now().minusSeconds(86400),
-        )
+    ): Permission = Permission(
+        id,
+        name,
+        description,
+        Instant.now().minusSeconds(86400),
+    )
 
     /**
      * Creates a custom permission for testing.
@@ -81,13 +77,12 @@ object PermissionFixtures {
         id: PermissionId = randomPermissionId(),
         name: String = "custom.action",
         description: String = "Custom test permission",
-    ): Permission =
-        Permission(
-            id,
-            name,
-            description,
-            Instant.now(),
-        )
+    ): Permission = Permission(
+        id,
+        name,
+        description,
+        Instant.now(),
+    )
 
     /**
      * Creates permission creation request data.
@@ -95,11 +90,10 @@ object PermissionFixtures {
     fun createPermissionRequest(
         name: String = "custom.action",
         description: String = "Test permission description",
-    ): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "description" to description,
-        )
+    ): Map<String, Any> = mapOf(
+        "name" to name,
+        "description" to description,
+    )
 
     /**
      * Invalid permission names for validation testing.

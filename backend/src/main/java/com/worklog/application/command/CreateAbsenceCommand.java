@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * Command to create a new absence record.
- * 
+ *
  * @param memberId Member who is absent
  * @param date Date of absence
  * @param hours Hours of absence (will be validated as 0.25h increments, > 0 and <= 24h)
@@ -15,11 +15,4 @@ import java.util.UUID;
  * @param recordedBy Who is recording the absence (for proxy entries)
  */
 public record CreateAbsenceCommand(
-    UUID memberId,
-    LocalDate date,
-    BigDecimal hours,
-    String absenceType,
-    String reason,
-    UUID recordedBy
-) {
-}
+        UUID memberId, LocalDate date, BigDecimal hours, String absenceType, String reason, UUID recordedBy) {}

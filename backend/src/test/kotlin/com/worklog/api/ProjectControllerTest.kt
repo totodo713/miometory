@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for ProjectController.
- * 
+ *
  * Tests the "Copy from Previous Month" feature (FR-016).
  * Task: T152 - Integration test for copy previous month
  */
@@ -129,8 +129,16 @@ class ProjectControllerTest : IntegrationTestBase() {
         assertEquals(2, body["count"]) // Should have 2 unique projects
         val projectIds = body["projectIds"] as List<*>
         assertEquals(2, projectIds.size)
-        assertTrue(projectIds.contains(projectId1.toString()) || projectIds.any { it.toString() == projectId1.toString() })
-        assertTrue(projectIds.contains(projectId2.toString()) || projectIds.any { it.toString() == projectId2.toString() })
+        assertTrue(
+            projectIds.contains(projectId1.toString()) || projectIds.any {
+                it.toString() == projectId1.toString()
+            },
+        )
+        assertTrue(
+            projectIds.contains(projectId2.toString()) || projectIds.any {
+                it.toString() == projectId2.toString()
+            },
+        )
     }
 
     @Test

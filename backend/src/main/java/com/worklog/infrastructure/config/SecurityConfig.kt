@@ -18,7 +18,7 @@ import org.springframework.web.cors.CorsConfigurationSource
  *
  * Development mode: All endpoints are public for rapid prototyping, CSRF disabled.
  * Production mode: CSRF enabled with cookie-based token for SPA compatibility.
- * 
+ *
  * TODO: Enable OAuth2/OIDC and SAML2 authentication for production:
  * - OAuth2/OIDC login for modern SSO providers (Azure AD, Google, etc.)
  * - SAML2 login for enterprise SAML providers (Okta, etc.)
@@ -27,9 +27,7 @@ import org.springframework.web.cors.CorsConfigurationSource
  */
 @Configuration
 @EnableWebSecurity
-class SecurityConfig(
-    private val corsConfigurationSource: CorsConfigurationSource,
-) {
+class SecurityConfig(private val corsConfigurationSource: CorsConfigurationSource) {
     /**
      * Password encoder bean using BCrypt algorithm.
      * BCrypt automatically handles salting and uses adaptive hashing.

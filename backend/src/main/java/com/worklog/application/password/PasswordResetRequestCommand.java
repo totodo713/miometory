@@ -7,9 +7,7 @@ import jakarta.validation.constraints.NotBlank;
  * Command object for requesting a password reset.
  */
 public class PasswordResetRequestCommand {
-    @NotBlank
-    @Email
-    private String email;
+    @NotBlank @Email private String email;
 
     public PasswordResetRequestCommand() {}
 

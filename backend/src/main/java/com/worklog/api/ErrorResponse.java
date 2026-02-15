@@ -12,12 +12,7 @@ import java.util.Map;
  * @param timestamp When the error occurred
  * @param details   Additional context about the error (optional)
  */
-public record ErrorResponse(
-    String errorCode,
-    String message,
-    Instant timestamp,
-    Map<String, Object> details
-) {
+public record ErrorResponse(String errorCode, String message, Instant timestamp, Map<String, Object> details) {
     /**
      * Creates an error response with the current timestamp.
      *

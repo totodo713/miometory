@@ -5,21 +5,20 @@ import java.util.UUID;
 
 /**
  * Value object representing date information including fiscal year and monthly period.
- * 
+ *
  * This is returned by DateInfoService when calculating fiscal year and monthly period
  * for a given date and organization.
  */
 public record DateInfo(
-    LocalDate date,
-    int fiscalYear,
-    LocalDate fiscalYearStart,
-    LocalDate fiscalYearEnd,
-    LocalDate monthlyPeriodStart,
-    LocalDate monthlyPeriodEnd,
-    UUID fiscalYearPatternId,
-    UUID monthlyPeriodPatternId,
-    UUID organizationId
-) {
+        LocalDate date,
+        int fiscalYear,
+        LocalDate fiscalYearStart,
+        LocalDate fiscalYearEnd,
+        LocalDate monthlyPeriodStart,
+        LocalDate monthlyPeriodEnd,
+        UUID fiscalYearPatternId,
+        UUID monthlyPeriodPatternId,
+        UUID organizationId) {
     public DateInfo {
         if (date == null) {
             throw new IllegalArgumentException("Date cannot be null");

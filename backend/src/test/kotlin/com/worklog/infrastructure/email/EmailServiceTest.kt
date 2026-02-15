@@ -19,9 +19,9 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for EmailService (T035)
- * 
+ *
  * Tests email sending functionality using GreenMail mock SMTP server.
- * 
+ *
  * Tests cover:
  * - Email verification messages
  * - Password reset messages
@@ -45,7 +45,8 @@ class EmailServiceTest {
     @Import(MailSenderAutoConfiguration::class)
     class TestConfig {
         @Bean
-        fun emailService(mailSender: JavaMailSender): EmailService = EmailServiceImpl(mailSender, "http://localhost:3000")
+        fun emailService(mailSender: JavaMailSender): EmailService =
+            EmailServiceImpl(mailSender, "http://localhost:3000")
     }
 
     companion object {
@@ -220,7 +221,6 @@ class EmailServiceTest {
      * Extracts email body text from MimeMessage.
      * Handles both plain text and HTML emails.
      */
-    private fun getEmailBody(message: MimeMessage): String =
-        com.icegreen.greenmail.util.GreenMailUtil
-            .getBody(message)
+    private fun getEmailBody(message: MimeMessage): String = com.icegreen.greenmail.util.GreenMailUtil
+        .getBody(message)
 }

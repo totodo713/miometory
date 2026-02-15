@@ -17,10 +17,10 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for ApprovalController.
- * 
+ *
  * Tests the full approval workflow stack from HTTP API through to database persistence.
  * Task: T126 - Integration tests for approval workflow
- * 
+ *
  * Note: Tests use @Transactional to ensure isolation between tests.
  */
 class ApprovalControllerTest : IntegrationTestBase() {
@@ -46,12 +46,7 @@ class ApprovalControllerTest : IntegrationTestBase() {
     /**
      * Helper: Create work log entry
      */
-    private fun createWorkLogEntry(
-        memberId: UUID,
-        projectId: UUID,
-        date: LocalDate,
-        hours: Double = 8.0,
-    ): String {
+    private fun createWorkLogEntry(memberId: UUID, projectId: UUID, date: LocalDate, hours: Double = 8.0): String {
         val request =
             mapOf(
                 "memberId" to memberId.toString(),

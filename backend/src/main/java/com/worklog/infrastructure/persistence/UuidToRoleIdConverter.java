@@ -1,10 +1,10 @@
 package com.worklog.infrastructure.persistence;
 
 import com.worklog.domain.role.RoleId;
+import java.util.UUID;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.stereotype.Component;
-import java.util.UUID;
 
 @Component
 @ReadingConverter

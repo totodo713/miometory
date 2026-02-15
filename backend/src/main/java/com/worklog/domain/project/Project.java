@@ -1,29 +1,28 @@
 package com.worklog.domain.project;
 
 import com.worklog.domain.tenant.TenantId;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
 
 /**
  * Project aggregate root.
- * 
+ *
  * Represents a project that members can log work hours against.
  * Projects have a validity period and can be activated/deactivated.
  */
 public class Project {
-    
+
     private final ProjectId id;
     private final TenantId tenantId;
-    private String code;           // Business identifier (e.g., "PROJ-123")
+    private String code; // Business identifier (e.g., "PROJ-123")
     private String name;
-    private boolean isActive;      // T013: Whether project accepts new entries
-    private LocalDate validFrom;   // T013: Project start date (nullable)
-    private LocalDate validUntil;  // T013: Project end date (nullable)
+    private boolean isActive; // T013: Whether project accepts new entries
+    private LocalDate validFrom; // T013: Project start date (nullable)
+    private LocalDate validUntil; // T013: Project end date (nullable)
     private final Instant createdAt;
     private Instant updatedAt;
-    
+
     /**
      * Constructor for creating a new Project.
      */
@@ -35,45 +34,38 @@ public class Project {
             boolean isActive,
             LocalDate validFrom,
             LocalDate validUntil,
-            Instant createdAt
-    ) {
+            Instant createdAt) {
         this.id = Objects.requireNonNull(id, "Project ID cannot be null");
         this.tenantId = Objects.requireNonNull(tenantId, "Tenant ID cannot be null");
         this.code = Objects.requireNonNull(code, "Project code cannot be null");
         this.name = Objects.requireNonNull(name, "Project name cannot be null");
         this.isActive = isActive;
-        this.validFrom = validFrom;  // Can be null
-        this.validUntil = validUntil;  // Can be null
+        this.validFrom = validFrom; // Can be null
+        this.validUntil = validUntil; // Can be null
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
         this.updatedAt = createdAt;
-        
+
         validateCode(code);
         validateName(name);
         validateValidityPeriod(validFrom, validUntil);
     }
-    
+
     /**
      * Factory method for creating a new Project.
      */
     public static Project create(
-            TenantId tenantId,
-            String code,
-            String name,
-            LocalDate validFrom,
-            LocalDate validUntil
-    ) {
+            TenantId tenantId, String code, String name, LocalDate validFrom, LocalDate validUntil) {
         return new Project(
-            ProjectId.generate(),
-            tenantId,
-            code,
-            name,
-            true,  // New projects are active by default
-            validFrom,
-            validUntil,
-            Instant.now()
-        );
+                ProjectId.generate(),
+                tenantId,
+                code,
+                name,
+                true, // New projects are active by default
+                validFrom,
+                validUntil,
+                Instant.now());
     }
-    
+
     /**
      * Updates project information.
      */
@@ -84,7 +76,7 @@ public class Project {
         this.name = Objects.requireNonNull(name, "Project name cannot be null");
         this.updatedAt = Instant.now();
     }
-    
+
     /**
      * Sets the validity period for the project.
      */
@@ -94,7 +86,7 @@ public class Project {
         this.validUntil = validUntil;
         this.updatedAt = Instant.now();
     }
-    
+
     /**
      * Deactivates the project.
      */
@@ -102,7 +94,7 @@ public class Project {
         this.isActive = false;
         this.updatedAt = Instant.now();
     }
-    
+
     /**
      * Activates the project.
      */
@@ -110,7 +102,7 @@ public class Project {
         this.isActive = true;
         this.updatedAt = Instant.now();
     }
-    
+
     /**
      * Checks if the project is valid (within validity period) on the given date.
      * Returns true if:
@@ -120,18 +112,18 @@ public class Project {
      */
     public boolean isValidOn(LocalDate date) {
         Objects.requireNonNull(date, "Date cannot be null");
-        
+
         if (validFrom != null && date.isBefore(validFrom)) {
             return false;
         }
-        
+
         if (validUntil != null && date.isAfter(validUntil)) {
             return false;
         }
-        
+
         return true;
     }
-    
+
     /**
      * Checks if the project is active AND valid on the given date.
      * This is the main business rule check for whether work can be logged to this project.
@@ -139,7 +131,7 @@ public class Project {
     public boolean isActiveOn(LocalDate date) {
         return isActive && isValidOn(date);
     }
-    
+
     /**
      * Validates project code format.
      */
@@ -151,7 +143,7 @@ public class Project {
             throw new IllegalArgumentException("Project code cannot exceed 50 characters");
         }
     }
-    
+
     /**
      * Validates project name.
      */
@@ -163,58 +155,57 @@ public class Project {
             throw new IllegalArgumentException("Project name cannot exceed 200 characters");
         }
     }
-    
+
     /**
      * Validates that validFrom <= validUntil if both are set.
      */
     private void validateValidityPeriod(LocalDate validFrom, LocalDate validUntil) {
         if (validFrom != null && validUntil != null) {
             if (validFrom.isAfter(validUntil)) {
-                throw new IllegalArgumentException(
-                    "Project validFrom date (" + validFrom + ") cannot be after validUntil date (" + validUntil + ")"
-                );
+                throw new IllegalArgumentException("Project validFrom date (" + validFrom
+                        + ") cannot be after validUntil date (" + validUntil + ")");
             }
         }
     }
-    
+
     // Getters
-    
+
     public ProjectId getId() {
         return id;
     }
-    
+
     public TenantId getTenantId() {
         return tenantId;
     }
-    
+
     public String getCode() {
         return code;
     }
-    
+
     public String getName() {
         return name;
     }
-    
+
     public boolean isActive() {
         return isActive;
     }
-    
+
     public LocalDate getValidFrom() {
         return validFrom;
     }
-    
+
     public LocalDate getValidUntil() {
         return validUntil;
     }
-    
+
     public Instant getCreatedAt() {
         return createdAt;
     }
-    
+
     public Instant getUpdatedAt() {
         return updatedAt;
     }
-    
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -222,21 +213,20 @@ public class Project {
         Project project = (Project) o;
         return Objects.equals(id, project.id);
     }
-    
+
     @Override
     public int hashCode() {
         return Objects.hash(id);
     }
-    
+
     @Override
     public String toString() {
-        return "Project{" +
-                "id=" + id +
-                ", code='" + code + '\'' +
-                ", name='" + name + '\'' +
-                ", isActive=" + isActive +
-                ", validFrom=" + validFrom +
-                ", validUntil=" + validUntil +
-                '}';
+        return "Project{" + "id="
+                + id + ", code='"
+                + code + '\'' + ", name='"
+                + name + '\'' + ", isActive="
+                + isActive + ", validFrom="
+                + validFrom + ", validUntil="
+                + validUntil + '}';
     }
 }

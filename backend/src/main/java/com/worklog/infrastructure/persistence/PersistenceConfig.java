@@ -1,10 +1,9 @@
 package com.worklog.infrastructure.persistence;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.core.convert.JdbcCustomConversions;
-
-import java.util.List;
 
 /**
  * Ensure custom converters are registered for Spring Data JDBC.
@@ -18,13 +17,8 @@ public class PersistenceConfig {
             RoleIdToUuidConverter roleIdToUuidConverter,
             UuidToRoleIdConverter uuidToRoleIdConverter,
             UserIdToUuidConverter userIdToUuidConverter,
-            UuidToUserIdConverter uuidToUserIdConverter
-    ) {
-        return new JdbcCustomConversions(List.of(
-                roleIdToUuidConverter,
-                uuidToRoleIdConverter,
-                userIdToUuidConverter,
-                uuidToUserIdConverter
-        ));
+            UuidToUserIdConverter uuidToUserIdConverter) {
+        return new JdbcCustomConversions(
+                List.of(roleIdToUuidConverter, uuidToRoleIdConverter, userIdToUuidConverter, uuidToUserIdConverter));
     }
 }

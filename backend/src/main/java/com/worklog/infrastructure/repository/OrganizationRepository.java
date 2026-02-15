@@ -5,16 +5,15 @@ import com.worklog.domain.organization.*;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Repository for Organization aggregates.
- * 
+ *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
@@ -40,11 +39,7 @@ public class OrganizationRepository {
         }
 
         eventStore.append(
-                organization.getId().value(),
-                organization.getAggregateType(),
-                events,
-                organization.getVersion()
-        );
+                organization.getId().value(), organization.getAggregateType(), events, organization.getVersion());
 
         organization.clearUncommittedEvents();
         organization.setVersion(organization.getVersion() + events.size());
@@ -52,7 +47,7 @@ public class OrganizationRepository {
 
     /**
      * Find an organization by ID.
-     * 
+     *
      * Reconstructs the aggregate from events in the event store.
      */
     public Optional<Organization> findById(OrganizationId organizationId) {
@@ -82,9 +77,12 @@ public class OrganizationRepository {
             return switch (storedEvent.eventType()) {
                 case "OrganizationCreated" -> objectMapper.readValue(storedEvent.payload(), OrganizationCreated.class);
                 case "OrganizationUpdated" -> objectMapper.readValue(storedEvent.payload(), OrganizationUpdated.class);
-                case "OrganizationDeactivated" -> objectMapper.readValue(storedEvent.payload(), OrganizationDeactivated.class);
-                case "OrganizationActivated" -> objectMapper.readValue(storedEvent.payload(), OrganizationActivated.class);
-                case "OrganizationPatternAssigned" -> objectMapper.readValue(storedEvent.payload(), OrganizationPatternAssigned.class);
+                case "OrganizationDeactivated" ->
+                    objectMapper.readValue(storedEvent.payload(), OrganizationDeactivated.class);
+                case "OrganizationActivated" ->
+                    objectMapper.readValue(storedEvent.payload(), OrganizationActivated.class);
+                case "OrganizationPatternAssigned" ->
+                    objectMapper.readValue(storedEvent.payload(), OrganizationPatternAssigned.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {

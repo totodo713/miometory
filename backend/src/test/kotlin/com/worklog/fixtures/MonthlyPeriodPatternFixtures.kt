@@ -11,11 +11,8 @@ object MonthlyPeriodPatternFixtures {
     /**
      * Kotlin-friendly wrapper for creating MonthlyPeriodPattern with named arguments.
      */
-    fun createPattern(
-        tenantId: TenantId,
-        name: String,
-        startDay: Int,
-    ): MonthlyPeriodPattern = MonthlyPeriodPattern.create(tenantId, name, startDay)
+    fun createPattern(tenantId: TenantId, name: String, startDay: Int): MonthlyPeriodPattern =
+        MonthlyPeriodPattern.create(tenantId, name, startDay)
 
     /**
      * Creates a valid monthly period pattern name.
@@ -30,41 +27,34 @@ object MonthlyPeriodPatternFixtures {
     /**
      * Creates a monthly period pattern request with 21st day start (21日締め).
      */
-    fun create21stDayStartRequest(name: String = "21日締め"): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "startDay" to 21,
-        )
+    fun create21stDayStartRequest(name: String = "21日締め"): Map<String, Any> = mapOf(
+        "name" to name,
+        "startDay" to 21,
+    )
 
     /**
      * Creates a monthly period pattern request with 1st day start (1日締め - month-end close).
      */
-    fun create1stDayStartRequest(name: String = "1日締め"): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "startDay" to 1,
-        )
+    fun create1stDayStartRequest(name: String = "1日締め"): Map<String, Any> = mapOf(
+        "name" to name,
+        "startDay" to 1,
+    )
 
     /**
      * Creates a monthly period pattern request with 15th day start (15日締め).
      */
-    fun create15thDayStartRequest(name: String = "15日締め"): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "startDay" to 15,
-        )
+    fun create15thDayStartRequest(name: String = "15日締め"): Map<String, Any> = mapOf(
+        "name" to name,
+        "startDay" to 15,
+    )
 
     /**
      * Creates a monthly period pattern creation request with custom start day.
      */
-    fun createPatternRequest(
-        name: String = validName(),
-        startDay: Int = 21,
-    ): Map<String, Any> =
-        mapOf(
-            "name" to name,
-            "startDay" to startDay,
-        )
+    fun createPatternRequest(name: String = validName(), startDay: Int = 21): Map<String, Any> = mapOf(
+        "name" to name,
+        "startDay" to startDay,
+    )
 
     /**
      * Invalid start days for validation testing (valid range: 1-28).

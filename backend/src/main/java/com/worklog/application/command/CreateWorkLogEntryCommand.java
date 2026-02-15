@@ -6,7 +6,7 @@ import java.util.UUID;
 
 /**
  * Command to create a new work log entry.
- * 
+ *
  * @param memberId Member who worked (or attributed member for proxy entries)
  * @param projectId Project worked on
  * @param date Date of work
@@ -15,11 +15,4 @@ import java.util.UUID;
  * @param enteredBy Who actually entered the data (for proxy entries)
  */
 public record CreateWorkLogEntryCommand(
-    UUID memberId,
-    UUID projectId,
-    LocalDate date,
-    BigDecimal hours,
-    String comment,
-    UUID enteredBy
-) {
-}
+        UUID memberId, UUID projectId, LocalDate date, BigDecimal hours, String comment, UUID enteredBy) {}

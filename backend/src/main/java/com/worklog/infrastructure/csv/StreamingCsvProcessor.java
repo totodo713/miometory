@@ -1,10 +1,5 @@
 package com.worklog.infrastructure.csv;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +7,10 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
+import org.springframework.stereotype.Component;
 
 /**
  * Processes CSV files in a streaming fashion to handle large files efficiently.
@@ -29,7 +27,7 @@ public class StreamingCsvProcessor {
 
     /**
      * Processes a CSV file from an InputStream, validating each row and calling the consumer for valid rows.
-     * 
+     *
      * @param inputStream The CSV file input stream
      * @param rowConsumer Consumer to process each valid CSV row
      * @param progressCallback Callback for progress updates (row number, total processed, errors)
@@ -37,9 +35,7 @@ public class StreamingCsvProcessor {
      * @throws IOException if there's an error reading the file
      */
     public ProcessingResult processStream(
-            InputStream inputStream,
-            RowConsumer rowConsumer,
-            ProgressCallback progressCallback) throws IOException {
+            InputStream inputStream, RowConsumer rowConsumer, ProgressCallback progressCallback) throws IOException {
 
         List<CsvValidationService.ValidationResult> validationErrors = new ArrayList<>();
         int totalRows = 0;
@@ -47,13 +43,15 @@ public class StreamingCsvProcessor {
         int errorRows = 0;
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
-                     .builder()
-                     .setHeader("Date", "Project Code", "Hours", "Notes")
-                     .setSkipHeaderRecord(true)
-                     .setIgnoreEmptyLines(true)
-                     .setTrim(true)
-                     .build())) {
+                CSVParser csvParser = new CSVParser(
+                        reader,
+                        CSVFormat.DEFAULT
+                                .builder()
+                                .setHeader("Date", "Project Code", "Hours", "Notes")
+                                .setSkipHeaderRecord(true)
+                                .setIgnoreEmptyLines(true)
+                                .setTrim(true)
+                                .build())) {
 
             for (CSVRecord record : csvParser) {
                 totalRows++;
@@ -80,9 +78,7 @@ public class StreamingCsvProcessor {
                     } catch (Exception e) {
                         // Processing error (e.g., database error)
                         validationErrors.add(new CsvValidationService.ValidationResult(
-                                rowNumber, 
-                                List.of("Processing error: " + e.getMessage())
-                        ));
+                                rowNumber, List.of("Processing error: " + e.getMessage())));
                         errorRows++;
                     }
                 } else {

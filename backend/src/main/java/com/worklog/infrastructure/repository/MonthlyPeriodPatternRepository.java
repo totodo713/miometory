@@ -7,21 +7,17 @@ import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Constructor;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Repository for MonthlyPeriodPattern aggregates.
- * 
+ *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
@@ -32,11 +28,7 @@ public class MonthlyPeriodPatternRepository {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
 
-    public MonthlyPeriodPatternRepository(
-        EventStore eventStore,
-        ObjectMapper objectMapper,
-        JdbcTemplate jdbcTemplate
-    ) {
+    public MonthlyPeriodPatternRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
@@ -52,12 +44,7 @@ public class MonthlyPeriodPatternRepository {
             return;
         }
 
-        eventStore.append(
-            pattern.getId().value(),
-            pattern.getAggregateType(),
-            events,
-            pattern.getVersion()
-        );
+        eventStore.append(pattern.getId().value(), pattern.getAggregateType(), events, pattern.getVersion());
 
         // Update projection table for query performance
         updateProjection(pattern);
@@ -68,7 +55,7 @@ public class MonthlyPeriodPatternRepository {
 
     /**
      * Find a monthly period pattern by ID.
-     * 
+     *
      * Reconstructs the aggregate from events in the event store.
      */
     public Optional<MonthlyPeriodPattern> findById(MonthlyPeriodPatternId id) {
@@ -96,16 +83,15 @@ public class MonthlyPeriodPatternRepository {
      */
     public List<MonthlyPeriodPattern> findByTenantId(UUID tenantId) {
         List<UUID> patternIds = jdbcTemplate.query(
-            "SELECT id FROM monthly_period_pattern WHERE tenant_id = ? ORDER BY name",
-            (rs, rowNum) -> UUID.fromString(rs.getString("id")),
-            tenantId
-        );
+                "SELECT id FROM monthly_period_pattern WHERE tenant_id = ? ORDER BY name",
+                (rs, rowNum) -> UUID.fromString(rs.getString("id")),
+                tenantId);
 
         return patternIds.stream()
-            .map(id -> findById(MonthlyPeriodPatternId.of(id)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .toList();
+                .map(id -> findById(MonthlyPeriodPatternId.of(id)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 
     /**
@@ -120,17 +106,16 @@ public class MonthlyPeriodPatternRepository {
      */
     private void updateProjection(MonthlyPeriodPattern pattern) {
         jdbcTemplate.update(
-            "INSERT INTO monthly_period_pattern (id, tenant_id, organization_id, name, start_day, created_at) " +
-            "VALUES (?, ?, ?, ?, ?, NOW()) " +
-            "ON CONFLICT (id) DO UPDATE SET " +
-            "name = EXCLUDED.name, " +
-            "start_day = EXCLUDED.start_day",
-            pattern.getId().value(),
-            pattern.getTenantId().value(), // Extract UUID from TenantId
-            null, // organization_id - not used in current implementation
-            pattern.getName(),
-            pattern.getStartDay()
-        );
+                "INSERT INTO monthly_period_pattern (id, tenant_id, organization_id, name, start_day, created_at) "
+                        + "VALUES (?, ?, ?, ?, ?, NOW()) "
+                        + "ON CONFLICT (id) DO UPDATE SET "
+                        + "name = EXCLUDED.name, "
+                        + "start_day = EXCLUDED.start_day",
+                pattern.getId().value(),
+                pattern.getTenantId().value(), // Extract UUID from TenantId
+                null, // organization_id - not used in current implementation
+                pattern.getName(),
+                pattern.getStartDay());
     }
 
     /**
@@ -139,10 +124,9 @@ public class MonthlyPeriodPatternRepository {
     private DomainEvent deserializeEvent(StoredEvent storedEvent) {
         try {
             return switch (storedEvent.eventType()) {
-                case "MonthlyPeriodPatternCreated" -> 
+                case "MonthlyPeriodPatternCreated" ->
                     objectMapper.readValue(storedEvent.payload(), MonthlyPeriodPatternCreated.class);
-                default -> 
-                    throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
+                default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {
             throw new RuntimeException("Failed to deserialize event: " + storedEvent.eventType(), e);

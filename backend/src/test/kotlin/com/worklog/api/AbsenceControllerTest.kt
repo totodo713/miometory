@@ -16,10 +16,10 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for AbsenceController.
- * 
+ *
  * Tests the full stack from HTTP API through to database persistence,
  * including critical cross-aggregate validation (work + absence <= 24h).
- * 
+ *
  * Task: T097 - AbsenceController integration tests
  */
 class AbsenceControllerTest : IntegrationTestBase() {

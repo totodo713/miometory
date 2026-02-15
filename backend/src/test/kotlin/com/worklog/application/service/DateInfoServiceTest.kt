@@ -22,10 +22,10 @@ import kotlin.test.assertNotNull
 
 /**
  * Integration tests for DateInfoService.
- * 
+ *
  * Tests the calculation of fiscal year and monthly period information
  * for organizations, including pattern inheritance from parent organizations.
- * 
+ *
  * Success Criteria (SC-002): 20+ test cases covering:
  * - Basic fiscal year calculation
  * - Basic monthly period calculation
@@ -462,21 +462,14 @@ class DateInfoServiceTest : IntegrationTestBase() {
         return tenant.id
     }
 
-    private fun createFiscalYearPattern(
-        tenantId: TenantId,
-        startMonth: Int,
-        startDay: Int,
-    ): UUID {
+    private fun createFiscalYearPattern(tenantId: TenantId, startMonth: Int, startDay: Int): UUID {
         val pattern = FiscalYearPattern.create(tenantId, "FY Pattern", startMonth, startDay)
         // Save using repository to persist in event store
         fiscalYearPatternRepository.save(pattern)
         return pattern.id.value()
     }
 
-    private fun createMonthlyPeriodPattern(
-        tenantId: TenantId,
-        startDay: Int,
-    ): UUID {
+    private fun createMonthlyPeriodPattern(tenantId: TenantId, startDay: Int): UUID {
         val pattern = MonthlyPeriodPattern.create(tenantId, "MP Pattern", startDay)
         // Save using repository to persist in event store
         monthlyPeriodPatternRepository.save(pattern)

@@ -21,10 +21,7 @@ object UserFixtures {
     /**
      * Creates a valid user name.
      */
-    fun validName(
-        firstName: String = "Test",
-        lastName: String = "User",
-    ): String = "$firstName $lastName"
+    fun validName(firstName: String = "Test", lastName: String = "User"): String = "$firstName $lastName"
 
     /**
      * Creates a valid bcrypt hashed password (hash of "password123").
@@ -51,21 +48,20 @@ object UserFixtures {
         hashedPassword: String = validHashedPassword(),
         roleId: RoleId = randomRoleId(),
         emailVerifiedAt: Instant = Instant.now().minusSeconds(3600),
-    ): User =
-        User(
-            id,
-            email,
-            name,
-            hashedPassword,
-            roleId,
-            User.AccountStatus.ACTIVE,
-            0,
-            null,
-            Instant.now().minusSeconds(86400),
-            Instant.now().minusSeconds(3600),
-            Instant.now().minusSeconds(600),
-            emailVerifiedAt,
-        )
+    ): User = User(
+        id,
+        email,
+        name,
+        hashedPassword,
+        roleId,
+        User.AccountStatus.ACTIVE,
+        0,
+        null,
+        Instant.now().minusSeconds(86400),
+        Instant.now().minusSeconds(3600),
+        Instant.now().minusSeconds(600),
+        emailVerifiedAt,
+    )
 
     /**
      * Creates an unverified user for testing.
@@ -76,21 +72,20 @@ object UserFixtures {
         name: String = validName(),
         hashedPassword: String = validHashedPassword(),
         roleId: RoleId = randomRoleId(),
-    ): User =
-        User(
-            id,
-            email,
-            name,
-            hashedPassword,
-            roleId,
-            User.AccountStatus.UNVERIFIED,
-            0,
-            null,
-            Instant.now(),
-            Instant.now(),
-            null,
-            null,
-        )
+    ): User = User(
+        id,
+        email,
+        name,
+        hashedPassword,
+        roleId,
+        User.AccountStatus.UNVERIFIED,
+        0,
+        null,
+        Instant.now(),
+        Instant.now(),
+        null,
+        null,
+    )
 
     /**
      * Creates a locked user for testing.
@@ -102,21 +97,20 @@ object UserFixtures {
         hashedPassword: String = validHashedPassword(),
         roleId: RoleId = randomRoleId(),
         lockedUntil: Instant = Instant.now().plusSeconds(1800),
-    ): User =
-        User(
-            id,
-            email,
-            name,
-            hashedPassword,
-            roleId,
-            User.AccountStatus.LOCKED,
-            5,
-            lockedUntil,
-            Instant.now().minusSeconds(86400),
-            Instant.now(),
-            Instant.now().minusSeconds(7200),
-            Instant.now().minusSeconds(82800),
-        )
+    ): User = User(
+        id,
+        email,
+        name,
+        hashedPassword,
+        roleId,
+        User.AccountStatus.LOCKED,
+        5,
+        lockedUntil,
+        Instant.now().minusSeconds(86400),
+        Instant.now(),
+        Instant.now().minusSeconds(7200),
+        Instant.now().minusSeconds(82800),
+    )
 
     /**
      * Creates a deleted user for testing.
@@ -127,21 +121,20 @@ object UserFixtures {
         name: String = validName(),
         hashedPassword: String = validHashedPassword(),
         roleId: RoleId = randomRoleId(),
-    ): User =
-        User(
-            id,
-            email,
-            name,
-            hashedPassword,
-            roleId,
-            User.AccountStatus.DELETED,
-            0,
-            null,
-            Instant.now().minusSeconds(86400),
-            Instant.now(),
-            Instant.now().minusSeconds(3600),
-            Instant.now().minusSeconds(82800),
-        )
+    ): User = User(
+        id,
+        email,
+        name,
+        hashedPassword,
+        roleId,
+        User.AccountStatus.DELETED,
+        0,
+        null,
+        Instant.now().minusSeconds(86400),
+        Instant.now(),
+        Instant.now().minusSeconds(3600),
+        Instant.now().minusSeconds(82800),
+    )
 
     /**
      * Creates registration request.

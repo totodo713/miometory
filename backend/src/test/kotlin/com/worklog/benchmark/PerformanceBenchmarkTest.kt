@@ -204,21 +204,16 @@ class PerformanceBenchmarkTest : IntegrationTestBase() {
         }
     }
 
-    private fun createEntry(
-        memberId: UUID,
-        projectId: UUID,
-        date: LocalDate,
-        hours: Double,
-        comment: String,
-    ) = restTemplate.postForEntity(
-        "/api/v1/worklog/entries",
-        mapOf(
-            "memberId" to memberId.toString(),
-            "projectId" to projectId.toString(),
-            "date" to date.toString(),
-            "hours" to hours,
-            "comment" to comment,
-        ),
-        Map::class.java,
-    )
+    private fun createEntry(memberId: UUID, projectId: UUID, date: LocalDate, hours: Double, comment: String) =
+        restTemplate.postForEntity(
+            "/api/v1/worklog/entries",
+            mapOf(
+                "memberId" to memberId.toString(),
+                "projectId" to projectId.toString(),
+                "date" to date.toString(),
+                "hours" to hours,
+                "comment" to comment,
+            ),
+            Map::class.java,
+        )
 }

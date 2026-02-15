@@ -7,21 +7,17 @@ import com.worklog.domain.fiscalyear.FiscalYearPatternId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.lang.reflect.Constructor;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Repository for FiscalYearPattern aggregates.
- * 
+ *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
@@ -32,11 +28,7 @@ public class FiscalYearPatternRepository {
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
 
-    public FiscalYearPatternRepository(
-        EventStore eventStore, 
-        ObjectMapper objectMapper,
-        JdbcTemplate jdbcTemplate
-    ) {
+    public FiscalYearPatternRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
@@ -52,12 +44,7 @@ public class FiscalYearPatternRepository {
             return;
         }
 
-        eventStore.append(
-            pattern.getId().value(),
-            pattern.getAggregateType(),
-            events,
-            pattern.getVersion()
-        );
+        eventStore.append(pattern.getId().value(), pattern.getAggregateType(), events, pattern.getVersion());
 
         // Update projection table for query performance
         updateProjection(pattern);
@@ -68,7 +55,7 @@ public class FiscalYearPatternRepository {
 
     /**
      * Find a fiscal year pattern by ID.
-     * 
+     *
      * Reconstructs the aggregate from events in the event store.
      */
     public Optional<FiscalYearPattern> findById(FiscalYearPatternId id) {
@@ -96,16 +83,15 @@ public class FiscalYearPatternRepository {
      */
     public List<FiscalYearPattern> findByTenantId(UUID tenantId) {
         List<UUID> patternIds = jdbcTemplate.query(
-            "SELECT id FROM fiscal_year_pattern WHERE tenant_id = ? ORDER BY name",
-            (rs, rowNum) -> UUID.fromString(rs.getString("id")),
-            tenantId
-        );
+                "SELECT id FROM fiscal_year_pattern WHERE tenant_id = ? ORDER BY name",
+                (rs, rowNum) -> UUID.fromString(rs.getString("id")),
+                tenantId);
 
         return patternIds.stream()
-            .map(id -> findById(FiscalYearPatternId.of(id)))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .toList();
+                .map(id -> findById(FiscalYearPatternId.of(id)))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
     }
 
     /**
@@ -120,19 +106,18 @@ public class FiscalYearPatternRepository {
      */
     private void updateProjection(FiscalYearPattern pattern) {
         jdbcTemplate.update(
-            "INSERT INTO fiscal_year_pattern (id, tenant_id, organization_id, name, start_month, start_day, created_at) " +
-            "VALUES (?, ?, ?, ?, ?, ?, NOW()) " +
-            "ON CONFLICT (id) DO UPDATE SET " +
-            "name = EXCLUDED.name, " +
-            "start_month = EXCLUDED.start_month, " +
-            "start_day = EXCLUDED.start_day",
-            pattern.getId().value(),
-            pattern.getTenantId().value(), // Extract UUID from TenantId
-            null, // organization_id - not used in current implementation
-            pattern.getName(),
-            pattern.getStartMonth(),
-            pattern.getStartDay()
-        );
+                "INSERT INTO fiscal_year_pattern (id, tenant_id, organization_id, name, start_month, start_day, created_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, NOW()) "
+                        + "ON CONFLICT (id) DO UPDATE SET "
+                        + "name = EXCLUDED.name, "
+                        + "start_month = EXCLUDED.start_month, "
+                        + "start_day = EXCLUDED.start_day",
+                pattern.getId().value(),
+                pattern.getTenantId().value(), // Extract UUID from TenantId
+                null, // organization_id - not used in current implementation
+                pattern.getName(),
+                pattern.getStartMonth(),
+                pattern.getStartDay());
     }
 
     /**
@@ -141,10 +126,9 @@ public class FiscalYearPatternRepository {
     private DomainEvent deserializeEvent(StoredEvent storedEvent) {
         try {
             return switch (storedEvent.eventType()) {
-                case "FiscalYearPatternCreated" -> 
+                case "FiscalYearPatternCreated" ->
                     objectMapper.readValue(storedEvent.payload(), FiscalYearPatternCreated.class);
-                default -> 
-                    throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
+                default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {
             throw new RuntimeException("Failed to deserialize event: " + storedEvent.eventType(), e);

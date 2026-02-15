@@ -2,7 +2,7 @@ package com.worklog.domain.absence;
 
 /**
  * Enumeration of absence types.
- * 
+ *
  * Represents different categories of non-working time that can be recorded.
  */
 public enum AbsenceType {
@@ -10,17 +10,17 @@ public enum AbsenceType {
      * Paid time off (vacation, holiday)
      */
     PAID_LEAVE,
-    
+
     /**
      * Sick leave (illness, medical appointments)
      */
     SICK_LEAVE,
-    
+
     /**
      * Special leave (bereavement, jury duty, etc.)
      */
     SPECIAL_LEAVE,
-    
+
     /**
      * Other types of absence not covered above
      */

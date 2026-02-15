@@ -33,10 +33,7 @@ class InfrastructureVerificationTest : IntegrationTestBase() {
     @Test
     fun `Instancio generates test data correctly`() {
         // Test Instancio with a simple data class
-        data class TestData(
-            val name: String,
-            val value: Int,
-        )
+        data class TestData(val name: String, val value: Int)
 
         val generated =
             Instancio
@@ -50,10 +47,7 @@ class InfrastructureVerificationTest : IntegrationTestBase() {
 
     @Test
     fun `Instancio generates list of test data`() {
-        data class Item(
-            val id: String,
-            val description: String,
-        )
+        data class Item(val id: String, val description: String)
 
         val items =
             Instancio

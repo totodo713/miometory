@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for OrganizationController.
- * 
+ *
  * Tests the full stack from HTTP API through to database persistence.
  */
 class OrganizationControllerTest : IntegrationTestBase() {

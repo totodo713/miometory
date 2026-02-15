@@ -4,19 +4,18 @@ import com.worklog.domain.fiscalyear.FiscalYearPattern;
 import com.worklog.domain.fiscalyear.FiscalYearPatternId;
 import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for FiscalYearPattern operations.
- * 
+ *
  * Provides endpoints for fiscal year pattern management.
  */
 @RestController
@@ -31,54 +30,45 @@ public class FiscalYearPatternController {
 
     /**
      * Creates a new fiscal year pattern.
-     * 
+     *
      * POST /api/v1/tenants/{tenantId}/fiscal-year-patterns
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createPattern(
-        @PathVariable UUID tenantId,
-        @RequestBody CreateFiscalYearPatternRequest request
-    ) {
+            @PathVariable UUID tenantId, @RequestBody CreateFiscalYearPatternRequest request) {
         FiscalYearPattern pattern = FiscalYearPattern.create(
-            TenantId.of(tenantId),
-            request.name(),
-            request.startMonth(),
-            request.startDay()
-        );
-        
+                TenantId.of(tenantId), request.name(), request.startMonth(), request.startDay());
+
         fiscalYearPatternRepository.save(pattern);
-        
+
         Map<String, Object> response = toMap(pattern);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
      * Gets a fiscal year pattern by ID.
-     * 
+     *
      * GET /api/v1/tenants/{tenantId}/fiscal-year-patterns/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getPattern(
-        @PathVariable UUID tenantId,
-        @PathVariable UUID id
-    ) {
-        return fiscalYearPatternRepository.findById(FiscalYearPatternId.of(id))
-            .map(pattern -> ResponseEntity.ok(toMap(pattern)))
-            .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<Map<String, Object>> getPattern(@PathVariable UUID tenantId, @PathVariable UUID id) {
+        return fiscalYearPatternRepository
+                .findById(FiscalYearPatternId.of(id))
+                .map(pattern -> ResponseEntity.ok(toMap(pattern)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     /**
      * Lists all fiscal year patterns for a tenant.
-     * 
+     *
      * GET /api/v1/tenants/{tenantId}/fiscal-year-patterns
      */
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> listPatterns(@PathVariable UUID tenantId) {
-        List<Map<String, Object>> patterns = fiscalYearPatternRepository.findByTenantId(tenantId)
-            .stream()
-            .map(this::toMap)
-            .collect(Collectors.toList());
-        
+        List<Map<String, Object>> patterns = fiscalYearPatternRepository.findByTenantId(tenantId).stream()
+                .map(this::toMap)
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(patterns);
     }
 
@@ -98,9 +88,5 @@ public class FiscalYearPatternController {
     /**
      * Request DTO for creating fiscal year patterns.
      */
-    public record CreateFiscalYearPatternRequest(
-        String name,
-        int startMonth,
-        int startDay
-    ) {}
+    public record CreateFiscalYearPatternRequest(String name, int startMonth, int startDay) {}
 }

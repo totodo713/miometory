@@ -2,15 +2,14 @@ package com.worklog.eventsourcing;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.Map;
-import java.util.UUID;
-
 /**
  * JDBC implementation of the AuditLogger interface.
- * 
+ *
  * Persists audit events to the audit_log table with JSONB details.
  */
 @Repository
@@ -25,21 +24,19 @@ public class JdbcAuditLogger implements AuditLogger {
     }
 
     @Override
-    public void log(UUID tenantId, UUID userId, String action, String resourceType, UUID resourceId, Map<String, Object> details) {
+    public void log(
+            UUID tenantId,
+            UUID userId,
+            String action,
+            String resourceType,
+            UUID resourceId,
+            Map<String, Object> details) {
         String detailsJson = serializeDetails(details);
-        
-        jdbcTemplate.update(
-            """
+
+        jdbcTemplate.update("""
             INSERT INTO audit_log (tenant_id, user_id, action, resource_type, resource_id, details, created_at)
             VALUES (?, ?, ?, ?, ?, ?::jsonb, CURRENT_TIMESTAMP)
-            """,
-            tenantId,
-            userId,
-            action,
-            resourceType,
-            resourceId,
-            detailsJson
-        );
+            """, tenantId, userId, action, resourceType, resourceId, detailsJson);
     }
 
     private String serializeDetails(Map<String, Object> details) {

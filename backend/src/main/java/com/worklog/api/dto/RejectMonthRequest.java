@@ -6,10 +6,7 @@ import java.util.UUID;
  * Request DTO for rejecting a submitted month.
  * Contains the reviewer ID and a mandatory rejection reason for feedback to the engineer.
  */
-public record RejectMonthRequest(
-    UUID reviewedBy,
-    String rejectionReason
-) {
+public record RejectMonthRequest(UUID reviewedBy, String rejectionReason) {
     public RejectMonthRequest {
         if (reviewedBy == null) {
             throw new IllegalArgumentException("reviewedBy is required");

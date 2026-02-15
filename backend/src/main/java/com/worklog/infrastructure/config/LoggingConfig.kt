@@ -55,9 +55,7 @@ class LoggingProperties {
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 10) // Run early in filter chain for comprehensive request logging
-class LoggingFilter(
-    private val properties: LoggingProperties,
-) : OncePerRequestFilter() {
+class LoggingFilter(private val properties: LoggingProperties) : OncePerRequestFilter() {
     private val log = LoggerFactory.getLogger(LoggingFilter::class.java)
 
     companion object {

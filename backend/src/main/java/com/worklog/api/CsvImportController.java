@@ -4,20 +4,6 @@ import com.worklog.application.command.CreateWorkLogEntryCommand;
 import com.worklog.application.service.WorkLogEntryService;
 import com.worklog.infrastructure.csv.ProjectCodeResolver;
 import com.worklog.infrastructure.csv.StreamingCsvProcessor;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.annotation.Scheduled;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -27,6 +13,18 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
  * REST API controller for CSV import operations.
@@ -61,12 +59,13 @@ public class CsvImportController {
     @Scheduled(fixedRate = 5, timeUnit = TimeUnit.MINUTES)
     public void cleanupStaleImports() {
         Instant cutoff = Instant.now().minusSeconds(IMPORT_TTL_MINUTES * 60);
-        Iterator<Map.Entry<String, ImportProgress>> iterator = activeImports.entrySet().iterator();
-        
+        Iterator<Map.Entry<String, ImportProgress>> iterator =
+                activeImports.entrySet().iterator();
+
         while (iterator.hasNext()) {
             Map.Entry<String, ImportProgress> entry = iterator.next();
             ImportProgress progress = entry.getValue();
-            
+
             if (progress.isFinished() && progress.getCreatedAt().isBefore(cutoff)) {
                 iterator.remove();
             }
@@ -75,15 +74,15 @@ public class CsvImportController {
 
     /**
      * Download the CSV template file for work log entries.
-     * 
+     *
      * GET /api/v1/worklog/csv/template
-     * 
+     *
      * @return CSV template file as downloadable resource
      */
     @GetMapping("/template")
     public ResponseEntity<Resource> downloadTemplate() throws IOException {
         Resource resource = new ClassPathResource("csv-templates/worklog-template.csv");
-        
+
         if (!resource.exists()) {
             return ResponseEntity.notFound().build();
         }
@@ -96,27 +95,24 @@ public class CsvImportController {
 
     /**
      * Import work log entries from CSV file with Server-Sent Events progress tracking.
-     * 
+     *
      * POST /api/v1/worklog/csv/import
-     * 
+     *
      * @param file CSV file to import
      * @param memberId Member ID for whom to create entries
      * @return Import ID for tracking progress via SSE
      */
     @PostMapping("/import")
     public ResponseEntity<Map<String, String>> importCsv(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("memberId") UUID memberId) {
-        
+            @RequestParam("file") MultipartFile file, @RequestParam("memberId") UUID memberId) {
+
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "File is empty"));
+            return ResponseEntity.badRequest().body(Map.of("error", "File is empty"));
         }
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || !originalFilename.endsWith(".csv")) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "File must be a CSV file"));
+            return ResponseEntity.badRequest().body(Map.of("error", "File must be a CSV file"));
         }
 
         // Generate import ID for tracking
@@ -133,19 +129,19 @@ public class CsvImportController {
                             // Create work log entry for each valid CSV row
                             CreateWorkLogEntryCommand command = new CreateWorkLogEntryCommand(
                                     memberId,
-                                    ProjectCodeResolver.resolveCodeToId(projectCode).value(),
+                                    ProjectCodeResolver.resolveCodeToId(projectCode)
+                                            .value(),
                                     LocalDate.parse(date),
                                     new BigDecimal(hours),
                                     notes,
                                     memberId // enteredBy same as memberId for self-entry
-                            );
+                                    );
                             workLogEntryService.createEntry(command);
                         },
                         (totalRows, validRows, errorRows) -> {
                             // Update progress
                             progress.update(totalRows, validRows, errorRows);
-                        }
-                );
+                        });
 
                 progress.complete(result);
             } catch (Exception e) {
@@ -153,28 +149,25 @@ public class CsvImportController {
             }
         });
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(Map.of("importId", importId));
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("importId", importId));
     }
 
     /**
      * Get real-time progress updates for CSV import via Server-Sent Events.
-     * 
+     *
      * GET /api/v1/worklog/csv/import/{importId}/progress
-     * 
+     *
      * @param importId Import ID from the import request
      * @return SSE emitter for progress updates
      */
     @GetMapping("/import/{importId}/progress")
     public SseEmitter getImportProgress(@PathVariable String importId) {
         ImportProgress progress = activeImports.get(importId);
-        
+
         if (progress == null) {
             SseEmitter emitter = new SseEmitter();
             try {
-                emitter.send(SseEmitter.event()
-                        .name("error")
-                        .data(Map.of("error", "Import not found")));
+                emitter.send(SseEmitter.event().name("error").data(Map.of("error", "Import not found")));
                 emitter.complete();
             } catch (IOException e) {
                 emitter.completeWithError(e);
@@ -199,9 +192,7 @@ public class CsvImportController {
 
         // Send initial state
         try {
-            emitter.send(SseEmitter.event()
-                    .name("progress")
-                    .data(progress.toMap()));
+            emitter.send(SseEmitter.event().name("progress").data(progress.toMap()));
         } catch (IOException e) {
             emitter.completeWithError(e);
         }
@@ -264,18 +255,16 @@ public class CsvImportController {
 
         private void notifyClients() {
             java.util.List<SseEmitter> deadEmitters = new java.util.ArrayList<>();
-            
+
             for (SseEmitter emitter : emitters) {
                 try {
-                    emitter.send(SseEmitter.event()
-                            .name("progress")
-                            .data(toMap()));
+                    emitter.send(SseEmitter.event().name("progress").data(toMap()));
                 } catch (IOException e) {
                     deadEmitters.add(emitter);
                     emitter.completeWithError(e);
                 }
             }
-            
+
             emitters.removeAll(deadEmitters);
         }
 
@@ -292,21 +281,22 @@ public class CsvImportController {
             map.put("validRows", validRows);
             map.put("errorRows", errorRows);
             map.put("status", status);
-            
+
             if (errorMessage != null) {
                 map.put("errorMessage", errorMessage);
             }
-            
+
             if (result != null && result.hasErrors()) {
-                map.put("errors", result.getValidationErrors().stream()
-                        .map(e -> Map.of(
-                                "row", e.getRowNumber(),
-                                "errors", e.getErrors()
-                        ))
-                        .limit(100) // Limit to first 100 errors
-                        .toList());
+                map.put(
+                        "errors",
+                        result.getValidationErrors().stream()
+                                .map(e -> Map.of(
+                                        "row", e.getRowNumber(),
+                                        "errors", e.getErrors()))
+                                .limit(100) // Limit to first 100 errors
+                                .toList());
             }
-            
+
             return map;
         }
     }

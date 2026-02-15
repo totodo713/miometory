@@ -1,7 +1,6 @@
 package com.worklog.domain.organization;
 
 import com.worklog.domain.shared.DomainEvent;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -16,29 +15,15 @@ public record OrganizationCreated(
         UUID parentId,
         String code,
         String name,
-        int level
-) implements DomainEvent {
-    
+        int level)
+        implements DomainEvent {
+
     public static OrganizationCreated create(
-            UUID organizationId,
-            UUID tenantId,
-            UUID parentId,
-            String code,
-            String name,
-            int level
-    ) {
+            UUID organizationId, UUID tenantId, UUID parentId, String code, String name, int level) {
         return new OrganizationCreated(
-                UUID.randomUUID(),
-                Instant.now(),
-                organizationId,
-                tenantId,
-                parentId,
-                code,
-                name,
-                level
-        );
+                UUID.randomUUID(), Instant.now(), organizationId, tenantId, parentId, code, name, level);
     }
-    
+
     @Override
     public String eventType() {
         return "OrganizationCreated";

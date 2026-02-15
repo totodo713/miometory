@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 
 /**
  * Integration tests for WorkLogController.
- * 
+ *
  * Tests the full stack from HTTP API through to database persistence.
  * Task: T060 - WorkLogController integration tests
  */

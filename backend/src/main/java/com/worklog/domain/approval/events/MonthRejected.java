@@ -3,7 +3,6 @@ package com.worklog.domain.approval.events;
 import com.worklog.domain.approval.MonthlyApprovalId;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
-
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,14 +12,9 @@ import java.util.UUID;
  * back to DRAFT status, allowing the member to make corrections and resubmit.
  */
 public record MonthRejected(
-    UUID eventId,
-    Instant occurredAt,
-    UUID aggregateId,
-    Instant reviewedAt,
-    UUID reviewedBy,
-    String rejectionReason
-) implements DomainEvent {
-    
+        UUID eventId, Instant occurredAt, UUID aggregateId, Instant reviewedAt, UUID reviewedBy, String rejectionReason)
+        implements DomainEvent {
+
     public MonthRejected {
         if (rejectionReason == null || rejectionReason.isBlank()) {
             throw new IllegalArgumentException("rejectionReason must not be blank");
@@ -29,23 +23,12 @@ public record MonthRejected(
             throw new IllegalArgumentException("rejectionReason must not exceed 1000 characters");
         }
     }
-    
-    public static MonthRejected create(
-        MonthlyApprovalId id,
-        MemberId reviewedBy,
-        String rejectionReason
-    ) {
+
+    public static MonthRejected create(MonthlyApprovalId id, MemberId reviewedBy, String rejectionReason) {
         Instant now = Instant.now();
-        return new MonthRejected(
-            UUID.randomUUID(),
-            now,
-            id.value(),
-            now,
-            reviewedBy.value(),
-            rejectionReason
-        );
+        return new MonthRejected(UUID.randomUUID(), now, id.value(), now, reviewedBy.value(), rejectionReason);
     }
-    
+
     @Override
     public String eventType() {
         return "MonthRejected";
