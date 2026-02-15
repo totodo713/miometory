@@ -27,6 +27,4 @@ worklog:
   auth:
     default-role-name: USER
   rate-limit:
-    enabled: true  # レートリミット有効化
-    rps: 2
-    burst: 2
+    enabled: false  # Base test config: keep disabled; enable per-test via @TestPropertySource

@@ -3,24 +3,18 @@ package com.worklog.api
 import com.worklog.IntegrationTestBase
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient
 @TestPropertySource(properties = [
     "worklog.rate-limit.enabled=true",
-    "worklog.rate-limit.authRequestsPerSecond=2",
-    "worklog.rate-limit.authBurstSize=2"
+    "worklog.rate-limit.auth-requests-per-second=2",
+    "worklog.rate-limit.auth-burst-size=2"
 ])
-@ActiveProfiles("test")
-
-
 class PasswordResetRateLimitIT : IntegrationTestBase() {
 
     @Autowired
@@ -31,7 +25,7 @@ class PasswordResetRateLimitIT : IntegrationTestBase() {
     fun `パスワードリセット依頼APIがレートリミット超過で429を返す`() {
         val requestBody = """{"email":"rate_limit_test@example.com"}"""
         val uri = "/api/v1/auth/password-reset/request"
-        // 1分間に2回まではリセット依頼可能、それを超える3回目で429エラーとなることを検証
+        // バーストサイズは2回のため、最初の2回は成功し、3回目のリクエストでレートリミット超過となることを確認する
         repeat(2) {
             webTestClient.post()
                 .uri(uri)
