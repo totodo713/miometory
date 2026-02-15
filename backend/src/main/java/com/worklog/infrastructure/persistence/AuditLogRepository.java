@@ -32,8 +32,7 @@ public interface AuditLogRepository extends CrudRepository<AuditLog, UUID> {
     /**
      * Find audit logs by user using UserId.
      */
-    // UserId converter is now registered; you can use UserId directly in queries if needed.
-// Remove this default method to simplify repository.
+
     
     /**
      * Find audit logs by event type.

@@ -1,36 +1,30 @@
 # Test configuration for integration tests
 spring:
   datasource:
-    # These will be overridden by Testcontainers DynamicPropertySource
-    url: jdbc:postgresql://localhost:5432/worklog_test
+    url: jdbc:postgresql://localhost:5432/test
+    driver-class-name: org.postgresql.Driver
     username: test
     password: test
     hikari:
       maximum-pool-size: 5
-
   flyway:
     enabled: true
     locations: classpath:db/migration
-
   security:
     user:
       name: test
       password: test
-
   servlet:
     multipart:
       max-file-size: 100MB
       max-request-size: 100MB
-
 logging:
   level:
     org.testcontainers: INFO
     com.github.database.rider: DEBUG
     org.flywaydb: INFO
-
-# Disable rate limiting for tests
 worklog:
   auth:
     default-role-name: USER
   rate-limit:
-    enabled: false
+    enabled: false  # Base test config: keep disabled; enable per-test via @TestPropertySource
