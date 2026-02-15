@@ -56,7 +56,6 @@ dependencies {
 
     // Testcontainers for PostgreSQL integration tests
     testImplementation("org.testcontainers:testcontainers:1.21.1")
-    testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:postgresql:1.21.1")
     testImplementation("org.testcontainers:junit-jupiter:1.21.1")
 
