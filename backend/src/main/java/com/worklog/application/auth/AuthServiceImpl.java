@@ -72,7 +72,8 @@ public class AuthServiceImpl implements AuthService {
         
         // Check for duplicate email
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new IllegalStateException("Email already registered");
+            // Tests expect IllegalArgumentException for duplicate email
+            throw new IllegalArgumentException("Email already registered");
         }
         
         // Hash password

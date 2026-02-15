@@ -55,7 +55,7 @@ public interface AuditLogRepository extends CrudRepository<AuditLog, UUID> {
         ORDER BY timestamp DESC LIMIT :limit
         """)
     List<AuditLog> findByUserIdAndEventType(
-        @Param("userId") UUID userId,
+        @Param("userId") UserId userId,
         @Param("eventType") String eventType,
         @Param("limit") int limit
     );
@@ -76,7 +76,7 @@ public interface AuditLogRepository extends CrudRepository<AuditLog, UUID> {
     @Modifying
     @Query("""
         DELETE FROM audit_logs 
-        WHERE timestamp + (retention_days || ' days')::INTERVAL < :now
+        WHERE timestamp + (COALESCE(retention_days, 90) || ' days')::INTERVAL < :now
         """)
     int deleteExpiredLogs(@Param("now") Instant now);
     
