@@ -50,11 +50,13 @@ dependencies {
 
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Testcontainers for PostgreSQL integration tests
     testImplementation("org.testcontainers:testcontainers:1.21.1")
+    testImplementation("com.h2database:h2")
     testImplementation("org.testcontainers:postgresql:1.21.1")
     testImplementation("org.testcontainers:junit-jupiter:1.21.1")
 
