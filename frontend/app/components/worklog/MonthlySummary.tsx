@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "../../services/api";
 import { SubmitButton } from "./SubmitButton";
 
@@ -38,7 +38,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadSummary = async () => {
+  const loadSummary = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -56,7 +56,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [year, month, memberId]);
 
   useEffect(() => {
     loadSummary();

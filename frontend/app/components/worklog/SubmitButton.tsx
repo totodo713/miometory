@@ -45,6 +45,7 @@ export function SubmitButton({
 
       onSubmitSuccess?.();
     } catch (err) {
+      // biome-ignore lint/suspicious/noConsole: log API failure for debugging
       console.error("Failed to submit month:", err);
       setError(err instanceof Error ? err.message : "Failed to submit for approval");
     } finally {

@@ -975,7 +975,8 @@ describe("DailyEntryForm", () => {
       // Click the Delete button in the modal
       const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
       const modalDeleteButton = deleteButtons.find((btn) => btn.textContent === "Delete");
-      await user.click(modalDeleteButton!);
+      expect(modalDeleteButton).toBeDefined();
+      await user.click(modalDeleteButton as HTMLElement);
 
       await waitFor(() => {
         expect(mockDeleteEntry).toHaveBeenCalledWith("entry-to-delete");
@@ -1012,7 +1013,8 @@ describe("DailyEntryForm", () => {
       });
       const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
       const modalDeleteButton = deleteButtons.find((btn) => btn.textContent === "Delete");
-      await user.click(modalDeleteButton!);
+      expect(modalDeleteButton).toBeDefined();
+      await user.click(modalDeleteButton as HTMLElement);
 
       await waitFor(() => {
         expect(mockOnSave).toHaveBeenCalled();

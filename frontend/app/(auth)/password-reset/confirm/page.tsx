@@ -76,6 +76,7 @@ function PasswordResetConfirmForm() {
         sessionStorage.setItem(TOKEN_STORAGE_KEY, urlToken);
       } catch (e) {
         // Ignore sessionStorage errors (private browsing mode, etc.)
+        // biome-ignore lint/suspicious/noConsole: intentional warning for storage fallback diagnostics
         console.warn("Failed to store token in sessionStorage:", e);
       }
 
@@ -102,6 +103,7 @@ function PasswordResetConfirmForm() {
         }
       } catch (e) {
         // sessionStorage not available
+        // biome-ignore lint/suspicious/noConsole: intentional warning for storage fallback diagnostics
         console.warn("Failed to retrieve token from sessionStorage:", e);
         setError({
           type: "expired_token",

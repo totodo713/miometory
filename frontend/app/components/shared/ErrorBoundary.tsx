@@ -37,6 +37,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Log error to console in development
+    // biome-ignore lint/suspicious/noConsole: error boundary must log caught errors
     console.error("ErrorBoundary caught an error:", error, errorInfo);
 
     // Call optional error callback

@@ -28,6 +28,40 @@ interface ProjectRow {
   };
 }
 
+function validateField(field: "project" | "hours" | "comment", value: string | number): string | undefined {
+  if (field === "project") {
+    if (!value) {
+      return "Project is required";
+    }
+  }
+
+  if (field === "hours") {
+    const hours = typeof value === "number" ? value : Number.parseFloat(value as string);
+
+    if (hours < 0) {
+      return "Hours cannot be negative";
+    }
+
+    if (hours > 24) {
+      return "Hours cannot exceed 24";
+    }
+
+    // Check 0.25 increments (quarter hours)
+    if (hours % 0.25 !== 0) {
+      return "Hours must be in 0.25 increments";
+    }
+  }
+
+  if (field === "comment") {
+    const comment = value as string;
+    if (comment.length > 500) {
+      return "Comment cannot exceed 500 characters";
+    }
+  }
+
+  return undefined;
+}
+
 export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFormProps) {
   const { isProxyMode, targetMember } = useProxyMode();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
@@ -53,6 +87,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
   const totalExceeds24 = totalHours > 24;
 
   // Load existing entries
+  // biome-ignore lint/correctness/useExhaustiveDependencies: projectRows intentionally excluded to avoid infinite loop
   useEffect(() => {
     async function loadEntries() {
       try {
@@ -101,8 +136,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
     }
 
     loadEntries();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memberId, date, projectRows]);
+  }, [memberId, date]);
 
   // Track unsaved changes
   useEffect(() => {
@@ -111,6 +145,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
   }, [projectRows]);
 
   // Auto-save timer (60 seconds)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: handleSave/hasValidationErrors intentionally excluded to avoid timer reset on every keystroke
   useEffect(() => {
     // Clear existing timer
     if (autoSaveTimerRef.current) {
@@ -132,43 +167,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
         clearTimeout(autoSaveTimerRef.current);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasUnsavedChanges, isReadOnly]);
-
-  // Validation functions
-  const validateField = (field: "project" | "hours" | "comment", value: string | number): string | undefined => {
-    if (field === "project") {
-      if (!value) {
-        return "Project is required";
-      }
-    }
-
-    if (field === "hours") {
-      const hours = typeof value === "number" ? value : Number.parseFloat(value as string);
-
-      if (hours < 0) {
-        return "Hours cannot be negative";
-      }
-
-      if (hours > 24) {
-        return "Hours cannot exceed 24";
-      }
-
-      // Check 0.25 increments (quarter hours)
-      if (hours % 0.25 !== 0) {
-        return "Hours must be in 0.25 increments";
-      }
-    }
-
-    if (field === "comment") {
-      const comment = value as string;
-      if (comment.length > 500) {
-        return "Comment cannot exceed 500 characters";
-      }
-    }
-
-    return undefined;
-  };
 
   const hasValidationErrors = (): boolean => {
     return projectRows.some((row) => row.errors.project || row.errors.hours || row.errors.comment);
@@ -217,7 +216,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
       setDeleteConfirmId(null);
       initialDataRef.current = "[]"; // Reset initial data
       onSave();
-    } catch (error: any) {
+    } catch (error: unknown) {
       setSaveError(error instanceof Error ? error.message : "Failed to delete entry");
     } finally {
       setIsSaving(false);
@@ -287,8 +286,8 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
         } else {
           onSave();
         }
-      } catch (error: any) {
-        if (error.status === 409) {
+      } catch (error: unknown) {
+        if (error != null && typeof error === "object" && "status" in error && error.status === 409) {
           setSaveError("This entry has been modified by another user. Please refresh and try again.");
         } else {
           setSaveError(error instanceof Error ? error.message : "Failed to save entries");
@@ -297,8 +296,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
         setIsSaving(false);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [projectRows, memberId, date, totalExceeds24, onSave, validateField],
+    [projectRows, memberId, date, totalExceeds24, onSave],
   );
 
   // Handle close with unsaved changes warning
@@ -548,7 +546,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
                       <div className="mt-4">
                         <button
                           type="button"
-                          onClick={() => setDeleteConfirmId(row.id!)}
+                          onClick={() => row.id && setDeleteConfirmId(row.id)}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >
                           Delete Entry

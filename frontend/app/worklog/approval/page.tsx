@@ -7,7 +7,7 @@
  * Allows managers to approve or reject submissions with feedback.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/services/api";
 import type { PendingApproval } from "@/types/approval";
 
@@ -22,7 +22,7 @@ export default function ApprovalPage() {
   // TODO: Get actual manager ID from auth context
   const managerId = "00000000-0000-0000-0000-000000000002";
 
-  const loadApprovalQueue = async () => {
+  const loadApprovalQueue = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -30,12 +30,13 @@ export default function ApprovalPage() {
       const data = await api.approval.getApprovalQueue(managerId);
       setPendingApprovals(data.pendingApprovals);
     } catch (err) {
+      // biome-ignore lint/suspicious/noConsole: log API failure for debugging
       console.error("Failed to load approval queue:", err);
       setError(err instanceof Error ? err.message : "Failed to load approval queue");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadApprovalQueue();
@@ -49,6 +50,7 @@ export default function ApprovalPage() {
       // Reload queue after approval
       await loadApprovalQueue();
     } catch (err) {
+      // biome-ignore lint/suspicious/noConsole: log API failure for debugging
       console.error("Failed to approve month:", err);
       alert(err instanceof Error ? err.message : "Failed to approve submission");
     } finally {
@@ -87,6 +89,7 @@ export default function ApprovalPage() {
       // Reload queue after rejection
       await loadApprovalQueue();
     } catch (err) {
+      // biome-ignore lint/suspicious/noConsole: log API failure for debugging
       console.error("Failed to reject month:", err);
       alert(err instanceof Error ? err.message : "Failed to reject submission");
     } finally {
