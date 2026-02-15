@@ -138,9 +138,9 @@ This is a **web application** (Next.js App Router):
 
 **Purpose**: Non-functional requirements, performance optimization, accessibility audit
 
-- [ ] T033 [P] Run Biome linter on all new files and fix any errors (npm run lint in frontend/)
-- [ ] T034 [P] Verify WCAG 2.1 AA compliance with @axe-core/playwright (run accessibility tests from quickstart.md, fix any violations: missing labels, insufficient color contrast, missing ARIA attributes)
-- [ ] T035 [P] Add JSDoc comments to all public functions and components (API client functions in auth.ts, validation utilities in password.ts, rate-limit.ts, PasswordStrengthIndicator component props/methods)
+- [x] T033 [P] Run Biome linter on all new files and fix any errors (npm run lint in frontend/)
+- [x] T034 [P] Verify WCAG 2.1 AA compliance with @axe-core/playwright (run accessibility tests from quickstart.md, fix any violations: missing labels, insufficient color contrast, missing ARIA attributes)
+- [x] T035 [P] Add JSDoc comments to all public functions and components (API client functions in auth.ts, validation utilities in password.ts, rate-limit.ts, PasswordStrengthIndicator component props/methods)
 - [ ] T036 [P] Performance audit: verify password strength calculation < 10ms (use browser DevTools Performance tab, ensure debounce is working), verify page load times < 500ms (Lighthouse audit)
 - [ ] T037 Run full E2E test suite (npm run test:e2e) and verify all tests pass, address any flaky tests or failures
 - [ ] T038 Run unit test suite (npm run test) and verify code coverage meets 80%+ target for new code
@@ -239,8 +239,8 @@ npm run test -- --watch tests/unit/password-reset-request.test.tsx
 | US1 (P1) | T010-T017 | 8 | T010-T011 (tests) | US1 | 🟡 Partial (6/8) |
 | US2 (P2) | T018-T025 | 8 | T018-T019 (tests) | US2 | 🟡 Partial (5/8) |
 | US3 (P3) | T026-T032 | 7 | T026-T027 (tests) | US3 | ✅ Complete (5/7) |
-| Polish | T033-T040 | 8 | T033-T036, T038, T040 | - | ⏳ Pending |
-| **TOTAL** | **T001-T040** | **40 tasks** | **19 parallelizable** | **3 stories** | **58% complete (23/40)** |
+| Polish | T033-T040 | 8 | T033-T036, T038, T040 | - | 🟡 In Progress (3/8) |
+| **TOTAL** | **T001-T040** | **40 tasks** | **19 parallelizable** | **3 stories** | **65% complete (26/40)** |
 
 ---
 
