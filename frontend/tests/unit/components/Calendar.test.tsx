@@ -132,14 +132,10 @@ describe("Calendar Component", () => {
     it("should render empty cells for padding", () => {
       // First date (2026-01-21) is a Wednesday (day 3)
       // Should have 3 empty cells before it
-      const { container } = render(
-        <Calendar year={2026} month={1} dates={mockDates} />,
-      );
+      const { container } = render(<Calendar year={2026} month={1} dates={mockDates} />);
 
       // Empty cells have "bg-gray-50 min-h-24" and no button
-      const emptyCells = container.querySelectorAll(
-        ".bg-gray-50.min-h-24:not(button)",
-      );
+      const emptyCells = container.querySelectorAll(".bg-gray-50.min-h-24:not(button)");
 
       // Should have 3 empty padding cells (Wed is day 3, so 3 empty cells before)
       expect(emptyCells.length).toBeGreaterThanOrEqual(3);
@@ -255,9 +251,7 @@ describe("Calendar Component", () => {
 
       // Find the button for date 2026-01-24 (Saturday, weekend)
       const buttons = screen.getAllByRole("button");
-      const weekendButton = buttons.find((btn) =>
-        btn.textContent?.includes("24"),
-      );
+      const weekendButton = buttons.find((btn) => btn.textContent?.includes("24"));
 
       expect(weekendButton).toHaveClass("bg-weekend-100");
     });
@@ -273,9 +267,7 @@ describe("Calendar Component", () => {
 
       // Find the button for date 2026-01-28 (holiday)
       const buttons = screen.getAllByRole("button");
-      const holidayButton = buttons.find((btn) =>
-        btn.textContent?.includes("28"),
-      );
+      const holidayButton = buttons.find((btn) => btn.textContent?.includes("28"));
 
       expect(holidayButton).toHaveClass("bg-holiday-100");
     });
@@ -286,20 +278,11 @@ describe("Calendar Component", () => {
       const user = userEvent.setup();
       const onDateSelect = vi.fn();
 
-      render(
-        <Calendar
-          year={2026}
-          month={1}
-          dates={mockDates}
-          onDateSelect={onDateSelect}
-        />,
-      );
+      render(<Calendar year={2026} month={1} dates={mockDates} onDateSelect={onDateSelect} />);
 
       // Click on the first date (21st)
       const buttons = screen.getAllByRole("button");
-      const firstDateButton = buttons.find((btn) =>
-        btn.textContent?.includes("21"),
-      );
+      const firstDateButton = buttons.find((btn) => btn.textContent?.includes("21"));
 
       expect(firstDateButton).toBeInTheDocument();
       if (firstDateButton) {
@@ -320,16 +303,12 @@ describe("Calendar Component", () => {
       }));
 
       // Need to re-import to get the new mock
-      const { Calendar: CalendarWithMock } = await import(
-        "@/components/worklog/Calendar"
-      );
+      const { Calendar: CalendarWithMock } = await import("@/components/worklog/Calendar");
 
       render(<CalendarWithMock year={2026} month={1} dates={mockDates} />);
 
       const buttons = screen.getAllByRole("button");
-      const firstDateButton = buttons.find((btn) =>
-        btn.textContent?.includes("21"),
-      );
+      const firstDateButton = buttons.find((btn) => btn.textContent?.includes("21"));
 
       if (firstDateButton) {
         await user.click(firstDateButton);

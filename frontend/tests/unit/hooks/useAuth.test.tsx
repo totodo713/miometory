@@ -17,9 +17,7 @@ function Consumer() {
 describe("useAuth hook", () => {
   test("returns dev mock user and auth state", () => {
     render(<Consumer />);
-    expect(screen.getByTestId("id").textContent).toBe(
-      "00000000-0000-0000-0000-000000000001",
-    );
+    expect(screen.getByTestId("id").textContent).toBe("00000000-0000-0000-0000-000000000001");
     expect(screen.getByTestId("email").textContent).toBe("dev@example.com");
     expect(screen.getByTestId("name").textContent).toBe("Development User");
     expect(screen.getByTestId("auth").textContent).toBe("yes");

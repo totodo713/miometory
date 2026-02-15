@@ -5,9 +5,7 @@ describe("Login page", () => {
   test("shows error when fields missing", () => {
     render(<LoginPage />);
     fireEvent.click(screen.getByText(/log in/i));
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /email and password are required/i,
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/email and password are required/i);
   });
 
   test("remember me checkbox toggles", () => {

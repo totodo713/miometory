@@ -20,8 +20,7 @@ import { useProxyMode } from "@/services/worklogStore";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 
 export default function WorkLogPage() {
-  const [calendarData, setCalendarData] =
-    useState<MonthlyCalendarResponse | null>(null);
+  const [calendarData, setCalendarData] = useState<MonthlyCalendarResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -39,8 +38,7 @@ export default function WorkLogPage() {
   const [month, setMonth] = useState(now.getMonth() + 1); // 1-indexed
 
   // Use target member ID if in proxy mode, otherwise use current user
-  const effectiveMemberId =
-    isProxyMode && targetMember ? targetMember.id : (userId ?? "");
+  const effectiveMemberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
   useEffect(() => {
     async function loadCalendar() {
@@ -55,9 +53,7 @@ export default function WorkLogPage() {
         });
         setCalendarData(data);
       } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to load calendar",
-        );
+        setError(err instanceof Error ? err.message : "Failed to load calendar");
       } finally {
         setIsLoading(false);
       }
@@ -127,8 +123,7 @@ export default function WorkLogPage() {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-yellow-900 font-medium">
-                Proxy Mode: Entering time for{" "}
-                <span className="font-bold">{targetMember.displayName}</span>
+                Proxy Mode: Entering time for <span className="font-bold">{targetMember.displayName}</span>
               </span>
             </div>
             <button
@@ -147,9 +142,7 @@ export default function WorkLogPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {isProxyMode && targetMember
-                ? `Miometry - ${targetMember.displayName}`
-                : "Miometry"}
+              {isProxyMode && targetMember ? `Miometry - ${targetMember.displayName}` : "Miometry"}
             </h1>
             <p className="mt-1 text-sm text-gray-600">
               {isProxyMode && targetMember
@@ -218,8 +211,7 @@ export default function WorkLogPage() {
           <div className="text-sm text-gray-600">
             {calendarData && (
               <span>
-                Period:{" "}
-                {new Date(calendarData.periodStart).toLocaleDateString()} -{" "}
+                Period: {new Date(calendarData.periodStart).toLocaleDateString()} -{" "}
                 {new Date(calendarData.periodEnd).toLocaleDateString()}
               </span>
             )}
@@ -246,19 +238,13 @@ export default function WorkLogPage() {
 
             {/* Monthly Summary (T072) */}
             <div className="mt-6">
-              <MonthlySummary
-                year={year}
-                month={month}
-                memberId={effectiveMemberId}
-              />
+              <MonthlySummary year={year} month={month} memberId={effectiveMemberId} />
             </div>
           </>
         )}
 
         {!isLoading && !error && !calendarData && (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-600">
-            No data available
-          </div>
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-600">No data available</div>
         )}
 
         {/* Copy Previous Month Dialog */}

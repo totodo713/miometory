@@ -47,25 +47,22 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     });
 
     // Mock monthly summary API
-    await page.route(
-      "**/api/v1/worklog/calendar/**/summary**",
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            year: 2026,
-            month: 1,
-            totalWorkHours: 8,
-            totalAbsenceHours: 0,
-            totalBusinessDays: 22,
-            projects: [],
-            approvalStatus: null,
-            rejectionReason: null,
-          }),
-        });
-      },
-    );
+    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          year: 2026,
+          month: 1,
+          totalWorkHours: 8,
+          totalAbsenceHours: 0,
+          totalBusinessDays: 22,
+          projects: [],
+          approvalStatus: null,
+          rejectionReason: null,
+        }),
+      });
+    });
 
     await page.route("**/api/v1/worklog/entries**", async (route) => {
       if (route.request().method() === "GET") {
@@ -107,9 +104,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
-    const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa"])
-      .analyze();
+    const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);
   });
@@ -119,9 +114,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     await page.goto(`${baseURL}/worklog/2026-01-15`);
     await page.waitForLoadState("networkidle");
 
-    const accessibilityScanResults = await new AxeBuilder({ page })
-      .withTags(["wcag2a", "wcag2aa"])
-      .analyze();
+    const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
 
     expect(accessibilityScanResults.violations).toEqual([]);
   });
@@ -167,9 +160,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     await page.keyboard.press("Tab");
 
     // Verify focus is on a focusable element
-    const focusedElement = await page.evaluate(
-      () => document.activeElement?.tagName,
-    );
+    const focusedElement = await page.evaluate(() => document.activeElement?.tagName);
     expect(["BUTTON", "A", "INPUT", "SELECT"]).toContain(focusedElement);
   });
 
@@ -204,15 +195,9 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
       // Hidden inputs don't need labels
       if (type === "hidden") continue;
 
-      const hasLabel =
-        ariaLabel ||
-        ariaLabelledby ||
-        (id && (await page.locator(`label[for="${id}"]`).count()) > 0);
+      const hasLabel = ariaLabel || ariaLabelledby || (id && (await page.locator(`label[for="${id}"]`).count()) > 0);
 
-      expect(
-        hasLabel,
-        `Input should have aria-label, aria-labelledby, or associated label`,
-      ).toBeTruthy();
+      expect(hasLabel, `Input should have aria-label, aria-labelledby, or associated label`).toBeTruthy();
     }
   });
 
@@ -225,11 +210,8 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     await page.waitForSelector('[role="dialog"]');
 
     // Tab through all focusable elements in dialog
-    const focusableSelector =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const dialogFocusable = await page
-      .locator(`[role="dialog"] ${focusableSelector}`)
-      .all();
+    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const dialogFocusable = await page.locator(`[role="dialog"] ${focusableSelector}`).all();
 
     // Tab through all elements and verify we stay in dialog
     for (let i = 0; i < dialogFocusable.length + 2; i++) {

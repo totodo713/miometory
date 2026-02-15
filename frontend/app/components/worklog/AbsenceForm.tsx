@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import { api } from "../../services/api";
-import {
-  AbsenceType,
-  AbsenceTypeLabels,
-  type CreateAbsenceRequest,
-} from "../../types/absence";
+import { AbsenceType, AbsenceTypeLabels, type CreateAbsenceRequest } from "../../types/absence";
 
 interface AbsenceFormProps {
   date: Date;
@@ -15,16 +11,9 @@ interface AbsenceFormProps {
   onCancel: () => void;
 }
 
-export function AbsenceForm({
-  date,
-  memberId,
-  onSave,
-  onCancel,
-}: AbsenceFormProps) {
+export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormProps) {
   const [hours, setHours] = useState<number>(8);
-  const [absenceType, setAbsenceType] = useState<AbsenceType>(
-    AbsenceType.PAID_LEAVE,
-  );
+  const [absenceType, setAbsenceType] = useState<AbsenceType>(AbsenceType.PAID_LEAVE);
   const [reason, setReason] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,11 +72,7 @@ export function AbsenceForm({
       await api.absence.createAbsence(request);
       onSave();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to create absence. Please try again.",
-      );
+      setError(err instanceof Error ? err.message : "Failed to create absence. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -96,21 +81,15 @@ export function AbsenceForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-1">
-          Record Absence
-        </h3>
+        <h3 className="text-sm font-medium text-blue-900 mb-1">Record Absence</h3>
         <p className="text-xs text-blue-700">
-          Use this form to record time away from work (vacation, sick leave,
-          etc.) separate from project hours.
+          Use this form to record time away from work (vacation, sick leave, etc.) separate from project hours.
         </p>
       </div>
 
       {/* Absence Type */}
       <div>
-        <label
-          htmlFor="absenceType"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
+        <label htmlFor="absenceType" className="block text-sm font-medium text-gray-700 mb-1">
           Absence Type *
         </label>
         <select
@@ -130,10 +109,7 @@ export function AbsenceForm({
 
       {/* Hours */}
       <div>
-        <label
-          htmlFor="hours"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
+        <label htmlFor="hours" className="block text-sm font-medium text-gray-700 mb-1">
           Hours *
         </label>
         <input
@@ -148,17 +124,12 @@ export function AbsenceForm({
           disabled={isSaving}
           required
         />
-        <p className="mt-1 text-xs text-gray-500">
-          Must be in 0.25h increments (e.g., 0.25, 0.5, 1.0, 8.0)
-        </p>
+        <p className="mt-1 text-xs text-gray-500">Must be in 0.25h increments (e.g., 0.25, 0.5, 1.0, 8.0)</p>
       </div>
 
       {/* Reason */}
       <div>
-        <label
-          htmlFor="reason"
-          className="block text-sm font-medium text-gray-700 mb-1"
-        >
+        <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
           Reason (Optional)
         </label>
         <textarea
@@ -171,18 +142,12 @@ export function AbsenceForm({
           disabled={isSaving}
           placeholder="Optional: Add a note about this absence"
         />
-        <p className="mt-1 text-xs text-gray-500">
-          {reason.length}/500 characters
-        </p>
+        <p className="mt-1 text-xs text-gray-500">{reason.length}/500 characters</p>
       </div>
 
       {/* Error message */}
       {error && (
-        <div
-          className="bg-red-50 border border-red-200 rounded-md p-3"
-          role="alert"
-          aria-live="polite"
-        >
+        <div className="bg-red-50 border border-red-200 rounded-md p-3" role="alert" aria-live="polite">
           <p className="text-sm text-red-800">{error}</p>
         </div>
       )}

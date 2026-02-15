@@ -244,16 +244,13 @@ export function useIsEntryEditable(status: EntryStatus): boolean {
 export function useCopiedProjects() {
   const copiedProjects = useWorkLogStore((state) => state.copiedProjects);
   const setCopiedProjects = useWorkLogStore((state) => state.setCopiedProjects);
-  const clearCopiedProjects = useWorkLogStore(
-    (state) => state.clearCopiedProjects,
-  );
+  const clearCopiedProjects = useWorkLogStore((state) => state.clearCopiedProjects);
 
   return {
     copiedProjects,
     setCopiedProjects,
     clearCopiedProjects,
-    hasProjects:
-      copiedProjects !== null && copiedProjects.projectIds.length > 0,
+    hasProjects: copiedProjects !== null && copiedProjects.projectIds.length > 0,
   };
 }
 
@@ -264,12 +261,8 @@ export function useProxyMode() {
   const proxyMode = useWorkLogStore((state) => state.proxyMode);
   const enableProxyMode = useWorkLogStore((state) => state.enableProxyMode);
   const disableProxyMode = useWorkLogStore((state) => state.disableProxyMode);
-  const setProxyTargetMember = useWorkLogStore(
-    (state) => state.setProxyTargetMember,
-  );
-  const getEffectiveMemberId = useWorkLogStore(
-    (state) => state.getEffectiveMemberId,
-  );
+  const setProxyTargetMember = useWorkLogStore((state) => state.setProxyTargetMember);
+  const getEffectiveMemberId = useWorkLogStore((state) => state.getEffectiveMemberId);
 
   return {
     proxyMode,

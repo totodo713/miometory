@@ -39,9 +39,7 @@ export function CopyPreviousMonthDialog({
   const [data, setData] = useState<PreviousMonthData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(
-    new Set(),
-  );
+  const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // Handle escape key to close dialog
@@ -55,10 +53,9 @@ export function CopyPreviousMonthDialog({
 
       // Focus trap: Tab key cycles within dialog
       if (event.key === "Tab" && dialogRef.current) {
-        const focusableElements =
-          dialogRef.current.querySelectorAll<HTMLElement>(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-          );
+        const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
 
@@ -106,11 +103,7 @@ export function CopyPreviousMonthDialog({
       // Select all projects by default
       setSelectedProjectIds(new Set(response.projectIds));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to load previous month projects",
-      );
+      setError(err instanceof Error ? err.message : "Failed to load previous month projects");
     } finally {
       setIsLoading(false);
     }
@@ -172,15 +165,10 @@ export function CopyPreviousMonthDialog({
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
-          <h2
-            id="copy-month-dialog-title"
-            className="text-lg font-semibold text-gray-900"
-          >
+          <h2 id="copy-month-dialog-title" className="text-lg font-semibold text-gray-900">
             Copy from Previous Month
           </h2>
-          <p className="mt-1 text-sm text-gray-600">
-            Select projects to copy as templates for this month
-          </p>
+          <p className="mt-1 text-sm text-gray-600">Select projects to copy as templates for this month</p>
         </div>
 
         {/* Content */}
@@ -209,16 +197,13 @@ export function CopyPreviousMonthDialog({
             <>
               {/* Previous month info */}
               <div className="mb-4 text-sm text-gray-600">
-                Previous period: {formatDate(data.previousMonthStart)} -{" "}
-                {formatDate(data.previousMonthEnd)}
+                Previous period: {formatDate(data.previousMonthStart)} - {formatDate(data.previousMonthEnd)}
               </div>
 
               {data.count === 0 ? (
                 <div className="text-center py-8 text-gray-600">
                   <p className="text-lg mb-2">No projects found</p>
-                  <p className="text-sm">
-                    You don't have any work log entries from the previous month.
-                  </p>
+                  <p className="text-sm">You don't have any work log entries from the previous month.</p>
                 </div>
               ) : (
                 <>
@@ -254,9 +239,7 @@ export function CopyPreviousMonthDialog({
                           onChange={() => handleToggleProject(projectId)}
                           className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                         />
-                        <span className="ml-3 text-sm text-gray-700 font-mono">
-                          {projectId.substring(0, 8)}...
-                        </span>
+                        <span className="ml-3 text-sm text-gray-700 font-mono">{projectId.substring(0, 8)}...</span>
                       </label>
                     ))}
                   </div>
@@ -286,8 +269,7 @@ export function CopyPreviousMonthDialog({
             disabled={isLoading || selectedProjectIds.size === 0}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Copy{" "}
-            {selectedProjectIds.size > 0 ? `(${selectedProjectIds.size})` : ""}
+            Copy {selectedProjectIds.size > 0 ? `(${selectedProjectIds.size})` : ""}
           </button>
         </div>
       </div>

@@ -29,13 +29,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     router.push("/api/auth/logout");
   };
 
-  const { isWarning, remainingTime, extendSession, logout } = useSessionTimeout(
-    {
-      onWarning: handleWarning,
-      onTimeout: handleTimeout,
-      enabled: true,
-    },
-  );
+  const { isWarning, remainingTime, extendSession, logout } = useSessionTimeout({
+    onWarning: handleWarning,
+    onTimeout: handleTimeout,
+    enabled: true,
+  });
 
   const handleContinue = () => {
     setShowDialog(false);

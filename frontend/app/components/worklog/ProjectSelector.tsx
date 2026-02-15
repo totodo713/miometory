@@ -62,10 +62,7 @@ export function ProjectSelector({
   const filteredProjects = projects.filter((project) => {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
-    return (
-      project.code.toLowerCase().includes(search) ||
-      project.name.toLowerCase().includes(search)
-    );
+    return project.code.toLowerCase().includes(search) || project.name.toLowerCase().includes(search);
   });
 
   // Fetch projects on mount
@@ -80,9 +77,7 @@ export function ProjectSelector({
         const response = await api.members.getAssignedProjects(memberId);
         setProjects(response.projects);
       } catch (err) {
-        setLoadError(
-          err instanceof Error ? err.message : "Failed to load projects",
-        );
+        setLoadError(err instanceof Error ? err.message : "Failed to load projects");
         setProjects([]);
       } finally {
         setIsLoading(false);
@@ -95,10 +90,7 @@ export function ProjectSelector({
   // Handle click outside to close dropdown
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         // Reset search text to show selected value
         if (selectedProject) {
@@ -136,9 +128,7 @@ export function ProjectSelector({
             setIsOpen(true);
             setHighlightedIndex(0);
           } else {
-            setHighlightedIndex((prev) =>
-              prev < filteredProjects.length - 1 ? prev + 1 : prev,
-            );
+            setHighlightedIndex((prev) => (prev < filteredProjects.length - 1 ? prev + 1 : prev));
           }
           break;
         case "ArrowUp":
@@ -147,11 +137,7 @@ export function ProjectSelector({
           break;
         case "Enter":
           event.preventDefault();
-          if (
-            isOpen &&
-            highlightedIndex >= 0 &&
-            filteredProjects[highlightedIndex]
-          ) {
+          if (isOpen && highlightedIndex >= 0 && filteredProjects[highlightedIndex]) {
             handleSelect(filteredProjects[highlightedIndex]);
           } else if (!isOpen) {
             setIsOpen(true);
@@ -214,9 +200,7 @@ export function ProjectSelector({
   if (loadError) {
     return (
       <div className={`relative ${className}`}>
-        <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
-          {loadError}
-        </div>
+        <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">{loadError}</div>
       </div>
     );
   }
@@ -244,11 +228,7 @@ export function ProjectSelector({
           aria-expanded={isOpen}
           aria-controls={listboxId}
           aria-autocomplete="list"
-          aria-activedescendant={
-            highlightedIndex >= 0
-              ? `project-option-${highlightedIndex}`
-              : undefined
-          }
+          aria-activedescendant={highlightedIndex >= 0 ? `project-option-${highlightedIndex}` : undefined}
           value={getDisplayValue()}
           onChange={handleInputChange}
           onFocus={handleFocus}
@@ -277,12 +257,7 @@ export function ProjectSelector({
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
       </div>
@@ -299,9 +274,7 @@ export function ProjectSelector({
           className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-white border border-gray-300 rounded-md shadow-lg"
         >
           {filteredProjects.length === 0 ? (
-            <div className="px-3 py-2 text-gray-500 text-sm">
-              No matching projects found
-            </div>
+            <div className="px-3 py-2 text-gray-500 text-sm">No matching projects found</div>
           ) : (
             filteredProjects.map((project, index) => (
               <div

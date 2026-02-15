@@ -22,10 +22,7 @@ import { zxcvbn, zxcvbnOptions } from "@zxcvbn-ts/core";
 import * as zxcvbnCommonPackage from "@zxcvbn-ts/language-common";
 import * as zxcvbnEnPackage from "@zxcvbn-ts/language-en";
 import { z } from "zod";
-import type {
-  PasswordStrengthResult,
-  ValidationError,
-} from "../types/password-reset";
+import type { PasswordStrengthResult, ValidationError } from "../types/password-reset";
 
 // Re-export types for external consumers
 export type { PasswordStrengthResult, ValidationError };
@@ -81,9 +78,7 @@ export const passwordResetConfirmSchema = z
       .string()
       .min(8, { message: "パスワードは8文字以上で入力してください" })
       .max(128, { message: "パスワードは128文字以内で入力してください" }),
-    confirmPassword: z
-      .string()
-      .min(1, { message: "確認用パスワードを入力してください" }),
+    confirmPassword: z.string().min(1, { message: "確認用パスワードを入力してください" }),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "パスワードが一致しません",
@@ -200,9 +195,7 @@ function getErrorType(zodErrorCode: string): ValidationError["type"] {
  * console.log(result.feedback); // ["Add more unique words or characters"]
  * ```
  */
-export function analyzePasswordStrength(
-  password: string,
-): PasswordStrengthResult {
+export function analyzePasswordStrength(password: string): PasswordStrengthResult {
   // Ensure zxcvbn is initialized
   initializeZxcvbn();
 
@@ -241,8 +234,7 @@ export function analyzePasswordStrength(
     strength,
     score: result.score,
     feedback,
-    crackTimeDisplay:
-      result.crackTimesDisplay.offlineSlowHashing1e4PerSecond || "不明",
+    crackTimeDisplay: result.crackTimesDisplay.offlineSlowHashing1e4PerSecond || "不明",
   };
 }
 
@@ -258,46 +250,31 @@ function translateFeedback(message: string): string {
     "This is a top-10 common password": "よく使われるパスワードです",
     "This is a top-100 common password": "よく使われるパスワードです",
     "This is a very common password": "よく使われるパスワードです",
-    "This is similar to a commonly used password":
-      "よく使われるパスワードに似ています",
+    "This is similar to a commonly used password": "よく使われるパスワードに似ています",
     "A word by itself is easy to guess": "単語だけでは推測されやすいです",
-    "Names and surnames by themselves are easy to guess":
-      "名前や苗字だけでは推測されやすいです",
-    "Common names and surnames are easy to guess":
-      "一般的な名前は推測されやすいです",
+    "Names and surnames by themselves are easy to guess": "名前や苗字だけでは推測されやすいです",
+    "Common names and surnames are easy to guess": "一般的な名前は推測されやすいです",
     "Straight rows of keys are easy to guess": "キーボードの並び順です",
-    "Short keyboard patterns are easy to guess":
-      "キーボードパターンは推測されやすいです",
+    "Short keyboard patterns are easy to guess": "キーボードパターンは推測されやすいです",
     'Repeats like "aaa" are easy to guess': "繰り返しは推測されやすいです",
-    'Repeats like "abcabcabc" are only slightly harder to guess than "abc"':
-      "繰り返しパターンは推測されやすいです",
-    'Sequences like "abc" or "6543" are easy to guess':
-      "連続した文字は推測されやすいです",
+    'Repeats like "abcabcabc" are only slightly harder to guess than "abc"': "繰り返しパターンは推測されやすいです",
+    'Sequences like "abc" or "6543" are easy to guess': "連続した文字は推測されやすいです",
     "Recent years are easy to guess": "最近の年は推測されやすいです",
     "Dates are often easy to guess": "日付は推測されやすいです",
 
     // Suggestions
-    "Use a few words, avoid common phrases":
-      "複数の単語を使い、一般的なフレーズを避けてください",
-    "No need for symbols, digits, or uppercase letters":
-      "記号・数字・大文字は必須ではありません",
-    "Add another word or two. Uncommon words are better.":
-      "単語を1～2語追加してください。珍しい単語が望ましいです",
-    "Use a longer keyboard pattern with more turns":
-      "より長く複雑なキーボードパターンを使用してください",
-    "Avoid repeated words and characters":
-      "単語や文字の繰り返しを避けてください",
+    "Use a few words, avoid common phrases": "複数の単語を使い、一般的なフレーズを避けてください",
+    "No need for symbols, digits, or uppercase letters": "記号・数字・大文字は必須ではありません",
+    "Add another word or two. Uncommon words are better.": "単語を1～2語追加してください。珍しい単語が望ましいです",
+    "Use a longer keyboard pattern with more turns": "より長く複雑なキーボードパターンを使用してください",
+    "Avoid repeated words and characters": "単語や文字の繰り返しを避けてください",
     "Avoid sequences": "連続した文字を避けてください",
     "Avoid recent years": "最近の年を避けてください",
-    "Avoid years that are associated with you":
-      "あなたに関連する年を避けてください",
-    "Avoid dates and years that are associated with you":
-      "あなたに関連する日付や年を避けてください",
+    "Avoid years that are associated with you": "あなたに関連する年を避けてください",
+    "Avoid dates and years that are associated with you": "あなたに関連する日付や年を避けてください",
     "Capitalization doesn't help very much": "大文字化はあまり効果がありません",
-    "All-uppercase is almost as easy to guess as all-lowercase":
-      "全て大文字でも推測されやすいです",
-    "Reversed words aren't much harder to guess":
-      "逆順の単語も推測されやすいです",
+    "All-uppercase is almost as easy to guess as all-lowercase": "全て大文字でも推測されやすいです",
+    "Reversed words aren't much harder to guess": "逆順の単語も推測されやすいです",
     'Predictable substitutions like "@" instead of "a" don\'t help very much':
       "予測可能な置換（例: a → @）はあまり効果がありません",
   };
@@ -322,10 +299,7 @@ function translateFeedback(message: string): string {
  * }
  * ```
  */
-export function meetsMinimumStrength(
-  password: string,
-  minStrength: "weak" | "medium" | "strong",
-): boolean {
+export function meetsMinimumStrength(password: string, minStrength: "weak" | "medium" | "strong"): boolean {
   const result = analyzePasswordStrength(password);
 
   const strengthOrder = ["weak", "medium", "strong"];

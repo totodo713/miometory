@@ -79,16 +79,13 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
     }
   }, []);
 
-  const handleFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0];
-      if (selectedFile) {
-        setFile(selectedFile);
-        setError(null);
-      }
-    },
-    [],
-  );
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setError(null);
+    }
+  }, []);
 
   const handleImport = useCallback(async () => {
     if (!file) return;
@@ -143,9 +140,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
 
   const getProgressPercentage = () => {
     if (!progress || progress.totalRows === 0) return 0;
-    return Math.round(
-      ((progress.validRows + progress.errorRows) / progress.totalRows) * 100,
-    );
+    return Math.round(((progress.validRows + progress.errorRows) / progress.totalRows) * 100);
   };
 
   return (
@@ -174,12 +169,8 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
             aria-label="Select CSV file to import"
           />
           <div className="text-gray-600">
-            <p className="text-lg font-medium mb-2">
-              Drop CSV file here or click to browse
-            </p>
-            <p className="text-sm text-gray-500">
-              Supported format: CSV (Date, Project Code, Hours, Notes)
-            </p>
+            <p className="text-lg font-medium mb-2">Drop CSV file here or click to browse</p>
+            <p className="text-sm text-gray-500">Supported format: CSV (Date, Project Code, Hours, Notes)</p>
           </div>
         </button>
       )}
@@ -190,9 +181,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
               <p className="font-medium">{file.name}</p>
-              <p className="text-sm text-gray-500">
-                {(file.size / 1024).toFixed(2)} KB
-              </p>
+              <p className="text-sm text-gray-500">{(file.size / 1024).toFixed(2)} KB</p>
             </div>
             <button
               type="button"
@@ -219,9 +208,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium">Importing...</span>
-              <span className="text-sm text-gray-600">
-                {getProgressPercentage()}%
-              </span>
+              <span className="text-sm text-gray-600">{getProgressPercentage()}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
@@ -232,9 +219,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
             <div className="mt-2 text-sm text-gray-600">
               <p>Total rows: {progress.totalRows}</p>
               <p className="text-green-600">Valid: {progress.validRows}</p>
-              {progress.errorRows > 0 && (
-                <p className="text-red-600">Errors: {progress.errorRows}</p>
-              )}
+              {progress.errorRows > 0 && <p className="text-red-600">Errors: {progress.errorRows}</p>}
             </div>
           </div>
         </div>
@@ -245,19 +230,12 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
           <p className="font-medium text-green-800">Import completed!</p>
           <p className="text-sm text-green-700 mt-1">
-            Successfully imported {progress.validRows} of {progress.totalRows}{" "}
-            rows
+            Successfully imported {progress.validRows} of {progress.totalRows} rows
           </p>
           {progress.errorRows > 0 && (
-            <p className="text-sm text-yellow-700 mt-1">
-              {progress.errorRows} rows had errors and were skipped
-            </p>
+            <p className="text-sm text-yellow-700 mt-1">{progress.errorRows} rows had errors and were skipped</p>
           )}
-          <button
-            type="button"
-            onClick={handleReset}
-            className="mt-3 text-sm text-blue-600 hover:text-blue-800"
-          >
+          <button type="button" onClick={handleReset} className="mt-3 text-sm text-blue-600 hover:text-blue-800">
             Import another file
           </button>
         </div>
@@ -278,18 +256,12 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
           <div className="space-y-2">
             {progress.errors.slice(0, 100).map((error) => (
               <div key={error.row} className="text-sm">
-                <span className="font-medium text-yellow-900">
-                  Row {error.row}:
-                </span>{" "}
-                <span className="text-yellow-700">
-                  {error.errors.join(", ")}
-                </span>
+                <span className="font-medium text-yellow-900">Row {error.row}:</span>{" "}
+                <span className="text-yellow-700">{error.errors.join(", ")}</span>
               </div>
             ))}
             {progress.errors.length > 100 && (
-              <p className="text-sm text-yellow-700 italic">
-                ... and {progress.errors.length - 100} more errors
-              </p>
+              <p className="text-sm text-yellow-700 italic">... and {progress.errors.length - 100} more errors</p>
             )}
           </div>
         </div>

@@ -22,19 +22,11 @@ export default function LoginPage() {
     <form onSubmit={handleSubmit}>
       <label>
         Email
-        <input
-          aria-label="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <input aria-label="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <label>
         Password
-        <input
-          aria-label="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <input aria-label="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       <label>
         Remember me

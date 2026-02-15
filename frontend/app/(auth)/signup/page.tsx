@@ -20,9 +20,7 @@ export default function SignupPage() {
       return;
     }
     if (!validatePassword(password)) {
-      setError(
-        "Password must be 8+ chars, include a digit and an uppercase letter",
-      );
+      setError("Password must be 8+ chars, include a digit and an uppercase letter");
       return;
     }
     // In real app: call API
@@ -33,27 +31,15 @@ export default function SignupPage() {
     <form onSubmit={handleSubmit}>
       <label>
         Email
-        <input
-          aria-label="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <input aria-label="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <label>
         Name
-        <input
-          aria-label="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <input aria-label="name" value={name} onChange={(e) => setName(e.target.value)} />
       </label>
       <label>
         Password
-        <input
-          aria-label="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <input aria-label="password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       {error && <div role="alert">{error}</div>}
       <button type="submit">Sign up</button>

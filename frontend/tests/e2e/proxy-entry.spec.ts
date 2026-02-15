@@ -54,43 +54,37 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Mock subordinates API
-    await page.route(
-      `**/api/v1/members/${managerId}/subordinates**`,
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            subordinates: [
-              {
-                id: subordinateId,
-                email: "engineer@test.com",
-                displayName: subordinateName,
-                managerId: managerId,
-                isActive: true,
-              },
-            ],
-            total: 1,
-            recursive: false,
-          }),
-        });
-      },
-    );
+    await page.route(`**/api/v1/members/${managerId}/subordinates**`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          subordinates: [
+            {
+              id: subordinateId,
+              email: "engineer@test.com",
+              displayName: subordinateName,
+              managerId: managerId,
+              isActive: true,
+            },
+          ],
+          total: 1,
+          recursive: false,
+        }),
+      });
+    });
 
     // Mock can-proxy API
-    await page.route(
-      `**/api/v1/members/${managerId}/can-proxy/${subordinateId}`,
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            canProxy: true,
-            reason: "Manager can enter time for this subordinate",
-          }),
-        });
-      },
-    );
+    await page.route(`**/api/v1/members/${managerId}/can-proxy/${subordinateId}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          canProxy: true,
+          reason: "Manager can enter time for this subordinate",
+        }),
+      });
+    });
 
     // Mock calendar API - handle all requests including summary
     await page.route("**/api/v1/worklog/calendar/**", async (route) => {
@@ -187,26 +181,21 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Mock previous month projects API
-    await page.route(
-      "**/api/v1/worklog/projects/previous-month**",
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            projectIds: [],
-            previousMonthStart: "2025-12-21",
-            previousMonthEnd: "2026-01-20",
-            count: 0,
-          }),
-        });
-      },
-    );
+    await page.route("**/api/v1/worklog/projects/previous-month**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projectIds: [],
+          previousMonthStart: "2025-12-21",
+          previousMonthEnd: "2026-01-20",
+          count: 0,
+        }),
+      });
+    });
   });
 
-  test("manager can navigate to proxy entry page and see subordinates", async ({
-    page,
-  }) => {
+  test("manager can navigate to proxy entry page and see subordinates", async ({ page }) => {
     // Step 1: Navigate to worklog page
     await page.goto(`${baseURL}/worklog?memberId=${managerId}`, {
       waitUntil: "networkidle",
@@ -223,29 +212,21 @@ test.describe("Proxy Entry Workflow", () => {
     await expect(page).toHaveURL(/\/worklog\/proxy/);
 
     // Step 4: Verify subordinate selector is available (it's a select dropdown)
-    const memberSelector = page.locator(
-      'select[aria-label="Select Team Member"]',
-    );
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
     await expect(memberSelector).toBeVisible();
 
     // Verify subordinate is listed as an option
-    await expect(
-      page.locator(`option:has-text("${subordinateName}")`),
-    ).toBeAttached();
+    await expect(page.locator(`option:has-text("${subordinateName}")`)).toBeAttached();
   });
 
-  test("manager can enable proxy mode and see proxy banner", async ({
-    page,
-  }) => {
+  test("manager can enable proxy mode and see proxy banner", async ({ page }) => {
     // Navigate to proxy page
     await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
     // Select subordinate from dropdown
-    const memberSelector = page.locator(
-      'select[aria-label="Select Team Member"]',
-    );
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
     await expect(memberSelector).toBeVisible();
     await memberSelector.selectOption({ value: subordinateId });
 
@@ -262,9 +243,7 @@ test.describe("Proxy Entry Workflow", () => {
     const proxyBanner = page.getByText(/Proxy Mode: Entering time for/i);
     await expect(proxyBanner).toBeVisible();
     // Subordinate name appears in the proxy banner
-    await expect(
-      proxyBanner.locator("..").getByText(subordinateName),
-    ).toBeVisible();
+    await expect(proxyBanner.locator("..").getByText(subordinateName)).toBeVisible();
   });
 
   test("manager can exit proxy mode", async ({ page }) => {
@@ -274,9 +253,7 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Select subordinate
-    const memberSelector = page.locator(
-      'select[aria-label="Select Team Member"]',
-    );
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
     await memberSelector.selectOption({ value: subordinateId });
 
     // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
@@ -286,9 +263,7 @@ test.describe("Proxy Entry Workflow", () => {
     await enterTimeButton.click();
 
     // Verify in proxy mode
-    await expect(
-      page.getByText(/Proxy Mode: Entering time for/i),
-    ).toBeVisible();
+    await expect(page.getByText(/Proxy Mode: Entering time for/i)).toBeVisible();
 
     // Click exit proxy mode button
     const exitButton = page.getByRole("button", { name: /Exit Proxy Mode/i });
@@ -296,9 +271,7 @@ test.describe("Proxy Entry Workflow", () => {
     await exitButton.click();
 
     // Verify proxy banner is no longer visible
-    await expect(
-      page.getByText(/Proxy Mode: Entering time for/i),
-    ).not.toBeVisible();
+    await expect(page.getByText(/Proxy Mode: Entering time for/i)).not.toBeVisible();
   });
 
   test("proxy entry form shows 'Entering as' banner", async ({ page }) => {
@@ -308,9 +281,7 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Select subordinate to enter proxy mode
-    const memberSelector = page.locator(
-      'select[aria-label="Select Team Member"]',
-    );
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
     await memberSelector.selectOption({ value: subordinateId });
 
     // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
@@ -331,23 +302,17 @@ test.describe("Proxy Entry Workflow", () => {
 
     // Verify the form shows proxy entry banner
     await expect(page.getByText(/Entering time as:/i)).toBeVisible();
-    await expect(
-      page.getByText(/This entry will be recorded on behalf of/i),
-    ).toBeVisible();
+    await expect(page.getByText(/This entry will be recorded on behalf of/i)).toBeVisible();
   });
 
-  test("calendar shows proxy entry indicator for entries made by manager", async ({
-    page,
-  }) => {
+  test("calendar shows proxy entry indicator for entries made by manager", async ({ page }) => {
     // Navigate to proxy page first to enable proxy mode
     await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
     // Select subordinate
-    const memberSelector = page.locator(
-      'select[aria-label="Select Team Member"]',
-    );
+    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
     await memberSelector.selectOption({ value: subordinateId });
 
     // Click Enter Time button to enable proxy mode

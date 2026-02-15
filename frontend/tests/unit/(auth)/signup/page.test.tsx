@@ -5,9 +5,7 @@ describe("Signup page", () => {
   test("shows validation error for empty fields", () => {
     render(<SignupPage />);
     fireEvent.click(screen.getByText(/sign up/i));
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      /all fields are required/i,
-    );
+    expect(screen.getByRole("alert")).toHaveTextContent(/all fields are required/i);
   });
 
   test("shows password validation error", () => {

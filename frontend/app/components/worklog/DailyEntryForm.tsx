@@ -28,17 +28,10 @@ interface ProjectRow {
   };
 }
 
-export function DailyEntryForm({
-  date,
-  memberId,
-  onClose,
-  onSave,
-}: DailyEntryFormProps) {
+export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFormProps) {
   const { isProxyMode, targetMember } = useProxyMode();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
-  const [projectRows, setProjectRows] = useState<ProjectRow[]>([
-    { projectId: "", hours: 0, comment: "", errors: {} },
-  ]);
+  const [projectRows, setProjectRows] = useState<ProjectRow[]>([{ projectId: "", hours: 0, comment: "", errors: {} }]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -48,15 +41,11 @@ export function DailyEntryForm({
   const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
   const [absenceHours, setAbsenceHours] = useState<number>(0);
 
-  const initialDataRef = useRef<string>(
-    JSON.stringify([{ projectId: "", hours: 0, comment: "", errors: {} }]),
-  );
+  const initialDataRef = useRef<string>(JSON.stringify([{ projectId: "", hours: 0, comment: "", errors: {} }]));
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Calculate if read-only (submitted or approved)
-  const isReadOnly = projectRows.some(
-    (row) => row.status === "SUBMITTED" || row.status === "APPROVED",
-  );
+  const isReadOnly = projectRows.some((row) => row.status === "SUBMITTED" || row.status === "APPROVED");
 
   // Calculate total hours
   const totalWorkHours = projectRows.reduce((sum, row) => sum + row.hours, 0);
@@ -102,17 +91,10 @@ export function DailyEntryForm({
         });
 
         // Sum up all absence hours for the day (excluding deleted absences)
-        const totalAbsence = absenceResponse.absences.reduce(
-          (sum, absence) => sum + absence.hours,
-          0,
-        );
+        const totalAbsence = absenceResponse.absences.reduce((sum, absence) => sum + absence.hours, 0);
         setAbsenceHours(totalAbsence);
       } catch (error) {
-        setLoadError(
-          error instanceof Error
-            ? error.message
-            : "Error loading entries. Please try again.",
-        );
+        setLoadError(error instanceof Error ? error.message : "Error loading entries. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -154,10 +136,7 @@ export function DailyEntryForm({
   }, [hasUnsavedChanges, isReadOnly]);
 
   // Validation functions
-  const validateField = (
-    field: "project" | "hours" | "comment",
-    value: string | number,
-  ): string | undefined => {
+  const validateField = (field: "project" | "hours" | "comment", value: string | number): string | undefined => {
     if (field === "project") {
       if (!value) {
         return "Project is required";
@@ -165,8 +144,7 @@ export function DailyEntryForm({
     }
 
     if (field === "hours") {
-      const hours =
-        typeof value === "number" ? value : Number.parseFloat(value as string);
+      const hours = typeof value === "number" ? value : Number.parseFloat(value as string);
 
       if (hours < 0) {
         return "Hours cannot be negative";
@@ -193,17 +171,11 @@ export function DailyEntryForm({
   };
 
   const hasValidationErrors = (): boolean => {
-    return projectRows.some(
-      (row) => row.errors.project || row.errors.hours || row.errors.comment,
-    );
+    return projectRows.some((row) => row.errors.project || row.errors.hours || row.errors.comment);
   };
 
   // Update project row field
-  const updateProjectRow = (
-    index: number,
-    field: keyof ProjectRow,
-    value: string | number,
-  ) => {
+  const updateProjectRow = (index: number, field: keyof ProjectRow, value: string | number) => {
     setProjectRows((prev) => {
       const updated = [...prev];
       const row = { ...updated[index] };
@@ -217,10 +189,7 @@ export function DailyEntryForm({
 
       // Validate the field
       const fieldName = field === "projectId" ? "project" : field;
-      const error = validateField(
-        fieldName as "project" | "hours" | "comment",
-        value,
-      );
+      const error = validateField(fieldName as "project" | "hours" | "comment", value);
       row.errors = { ...row.errors, [fieldName]: error };
 
       updated[index] = row;
@@ -230,10 +199,7 @@ export function DailyEntryForm({
 
   // Add a new project row
   const addProjectRow = () => {
-    setProjectRows((prev) => [
-      ...prev,
-      { projectId: "", hours: 0, comment: "", errors: {} },
-    ]);
+    setProjectRows((prev) => [...prev, { projectId: "", hours: 0, comment: "", errors: {} }]);
   };
 
   // Remove a project row
@@ -252,9 +218,7 @@ export function DailyEntryForm({
       initialDataRef.current = "[]"; // Reset initial data
       onSave();
     } catch (error: any) {
-      setSaveError(
-        error instanceof Error ? error.message : "Failed to delete entry",
-      );
+      setSaveError(error instanceof Error ? error.message : "Failed to delete entry");
     } finally {
       setIsSaving(false);
     }
@@ -276,9 +240,7 @@ export function DailyEntryForm({
       setProjectRows(validatedRows);
 
       // Check for validation errors
-      const hasErrors = validatedRows.some(
-        (row) => row.errors.project || row.errors.hours || row.errors.comment,
-      );
+      const hasErrors = validatedRows.some((row) => row.errors.project || row.errors.hours || row.errors.comment);
 
       if (hasErrors) {
         return;
@@ -327,13 +289,9 @@ export function DailyEntryForm({
         }
       } catch (error: any) {
         if (error.status === 409) {
-          setSaveError(
-            "This entry has been modified by another user. Please refresh and try again.",
-          );
+          setSaveError("This entry has been modified by another user. Please refresh and try again.");
         } else {
-          setSaveError(
-            error instanceof Error ? error.message : "Failed to save entries",
-          );
+          setSaveError(error instanceof Error ? error.message : "Failed to save entries");
         }
       } finally {
         setIsSaving(false);
@@ -346,11 +304,7 @@ export function DailyEntryForm({
   // Handle close with unsaved changes warning
   const handleClose = () => {
     if (hasUnsavedChanges && !isReadOnly) {
-      if (
-        !window.confirm(
-          "You have unsaved changes. Are you sure you want to close?",
-        )
-      ) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to close?")) {
         return;
       }
     }
@@ -373,13 +327,7 @@ export function DailyEntryForm({
       REJECTED: "bg-red-200 text-red-800",
     };
 
-    return (
-      <span
-        className={`ml-2 px-2 py-1 text-xs font-semibold rounded ${colors[status]}`}
-      >
-        {status}
-      </span>
-    );
+    return <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded ${colors[status]}`}>{status}</span>;
   };
 
   if (isLoading) {
@@ -426,14 +374,12 @@ export function DailyEntryForm({
             <div className="mb-6 p-4 bg-amber-100 border border-amber-300 rounded-lg">
               <div className="flex items-center gap-2">
                 <span className="text-amber-800 font-medium">
-                  Entering time as:{" "}
-                  <span className="font-bold">{targetMember.displayName}</span>
+                  Entering time as: <span className="font-bold">{targetMember.displayName}</span>
                 </span>
               </div>
               <p className="text-sm text-amber-700 mt-1">
-                This entry will be recorded on behalf of{" "}
-                {targetMember.displayName}. You will be logged as the person who
-                entered this data.
+                This entry will be recorded on behalf of {targetMember.displayName}. You will be logged as the person
+                who entered this data.
               </p>
             </div>
           )}
@@ -468,44 +414,30 @@ export function DailyEntryForm({
 
           {/* Load Error */}
           {loadError && (
-            <div
-              className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded"
-              role="alert"
-            >
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded" role="alert">
               {loadError}
             </div>
           )}
 
           {/* Save Error */}
           {saveError && (
-            <div
-              className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded"
-              role="alert"
-            >
+            <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded" role="alert">
               {saveError}
             </div>
           )}
 
           {/* Auto-save indicator */}
           {autoSavedAt && (
-            <div className="mb-4 text-sm text-green-600">
-              Auto-saved at {autoSavedAt.toLocaleTimeString()}
-            </div>
+            <div className="mb-4 text-sm text-green-600">Auto-saved at {autoSavedAt.toLocaleTimeString()}</div>
           )}
 
           {/* Combined Total Hours Display */}
           <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-gray-700">
-                Total Daily Hours:
-              </span>
+              <span className="font-semibold text-gray-700">Total Daily Hours:</span>
               <span
                 className={`text-2xl font-bold ${
-                  totalExceeds24
-                    ? "text-red-600"
-                    : totalHours === 0
-                      ? "text-gray-500"
-                      : "text-green-600"
+                  totalExceeds24 ? "text-red-600" : totalHours === 0 ? "text-gray-500" : "text-green-600"
                 }`}
               >
                 {totalHours.toFixed(2)}h
@@ -516,17 +448,13 @@ export function DailyEntryForm({
                 {totalWorkHours > 0 && (
                   <div className="flex justify-between">
                     <span>Work Hours:</span>
-                    <span className="font-medium">
-                      {totalWorkHours.toFixed(2)}h
-                    </span>
+                    <span className="font-medium">{totalWorkHours.toFixed(2)}h</span>
                   </div>
                 )}
                 {absenceHours > 0 && (
                   <div className="flex justify-between">
                     <span>Absence Hours:</span>
-                    <span className="font-medium text-blue-600">
-                      {absenceHours.toFixed(2)}h
-                    </span>
+                    <span className="font-medium text-blue-600">{absenceHours.toFixed(2)}h</span>
                   </div>
                 )}
               </div>
@@ -548,23 +476,16 @@ export function DailyEntryForm({
                     <div className="flex items-start gap-4">
                       {/* Project Selection */}
                       <div className="flex-1">
-                        <label
-                          htmlFor={`project-${index}`}
-                          className="block text-sm font-medium mb-1"
-                        >
+                        <label htmlFor={`project-${index}`} className="block text-sm font-medium mb-1">
                           Project {renderStatusBadge(row.status)}
                         </label>
                         <ProjectSelector
                           id={`project-${index}`}
                           memberId={memberId}
                           value={row.projectId}
-                          onChange={(projectId) =>
-                            updateProjectRow(index, "projectId", projectId)
-                          }
+                          onChange={(projectId) => updateProjectRow(index, "projectId", projectId)}
                           disabled={
-                            (row.status !== "DRAFT" &&
-                              row.status !== undefined) ||
-                            !!row.id // Disable for existing entries (FR-008)
+                            (row.status !== "DRAFT" && row.status !== undefined) || !!row.id // Disable for existing entries (FR-008)
                           }
                           error={row.errors.project}
                           placeholder="Select a project..."
@@ -573,80 +494,53 @@ export function DailyEntryForm({
 
                       {/* Hours Input */}
                       <div className="w-32">
-                        <label
-                          htmlFor={`hours-${index}`}
-                          className="block text-sm font-medium mb-1"
-                        >
+                        <label htmlFor={`hours-${index}`} className="block text-sm font-medium mb-1">
                           Hours
                         </label>
                         <input
                           id={`hours-${index}`}
                           type="number"
                           value={row.hours}
-                          onChange={(e) =>
-                            updateProjectRow(
-                              index,
-                              "hours",
-                              Number.parseFloat(e.target.value) || 0,
-                            )
-                          }
-                          disabled={
-                            row.status !== "DRAFT" && row.status !== undefined
-                          }
+                          onChange={(e) => updateProjectRow(index, "hours", Number.parseFloat(e.target.value) || 0)}
+                          disabled={row.status !== "DRAFT" && row.status !== undefined}
                           step="0.25"
                           min="0"
                           max="24"
                           className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
                         />
-                        {row.errors.hours && (
-                          <div className="text-red-600 text-sm mt-1">
-                            {row.errors.hours}
-                          </div>
-                        )}
+                        {row.errors.hours && <div className="text-red-600 text-sm mt-1">{row.errors.hours}</div>}
                       </div>
 
                       {/* Remove Button */}
                       <div className="pt-6">
-                        {projectRows.length > 1 &&
-                          (row.status === "DRAFT" || !row.status) && (
-                            <button
-                              type="button"
-                              onClick={() => removeProjectRow(index)}
-                              aria-label={`Remove project entry ${index + 1}`}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              Remove
-                            </button>
-                          )}
+                        {projectRows.length > 1 && (row.status === "DRAFT" || !row.status) && (
+                          <button
+                            type="button"
+                            onClick={() => removeProjectRow(index)}
+                            aria-label={`Remove project entry ${index + 1}`}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                     </div>
 
                     {/* Comment */}
                     <div className="mt-4">
-                      <label
-                        htmlFor={`comment-${index}`}
-                        className="block text-sm font-medium mb-1"
-                      >
+                      <label htmlFor={`comment-${index}`} className="block text-sm font-medium mb-1">
                         Comment
                       </label>
                       <textarea
                         id={`comment-${index}`}
                         value={row.comment}
-                        onChange={(e) =>
-                          updateProjectRow(index, "comment", e.target.value)
-                        }
-                        disabled={
-                          row.status !== "DRAFT" && row.status !== undefined
-                        }
+                        onChange={(e) => updateProjectRow(index, "comment", e.target.value)}
+                        disabled={row.status !== "DRAFT" && row.status !== undefined}
                         rows={2}
                         className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
                         placeholder="Optional comment..."
                       />
-                      {row.errors.comment && (
-                        <div className="text-red-600 text-sm mt-1">
-                          {row.errors.comment}
-                        </div>
-                      )}
+                      {row.errors.comment && <div className="text-red-600 text-sm mt-1">{row.errors.comment}</div>}
                     </div>
 
                     {/* Delete Button (for existing entries) */}
@@ -689,9 +583,7 @@ export function DailyEntryForm({
                   <button
                     type="button"
                     onClick={() => handleSave(false)}
-                    disabled={
-                      isSaving || hasValidationErrors() || totalExceeds24
-                    }
+                    disabled={isSaving || hasValidationErrors() || totalExceeds24}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
                     {isSaving ? "Saving..." : "Save"}
@@ -703,12 +595,7 @@ export function DailyEntryForm({
 
           {/* Absence Tab */}
           {activeTab === "absence" && (
-            <AbsenceForm
-              date={date}
-              memberId={memberId}
-              onSave={handleAbsenceSave}
-              onCancel={handleClose}
-            />
+            <AbsenceForm date={date} memberId={memberId} onSave={handleAbsenceSave} onCancel={handleClose} />
           )}
         </div>
       </div>
@@ -727,8 +614,7 @@ export function DailyEntryForm({
               Confirm Delete
             </h3>
             <p id="delete-confirm-description" className="mb-6">
-              Are you sure you want to delete this entry? This action cannot be
-              undone.
+              Are you sure you want to delete this entry? This action cannot be undone.
             </p>
             <div className="flex justify-end gap-4">
               <button

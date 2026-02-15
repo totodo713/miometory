@@ -115,49 +115,39 @@ test.describe("Daily Entry Workflow", () => {
     });
 
     // Mock monthly summary API (used by MonthlySummary component on calendar page)
-    await page.route(
-      "**/api/v1/worklog/calendar/**/summary**",
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            year: 2026,
-            month: 1,
-            totalWorkHours: 0,
-            totalAbsenceHours: 0,
-            totalBusinessDays: 22,
-            projects: [],
-            approvalStatus: null,
-            rejectionReason: null,
-          }),
-        });
-      },
-    );
+    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          year: 2026,
+          month: 1,
+          totalWorkHours: 0,
+          totalAbsenceHours: 0,
+          totalBusinessDays: 22,
+          projects: [],
+          approvalStatus: null,
+          rejectionReason: null,
+        }),
+      });
+    });
 
     // Mock previous month projects API (used by CopyPreviousMonthDialog)
-    await page.route(
-      "**/api/v1/worklog/previous-month-projects**",
-      async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            projects: [],
-          }),
-        });
-      },
-    );
+    await page.route("**/api/v1/worklog/previous-month-projects**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projects: [],
+        }),
+      });
+    });
   });
 
   test("should complete full daily entry workflow", async ({ page }) => {
     // Log all requests that fail to be mocked
     page.on("requestfailed", (request) => {
-      console.log(
-        "Request failed:",
-        request.url(),
-        request.failure()?.errorText,
-      );
+      console.log("Request failed:", request.url(), request.failure()?.errorText);
     });
 
     // Log console errors
@@ -204,9 +194,7 @@ test.describe("Daily Entry Workflow", () => {
     await page.waitForSelector('input[id="project-0"]', { timeout: 10000 });
 
     // Verify form is loaded
-    await expect(page.locator("h2, h3")).toContainText(
-      /Work Log Entry|Daily Entry|2026-01-15/i,
-    );
+    await expect(page.locator("h2, h3")).toContainText(/Work Log Entry|Daily Entry|2026-01-15/i);
 
     // Step 4: Enter time for first project
     // Add first project row (project is text input, not select)
@@ -261,9 +249,7 @@ test.describe("Daily Entry Workflow", () => {
     await page.waitForTimeout(100);
 
     // Verify validation error appears (global error message)
-    await expect(
-      page.locator("text=/Combined hours cannot exceed 24 hours/i"),
-    ).toBeVisible();
+    await expect(page.locator("text=/Combined hours cannot exceed 24 hours/i")).toBeVisible();
 
     // Save button should be disabled
     const saveButton = page.locator('button:has-text("Save")');
