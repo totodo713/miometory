@@ -22,7 +22,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import type { ErrorState, ValidationError } from "@/lib/types/password-reset";
 import { validatePasswordConfirm } from "@/lib/validation/password";
 import { api } from "@/services/api";
@@ -30,7 +30,11 @@ import { api } from "@/services/api";
 // sessionStorage key for token backup
 const TOKEN_STORAGE_KEY = "password_reset_token";
 
-export default function PasswordResetConfirmPage() {
+/**
+ * Inner component that uses useSearchParams
+ * Wrapped in Suspense boundary by parent component
+ */
+function PasswordResetConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -676,5 +680,52 @@ export default function PasswordResetConfirmPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+/**
+ * Page component with Suspense boundary
+ * Required for useSearchParams() in Next.js 16+
+ */
+export default function PasswordResetConfirmPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container">
+          <div className="card">
+            <output className="loading" aria-live="polite">
+              処理中...
+            </output>
+          </div>
+
+          <style jsx>{`
+            .container {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              padding: 1rem;
+              background-color: #f5f5f5;
+            }
+
+            .card {
+              background: white;
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+              padding: 2rem;
+              width: 100%;
+              max-width: 400px;
+            }
+
+            .loading {
+              text-align: center;
+              color: #666;
+            }
+          `}</style>
+        </div>
+      }
+    >
+      <PasswordResetConfirmForm />
+    </Suspense>
   );
 }
