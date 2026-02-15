@@ -101,7 +101,7 @@ export default function PasswordResetRequestPage() {
     setIsLoading(true);
 
     try {
-      await api.auth.requestPasswordReset({ email });
+      await api.auth.requestPasswordReset({ email: email.toLowerCase() });
 
       // Record attempt after successful request
       recordAttempt();
