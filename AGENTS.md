@@ -1,6 +1,7 @@
 # AGENTS.md – Agentic Coding Rules for Miometry
 
 This file provides agentic coding agents with complete guidelines for operating in this repository. It covers build, lint, and test commands, exhaustive style recommendations, and critical patterns for maintaining code standardization across backend (Spring Boot/Kotlin) and frontend (Next.js/TypeScript) projects.
+Always use Context7 MCP when I need library/API documentation, code generation, setup or configuration steps without me having to explicitly ask.
 
 ## Table of Contents
 1. [Language Preferences](#language-preferences)
