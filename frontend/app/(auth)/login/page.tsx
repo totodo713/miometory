@@ -1,18 +1,19 @@
-"use client"
-import React, { useState } from 'react'
+"use client";
+import type React from "react";
+import { useState } from "react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
     if (!email || !password) {
-      setError('Email and password are required')
-      return
+      setError("Email and password are required");
+      return;
     }
     // In real app: call API and set cookie for remember
   }
@@ -21,18 +22,31 @@ export default function LoginPage() {
     <form onSubmit={handleSubmit}>
       <label>
         Email
-        <input aria-label="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input
+          aria-label="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </label>
       <label>
         Password
-        <input aria-label="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input
+          aria-label="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
       </label>
       <label>
         Remember me
-        <input aria-label="remember-me" type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+        <input
+          aria-label="remember-me"
+          type="checkbox"
+          checked={remember}
+          onChange={(e) => setRemember(e.target.checked)}
+        />
       </label>
       {error && <div role="alert">{error}</div>}
       <button type="submit">Log in</button>
     </form>
-  )
+  );
 }

@@ -23,7 +23,7 @@ test.describe("Absence Entry Workflow", () => {
     // Mock calendar API - includes both work and absence hours
     await page.route("**/api/v1/worklog/calendar/**", async (route) => {
       const url = route.request().url();
-      
+
       // Handle summary endpoint inline
       if (url.includes("/summary")) {
         await route.fulfill({
@@ -42,7 +42,7 @@ test.describe("Absence Entry Workflow", () => {
         });
         return;
       }
-      
+
       await route.fulfill({
         status: 200,
         contentType: "application/json",

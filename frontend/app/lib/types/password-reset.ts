@@ -1,9 +1,9 @@
 /**
  * TypeScript type definitions for password reset feature
- * 
+ *
  * This file contains all entity types, validation error types, and API response types
  * used throughout the password reset flow.
- * 
+ *
  * @see specs/005-password-reset-frontend/data-model.md
  */
 
@@ -48,7 +48,7 @@ export interface ValidationError {
   /** User-friendly error message (localized) */
   message: string;
   /** Error type for programmatic handling */
-  type: 'required' | 'format' | 'mismatch' | 'length' | 'strength';
+  type: "required" | "format" | "mismatch" | "length" | "strength";
 }
 
 /**
@@ -71,7 +71,7 @@ export interface RateLimitState {
  */
 export interface PasswordStrengthResult {
   /** Strength category for UI display */
-  strength: 'weak' | 'medium' | 'strong';
+  strength: "weak" | "medium" | "strong";
   /** Raw zxcvbn score (0-4) */
   score: number;
   /** User-friendly feedback messages (localized) */
@@ -101,7 +101,13 @@ export interface ApiResponse<T = unknown> {
  */
 export interface ErrorState {
   /** Error type for UI rendering */
-  type: 'network' | 'validation' | 'expired_token' | 'rate_limit' | 'server' | null;
+  type:
+    | "network"
+    | "validation"
+    | "expired_token"
+    | "rate_limit"
+    | "server"
+    | null;
   /** User-friendly error message (localized) */
   message: string;
   /** Whether error is retryable (show retry button) */

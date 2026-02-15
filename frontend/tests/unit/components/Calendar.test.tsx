@@ -5,7 +5,7 @@
  * Task: T061 - Calendar component tests
  */
 
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Calendar } from "@/components/worklog/Calendar";

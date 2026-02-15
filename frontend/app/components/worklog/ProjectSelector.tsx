@@ -81,7 +81,7 @@ export function ProjectSelector({
         setProjects(response.projects);
       } catch (err) {
         setLoadError(
-          err instanceof Error ? err.message : "Failed to load projects"
+          err instanceof Error ? err.message : "Failed to load projects",
         );
         setProjects([]);
       } finally {
@@ -114,12 +114,15 @@ export function ProjectSelector({
   // Handle project selection
   // Note: setSearchText, setIsOpen, setHighlightedIndex are React state setters
   // which are guaranteed to be stable and don't need to be in the dependency array
-  const handleSelect = useCallback((project: AssignedProject) => {
-    onChange(project.id);
-    setSearchText("");
-    setIsOpen(false);
-    setHighlightedIndex(-1);
-  }, [onChange]);
+  const handleSelect = useCallback(
+    (project: AssignedProject) => {
+      onChange(project.id);
+      setSearchText("");
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+    },
+    [onChange],
+  );
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback(
@@ -134,7 +137,7 @@ export function ProjectSelector({
             setHighlightedIndex(0);
           } else {
             setHighlightedIndex((prev) =>
-              prev < filteredProjects.length - 1 ? prev + 1 : prev
+              prev < filteredProjects.length - 1 ? prev + 1 : prev,
             );
           }
           break;
@@ -144,7 +147,11 @@ export function ProjectSelector({
           break;
         case "Enter":
           event.preventDefault();
-          if (isOpen && highlightedIndex >= 0 && filteredProjects[highlightedIndex]) {
+          if (
+            isOpen &&
+            highlightedIndex >= 0 &&
+            filteredProjects[highlightedIndex]
+          ) {
             handleSelect(filteredProjects[highlightedIndex]);
           } else if (!isOpen) {
             setIsOpen(true);
@@ -160,7 +167,7 @@ export function ProjectSelector({
           break;
       }
     },
-    [disabled, isOpen, highlightedIndex, filteredProjects, handleSelect]
+    [disabled, isOpen, highlightedIndex, filteredProjects, handleSelect],
   );
 
   // Handle input change for search

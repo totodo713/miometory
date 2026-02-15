@@ -18,7 +18,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Approval Workflow", () => {
   const baseURL = "http://localhost:3000";
   const memberId = "00000000-0000-0000-0000-000000000001";
-  const managerId = "00000000-0000-0000-0000-000000000002";
+  const _managerId = "00000000-0000-0000-0000-000000000002";
   const projectId = "00000000-0000-0000-0000-000000000003";
   const testDate = "2026-01-25"; // Within fiscal month Jan 21 - Feb 20
   const fiscalMonthStart = "2026-01-21";
@@ -65,27 +65,34 @@ test.describe("Approval Workflow", () => {
     });
 
     // Mock calendar summary API
-    await page.route("**/api/v1/worklog/calendar/**/summary**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          year: 2026,
-          month: 1,
-          totalWorkHours: createdEntryId ? 8.0 : 0,
-          totalAbsenceHours: 0,
-          totalBusinessDays: 22,
-          projects: createdEntryId ? [{ 
-            projectId: projectId, 
-            projectName: "Test Project",
-            totalHours: 8.0,
-            percentage: 100.0 
-          }] : [],
-          approvalStatus: createdApprovalId ? "SUBMITTED" : null,
-          rejectionReason: null,
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/calendar/**/summary**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            year: 2026,
+            month: 1,
+            totalWorkHours: createdEntryId ? 8.0 : 0,
+            totalAbsenceHours: 0,
+            totalBusinessDays: 22,
+            projects: createdEntryId
+              ? [
+                  {
+                    projectId: projectId,
+                    projectName: "Test Project",
+                    totalHours: 8.0,
+                    percentage: 100.0,
+                  },
+                ]
+              : [],
+            approvalStatus: createdApprovalId ? "SUBMITTED" : null,
+            rejectionReason: null,
+          }),
+        });
+      },
+    );
 
     // Mock get entries API - returns created entry
     await page.route("**/api/v1/worklog/entries?**", async (route) => {
@@ -145,15 +152,18 @@ test.describe("Approval Workflow", () => {
     });
 
     // Mock previous month projects API
-    await page.route("**/api/v1/worklog/previous-month-projects**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          projects: [],
-        }),
-      });
-    });
+    await page.route(
+      "**/api/v1/worklog/previous-month-projects**",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            projects: [],
+          }),
+        });
+      },
+    );
 
     // Mock create entry API
     await page.route("**/api/v1/worklog/entries", async (route) => {
@@ -319,7 +329,9 @@ test.describe("Approval Workflow", () => {
     ).toBeVisible();
 
     // Step 2: Verify Submit button is visible (since we have entries)
-    await expect(page.locator('button:has-text("Submit for Approval")')).toBeVisible();
+    await expect(
+      page.locator('button:has-text("Submit for Approval")'),
+    ).toBeVisible();
 
     // Step 3: Submit month for approval
     await page.click('button:has-text("Submit for Approval")');
@@ -329,7 +341,9 @@ test.describe("Approval Workflow", () => {
 
     // Verify button changes to "Submitted" or shows submitted state
     await expect(
-      page.locator('button:has-text("Submitted")').or(page.locator('button:disabled:has-text("Submit")'))
+      page
+        .locator('button:has-text("Submitted")')
+        .or(page.locator('button:disabled:has-text("Submit")')),
     ).toBeVisible();
 
     // Step 4: Navigate to entry to verify read-only state
@@ -339,9 +353,7 @@ test.describe("Approval Workflow", () => {
 
     // Step 5: Verify entry is read-only (inputs should be disabled)
     await page.waitForSelector('[role="dialog"]');
-    await expect(
-      page.locator('input[id="project-0"]'),
-    ).toBeDisabled();
+    await expect(page.locator('input[id="project-0"]')).toBeDisabled();
     await expect(page.locator('input[id="hours-0"]')).toBeDisabled();
 
     // Verify Save button is hidden (read-only mode)
@@ -424,7 +436,9 @@ test.describe("Approval Workflow", () => {
 
     // Verify submission state changed
     await expect(
-      page.locator('button:has-text("Submitted")').or(page.locator('button:disabled:has-text("Submit")'))
+      page
+        .locator('button:has-text("Submitted")')
+        .or(page.locator('button:disabled:has-text("Submit")')),
     ).toBeVisible();
 
     console.log("✅ Status badges display correctly in calendar view");
@@ -438,16 +452,18 @@ test.describe("Approval Workflow", () => {
     createdEntryId = `entry-${Date.now()}`;
 
     // Step 1: Navigate to entry (in DRAFT state)
-    await page.goto(`${baseURL}/worklog/${testDate}`, { waitUntil: "networkidle" });
+    await page.goto(`${baseURL}/worklog/${testDate}`, {
+      waitUntil: "networkidle",
+    });
 
     // Wait for the daily entry form dialog to appear
     await page.waitForSelector('[role="dialog"]');
 
     // Verify delete/remove button is visible for DRAFT entry
     // The form shows "Remove" for removing project rows and "Delete Entry" for deleting
-    const removeButton = page.locator('button:has-text("Remove")').or(
-      page.locator('button:has-text("Delete Entry")')
-    );
+    const removeButton = page
+      .locator('button:has-text("Remove")')
+      .or(page.locator('button:has-text("Delete Entry")'));
     await expect(removeButton.first()).toBeVisible();
 
     // Step 2: Go back to calendar
@@ -458,12 +474,14 @@ test.describe("Approval Workflow", () => {
     await page.waitForTimeout(1000);
 
     // Step 3: Go back to entry
-    await page.goto(`${baseURL}/worklog/${testDate}`, { waitUntil: "networkidle" });
+    await page.goto(`${baseURL}/worklog/${testDate}`, {
+      waitUntil: "networkidle",
+    });
     await page.waitForSelector('[role="dialog"]');
 
     // Verify delete/remove button is hidden for SUBMITTED
     await expect(
-      page.locator('button:has-text("Delete Entry")')
+      page.locator('button:has-text("Delete Entry")'),
     ).not.toBeVisible();
 
     console.log(

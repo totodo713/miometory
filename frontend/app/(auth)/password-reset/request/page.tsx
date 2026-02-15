@@ -1,49 +1,57 @@
-'use client';
+"use client";
 
 /**
  * Password Reset Request Page
- * 
+ *
  * Allows users to request a password reset email by entering their email address.
- * 
+ *
  * Features:
  * - Email validation (format check)
  * - Client-side rate limiting (3 requests per 5 minutes)
  * - Success message (always shown for anti-enumeration)
  * - Error handling with retry button
  * - Accessibility (WCAG 2.1 AA)
- * 
+ *
  * User Story 1 (P1): Request Password Reset
  * @see specs/005-password-reset-frontend/spec.md
  */
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { validateEmail } from '@/lib/validation/password';
-import { 
-  checkRateLimit, 
-  recordAttempt, 
+import Link from "next/link";
+import type React from "react";
+import { useEffect, useState } from "react";
+import type {
+  ErrorState,
+  RateLimitState,
+  ValidationError,
+} from "@/lib/types/password-reset";
+import {
+  checkRateLimit,
   getMinutesUntilReset,
-  setupStorageListener 
-} from '@/lib/utils/rate-limit';
-import { api } from '@/services/api';
-import type { ValidationError, RateLimitState, ErrorState } from '@/lib/types/password-reset';
+  recordAttempt,
+  setupStorageListener,
+} from "@/lib/utils/rate-limit";
+import { validateEmail } from "@/lib/validation/password";
+import { api } from "@/services/api";
 
 export default function PasswordResetRequestPage() {
   // Form state
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [validationError, setValidationError] = useState<ValidationError | null>(null);
-  
+  const [validationError, setValidationError] =
+    useState<ValidationError | null>(null);
+
   // Rate limiting state
-  const [rateLimitState, setRateLimitState] = useState<RateLimitState>(() => checkRateLimit());
-  
+  const [rateLimitState, setRateLimitState] = useState<RateLimitState>(() =>
+    checkRateLimit(),
+  );
+
   // Success state
   const [isSuccess, setIsSuccess] = useState(false);
-  
+
   // Error state
   const [error, setError] = useState<ErrorState>({
     type: null,
-    message: '',
+    message: "",
     isRetryable: false,
   });
 
@@ -60,10 +68,10 @@ export default function PasswordResetRequestPage() {
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Reset states
     setValidationError(null);
-    setError({ type: null, message: '', isRetryable: false });
+    setError({ type: null, message: "", isRetryable: false });
     setIsSuccess(false);
 
     // Validate email
@@ -76,13 +84,13 @@ export default function PasswordResetRequestPage() {
     // Check rate limit
     const rateLimitCheck = checkRateLimit();
     setRateLimitState(rateLimitCheck);
-    
+
     if (!rateLimitCheck.isAllowed) {
-      const minutes = rateLimitCheck.resetTime 
+      const minutes = rateLimitCheck.resetTime
         ? getMinutesUntilReset(rateLimitCheck.resetTime)
         : 5;
       setError({
-        type: 'rate_limit',
+        type: "rate_limit",
         message: `リクエストが多すぎます。${minutes}分後に再試行してください。`,
         isRetryable: false,
       });
@@ -91,33 +99,34 @@ export default function PasswordResetRequestPage() {
 
     // Submit API request
     setIsLoading(true);
-    
+
     try {
       await api.auth.requestPasswordReset({ email });
-      
+
       // Record attempt after successful request
       recordAttempt();
       setRateLimitState(checkRateLimit());
-      
+
       // Always show success message (anti-enumeration)
       setIsSuccess(true);
-      setEmail(''); // Clear email for security
+      setEmail(""); // Clear email for security
     } catch (err) {
       // Handle API errors
       if (err instanceof Error) {
-        const isNetworkError = err.message.includes('network') || err.message.includes('Network');
-        
+        const isNetworkError =
+          err.message.includes("network") || err.message.includes("Network");
+
         setError({
-          type: isNetworkError ? 'network' : 'server',
-          message: isNetworkError 
-            ? 'ネットワークエラーが発生しました。接続を確認して再試行してください。'
-            : 'サーバーエラーが発生しました。しばらくしてから再試行してください。',
+          type: isNetworkError ? "network" : "server",
+          message: isNetworkError
+            ? "ネットワークエラーが発生しました。接続を確認して再試行してください。"
+            : "サーバーエラーが発生しました。しばらくしてから再試行してください。",
           isRetryable: true,
         });
       } else {
         setError({
-          type: 'server',
-          message: '予期しないエラーが発生しました。',
+          type: "server",
+          message: "予期しないエラーが発生しました。",
           isRetryable: true,
         });
       }
@@ -130,7 +139,7 @@ export default function PasswordResetRequestPage() {
    * Handle retry button click
    */
   const handleRetry = () => {
-    setError({ type: null, message: '', isRetryable: false });
+    setError({ type: null, message: "", isRetryable: false });
   };
 
   /**
@@ -148,7 +157,7 @@ export default function PasswordResetRequestPage() {
     <div className="password-reset-request-page">
       <div className="container">
         <h1>パスワードリセット</h1>
-        
+
         {/* Success message */}
         {isSuccess && (
           <div className="success-message" role="alert" aria-live="assertive">
@@ -167,8 +176,8 @@ export default function PasswordResetRequestPage() {
           <div className="error-message" role="alert" aria-live="assertive">
             <p>{error.message}</p>
             {error.isRetryable && (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={handleRetry}
                 className="retry-button"
               >
@@ -183,7 +192,8 @@ export default function PasswordResetRequestPage() {
           <div className="rate-limit-warning" role="alert" aria-live="polite">
             <p>
               リクエスト制限に達しました。
-              {getMinutesUntilReset(rateLimitState.resetTime)}分後に再試行できます。
+              {getMinutesUntilReset(rateLimitState.resetTime)}
+              分後に再試行できます。
             </p>
           </div>
         )}
@@ -209,16 +219,12 @@ export default function PasswordResetRequestPage() {
                 placeholder="example@company.com"
                 required
                 aria-required="true"
-                aria-invalid={validationError ? 'true' : 'false'}
-                aria-describedby={validationError ? 'email-error' : undefined}
+                aria-invalid={validationError ? "true" : "false"}
+                aria-describedby={validationError ? "email-error" : undefined}
                 disabled={isLoading || !rateLimitState.isAllowed}
               />
               {validationError && (
-                <span 
-                  id="email-error" 
-                  className="field-error" 
-                  role="alert"
-                >
+                <span id="email-error" className="field-error" role="alert">
                   {validationError.message}
                 </span>
               )}
@@ -230,7 +236,7 @@ export default function PasswordResetRequestPage() {
                 disabled={isLoading || !rateLimitState.isAllowed}
                 aria-busy={isLoading}
               >
-                {isLoading ? '送信中...' : 'リセットリンクを送信'}
+                {isLoading ? "送信中..." : "リセットリンクを送信"}
               </button>
             </div>
 
@@ -238,11 +244,12 @@ export default function PasswordResetRequestPage() {
               <Link href="/login" className="back-to-login-link">
                 ログインに戻る
               </Link>
-              {rateLimitState.isAllowed && rateLimitState.remainingAttempts < 3 && (
-                <p className="rate-limit-info" aria-live="polite">
-                  残り試行回数: {rateLimitState.remainingAttempts}
-                </p>
-              )}
+              {rateLimitState.isAllowed &&
+                rateLimitState.remainingAttempts < 3 && (
+                  <p className="rate-limit-info" aria-live="polite">
+                    残り試行回数: {rateLimitState.remainingAttempts}
+                  </p>
+                )}
             </div>
           </form>
         )}

@@ -62,7 +62,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
 
   useEffect(() => {
     loadSummary();
-  }, [year, month, memberId]);
+  }, [loadSummary]);
 
   if (isLoading) {
     return (
