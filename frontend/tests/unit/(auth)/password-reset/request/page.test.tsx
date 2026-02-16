@@ -103,6 +103,21 @@ describe("PasswordResetRequestPage", () => {
       });
     });
 
+    test("normalizes email to lowercase before calling the API", async () => {
+      vi.mocked(api.auth.requestPasswordReset).mockResolvedValue({ message: "OK" });
+
+      render(<PasswordResetRequestPage />);
+
+      fireEvent.change(screen.getByLabelText(/メールアドレス/), {
+        target: { value: "User@Example.COM" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /リセットリンクを送信/ }));
+
+      await waitFor(() => {
+        expect(api.auth.requestPasswordReset).toHaveBeenCalledWith({ email: "user@example.com" });
+      });
+    });
+
     test("hides form after success", async () => {
       vi.mocked(api.auth.requestPasswordReset).mockResolvedValue({ message: "OK" });
 
