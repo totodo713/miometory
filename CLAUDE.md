@@ -140,3 +140,10 @@ When responding to PR review comments:
 2. Do NOT post general summary comments
 3. Update the PR Description (body) to reflect all changes after addressing feedback
 4. Reply API: `gh api repos/{owner}/{repo}/pulls/{pr}/comments -X POST -f body="..." -F in_reply_to={comment_id}`
+
+## Active Technologies
+- TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl (006-password-reset-frontend)
+- localStorage (rate limiting state), sessionStorage (token backup) (006-password-reset-frontend)
+
+## Recent Changes
+- 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl

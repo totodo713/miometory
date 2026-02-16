@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import type React from "react";
 import { useState } from "react";
 
@@ -39,6 +40,11 @@ export default function LoginPage() {
       </label>
       {error && <div role="alert">{error}</div>}
       <button type="submit">Log in</button>
+      <div style={{ marginTop: "1rem", textAlign: "center" }}>
+        <Link href="/password-reset/request" style={{ fontSize: "0.875rem", color: "#1976d2" }}>
+          パスワードをお忘れですか？
+        </Link>
+      </div>
     </form>
   );
 }
