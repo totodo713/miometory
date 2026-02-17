@@ -173,9 +173,11 @@ Auth endpoints (including password reset) are rate limited:
 
 | Test | File | Coverage |
 |------|------|----------|
-| PasswordResetService unit | `test/kotlin/.../PasswordResetServiceTest.kt` | Token generation, validation, edge cases |
-| Password reset integration | `test/kotlin/.../PasswordResetIntegrationTest.kt` | Full flow with real DB (Testcontainers) |
-| CSRF protection | `test/kotlin/.../CsrfProtectionTest.kt` | CSRF token enforcement |
-| E2E tests | `test/kotlin/.../PasswordResetE2ETest.kt` | End-to-end API flow |
-| Request page test | `app/(auth)/password-reset/request/__tests__/page.test.tsx` | Form validation, API calls |
-| Confirm page test | `app/(auth)/password-reset/confirm/__tests__/page.test.tsx` | Token handling, error states |
+| PasswordResetService unit | `backend/src/test/kotlin/com/worklog/application/password/PasswordResetServiceTest.kt` | Token generation, validation, edge cases |
+| PasswordResetToken unit | `backend/src/test/kotlin/com/worklog/domain/password/PasswordResetTokenTest.kt` | Token entity logic |
+| TokenRepository integration | `backend/src/test/kotlin/com/worklog/infrastructure/persistence/PasswordResetTokenRepositoryTest.kt` | DB operations for tokens |
+| CSRF protection | `backend/src/test/kotlin/com/worklog/api/PasswordResetCsrfTest.kt` | CSRF token enforcement |
+| Rate limiting | `backend/src/test/kotlin/com/worklog/api/PasswordResetRateLimitIT.kt` | Auth endpoint rate limits |
+| E2E tests | `backend/src/test/kotlin/com/worklog/e2e/PasswordResetE2ETest.kt` | End-to-end API flow with real DB |
+| Request page test | `frontend/tests/unit/(auth)/password-reset/request/page.test.tsx` | Form validation, API calls |
+| Confirm page test | `frontend/tests/unit/(auth)/password-reset/confirm/page.test.tsx` | Token handling, error states |
