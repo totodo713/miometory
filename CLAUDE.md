@@ -144,6 +144,8 @@ When responding to PR review comments:
 ## Active Technologies
 - TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl (006-password-reset-frontend)
 - localStorage (rate limiting state), sessionStorage (token backup) (006-password-reset-frontend)
+- Kotlin 2.3.0 + Java 21 (Spring Boot 3.5.9) + Spring Boot Test, Testcontainers 1.21.1, spring-security-test, MockK, JUnit 5 (007-password-reset-tests)
+- PostgreSQL 16 (via Testcontainers), Flyway migrations (V11__user_auth.sql) (007-password-reset-tests)
 
 ## Recent Changes
 - 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl
