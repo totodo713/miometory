@@ -21,6 +21,12 @@ miometry-postgres       postgres:16     Up        0.0.0.0:5432->5432
 miometry-redis          redis:7-alpine  Up        0.0.0.0:6379->6379
 ```
 
+> **MailHog (Optional)**: For testing email features (signup verification, password reset), start MailHog:
+> ```bash
+> docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
+> ```
+> MailHog UI: http://localhost:8025 — All outgoing emails are captured here in development.
+
 ### 2. Start Backend (Spring Boot)
 
 ```bash
@@ -83,6 +89,52 @@ curl -X POST http://localhost:8080/api/v1/worklog/entries \
 
 ---
 
+## Test Password Reset Flow
+
+After starting the backend with MailHog running:
+
+### 1. Create a Test Account
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "name": "Test User", "password": "Password1"}'
+# Expected: HTTP 201
+```
+
+### 2. Request Password Reset
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/password-reset/request \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com"}'
+# Expected: HTTP 200 (always returns 200 for anti-enumeration)
+```
+
+### 3. Get Reset Token from MailHog
+
+Open http://localhost:8025 and find the password reset email. Copy the token from the reset link.
+
+### 4. Confirm Password Reset
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/password-reset/confirm \
+  -H "Content-Type: application/json" \
+  -d '{"token": "<token-from-email>", "newPassword": "NewPassword1"}'
+# Expected: HTTP 200
+```
+
+### 5. Login with New Password
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "password": "NewPassword1", "rememberMe": false}'
+# Expected: HTTP 200 with session details
+```
+
+---
+
 ## SSO Mock Configuration (Local Development)
 
 For local development, authentication is disabled. All endpoints are public.
@@ -116,6 +168,18 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1
 NEXT_PUBLIC_SSO_ENABLED=false
 NEXT_PUBLIC_MOCK_AUTH=true
 ```
+
+### Email / SMTP Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAIL_HOST` | `localhost` | SMTP server host (use MailHog for dev) |
+| `MAIL_PORT` | `1025` | SMTP server port |
+| `MAIL_USERNAME` | *(empty)* | SMTP username (not needed for MailHog) |
+| `MAIL_PASSWORD` | *(empty)* | SMTP password (not needed for MailHog) |
+| `MAIL_SMTP_AUTH` | `false` | Enable SMTP authentication |
+| `MAIL_SMTP_STARTTLS` | `false` | Enable STARTTLS |
+| `FRONTEND_BASE_URL` | `http://localhost:3000` | Base URL for links in emails (password reset, email verification) |
 
 ---
 

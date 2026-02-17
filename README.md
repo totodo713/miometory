@@ -44,7 +44,7 @@ work-log/
 - **Languages**: Kotlin 2.3.0, Java 21
 - **Database**: PostgreSQL (with JSONB for events)
 - **Migrations**: Flyway
-- **Security**: Spring Security (Basic Auth)
+- **Security**: Spring Security (Form-based Auth, Password Reset)
 - **Testing**: JUnit 5, Testcontainers, Instancio, DBUnit Rider
 
 ### Frontend
@@ -134,7 +134,7 @@ npm install && npm run dev
 ```
 
 The `dev` profile automatically:
-- Runs Flyway migrations (V1-V7)
+- Runs Flyway migrations (V1-V12)
 - Loads `data-dev.sql` with sample data
 - Disables Redis cache and rate limiting for easier debugging
 
@@ -208,13 +208,18 @@ npm run lint
 
 ## 📚 API Documentation
 
-### Authentication
+### Authentication Endpoints
 
-All API endpoints require Basic Authentication:
-```
-Username: user
-Password: password
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/auth/signup` | Register new user account |
+| POST | `/api/v1/auth/login` | Authenticate and create session |
+| POST | `/api/v1/auth/logout` | Invalidate session |
+| POST | `/api/v1/auth/verify-email` | Verify email with token |
+| POST | `/api/v1/auth/password-reset/request` | Request password reset email |
+| POST | `/api/v1/auth/password-reset/confirm` | Reset password with token |
+
+See [Authentication API](docs/api/authentication.md) for full request/response schemas.
 
 ### Core Endpoints
 
@@ -235,6 +240,8 @@ Full API documentation available at `/api-docs.html` when running the backend.
 - [User Manual](docs/user-manual.md) - End-user documentation
 - [Manager Guide](docs/manager-guide.md) - Approval workflow guide
 - [Backup Strategy](docs/backup-strategy.md) - Data backup procedures
+- [Authentication API](docs/api/authentication.md) - Auth endpoint reference
+- [Password Reset Architecture](docs/architecture/password-reset-flow.md) - Auth system design
 - [Agent Guidelines](AGENTS.md) - Coding standards for AI agents
 
 ## 🎯 Current Status
@@ -258,6 +265,12 @@ Full API documentation available at `/api-docs.html` when running the backend.
 - Error handling
 - Auto-save functionality
 - Session timeout warnings
+
+### Phase 4: User Authentication 🚧 IN PROGRESS
+- User signup and email verification
+- Login/logout with session management
+- Password reset via email
+- Rate limiting for auth endpoints
 
 ## 🐳 Docker Support
 
