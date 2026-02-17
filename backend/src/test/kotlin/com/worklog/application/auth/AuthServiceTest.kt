@@ -1,11 +1,11 @@
 package com.worklog.application.auth
 
+import com.worklog.application.audit.AuditLogService
 import com.worklog.domain.role.Role
 import com.worklog.domain.role.RoleId
 import com.worklog.domain.user.User
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.email.EmailService
-import com.worklog.infrastructure.persistence.AuditLogRepository
 import com.worklog.infrastructure.persistence.JdbcEmailVerificationTokenStore
 import com.worklog.infrastructure.persistence.JdbcUserRepository
 import com.worklog.infrastructure.persistence.JdbcUserSessionRepository
@@ -40,7 +40,7 @@ class AuthServiceTest {
     private val userRepository: JdbcUserRepository = mockk(relaxed = true)
     private val sessionRepository: JdbcUserSessionRepository = mockk(relaxed = true)
     private val roleRepository: RoleRepository = mockk(relaxed = true)
-    private val auditLogRepository: AuditLogRepository = mockk(relaxed = true)
+    private val auditLogService: AuditLogService = mockk(relaxed = true)
     private val emailService: EmailService = mockk(relaxed = true)
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
     private val tokenStore: JdbcEmailVerificationTokenStore = mockk(relaxed = true)
@@ -67,7 +67,7 @@ class AuthServiceTest {
                 userRepository,
                 sessionRepository,
                 roleRepository,
-                auditLogRepository,
+                auditLogService,
                 emailService,
                 passwordEncoder,
                 tokenStore,

@@ -5,10 +5,13 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("audit_logs")
-public class AuditLog {
+public class AuditLog implements Persistable<UUID> {
 
     // Event type constants
     public static final String LOGIN_SUCCESS = "LOGIN_SUCCESS";
@@ -35,10 +38,15 @@ public class AuditLog {
     private final String details; // JSON string, can be null
     private final int retentionDays;
 
+    @Transient
+    private final boolean isNew;
+
     /**
-     * Constructor for creating a new AuditLog.
-     * Audit logs are immutable once created.
+     * Rehydration constructor for restoring an AuditLog from persistence.
+     * Annotated with @PersistenceCreator so Spring Data JDBC uses this constructor
+     * when instantiating AuditLog entities from database rows (isNew = false).
      */
+    @PersistenceCreator
     public AuditLog(
             UUID id,
             UserId userId,
@@ -65,6 +73,40 @@ public class AuditLog {
         this.ipAddress = ipAddress; // Can be null
         this.details = details; // Can be null
         this.retentionDays = retentionDays;
+        this.isNew = false;
+    }
+
+    /**
+     * Internal constructor for creating new AuditLog instances with isNew = true.
+     */
+    private AuditLog(
+            UUID id,
+            UserId userId,
+            String eventType,
+            String ipAddress,
+            Instant timestamp,
+            String details,
+            int retentionDays,
+            boolean isNew) {
+        this.id = Objects.requireNonNull(id, "Audit log ID cannot be null");
+        this.eventType = Objects.requireNonNull(eventType, "Event type cannot be null");
+        this.timestamp = Objects.requireNonNull(timestamp, "Timestamp cannot be null");
+
+        if (eventType.isBlank()) {
+            throw new IllegalArgumentException("Event type cannot be empty");
+        }
+        if (eventType.length() > 50) {
+            throw new IllegalArgumentException("Event type cannot exceed 50 characters");
+        }
+        if (retentionDays < 1) {
+            throw new IllegalArgumentException("Retention days must be at least 1");
+        }
+
+        this.userId = userId;
+        this.ipAddress = ipAddress;
+        this.details = details;
+        this.retentionDays = retentionDays;
+        this.isNew = isNew;
     }
 
     /**
@@ -78,8 +120,8 @@ public class AuditLog {
                 ipAddress,
                 Instant.now(),
                 details,
-                90 // Default retention: 90 days
-                );
+                90, // Default retention: 90 days
+                true);
     }
 
     /**
@@ -93,8 +135,8 @@ public class AuditLog {
                 null, // No IP address for system events
                 Instant.now(),
                 details,
-                90 // Default retention: 90 days
-                );
+                90, // Default retention: 90 days
+                true);
     }
 
     /**
@@ -121,11 +163,19 @@ public class AuditLog {
         return userId == null;
     }
 
-    // Getters
+    // Persistable implementation
 
+    @Override
     public UUID getId() {
         return id;
     }
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    // Getters
 
     public UserId getUserId() {
         return userId;

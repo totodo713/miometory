@@ -1,5 +1,6 @@
 package com.worklog.application.auth;
 
+import com.worklog.application.audit.AuditLogService;
 import com.worklog.application.validation.PasswordValidator;
 import com.worklog.domain.audit.AuditLog;
 import com.worklog.domain.role.Role;
@@ -8,7 +9,6 @@ import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.email.EmailService;
-import com.worklog.infrastructure.persistence.AuditLogRepository;
 import com.worklog.infrastructure.persistence.JdbcEmailVerificationTokenStore;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.persistence.JdbcUserSessionRepository;
@@ -33,7 +33,7 @@ public class AuthServiceImpl implements AuthService {
     private final JdbcUserRepository userRepository;
     private final JdbcUserSessionRepository sessionRepository;
     private final RoleRepository roleRepository;
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogService auditLogService;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JdbcEmailVerificationTokenStore tokenStore;
@@ -43,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
             JdbcUserRepository userRepository,
             JdbcUserSessionRepository sessionRepository,
             RoleRepository roleRepository,
-            AuditLogRepository auditLogRepository,
+            AuditLogService auditLogService,
             EmailService emailService,
             PasswordEncoder passwordEncoder,
             JdbcEmailVerificationTokenStore tokenStore,
@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
         this.roleRepository = roleRepository;
-        this.auditLogRepository = auditLogRepository;
+        this.auditLogService = auditLogService;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.tokenStore = tokenStore;
@@ -102,7 +102,7 @@ public class AuthServiceImpl implements AuthService {
         // Find user
         User user = userRepository.findByEmail(normalizedEmail).orElseThrow(() -> {
             // Log failed login attempt for non-existent user
-            logAuditEvent(
+            auditLogService.logEvent(
                     null,
                     AuditLog.LOGIN_FAILURE,
                     ipAddress,
@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
         if (!user.canLogin()) {
             if (user.isLocked()) {
                 // Log account locked login attempt
-                logAuditEvent(
+                auditLogService.logEvent(
                         user.getId(),
                         AuditLog.LOGIN_FAILURE,
                         ipAddress,
@@ -123,7 +123,7 @@ public class AuthServiceImpl implements AuthService {
                         + ". Please try again later or contact support.");
             }
             // Log inactive account login attempt
-            logAuditEvent(
+            auditLogService.logEvent(
                     user.getId(),
                     AuditLog.LOGIN_FAILURE,
                     ipAddress,
@@ -138,7 +138,7 @@ public class AuthServiceImpl implements AuthService {
             userRepository.save(user);
 
             // Log failed login with wrong password
-            logAuditEvent(
+            auditLogService.logEvent(
                     user.getId(),
                     AuditLog.LOGIN_FAILURE,
                     ipAddress,
@@ -146,7 +146,7 @@ public class AuthServiceImpl implements AuthService {
 
             // If account got locked due to this failure
             if (user.isLocked()) {
-                logAuditEvent(
+                auditLogService.logEvent(
                         user.getId(),
                         AuditLog.ACCOUNT_LOCKED,
                         ipAddress,
@@ -168,7 +168,7 @@ public class AuthServiceImpl implements AuthService {
         sessionRepository.save(session);
 
         // Log successful login
-        logAuditEvent(
+        auditLogService.logEvent(
                 user.getId(),
                 AuditLog.LOGIN_SUCCESS,
                 ipAddress,
@@ -196,7 +196,7 @@ public class AuthServiceImpl implements AuthService {
             userRepository.save(user);
 
             // Log email verification
-            logAuditEvent(
+            auditLogService.logEvent(
                     user.getId(),
                     AuditLog.EMAIL_VERIFICATION,
                     null,
@@ -213,24 +213,5 @@ public class AuthServiceImpl implements AuthService {
         byte[] bytes = new byte[32]; // 256 bits
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    /**
-     * Helper method to log audit events.
-     *
-     * @param userId User ID (can be null for anonymous events)
-     * @param eventType Type of security event
-     * @param ipAddress Client IP address (can be null)
-     * @param details Additional details about the event
-     */
-    private void logAuditEvent(UserId userId, String eventType, String ipAddress, String details) {
-        try {
-            AuditLog auditLog = AuditLog.createUserAction(userId, eventType, ipAddress, details);
-            auditLogRepository.save(auditLog);
-        } catch (Exception e) {
-            // Log to system log but don't fail the operation
-            // In production, this should be sent to a monitoring system
-            System.err.println("Failed to create audit log: " + e.getMessage());
-        }
     }
 }

@@ -47,7 +47,7 @@ dependencies {
     implementation("org.apache.commons:commons-csv:1.11.0")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-cache")
-    runtimeOnly("org.postgresql:postgresql")
+    implementation("org.postgresql:postgresql")
 
     // Test dependencies
     testImplementation("org.springframework.boot:spring-boot-starter-test")

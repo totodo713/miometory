@@ -14,10 +14,33 @@ import org.springframework.stereotype.Repository;
 /**
  * Repository interface for AuditLog entity using Spring Data JDBC.
  *
- * Provides operations for audit trail management and compliance.
+ * <p>Provides operations for audit trail management and compliance.
+ * Uses explicit SQL casting for JSONB and INET columns since global
+ * writing converters would affect all String fields across entities.
  */
 @Repository
 public interface AuditLogRepository extends CrudRepository<AuditLog, UUID> {
+
+    /**
+     * Inserts a new audit log entry with explicit PostgreSQL type casting
+     * for JSONB (details) and INET (ip_address) columns.
+     *
+     * <p>This method must be used instead of {@link CrudRepository#save} because
+     * Spring Data JDBC cannot automatically map Java String to PostgreSQL JSONB/INET types.
+     */
+    @Modifying
+    @Query("""
+        INSERT INTO audit_logs (id, user_id, event_type, ip_address, timestamp, details, retention_days)
+        VALUES (:id, :userId, :eventType, CAST(:ipAddress AS inet), :timestamp, CAST(:details AS jsonb), :retentionDays)
+        """)
+    void insertAuditLog(
+            @Param("id") UUID id,
+            @Param("userId") UUID userId,
+            @Param("eventType") String eventType,
+            @Param("ipAddress") String ipAddress,
+            @Param("timestamp") Instant timestamp,
+            @Param("details") String details,
+            @Param("retentionDays") int retentionDays);
 
     /**
      * Find audit logs by user ID.
