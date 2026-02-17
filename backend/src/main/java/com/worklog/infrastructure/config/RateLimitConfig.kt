@@ -27,8 +27,6 @@ class TrustedProxyChecker(trustedProxiesConfig: String) {
                 // CIDR notation
                 try {
                     trustedCidrs.add(CidrRange.parse(entry))
-                } catch (e: NumberFormatException) {
-                    logger.warn("Invalid CIDR notation, skipping: {}", entry, e)
                 } catch (e: IllegalArgumentException) {
                     logger.warn("Invalid CIDR notation, skipping: {}", entry, e)
                 }
@@ -56,9 +54,6 @@ class TrustedProxyChecker(trustedProxiesConfig: String) {
         fun contains(ipAddress: String): Boolean = try {
             val ip = ipToLong(ipAddress)
             (ip and mask) == networkAddress
-        } catch (e: NumberFormatException) {
-            logger.warn("Failed to check IP against CIDR range: {}", ipAddress, e)
-            false
         } catch (e: IllegalArgumentException) {
             logger.warn("Failed to check IP against CIDR range: {}", ipAddress, e)
             false

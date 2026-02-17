@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
  *
  * Task: T097 - AbsenceController integration tests
  */
-@Suppress("LargeClass") // Integration test — splitting fragments related endpoint tests
+@Suppress("LargeClass") // Integration test — splitting would fragment related endpoint tests
 class AbsenceControllerTest : IntegrationTestBase() {
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
