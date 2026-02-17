@@ -167,20 +167,6 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles IllegalStateException (service configuration or state errors).
-     * Returns 503 Service Unavailable for server-side configuration issues.
-     */
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex, WebRequest request) {
-        logger.error("Service configuration error: {}", ex.getMessage());
-
-        ErrorResponse error = ErrorResponse.of(
-                "SERVICE_CONFIGURATION_ERROR", ex.getMessage(), Map.of("path", getRequestPath(request)));
-
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
-    }
-
-    /**
      * Handles IllegalArgumentException (common for invalid inputs).
      * Returns 400 Bad Request.
      */

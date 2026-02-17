@@ -147,7 +147,7 @@ When responding to PR review comments:
 - Kotlin 2.3.0 + Java 21 (Spring Boot 3.5.9) + Spring Boot Test, Testcontainers 1.21.1, spring-security-test, MockK, JUnit 5 (007-password-reset-tests)
 - PostgreSQL 16 (via Testcontainers), Flyway migrations (V11__user_auth.sql) (007-password-reset-tests)
 - Java 21 (domain), Kotlin 2.3.0 (infrastructure) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security (009-fix-signup-role-error)
-- PostgreSQL 17 (via Spring Data JDBC for Role entity, event sourcing for aggregates) (009-fix-signup-role-error)
+- PostgreSQL 16 (via Spring Data JDBC for Role entity, event sourcing for aggregates) (009-fix-signup-role-error)
 
 ## Recent Changes
 - 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl
