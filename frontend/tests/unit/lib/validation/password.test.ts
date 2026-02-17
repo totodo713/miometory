@@ -4,6 +4,7 @@ import {
   passwordResetConfirmSchema,
   passwordResetRequestSchema,
   validateEmail,
+  validatePasswordConfirm,
 } from "@/lib/validation/password";
 
 describe("validateEmail", () => {
@@ -229,5 +230,39 @@ describe("meetsMinimumStrength", () => {
 
   test("returns false when weak password checked against strong threshold", () => {
     expect(meetsMinimumStrength("password", "strong")).toBe(false);
+  });
+});
+
+describe("validatePasswordConfirm", () => {
+  const validToken = "test-token";
+
+  test("returns empty object when passwords match and are valid", () => {
+    const errors = validatePasswordConfirm("ValidPass1", "ValidPass1", validToken);
+    expect(errors).toEqual({});
+  });
+
+  test("returns mismatch error when passwords do not match", () => {
+    const errors = validatePasswordConfirm("ValidPass1", "DifferentPass1", validToken);
+    expect(errors.confirmPassword).toBeDefined();
+    expect(errors.confirmPassword.type).toBe("mismatch");
+    expect(errors.confirmPassword.message).toBe("パスワードが一致しません");
+  });
+
+  test("returns error when confirmPassword is empty", () => {
+    const errors = validatePasswordConfirm("ValidPass1", "", validToken);
+    expect(errors.confirmPassword).toBeDefined();
+    expect(errors.confirmPassword.message).toBe("パスワードが一致しません");
+    expect(errors.confirmPassword.type).toBe("mismatch");
+  });
+
+  test("returns length error when password is too short", () => {
+    const errors = validatePasswordConfirm("short", "short", validToken);
+    expect(errors.newPassword).toBeDefined();
+    expect(errors.newPassword.type).toBe("length");
+  });
+
+  test("returns token error when token is empty", () => {
+    const errors = validatePasswordConfirm("ValidPass1", "ValidPass1", "");
+    expect(errors.token).toBeDefined();
   });
 });

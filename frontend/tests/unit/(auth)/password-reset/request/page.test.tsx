@@ -1,9 +1,8 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import PasswordResetRequestPage from "@/(auth)/password-reset/request/page";
 import { checkRateLimit, getMinutesUntilReset, setupStorageListener } from "@/lib/utils/rate-limit";
 import { api } from "@/services/api";
 
-// Mock next/link
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
     <a href={href} {...props}>
@@ -151,7 +150,7 @@ describe("PasswordResetRequestPage", () => {
 
   describe("Loading state", () => {
     test("disables submit button during API call", async () => {
-      let resolveApi: (value: any) => void;
+      let resolveApi!: (value: any) => void;
       vi.mocked(api.auth.requestPasswordReset).mockImplementation(
         () =>
           new Promise((resolve) => {
@@ -170,7 +169,9 @@ describe("PasswordResetRequestPage", () => {
         expect(screen.getByRole("button", { name: /送信中/ })).toBeDisabled();
       });
 
-      resolveApi?.({ message: "OK" });
+      await act(async () => {
+        resolveApi({ message: "OK" });
+      });
     });
   });
 

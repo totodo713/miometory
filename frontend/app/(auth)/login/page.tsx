@@ -40,8 +40,8 @@ export default function LoginPage() {
       </label>
       {error && <div role="alert">{error}</div>}
       <button type="submit">Log in</button>
-      <div style={{ marginTop: "1rem", textAlign: "center" }}>
-        <Link href="/password-reset/request" style={{ fontSize: "0.875rem", color: "#1976d2" }}>
+      <div className="mt-4 text-center">
+        <Link href="/password-reset/request" className="text-sm text-blue-600 hover:underline">
           パスワードをお忘れですか？
         </Link>
       </div>

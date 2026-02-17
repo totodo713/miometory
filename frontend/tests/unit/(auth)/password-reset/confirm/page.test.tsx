@@ -48,6 +48,7 @@ async function fillAndSubmit(newPass: string, confirmPass: string) {
 
 describe("PasswordResetConfirmPage", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
     sessionStorage.clear();
     mockGetParam.mockReturnValue("valid-token-123");
@@ -118,6 +119,7 @@ describe("PasswordResetConfirmPage", () => {
     });
 
     test("redirects to login after countdown completes", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
       vi.mocked(api.auth.confirmPasswordReset).mockResolvedValue({ message: "OK" });
       await renderAndWaitForForm();
       await fillAndSubmit("ValidPass1", "ValidPass1");
@@ -126,13 +128,16 @@ describe("PasswordResetConfirmPage", () => {
         expect(screen.getByText("パスワードを変更しました")).toBeInTheDocument();
       });
 
-      // Wait for countdown (3 x 1 second intervals) to complete and redirect
-      await waitFor(
-        () => {
-          expect(mockPush).toHaveBeenCalledWith("/login");
-        },
-        { timeout: 5000 },
-      );
+      // Advance through the countdown (3 x 1 second intervals)
+      // Each step triggers a state update that schedules the next timeout
+      for (let i = 0; i < 3; i++) {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(1000);
+        });
+      }
+
+      expect(mockPush).toHaveBeenCalledWith("/login");
+      vi.useRealTimers();
     });
   });
 
