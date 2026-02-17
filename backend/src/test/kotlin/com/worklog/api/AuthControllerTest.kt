@@ -506,4 +506,77 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.errorCode").value("INVALID_TOKEN"))
             .andExpect(jsonPath("$.message").value("Invalid or expired token"))
     }
+
+    // ============================================================
+    // Password Reset Validation Tests (TC-2.1 to TC-2.4)
+    // ============================================================
+
+    @Test
+    fun `passwordResetRequest should return 400 for empty email`() {
+        // Given
+        val requestBody = mapOf("email" to "")
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/request")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isBadRequest)
+
+        // Verify service was NOT called (validation rejects before reaching service)
+        verify(exactly = 0) { passwordResetService.requestReset(any()) }
+    }
+
+    @Test
+    fun `passwordResetRequest should return 400 for invalid email format`() {
+        // Given
+        val requestBody = mapOf("email" to "not-email")
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/request")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { passwordResetService.requestReset(any()) }
+    }
+
+    @Test
+    fun `passwordResetConfirm should return 400 for empty token`() {
+        // Given
+        val requestBody = mapOf("token" to "", "newPassword" to "ValidPW123")
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/confirm")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { passwordResetService.confirmReset(any(), any()) }
+    }
+
+    @Test
+    fun `passwordResetConfirm should return 400 for password shorter than 8 characters`() {
+        // Given
+        val requestBody = mapOf("token" to "valid-token", "newPassword" to "short")
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/password-reset/confirm")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(requestBody))
+                    .with(csrf()),
+            ).andExpect(status().isBadRequest)
+
+        verify(exactly = 0) { passwordResetService.confirmReset(any(), any()) }
+    }
 }
