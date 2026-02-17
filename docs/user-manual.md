@@ -28,6 +28,20 @@ This guide helps software engineers use Miometry to record daily work hours, man
 
 No additional setup is required. Your employee profile is automatically synced from your organization's identity provider.
 
+### Forgot Password
+
+If you forget your password, you can reset it via email:
+
+1. On the login page, click **"Forgot your password?"**
+2. Enter the email address associated with your account
+3. Check your inbox for a password reset email (check spam/junk if not found)
+4. Click the reset link in the email — it is valid for 24 hours
+5. Enter your new password (must be at least 8 characters with uppercase, lowercase, and a digit)
+
+After resetting your password, you will need to log in again on all devices.
+
+> **Note**: For security, the system always shows "Check your email" even if the email is not registered. If you do not receive an email within a few minutes, verify you are using the correct email address.
+
 ---
 
 ## Daily Time Entry
