@@ -32,18 +32,21 @@ cd backend
 
 | File | Purpose |
 |------|---------|
-| `infrastructure/persistence/StringToJsonbWritingConverter.java` | String → PGobject(jsonb) |
-| `infrastructure/persistence/JsonbToStringReadingConverter.java` | PGobject → String (jsonb) |
-| `infrastructure/persistence/StringToInetWritingConverter.java` | String → PGobject(inet) |
-| `infrastructure/persistence/InetToStringReadingConverter.java` | PGobject → String (inet) |
+| `infrastructure/persistence/JsonbToStringReadingConverter.java` | PGobject → String (jsonb read) |
+| `infrastructure/persistence/InetToStringReadingConverter.java` | PGobject → String (inet read) |
 | `application/audit/AuditLogService.java` | Transaction-isolated audit logging |
+
+> **Note**: Writing converters were intentionally omitted. Global `String → PGobject` writing converters
+> affect ALL String fields across all entities, breaking VARCHAR columns. Instead, `AuditLogRepository`
+> uses a custom `@Query` INSERT with explicit `CAST(? AS jsonb)` / `CAST(? AS inet)` SQL casting.
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
 | `domain/audit/AuditLog.java` | Add `Persistable<UUID>`, `@PersistenceCreator`, `@Transient isNew` |
-| `infrastructure/persistence/PersistenceConfig.java` | Register 4 new converters |
+| `infrastructure/persistence/PersistenceConfig.java` | Register 2 reading converters |
+| `infrastructure/persistence/AuditLogRepository.java` | Add `@Query` INSERT with explicit SQL CAST |
 | `application/auth/AuthServiceImpl.java` | Replace private `logAuditEvent()` with `AuditLogService` delegation |
 
 ## Files to Create (Tests)

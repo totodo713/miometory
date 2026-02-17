@@ -41,6 +41,18 @@ public class AuditLog implements Persistable<UUID> {
     @Transient
     private final boolean isNew;
 
+    private static void validate(String eventType, int retentionDays) {
+        if (eventType.isBlank()) {
+            throw new IllegalArgumentException("Event type cannot be empty");
+        }
+        if (eventType.length() > 50) {
+            throw new IllegalArgumentException("Event type cannot exceed 50 characters");
+        }
+        if (retentionDays < 1) {
+            throw new IllegalArgumentException("Retention days must be at least 1");
+        }
+    }
+
     /**
      * Rehydration constructor for restoring an AuditLog from persistence.
      * Annotated with @PersistenceCreator so Spring Data JDBC uses this constructor
@@ -58,17 +70,7 @@ public class AuditLog implements Persistable<UUID> {
         this.id = Objects.requireNonNull(id, "Audit log ID cannot be null");
         this.eventType = Objects.requireNonNull(eventType, "Event type cannot be null");
         this.timestamp = Objects.requireNonNull(timestamp, "Timestamp cannot be null");
-
-        if (eventType.isBlank()) {
-            throw new IllegalArgumentException("Event type cannot be empty");
-        }
-        if (eventType.length() > 50) {
-            throw new IllegalArgumentException("Event type cannot exceed 50 characters");
-        }
-        if (retentionDays < 1) {
-            throw new IllegalArgumentException("Retention days must be at least 1");
-        }
-
+        validate(eventType, retentionDays);
         this.userId = userId; // Can be null for system events
         this.ipAddress = ipAddress; // Can be null
         this.details = details; // Can be null
@@ -91,17 +93,7 @@ public class AuditLog implements Persistable<UUID> {
         this.id = Objects.requireNonNull(id, "Audit log ID cannot be null");
         this.eventType = Objects.requireNonNull(eventType, "Event type cannot be null");
         this.timestamp = Objects.requireNonNull(timestamp, "Timestamp cannot be null");
-
-        if (eventType.isBlank()) {
-            throw new IllegalArgumentException("Event type cannot be empty");
-        }
-        if (eventType.length() > 50) {
-            throw new IllegalArgumentException("Event type cannot exceed 50 characters");
-        }
-        if (retentionDays < 1) {
-            throw new IllegalArgumentException("Retention days must be at least 1");
-        }
-
+        validate(eventType, retentionDays);
         this.userId = userId;
         this.ipAddress = ipAddress;
         this.details = details;

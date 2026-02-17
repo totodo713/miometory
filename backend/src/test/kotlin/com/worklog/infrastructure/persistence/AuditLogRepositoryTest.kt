@@ -98,7 +98,7 @@ class AuditLogRepositoryTest : IntegrationTestBase() {
 
         val found = insertAndFind(auditLog)
 
-        assertNotNull(found.ipAddress)
+        assertEquals(ipv6, found.ipAddress)
     }
 
     @Test

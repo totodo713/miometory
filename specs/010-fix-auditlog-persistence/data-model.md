@@ -25,9 +25,9 @@ AuditLog implements Persistable<UUID>
 ├── @Id UUID id                    ← isNew() controlled by Persistable
 ├── UserId userId                  ← Converter exists (UserIdToUuidConverter)
 ├── String eventType               ← Works (VARCHAR)
-├── String ipAddress               ← NEW: StringToInetWritingConverter
+├── String ipAddress               ← SQL CAST via @Query INSERT + InetToStringReadingConverter
 ├── Instant timestamp              ← Works (TIMESTAMP)
-├── String details                 ← NEW: StringToJsonbWritingConverter
+├── String details                 ← SQL CAST via @Query INSERT + JsonbToStringReadingConverter
 ├── int retentionDays              ← Works (INTEGER)
 └── @Transient boolean isNew       ← NEW: controls INSERT vs UPDATE
 ```
@@ -61,14 +61,17 @@ Table `audit_logs` (from V11__user_auth.sql):
 
 ## New Components
 
-### Type Converters (4 new classes)
+### Type Converters (2 reading converters + SQL CAST)
 
-| Converter | Direction | From | To | Purpose |
+| Component | Direction | From | To | Purpose |
 |-----------|-----------|------|----|---------|
-| StringToJsonbWritingConverter | Write | String | PGobject(jsonb) | Persist details field |
 | JsonbToStringReadingConverter | Read | PGobject | String | Read details field |
-| StringToInetWritingConverter | Write | String | PGobject(inet) | Persist ip_address field |
 | InetToStringReadingConverter | Read | PGobject | String | Read ip_address field |
+| AuditLogRepository `@Query` INSERT | Write | String | JSONB/INET | Explicit `CAST(? AS jsonb)` / `CAST(? AS inet)` |
+
+> **Design decision**: Global writing converters (`String → PGobject`) were rejected because they
+> affect ALL String fields across all entities, breaking VARCHAR columns. Instead, writing is handled
+> by explicit SQL CAST in the repository's custom `@Query` INSERT method.
 
 Location: `backend/src/main/java/com/worklog/infrastructure/persistence/`
 
@@ -88,8 +91,6 @@ AuthServiceImpl
         └── AuditLogRepository
               └── AuditLog (updated: Persistable<UUID>)
                     └── PersistenceConfig (updated: 4 new converters)
-                          ├── StringToJsonbWritingConverter (NEW)
                           ├── JsonbToStringReadingConverter (NEW)
-                          ├── StringToInetWritingConverter (NEW)
                           └── InetToStringReadingConverter (NEW)
 ```
