@@ -1,5 +1,6 @@
 package com.worklog.api
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.worklog.IntegrationTestBase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -34,6 +35,8 @@ class AuthControllerSignupTest : IntegrationTestBase() {
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
 
+    private val objectMapper = ObjectMapper()
+
     @BeforeEach
     fun setUp() {
         // Clean up test users to ensure isolation
@@ -43,7 +46,7 @@ class AuthControllerSignupTest : IntegrationTestBase() {
     private fun signupRequest(email: String, name: String, password: String): HttpEntity<String> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
-        val body = """{"email":"$email","name":"$name","password":"$password"}"""
+        val body = objectMapper.writeValueAsString(mapOf("email" to email, "name" to name, "password" to password))
         return HttpEntity(body, headers)
     }
 

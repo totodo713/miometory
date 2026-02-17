@@ -4,6 +4,7 @@ import com.worklog.application.validation.PasswordValidator;
 import com.worklog.domain.audit.AuditLog;
 import com.worklog.domain.role.Role;
 import com.worklog.domain.session.UserSession;
+import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.email.EmailService;
@@ -77,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
         // Load default role from database
         Role defaultRole = roleRepository
                 .findByName(defaultRoleName)
-                .orElseThrow(() -> new IllegalStateException("Default role '" + defaultRoleName
+                .orElseThrow(() -> new ServiceConfigurationException("Default role '" + defaultRoleName
                         + "' not found in database. " + "Please ensure roles are properly initialized."));
 
         // Create user entity
