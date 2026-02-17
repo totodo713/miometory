@@ -24,10 +24,11 @@ import java.util.UUID
  * - TC-4.3: Used token rejection
  * - TC-4.4: Session invalidation after password reset
  *
- * Note: Login endpoint verification uses DB-level password hash checks instead of
- * calling /api/v1/auth/login directly, because the AuditLog entity has a known
- * Spring Data JDBC isNew() detection issue that causes login transactions to fail
- * in the test context. This does not affect the password reset flow under test.
+ * Note: TC-4.1 verifies credentials at the DB level (password hash comparison) instead of
+ * calling /api/v1/auth/login directly. The login endpoint triggers AuditLog persistence which
+ * fails due to multiple Spring Data JDBC mapping issues (JSONB/INET column types, isNew()
+ * detection, and transaction rollback propagation). See GitHub Issue #15 for details and
+ * the planned fix. Once resolved, TC-4.1 should be updated to use the login endpoint.
  */
 @AutoConfigureWebTestClient
 class PasswordResetE2ETest : IntegrationTestBase() {
@@ -147,7 +148,7 @@ class PasswordResetE2ETest : IntegrationTestBase() {
             .exchange()
             .expectStatus().isOk
 
-        // Step 4: Verify new password works (DB-level verification)
+        // Step 4: Verify new password works (DB-level verification; see class Javadoc / Issue #15)
         val newHash = getStoredPasswordHash(userId)
         assertTrue(passwordEncoder.matches(newPassword, newHash))
 
@@ -183,12 +184,13 @@ class PasswordResetE2ETest : IntegrationTestBase() {
 
         val token = extractTokenFromDb(userId)
 
-        // Expire the token by setting expires_at to past
-        jdbcTemplate.execute(
-            "ALTER TABLE password_reset_tokens DROP CONSTRAINT IF EXISTS chk_expires_at_after_created",
-        )
+        // Expire the token by moving created_at and expires_at into the past
+        // (satisfies the chk_expires_at_after_created constraint: expires_at > created_at)
         jdbcTemplate.update(
-            "UPDATE password_reset_tokens SET expires_at = NOW() - INTERVAL '1 hour' WHERE user_id = ?",
+            "UPDATE password_reset_tokens " +
+                "SET created_at = NOW() - INTERVAL '2 hours', " +
+                "    expires_at = NOW() - INTERVAL '1 hour' " +
+                "WHERE user_id = ?",
             userId,
         )
 

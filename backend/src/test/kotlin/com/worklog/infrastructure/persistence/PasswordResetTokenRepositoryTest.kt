@@ -203,13 +203,11 @@ class PasswordResetTokenRepositoryTest {
         val token = PasswordResetToken.create(user.id, tokenString, 60)
         repository.save(token)
 
-        // Temporarily drop CHECK constraint to allow setting expires_at to past
-        // (will be auto-rolled back by @Transactional)
-        jdbcTemplate.execute(
-            "ALTER TABLE password_reset_tokens DROP CONSTRAINT chk_expires_at_after_created",
-        )
+        // Expire the token by moving created_at and expires_at into the past
+        // (satisfies the chk_expires_at_after_created constraint: expires_at > created_at)
         jdbcTemplate.update(
-            "UPDATE password_reset_tokens SET expires_at = ? WHERE id = ?",
+            "UPDATE password_reset_tokens SET created_at = ?, expires_at = ? WHERE id = ?",
+            Timestamp.from(Instant.now().minusSeconds(7200)),
             Timestamp.from(Instant.now().minusSeconds(3600)),
             token.id,
         )
@@ -325,13 +323,11 @@ class PasswordResetTokenRepositoryTest {
         repository.save(expiredToken)
         repository.save(validToken)
 
-        // Temporarily drop CHECK constraint to allow setting expires_at to past
-        // (will be auto-rolled back by @Transactional)
-        jdbcTemplate.execute(
-            "ALTER TABLE password_reset_tokens DROP CONSTRAINT chk_expires_at_after_created",
-        )
+        // Expire the token by moving created_at and expires_at into the past
+        // (satisfies the chk_expires_at_after_created constraint: expires_at > created_at)
         jdbcTemplate.update(
-            "UPDATE password_reset_tokens SET expires_at = ? WHERE id = ?",
+            "UPDATE password_reset_tokens SET created_at = ?, expires_at = ? WHERE id = ?",
+            Timestamp.from(Instant.now().minusSeconds(7200)),
             Timestamp.from(Instant.now().minusSeconds(3600)),
             expiredToken.id,
         )
@@ -472,7 +468,7 @@ class PasswordResetTokenRepositoryTest {
     }
 
     @Test
-    fun `constructor - should reject null token`() {
+    fun `constructor - should reject empty token`() {
         assertThrows<IllegalArgumentException> {
             PasswordResetToken(
                 UUID.randomUUID(),
