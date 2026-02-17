@@ -211,6 +211,12 @@ public class AuthController {
                     .body(ErrorResponse.of("ACCOUNT_LOCKED", e.getMessage()));
         }
 
+        // Check if it's a service configuration error (e.g., missing default role)
+        if (e.getMessage() != null && e.getMessage().contains("not found in database")) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ErrorResponse.of("SERVICE_CONFIGURATION_ERROR", e.getMessage()));
+        }
+
         // For other state errors
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.of("unauthorized", e.getMessage()));
     }
