@@ -148,6 +148,8 @@ When responding to PR review comments:
 - PostgreSQL 16 (via Testcontainers), Flyway migrations (V11__user_auth.sql) (007-password-reset-tests)
 - Java 21 (domain), Kotlin 2.3.0 (infrastructure) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security (009-fix-signup-role-error)
 - PostgreSQL 16 (via Spring Data JDBC for Role entity, event sourcing for aggregates) (009-fix-signup-role-error)
+- Java 21 (domain), Kotlin 2.3.0 (infrastructure/tests) + Spring Boot 3.5.9, Spring Data JDBC, PostgreSQL JDBC Driver (010-fix-auditlog-persistence)
+- PostgreSQL 17 (`audit_logs` table with JSONB + INET columns) (010-fix-auditlog-persistence)
 
 ## Recent Changes
 - 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl
