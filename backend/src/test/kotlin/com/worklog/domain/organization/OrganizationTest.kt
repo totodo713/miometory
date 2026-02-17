@@ -3,9 +3,9 @@ package com.worklog.domain.organization
 import com.worklog.domain.shared.Code
 import com.worklog.domain.shared.DomainException
 import com.worklog.domain.tenant.TenantId
-import com.worklog.fixtures.OrganizationFixtures.Companion.createOrganization
-import com.worklog.fixtures.OrganizationFixtures.Companion.randomCode
-import com.worklog.fixtures.OrganizationFixtures.Companion.randomOrganizationId
+import com.worklog.fixtures.OrganizationFixtures.createOrganization
+import com.worklog.fixtures.OrganizationFixtures.randomCode
+import com.worklog.fixtures.OrganizationFixtures.randomOrganizationId
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

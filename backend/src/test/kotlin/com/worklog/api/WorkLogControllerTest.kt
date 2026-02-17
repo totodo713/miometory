@@ -20,6 +20,7 @@ import kotlin.test.assertTrue
  * Tests the full stack from HTTP API through to database persistence.
  * Task: T060 - WorkLogController integration tests
  */
+@Suppress("LargeClass") // Integration test — splitting would fragment related endpoint tests
 class WorkLogControllerTest : IntegrationTestBase() {
     @Autowired
     private lateinit var restTemplate: TestRestTemplate

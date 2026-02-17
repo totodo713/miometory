@@ -150,6 +150,8 @@ When responding to PR review comments:
 - PostgreSQL 16 (via Spring Data JDBC for Role entity, event sourcing for aggregates) (009-fix-signup-role-error)
 - Java 21 (domain), Kotlin 2.3.0 (infrastructure/tests) + Spring Boot 3.5.9, Spring Data JDBC, PostgreSQL JDBC Driver (010-fix-auditlog-persistence)
 - PostgreSQL 17 (`audit_logs` table with JSONB + INET columns) (010-fix-auditlog-persistence)
+- Kotlin 2.3.0 (infrastructure/tests), Java 21 (domain) + Spring Boot 3.5.9, detekt (static analysis), SLF4J (logging) (011-fix-detekt-baseline)
+- N/A (no storage changes) (011-fix-detekt-baseline)
 
 ## Recent Changes
 - 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl

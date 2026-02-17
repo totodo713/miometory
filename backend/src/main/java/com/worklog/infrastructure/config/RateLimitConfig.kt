@@ -3,6 +3,7 @@ package com.worklog.infrastructure.config
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit
  * Supports both exact IP addresses and CIDR notation.
  */
 class TrustedProxyChecker(trustedProxiesConfig: String) {
+    private val logger = LoggerFactory.getLogger(TrustedProxyChecker::class.java)
     private val trustedAddresses = mutableSetOf<String>()
     private val trustedCidrs = mutableListOf<CidrRange>()
 
@@ -25,8 +27,8 @@ class TrustedProxyChecker(trustedProxiesConfig: String) {
                 // CIDR notation
                 try {
                     trustedCidrs.add(CidrRange.parse(entry))
-                } catch (e: Exception) {
-                    // Log and skip invalid CIDR
+                } catch (e: IllegalArgumentException) {
+                    logger.warn("Invalid CIDR notation, skipping: {}", entry, e)
                 }
             } else {
                 // Exact IP address
@@ -52,16 +54,22 @@ class TrustedProxyChecker(trustedProxiesConfig: String) {
         fun contains(ipAddress: String): Boolean = try {
             val ip = ipToLong(ipAddress)
             (ip and mask) == networkAddress
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
+            logger.warn("Failed to check IP against CIDR range: {}", ipAddress, e)
             false
         }
 
         companion object {
+            private val logger = LoggerFactory.getLogger(CidrRange::class.java)
+            private const val IPV4_FULL_MASK = 0xFFFFFFFFL
+            private const val IPV4_BITS = 32
+            private const val BITS_PER_OCTET = 8
+
             fun parse(cidr: String): CidrRange {
                 val parts = cidr.split("/")
                 val ip = ipToLong(parts[0])
                 val prefixLength = parts[1].toInt()
-                val mask = if (prefixLength == 0) 0L else (-1L shl (32 - prefixLength)) and 0xFFFFFFFFL
+                val mask = if (prefixLength == 0) 0L else (-1L shl (IPV4_BITS - prefixLength)) and IPV4_FULL_MASK
                 val network = ip and mask
                 return CidrRange(network, mask)
             }
@@ -69,7 +77,7 @@ class TrustedProxyChecker(trustedProxiesConfig: String) {
             private fun ipToLong(ip: String): Long {
                 val octets = ip.split(".")
                 if (octets.size != 4) throw IllegalArgumentException("Invalid IPv4 address: $ip")
-                return octets.fold(0L) { acc, octet -> (acc shl 8) or octet.toLong() }
+                return octets.fold(0L) { acc, octet -> (acc shl BITS_PER_OCTET) or octet.toLong() }
             }
         }
     }
@@ -131,6 +139,12 @@ class TokenBucket(private val capacity: Int, private val refillRatePerSecond: In
  */
 @Component
 class RateLimitFilter(private val properties: RateLimitProperties) : OncePerRequestFilter() {
+    companion object {
+        private const val MILLIS_PER_SECOND = 1000L
+        private const val SECONDS_PER_MINUTE = 60
+        private val HEALTH_CHECK_PATHS = listOf("/health", "/api/v1/health", "/ready")
+    }
+
     private val buckets = ConcurrentHashMap<String, TokenBucket>()
     private var lastCleanupTime: Long = System.currentTimeMillis()
 
@@ -152,7 +166,7 @@ class RateLimitFilter(private val properties: RateLimitProperties) : OncePerRequ
 
         // Skip rate limiting for health check endpoints
         val path = request.requestURI
-        if (path.startsWith("/actuator") || path == "/health" || path == "/api/v1/health" || path == "/ready") {
+        if (path.startsWith("/actuator") || path in HEALTH_CHECK_PATHS) {
             filterChain.doFilter(request, response)
             return
         }
@@ -238,7 +252,7 @@ class RateLimitFilter(private val properties: RateLimitProperties) : OncePerRequ
      */
     private fun cleanupIfNeeded() {
         val now = System.currentTimeMillis()
-        val cleanupIntervalMillis = properties.cleanupIntervalMinutes * 60 * 1000L
+        val cleanupIntervalMillis = properties.cleanupIntervalMinutes * SECONDS_PER_MINUTE * MILLIS_PER_SECOND
 
         if (now - lastCleanupTime > cleanupIntervalMillis) {
             synchronized(this) {

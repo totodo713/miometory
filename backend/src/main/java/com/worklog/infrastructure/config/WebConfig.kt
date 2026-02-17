@@ -10,18 +10,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
  */
 @Configuration
 class WebConfig : WebMvcConfigurer {
+    companion object {
+        private const val CACHE_PERIOD_SECONDS = 3600
+    }
+
     override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
         // Serve OpenAPI spec files
         registry
             .addResourceHandler("/api-docs/**")
             .addResourceLocations("classpath:/static/api-docs/")
-            .setCachePeriod(3600)
+            .setCachePeriod(CACHE_PERIOD_SECONDS)
 
         // Serve static files (including api-docs.html)
         registry
             .addResourceHandler("/static/**")
             .addResourceLocations("classpath:/static/")
-            .setCachePeriod(3600)
+            .setCachePeriod(CACHE_PERIOD_SECONDS)
     }
 
     override fun addViewControllers(registry: ViewControllerRegistry) {

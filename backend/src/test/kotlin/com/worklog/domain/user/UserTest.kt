@@ -32,7 +32,7 @@ class UserTest {
                 User.create(
                     UserFixtures.validEmail(),
                     UserFixtures.validName(),
-                    UserFixtures.validHashedPassword(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
                     RoleId.generate(),
                 )
 
@@ -55,7 +55,7 @@ class UserTest {
                     User.create(
                         invalidEmail,
                         UserFixtures.validName(),
-                        UserFixtures.validHashedPassword(),
+                        UserFixtures.VALID_HASHED_PASSWORD,
                         RoleId.generate(),
                     )
                 }
@@ -72,7 +72,7 @@ class UserTest {
                 User.create(
                     UserFixtures.validEmail(),
                     tooLongName,
-                    UserFixtures.validHashedPassword(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
                     RoleId.generate(),
                 )
             }
@@ -86,7 +86,7 @@ class UserTest {
                     User.create(
                         UserFixtures.validEmail(),
                         invalidName,
-                        UserFixtures.validHashedPassword(),
+                        UserFixtures.VALID_HASHED_PASSWORD,
                         RoleId.generate(),
                     )
                 }
@@ -103,7 +103,7 @@ class UserTest {
                 User.create(
                     mixedCaseEmail,
                     UserFixtures.validName(),
-                    UserFixtures.validHashedPassword(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
                     RoleId.generate(),
                 )
 
@@ -223,7 +223,7 @@ class UserTest {
                     UserId.generate(),
                     UserFixtures.validEmail(),
                     UserFixtures.validName(),
-                    UserFixtures.validHashedPassword(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
                     RoleId.generate(),
                     User.AccountStatus.LOCKED,
                     5,
@@ -397,7 +397,7 @@ class UserTest {
                     UserId.generate(),
                     UserFixtures.validEmail(),
                     UserFixtures.validName(),
-                    UserFixtures.validHashedPassword(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
                     RoleId.generate(),
                     User.AccountStatus.LOCKED,
                     5,
@@ -479,7 +479,7 @@ class UserTest {
                 User.create(
                     UserFixtures.validEmail(),
                     maxLengthName,
-                    UserFixtures.validHashedPassword(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
                     RoleId.generate(),
                 )
 
@@ -498,7 +498,7 @@ class UserTest {
                 User.create(
                     maxLengthEmail,
                     UserFixtures.validName(),
-                    UserFixtures.validHashedPassword(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
                     RoleId.generate(),
                 )
 

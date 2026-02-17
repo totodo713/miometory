@@ -107,11 +107,11 @@ class ApprovalServiceTest {
                 ),
             ).thenReturn(listOf(absenceId))
 
-            val workLogEntry = createWorkLogEntry(workLogEntryId)
+            val workLogEntry = createWorkLogEntry()
             `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId)))
                 .thenReturn(Optional.of(workLogEntry))
 
-            val absence = createAbsence(absenceId)
+            val absence = createAbsence()
             `when`(absenceRepository.findById(AbsenceId.of(absenceId)))
                 .thenReturn(Optional.of(absence))
 
@@ -290,11 +290,11 @@ class ApprovalServiceTest {
             ).thenReturn(emptyList())
 
             `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId1)))
-                .thenReturn(Optional.of(createWorkLogEntry(workLogEntryId1)))
+                .thenReturn(Optional.of(createWorkLogEntry()))
             `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId2)))
-                .thenReturn(Optional.of(createWorkLogEntry(workLogEntryId2)))
+                .thenReturn(Optional.of(createWorkLogEntry()))
             `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId3)))
-                .thenReturn(Optional.of(createWorkLogEntry(workLogEntryId3)))
+                .thenReturn(Optional.of(createWorkLogEntry()))
 
             // When
             val result = approvalService.submitMonth(command)
@@ -353,13 +353,13 @@ class ApprovalServiceTest {
                 .thenReturn(Optional.of(approval))
 
             for (entryId in approval.workLogEntryIds) {
-                val entry = createSubmittedWorkLogEntry(entryId)
+                val entry = createSubmittedWorkLogEntry()
                 `when`(workLogRepository.findById(WorkLogEntryId.of(entryId)))
                     .thenReturn(Optional.of(entry))
             }
 
             for (absenceId in approval.absenceIds) {
-                val absence = createSubmittedAbsence(absenceId)
+                val absence = createSubmittedAbsence()
                 `when`(absenceRepository.findById(AbsenceId.of(absenceId)))
                     .thenReturn(Optional.of(absence))
             }
@@ -443,13 +443,13 @@ class ApprovalServiceTest {
                 .thenReturn(Optional.of(approval))
 
             for (entryId in approval.workLogEntryIds) {
-                val entry = createSubmittedWorkLogEntry(entryId)
+                val entry = createSubmittedWorkLogEntry()
                 `when`(workLogRepository.findById(WorkLogEntryId.of(entryId)))
                     .thenReturn(Optional.of(entry))
             }
 
             for (absenceId in approval.absenceIds) {
-                val absence = createSubmittedAbsence(absenceId)
+                val absence = createSubmittedAbsence()
                 `when`(absenceRepository.findById(AbsenceId.of(absenceId)))
                     .thenReturn(Optional.of(absence))
             }
@@ -473,7 +473,7 @@ class ApprovalServiceTest {
 
             // Work log entries found successfully
             for (entryId in approval.workLogEntryIds) {
-                val entry = createSubmittedWorkLogEntry(entryId)
+                val entry = createSubmittedWorkLogEntry()
                 `when`(workLogRepository.findById(WorkLogEntryId.of(entryId)))
                     .thenReturn(Optional.of(entry))
             }
@@ -576,7 +576,7 @@ class ApprovalServiceTest {
 
     // Helper methods to create test fixtures
 
-    private fun createWorkLogEntry(id: UUID): WorkLogEntry = WorkLogEntry.create(
+    private fun createWorkLogEntry(): WorkLogEntry = WorkLogEntry.create(
         memberId,
         projectId,
         LocalDate.of(2024, 1, 25),
@@ -585,7 +585,7 @@ class ApprovalServiceTest {
         memberId,
     )
 
-    private fun createSubmittedWorkLogEntry(id: UUID): WorkLogEntry {
+    private fun createSubmittedWorkLogEntry(): WorkLogEntry {
         val entry =
             WorkLogEntry.create(
                 memberId,
@@ -599,7 +599,7 @@ class ApprovalServiceTest {
         return entry
     }
 
-    private fun createAbsence(id: UUID): Absence = Absence.record(
+    private fun createAbsence(): Absence = Absence.record(
         memberId,
         LocalDate.of(2024, 1, 26),
         TimeAmount.of(java.math.BigDecimal("8.00")),
@@ -608,7 +608,7 @@ class ApprovalServiceTest {
         memberId,
     )
 
-    private fun createSubmittedAbsence(id: UUID): Absence {
+    private fun createSubmittedAbsence(): Absence {
         val absence =
             Absence.record(
                 memberId,

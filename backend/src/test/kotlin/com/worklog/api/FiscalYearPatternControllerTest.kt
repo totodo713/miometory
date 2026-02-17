@@ -14,6 +14,12 @@ import kotlin.test.assertNotNull
  * Integration tests for FiscalYearPatternController.
  */
 class FiscalYearPatternControllerTest : IntegrationTestBase() {
+    companion object {
+        private const val UPSERT_TENANT_SQL =
+            "INSERT INTO tenant (id, code, name, status, created_at) " +
+                "VALUES (?, ?, ?, 'ACTIVE', NOW()) ON CONFLICT (id) DO NOTHING"
+    }
+
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
 
@@ -272,7 +278,7 @@ class FiscalYearPatternControllerTest : IntegrationTestBase() {
         // WORKAROUND: Create tenant projection manually
         // In future, this should be handled by an event listener/projector
         jdbcTemplate.update(
-            "INSERT INTO tenant (id, code, name, status, created_at) VALUES (?, ?, ?, 'ACTIVE', NOW()) ON CONFLICT (id) DO NOTHING",
+            UPSERT_TENANT_SQL,
             tenantId,
             shortCode,
             "Test Tenant",

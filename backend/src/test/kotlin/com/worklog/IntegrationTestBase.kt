@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @Testcontainers
+@Suppress("UtilityClassWithPublicConstructor") // Abstract base class for integration tests
 abstract class IntegrationTestBase {
     companion object {
         @JvmStatic
