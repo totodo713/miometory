@@ -3,6 +3,7 @@ package com.worklog.domain.role;
 import java.time.Instant;
 import java.util.Objects;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("roles")
@@ -25,7 +26,10 @@ public class Role {
 
     /**
      * Rehydration constructor for restoring a Role from persistence.
+     * Annotated with @PersistenceCreator so Spring Data JDBC uses this constructor
+     * when instantiating Role entities from database rows.
      */
+    @PersistenceCreator
     public Role(RoleId id, String name, String description, Instant createdAt, Instant updatedAt) {
         this.id = Objects.requireNonNull(id, "Role ID cannot be null");
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");

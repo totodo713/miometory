@@ -7,6 +7,7 @@ import com.worklog.application.auth.RegistrationRequest;
 import com.worklog.application.password.PasswordResetConfirmCommand;
 import com.worklog.application.password.PasswordResetRequestCommand;
 import com.worklog.application.password.PasswordResetService;
+import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -213,5 +214,15 @@ public class AuthController {
 
         // For other state errors
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.of("unauthorized", e.getMessage()));
+    }
+
+    /**
+     * Handles service configuration errors (e.g., missing default role).
+     * Returns 503 Service Unavailable.
+     */
+    @ExceptionHandler(ServiceConfigurationException.class)
+    public ResponseEntity<ErrorResponse> handleServiceConfigurationError(ServiceConfigurationException e) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.of("SERVICE_CONFIGURATION_ERROR", e.getMessage()));
     }
 }
