@@ -12,7 +12,7 @@ All authentication endpoints accept and return `application/json`.
 |--------|----------|:---:|-------------|
 | POST | `/signup` | No | Register new account |
 | POST | `/login` | No | Authenticate user |
-| POST | `/logout` | No | Invalidate session |
+| POST | `/logout` | Yes | Invalidate session |
 | POST | `/verify-email` | No | Verify email address |
 | POST | `/password-reset/request` | No | Request password reset |
 | POST | `/password-reset/confirm` | No | Confirm password reset |
@@ -360,4 +360,4 @@ After calling `/signup` or `/password-reset/request`, check MailHog to retrieve 
 | Password Reset Service | `backend/src/main/java/com/worklog/application/password/PasswordResetService.java` |
 | Password Validator | `backend/src/main/java/com/worklog/application/validation/PasswordValidator.java` |
 | Email Service | `backend/src/main/java/com/worklog/infrastructure/email/EmailServiceImpl.java` |
-| Security Config | `backend/src/main/kotlin/com/worklog/infrastructure/config/SecurityConfig.kt` |
+| Security Config | `backend/src/main/java/com/worklog/infrastructure/config/SecurityConfig.kt` |

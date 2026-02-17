@@ -198,16 +198,16 @@
 
 ### Backend Implementation (US2)
 
-- [X] T092 [P] [US2] Create PasswordResetRequestCommand in `backend/src/main/kotlin/com/worklog/application/password/PasswordResetRequestCommand.kt` (email)
-- [X] T093 [P] [US2] Create PasswordResetConfirmCommand in `backend/src/main/kotlin/com/worklog/application/password/PasswordResetConfirmCommand.kt` (token, newPassword)
-- [X] T094 [US2] Create PasswordResetService in `backend/src/main/kotlin/com/worklog/application/password/PasswordResetService.kt` with requestReset and confirmReset methods
+- [X] T092 [P] [US2] Create PasswordResetRequestCommand in `backend/src/main/java/com/worklog/application/password/PasswordResetRequestCommand.java` (email)
+- [X] T093 [P] [US2] Create PasswordResetConfirmCommand in `backend/src/main/java/com/worklog/application/password/PasswordResetConfirmCommand.java` (token, newPassword)
+- [X] T094 [US2] Create PasswordResetService in `backend/src/main/java/com/worklog/application/password/PasswordResetService.java` with requestReset and confirmReset methods
 - [X] T095 [US2] Implement token generation (secure random 32-byte token) in PasswordResetService.requestReset
 - [X] T096 [US2] Implement token expiration (24 hours) in PasswordResetService.requestReset
 - [X] T097 [US2] Implement invalidation of previous tokens (set used_at) in PasswordResetService.requestReset
 - [X] T098 [US2] Add sendPasswordResetEmail method to EmailService with reset link containing token
 - [X] T099 [US2] Implement token validation (unused, not expired) in PasswordResetService.confirmReset
 - [X] T100 [US2] Implement password update and session invalidation in PasswordResetService.confirmReset (delete all user sessions and persistent logins)
-- [X] T101 [US2] Create PasswordResetTokenRepository in `backend/src/main/kotlin/com/worklog/infrastructure/persistence/PasswordResetTokenRepository.kt`
+- [X] T101 [US2] Create PasswordResetTokenRepository in `backend/src/main/java/com/worklog/infrastructure/persistence/PasswordResetTokenRepository.java`
 - [X] T102 [US2] Add POST /auth/password-reset/request endpoint to AuthController (always returns 200 to prevent email enumeration)
 - [X] T103 [US2] Add POST /auth/password-reset/confirm endpoint to AuthController with token validation
 
@@ -215,7 +215,7 @@
 
 - [X] T104 [P] [US2] Create password reset request page in `frontend/app/(auth)/password-reset/request/page.tsx` with email form
 - [X] T105 [P] [US2] Create password reset confirm page in `frontend/app/(auth)/password-reset/confirm/page.tsx` accepting token query param and new password form
-- [X] T106 [US2] Add API client functions in `frontend/app/lib/api/auth.ts` (requestPasswordReset, confirmPasswordReset)
+- [X] T106 [US2] Add API client functions in `frontend/app/services/api.ts` (requestPasswordReset, confirmPasswordReset)
 
 **Checkpoint**: User Story 2 complete - password reset flow functional
 
