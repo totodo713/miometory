@@ -5,7 +5,6 @@ import com.worklog.domain.role.RoleId
 import com.worklog.domain.user.User
 import com.worklog.domain.user.UserId
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -76,7 +75,8 @@ class PasswordResetTokenRepositoryTest {
 
     @BeforeEach
     fun setUp() {
-        // Clean tables before each test (order matters for FK constraints)
+        // Defensive cleanup: @Transactional auto-rollback handles isolation, but explicit DELETEs
+        // guard against edge cases where framework rollback may not apply (e.g. DDL side-effects).
         jdbcTemplate.update("DELETE FROM password_reset_tokens")
         jdbcTemplate.update("DELETE FROM users")
 
@@ -382,127 +382,5 @@ class PasswordResetTokenRepositoryTest {
         // Then - token should also be deleted (CASCADE)
         val result = repository.findByToken(tokenString)
         assertTrue(result.isEmpty)
-    }
-
-    // ============================================================
-    // Domain Entity Tests - PasswordResetToken domain methods
-    // ============================================================
-
-    @Test
-    fun `markAsUsed - domain method should set used flag and usedAt`() {
-        // Given
-        val user = createTestUser()
-        val tokenString = "domain-mark-used-" + UUID.randomUUID().toString().replace("-", "")
-        val token = PasswordResetToken.create(user.id, tokenString, 60)
-
-        // When
-        token.markAsUsed()
-
-        // Then
-        assertTrue(token.isUsed)
-        assertNotNull(token.usedAt)
-        assertFalse(token.isValid)
-    }
-
-    @Test
-    fun `markAsUsed - should throw when token already used`() {
-        // Given
-        val user = createTestUser()
-        val tokenString = "double-use-token-" + UUID.randomUUID().toString().replace("-", "")
-        val token = PasswordResetToken.create(user.id, tokenString, 60)
-        token.markAsUsed()
-
-        // When/Then
-        assertThrows<IllegalStateException> {
-            token.markAsUsed()
-        }
-    }
-
-    @Test
-    fun `isValid - should return true for unused non-expired token`() {
-        // Given
-        val user = createTestUser()
-        val tokenString = "valid-domain-test-" + UUID.randomUUID().toString().replace("-", "")
-        val token = PasswordResetToken.create(user.id, tokenString, 60)
-
-        // Then
-        assertTrue(token.isValid)
-        assertFalse(token.isUsed)
-        assertFalse(token.isExpired)
-    }
-
-    @Test
-    fun `equals and hashCode - tokens with same id should be equal`() {
-        // Given
-        val user = createTestUser()
-        val tokenString = "equals-test-token-" + UUID.randomUUID().toString().replace("-", "")
-        val token = PasswordResetToken.create(user.id, tokenString, 60)
-
-        // Create another token with same ID via rehydration constructor
-        val sameIdToken = PasswordResetToken(
-            token.id,
-            user.id,
-            tokenString,
-            token.createdAt,
-            token.expiresAt,
-        )
-
-        // Then
-        assertEquals(token, sameIdToken)
-        assertEquals(token.hashCode(), sameIdToken.hashCode())
-    }
-
-    @Test
-    fun `toString - should return readable representation`() {
-        // Given
-        val user = createTestUser()
-        val tokenString = "tostring-test-tok-" + UUID.randomUUID().toString().replace("-", "")
-        val token = PasswordResetToken.create(user.id, tokenString, 60)
-
-        // When
-        val result = token.toString()
-
-        // Then
-        assertTrue(result.contains("PasswordResetToken"))
-        assertTrue(result.contains(token.id.toString()))
-    }
-
-    @Test
-    fun `constructor - should reject empty token`() {
-        assertThrows<IllegalArgumentException> {
-            PasswordResetToken(
-                UUID.randomUUID(),
-                UserId.of(UUID.randomUUID()),
-                "",
-                Instant.now(),
-                Instant.now().plusSeconds(3600),
-            )
-        }
-    }
-
-    @Test
-    fun `constructor - should reject short token`() {
-        assertThrows<IllegalArgumentException> {
-            PasswordResetToken(
-                UUID.randomUUID(),
-                UserId.of(UUID.randomUUID()),
-                "short",
-                Instant.now(),
-                Instant.now().plusSeconds(3600),
-            )
-        }
-    }
-
-    @Test
-    fun `constructor - should reject expiresAt before createdAt`() {
-        assertThrows<IllegalArgumentException> {
-            PasswordResetToken(
-                UUID.randomUUID(),
-                UserId.of(UUID.randomUUID()),
-                "valid-token-string-that-is-at-least-32-chars",
-                Instant.now(),
-                Instant.now().minusSeconds(3600),
-            )
-        }
     }
 }

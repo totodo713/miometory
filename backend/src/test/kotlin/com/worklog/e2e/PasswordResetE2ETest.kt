@@ -91,13 +91,13 @@ class PasswordResetE2ETest : IntegrationTestBase() {
             """,
         String::class.java,
         userId,
-    )!!
+    ) ?: error("No unused token found for user $userId")
 
     private fun getStoredPasswordHash(userId: UUID): String = jdbcTemplate.queryForObject(
         "SELECT hashed_password FROM users WHERE id = ?",
         String::class.java,
         userId,
-    )!!
+    ) ?: error("No password hash found for user $userId")
 
     private fun createSessionForUser(userId: UUID): UUID {
         val sessionId = UUID.randomUUID()
@@ -259,7 +259,7 @@ class PasswordResetE2ETest : IntegrationTestBase() {
             "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
             Int::class.java,
             userId,
-        )!!
+        ) ?: error("Failed to count sessions for user $userId")
         assertEquals(1, sessionCountBefore, "Expected exactly one session before password reset")
 
         // Request password reset
@@ -285,7 +285,7 @@ class PasswordResetE2ETest : IntegrationTestBase() {
             "SELECT COUNT(*) FROM user_sessions WHERE user_id = ?",
             Int::class.java,
             userId,
-        )!!
+        ) ?: error("Failed to count sessions for user $userId")
         assertEquals(0, sessionCountAfter, "Expected zero sessions after password reset")
     }
 }
