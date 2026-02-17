@@ -90,7 +90,7 @@ AuthServiceImpl
   └── AuditLogService (NEW - replaces private logAuditEvent())
         └── AuditLogRepository
               └── AuditLog (updated: Persistable<UUID>)
-                    └── PersistenceConfig (updated: 4 new converters)
+                    └── PersistenceConfig (updated: 2 reading converters)
                           ├── JsonbToStringReadingConverter (NEW)
                           └── InetToStringReadingConverter (NEW)
 ```

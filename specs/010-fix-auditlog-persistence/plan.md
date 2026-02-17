@@ -77,10 +77,9 @@ backend/src/main/java/com/worklog/
 ├── application/auth/
 │   └── AuthServiceImpl.java                        # MODIFY: delegate to AuditLogService
 └── infrastructure/persistence/
-    ├── PersistenceConfig.java                      # MODIFY: register 4 new converters
-    ├── StringToJsonbWritingConverter.java           # CREATE
+    ├── PersistenceConfig.java                      # MODIFY: register 2 reading converters
+    ├── AuditLogRepository.java                     # MODIFY: add @Query INSERT with SQL CAST
     ├── JsonbToStringReadingConverter.java           # CREATE
-    ├── StringToInetWritingConverter.java            # CREATE
     └── InetToStringReadingConverter.java            # CREATE
 
 backend/src/test/kotlin/com/worklog/
