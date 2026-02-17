@@ -24,9 +24,9 @@ object UserFixtures {
     fun validName(firstName: String = "Test", lastName: String = "User"): String = "$firstName $lastName"
 
     /**
-     * Creates a valid bcrypt hashed password (hash of "password123").
+     * Valid bcrypt hashed password (hash of "password123").
      */
-    fun validHashedPassword(): String = "\$2a\$10\$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+    const val VALID_HASHED_PASSWORD: String = "\$2a\$10\$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
 
     /**
      * Creates a new random user ID.
@@ -45,7 +45,7 @@ object UserFixtures {
         id: UserId = randomUserId(),
         email: String = validEmail(),
         name: String = validName(),
-        hashedPassword: String = validHashedPassword(),
+        hashedPassword: String = VALID_HASHED_PASSWORD,
         roleId: RoleId = randomRoleId(),
         emailVerifiedAt: Instant = Instant.now().minusSeconds(3600),
     ): User = User(
@@ -70,7 +70,7 @@ object UserFixtures {
         id: UserId = randomUserId(),
         email: String = validEmail(),
         name: String = validName(),
-        hashedPassword: String = validHashedPassword(),
+        hashedPassword: String = VALID_HASHED_PASSWORD,
         roleId: RoleId = randomRoleId(),
     ): User = User(
         id,
@@ -94,7 +94,7 @@ object UserFixtures {
         id: UserId = randomUserId(),
         email: String = validEmail(),
         name: String = validName(),
-        hashedPassword: String = validHashedPassword(),
+        hashedPassword: String = VALID_HASHED_PASSWORD,
         roleId: RoleId = randomRoleId(),
         lockedUntil: Instant = Instant.now().plusSeconds(1800),
     ): User = User(
@@ -119,7 +119,7 @@ object UserFixtures {
         id: UserId = randomUserId(),
         email: String = validEmail(),
         name: String = validName(),
-        hashedPassword: String = validHashedPassword(),
+        hashedPassword: String = VALID_HASHED_PASSWORD,
         roleId: RoleId = randomRoleId(),
     ): User = User(
         id,

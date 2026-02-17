@@ -40,7 +40,14 @@ class MemberControllerTest : IntegrationTestBase() {
         subordinateId = UUID.randomUUID()
         nonSubordinateId = UUID.randomUUID()
 
-        // Insert tenant
+        insertTenant()
+        insertOrganization()
+        insertMember(managerId, "manager", "Test Manager", managerIdRef = null)
+        insertMember(subordinateId, "subordinate", "Test Subordinate", managerIdRef = managerId)
+        insertMember(nonSubordinateId, "nonsubordinate", "Test Non-Subordinate", managerIdRef = null)
+    }
+
+    private fun insertTenant() {
         jdbcTemplate.update(
             """
             INSERT INTO tenant (id, name, code, status, version)
@@ -51,8 +58,9 @@ class MemberControllerTest : IntegrationTestBase() {
             "Test Tenant",
             "TEST-${tenantId.toString().take(8)}",
         )
+    }
 
-        // Insert organization
+    private fun insertOrganization() {
         jdbcTemplate.update(
             """
             INSERT INTO organization (id, tenant_id, name, code, level, status, version)
@@ -64,48 +72,21 @@ class MemberControllerTest : IntegrationTestBase() {
             "Test Organization",
             "ORG-${organizationId.toString().take(8)}",
         )
+    }
 
-        // Insert manager
-        jdbcTemplate.update(
-            """
-            INSERT INTO members (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
-            VALUES (?, ?, ?, ?, ?, NULL, true, 0)
-            ON CONFLICT (id) DO NOTHING
-            """,
-            managerId,
-            tenantId,
-            organizationId,
-            "manager-${managerId.toString().take(8)}@test.com",
-            "Test Manager",
-        )
-
-        // Insert subordinate (reports to manager)
+    private fun insertMember(memberId: UUID, emailPrefix: String, displayName: String, managerIdRef: UUID?) {
         jdbcTemplate.update(
             """
             INSERT INTO members (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
             VALUES (?, ?, ?, ?, ?, ?, true, 0)
             ON CONFLICT (id) DO NOTHING
             """,
-            subordinateId,
+            memberId,
             tenantId,
             organizationId,
-            "subordinate-${subordinateId.toString().take(8)}@test.com",
-            "Test Subordinate",
-            managerId,
-        )
-
-        // Insert non-subordinate (no manager relationship)
-        jdbcTemplate.update(
-            """
-            INSERT INTO members (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version)
-            VALUES (?, ?, ?, ?, ?, NULL, true, 0)
-            ON CONFLICT (id) DO NOTHING
-            """,
-            nonSubordinateId,
-            tenantId,
-            organizationId,
-            "nonsubordinate-${nonSubordinateId.toString().take(8)}@test.com",
-            "Test Non-Subordinate",
+            "$emailPrefix-${memberId.toString().take(8)}@test.com",
+            displayName,
+            managerIdRef,
         )
     }
 

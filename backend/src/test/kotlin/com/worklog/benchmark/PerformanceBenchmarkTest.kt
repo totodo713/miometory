@@ -3,6 +3,7 @@ package com.worklog.benchmark
 import com.worklog.IntegrationTestBase
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.http.HttpStatus
@@ -29,6 +30,8 @@ import kotlin.test.assertTrue
  */
 @Tag("performance")
 class PerformanceBenchmarkTest : IntegrationTestBase() {
+    private val logger = LoggerFactory.getLogger(PerformanceBenchmarkTest::class.java)
+
     @Autowired
     private lateinit var restTemplate: TestRestTemplate
 
@@ -118,6 +121,7 @@ class PerformanceBenchmarkTest : IntegrationTestBase() {
                                 errorCount.incrementAndGet()
                             }
                         } catch (e: Exception) {
+                            logger.debug("Request failed during benchmark", e)
                             errorCount.incrementAndGet()
                         }
                         totalTime.addAndGet(System.currentTimeMillis() - requestStart)

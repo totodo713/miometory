@@ -94,9 +94,7 @@ class JdbcUserRepositoryTest {
                     testRoleId,
                 )
             } catch (e: IllegalArgumentException) {
-                println("ERROR creating user: ${e.message}")
-                e.printStackTrace()
-                throw e
+                throw AssertionError("Failed to create user: ${e.message}", e)
             }
 
         // When

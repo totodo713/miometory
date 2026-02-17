@@ -18,6 +18,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
  */
 @Configuration
 class CorsConfig {
+    companion object {
+        private const val CORS_MAX_AGE_SECONDS = 3600L
+    }
+
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
@@ -61,7 +65,7 @@ class CorsConfig {
         configuration.allowCredentials = true
 
         // Cache preflight requests for 1 hour
-        configuration.maxAge = 3600L
+        configuration.maxAge = CORS_MAX_AGE_SECONDS
 
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/api/**", configuration)

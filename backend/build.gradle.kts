@@ -189,7 +189,6 @@ spotless {
 detekt {
     buildUponDefaultConfig = true
     config.setFrom("$projectDir/config/detekt/detekt.yml")
-    baseline = file("$projectDir/detekt-baseline.xml")
     parallel = true
 }
 
