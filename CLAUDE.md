@@ -152,6 +152,8 @@ When responding to PR review comments:
 - PostgreSQL 17 (`audit_logs` table with JSONB + INET columns) (010-fix-auditlog-persistence)
 - Kotlin 2.3.0 (infrastructure/tests), Java 21 (domain) + Spring Boot 3.5.9, detekt (static analysis), SLF4J (logging) (011-fix-detekt-baseline)
 - N/A (no storage changes) (011-fix-detekt-baseline)
+- TypeScript 5.x (frontend), Kotlin 2.3.0 / Java 21 (backend) + Next.js 16.x, React 19.x, Tailwind CSS v4, Spring Boot 3.5.9 (012-login-auth-ui)
+- PostgreSQL 17 (users table via V11 migration, session-based auth via Spring Security) (012-login-auth-ui)
 
 ## Recent Changes
 - 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl

@@ -21,6 +21,12 @@ vi.mock("../../../app/services/api", () => ({
     members: {
       getAssignedProjects: vi.fn(),
     },
+    auth: {
+      login: vi.fn(),
+      logout: vi.fn(),
+      requestPasswordReset: vi.fn(),
+      confirmPasswordReset: vi.fn(),
+    },
   },
 }));
 
@@ -41,6 +47,12 @@ vi.mock("@/services/api", () => ({
     },
     members: {
       getAssignedProjects: vi.fn(),
+    },
+    auth: {
+      login: vi.fn(),
+      logout: vi.fn(),
+      requestPasswordReset: vi.fn(),
+      confirmPasswordReset: vi.fn(),
     },
   },
 }));

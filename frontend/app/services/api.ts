@@ -516,6 +516,27 @@ export const api = {
    */
   auth: {
     /**
+     * Login with email and password
+     */
+    login: (data: { email: string; password: string; rememberMe: boolean }) =>
+      apiClient.post<{
+        user: {
+          id: string;
+          email: string;
+          name: string;
+          accountStatus: string;
+        };
+        sessionExpiresAt: string;
+        rememberMeToken: string | null;
+        warning: string | null;
+      }>("/api/v1/auth/login", data, { skipAuth: true }),
+
+    /**
+     * Logout current session
+     */
+    logout: () => apiClient.post<void>("/api/v1/auth/logout"),
+
+    /**
      * Request password reset email
      * Always returns 200 OK to prevent email enumeration
      */

@@ -208,3 +208,49 @@ WHERE name IN (
     'audit_log.view'
 )
 ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- User Account Seed Data
+-- Feature: 012-login-auth-ui
+-- ============================================================================
+-- All users share password: Password1
+-- BCrypt hash: $2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa
+-- UUIDs match existing members table IDs
+-- ============================================================================
+
+INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at)
+VALUES
+    -- Bob Engineer (USER)
+    ('00000000-0000-0000-0000-000000000001',
+     'bob.engineer@miometry.example.com',
+     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     'Bob Engineer',
+     '00000000-0000-0000-0000-000000000002',
+     'active', 0, NOW()),
+    -- Alice Manager (ADMIN)
+    ('00000000-0000-0000-0000-000000000002',
+     'alice.manager@miometry.example.com',
+     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     'Alice Manager',
+     '00000000-0000-0000-0000-000000000001',
+     'active', 0, NOW()),
+    -- Charlie Engineer (USER)
+    ('00000000-0000-0000-0000-000000000003',
+     'charlie.engineer@miometry.example.com',
+     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     'Charlie Engineer',
+     '00000000-0000-0000-0000-000000000002',
+     'active', 0, NOW()),
+    -- David Independent (USER)
+    ('00000000-0000-0000-0000-000000000004',
+     'david.independent@miometry.example.com',
+     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     'David Independent',
+     '00000000-0000-0000-0000-000000000002',
+     'active', 0, NOW())
+ON CONFLICT (email) DO UPDATE SET
+    hashed_password = EXCLUDED.hashed_password,
+    name = EXCLUDED.name,
+    role_id = EXCLUDED.role_id,
+    account_status = EXCLUDED.account_status,
+    email_verified_at = EXCLUDED.email_verified_at;

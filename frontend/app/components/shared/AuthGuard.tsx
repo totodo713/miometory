@@ -4,19 +4,19 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthContext } from "@/providers/AuthProvider";
 
-export default function Home() {
+export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthContext();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        router.replace("/worklog");
-      } else {
-        router.replace("/login");
-      }
+    if (!isLoading && !user) {
+      router.replace("/login");
     }
   }, [user, isLoading, router]);
 
-  return null;
+  if (isLoading || !user) {
+    return null;
+  }
+
+  return <>{children}</>;
 }
