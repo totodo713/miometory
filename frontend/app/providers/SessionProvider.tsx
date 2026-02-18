@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SessionTimeoutDialog } from "../components/shared/SessionTimeoutDialog";
 import { useSessionTimeout } from "../hooks/useSessionTimeout";
+import { useAuthContext } from "./AuthProvider";
 
 /**
  * Session timeout provider that wraps the application.
@@ -16,7 +16,7 @@ import { useSessionTimeout } from "../hooks/useSessionTimeout";
  * - Auto-logout on timeout
  */
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
+  const { user, logout } = useAuthContext();
   const [showDialog, setShowDialog] = useState(false);
 
   const handleWarning = () => {
@@ -25,14 +25,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const handleTimeout = () => {
     setShowDialog(false);
-    // Redirect to logout endpoint
-    router.push("/api/auth/logout");
+    logout();
   };
 
-  const { isWarning, remainingTime, extendSession, logout } = useSessionTimeout({
+  const {
+    isWarning,
+    remainingTime,
+    extendSession,
+    logout: sessionLogout,
+  } = useSessionTimeout({
     onWarning: handleWarning,
     onTimeout: handleTimeout,
-    enabled: true,
+    enabled: user !== null,
   });
 
   const handleContinue = () => {
@@ -42,7 +46,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   const handleLogout = () => {
     setShowDialog(false);
-    logout();
+    sessionLogout();
   };
 
   return (

@@ -65,6 +65,9 @@ export class ValidationError extends ApiError {
   }
 }
 
+/** Custom event name fired when a non-auth API call receives 401 */
+export const AUTH_UNAUTHORIZED_EVENT = "miometry:auth:unauthorized";
+
 /**
  * API request options
  */
@@ -89,7 +92,7 @@ class ApiClient {
    * Makes an authenticated API request
    */
   private async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    const { version, ...fetchOptions } = options;
+    const { version, skipAuth, ...fetchOptions } = options;
 
     const url = `${this.baseUrl}${endpoint}`;
 
@@ -122,6 +125,9 @@ class ApiClient {
 
       // Handle specific HTTP status codes
       if (response.status === 401) {
+        if (!skipAuth && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
+        }
         throw new UnauthorizedError();
       }
 
@@ -515,6 +521,27 @@ export const api = {
    * Authentication endpoints
    */
   auth: {
+    /**
+     * Login with email and password
+     */
+    login: (data: { email: string; password: string; rememberMe: boolean }) =>
+      apiClient.post<{
+        user: {
+          id: string;
+          email: string;
+          name: string;
+          accountStatus: string;
+        };
+        sessionExpiresAt: string;
+        rememberMeToken: string | null;
+        warning: string | null;
+      }>("/api/v1/auth/login", data, { skipAuth: true }),
+
+    /**
+     * Logout current session
+     */
+    logout: () => apiClient.post<void>("/api/v1/auth/logout"),
+
     /**
      * Request password reset email
      * Always returns 200 OK to prevent email enumeration
