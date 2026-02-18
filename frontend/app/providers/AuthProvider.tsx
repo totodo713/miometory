@@ -23,17 +23,21 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    if (typeof window === "undefined") return null;
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Restore user from sessionStorage after hydration to avoid SSR/CSR mismatch
+  useEffect(() => {
     try {
       const stored = sessionStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
     } catch {
       sessionStorage.removeItem(STORAGE_KEY);
-      return null;
     }
-  });
-  const [isLoading] = useState(false);
+    setIsLoading(false);
+  }, []);
 
   // Listen for 401 unauthorized events from API client
   useEffect(() => {
