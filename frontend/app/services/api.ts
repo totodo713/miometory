@@ -65,6 +65,9 @@ export class ValidationError extends ApiError {
   }
 }
 
+/** Custom event name fired when a non-auth API call receives 401 */
+export const AUTH_UNAUTHORIZED_EVENT = "miometry:auth:unauthorized";
+
 /**
  * API request options
  */
@@ -89,7 +92,7 @@ class ApiClient {
    * Makes an authenticated API request
    */
   private async request<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-    const { version, ...fetchOptions } = options;
+    const { version, skipAuth, ...fetchOptions } = options;
 
     const url = `${this.baseUrl}${endpoint}`;
 
@@ -122,6 +125,9 @@ class ApiClient {
 
       // Handle specific HTTP status codes
       if (response.status === 401) {
+        if (!skipAuth && typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
+        }
         throw new UnauthorizedError();
       }
 

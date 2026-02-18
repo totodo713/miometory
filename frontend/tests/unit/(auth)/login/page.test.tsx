@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import LoginPage from "@/(auth)/login/page";
+import { ApiError } from "@/services/api";
 
 const mockLogin = vi.fn();
 const mockReplace = vi.fn();
@@ -27,6 +28,12 @@ vi.mock("next/link", () => ({
     </a>
   ),
 }));
+
+async function fillAndSubmit() {
+  fireEvent.change(screen.getByLabelText("メールアドレス"), { target: { value: "user@example.com" } });
+  fireEvent.change(screen.getByLabelText("パスワード"), { target: { value: "password123" } });
+  fireEvent.click(screen.getByRole("button", { name: /ログイン/i }));
+}
 
 describe("Login page", () => {
   beforeEach(() => {
@@ -57,6 +64,54 @@ describe("Login page", () => {
       render(<LoginPage />);
       const link = screen.getByText("パスワードをお忘れですか？");
       expect(link.closest("a")).toHaveAttribute("href", "/password-reset/request");
+    });
+  });
+
+  describe("Login submission", () => {
+    test("redirects to /worklog on successful login", async () => {
+      mockLogin.mockResolvedValueOnce(undefined);
+      render(<LoginPage />);
+      await fillAndSubmit();
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/worklog"));
+    });
+
+    test("shows credential error on 401", async () => {
+      mockLogin.mockRejectedValueOnce(new ApiError("Unauthorized", 401));
+      render(<LoginPage />);
+      await fillAndSubmit();
+      await waitFor(() =>
+        expect(screen.getByRole("alert")).toHaveTextContent("メールアドレスまたはパスワードが正しくありません"),
+      );
+    });
+
+    test("shows network error for non-ApiError failures", async () => {
+      mockLogin.mockRejectedValueOnce(new Error("Failed to fetch"));
+      render(<LoginPage />);
+      await fillAndSubmit();
+      await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("ネットワークエラーが発生しました"));
+    });
+
+    test("shows server error on 503", async () => {
+      mockLogin.mockRejectedValueOnce(new ApiError("Service Unavailable", 503));
+      render(<LoginPage />);
+      await fillAndSubmit();
+      await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("サーバーエラーが発生しました"));
+    });
+
+    test("disables form and shows loading text while submitting", async () => {
+      let resolveLogin: () => void;
+      mockLogin.mockReturnValueOnce(
+        new Promise<void>((r) => {
+          resolveLogin = r;
+        }),
+      );
+      render(<LoginPage />);
+      await fillAndSubmit();
+      expect(screen.getByRole("button", { name: /ログイン中/i })).toBeDisabled();
+      expect(screen.getByLabelText("メールアドレス")).toBeDisabled();
+      expect(screen.getByLabelText("パスワード")).toBeDisabled();
+      resolveLogin?.();
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/worklog"));
     });
   });
 });

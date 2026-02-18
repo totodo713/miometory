@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { api } from "@/services/api";
+import { AUTH_UNAUTHORIZED_EVENT, api } from "@/services/api";
 
 const STORAGE_KEY = "miometry_auth_user";
 
@@ -23,25 +23,28 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Restore user from sessionStorage on mount
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      setIsLoading(false);
-      return;
-    }
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    if (typeof window === "undefined") return null;
     try {
       const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setUser(JSON.parse(stored));
-      }
+      return stored ? JSON.parse(stored) : null;
     } catch {
       sessionStorage.removeItem(STORAGE_KEY);
+      return null;
     }
-    setIsLoading(false);
-  }, []);
+  });
+  const [isLoading] = useState(false);
+
+  // Listen for 401 unauthorized events from API client
+  useEffect(() => {
+    function handleUnauthorized() {
+      setUser(null);
+      sessionStorage.removeItem(STORAGE_KEY);
+      router.replace("/login");
+    }
+    window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, [router]);
 
   const login = useCallback(async (email: string, password: string, rememberMe: boolean) => {
     const response = await api.auth.login({ email, password, rememberMe });
