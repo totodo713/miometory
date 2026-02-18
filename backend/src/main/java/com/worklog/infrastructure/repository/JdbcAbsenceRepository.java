@@ -7,15 +7,19 @@ import com.worklog.domain.absence.events.AbsenceDeleted;
 import com.worklog.domain.absence.events.AbsenceRecorded;
 import com.worklog.domain.absence.events.AbsenceStatusChanged;
 import com.worklog.domain.absence.events.AbsenceUpdated;
+import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
+import com.worklog.infrastructure.projection.MonthlyCalendarProjection;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,18 +33,30 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public class JdbcAbsenceRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(JdbcAbsenceRepository.class);
+
     private final EventStore eventStore;
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
+    private final JdbcMemberRepository memberRepository;
+    private final MonthlyCalendarProjection calendarProjection;
 
-    public JdbcAbsenceRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
+    public JdbcAbsenceRepository(
+            EventStore eventStore,
+            ObjectMapper objectMapper,
+            JdbcTemplate jdbcTemplate,
+            JdbcMemberRepository memberRepository,
+            MonthlyCalendarProjection calendarProjection) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
+        this.memberRepository = memberRepository;
+        this.calendarProjection = calendarProjection;
     }
 
     /**
      * Save an absence aggregate by appending its uncommitted events.
+     * Also updates the projection table synchronously within the same transaction.
      */
     @Transactional
     public void save(Absence absence) {
@@ -50,9 +66,12 @@ public class JdbcAbsenceRepository {
         }
 
         eventStore.append(absence.getId().value(), absence.getAggregateType(), events, absence.getVersion());
+        updateProjection(absence, events);
 
         absence.clearUncommittedEvents();
         absence.setVersion(absence.getVersion() + events.size());
+
+        evictCalendarCache(absence.getMemberId().value());
     }
 
     /**
@@ -191,6 +210,77 @@ public class JdbcAbsenceRepository {
             return constructor.newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create empty Absence instance", e);
+        }
+    }
+
+    /**
+     * Updates the projection table based on domain events.
+     * SQL failures propagate to the caller, rolling back the enclosing transaction
+     * so that the event store and projection stay consistent.
+     */
+    private void updateProjection(Absence absence, List<DomainEvent> events) {
+        for (DomainEvent event : events) {
+            switch (event) {
+                case AbsenceRecorded e -> {
+                    Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
+                    if (organizationId.isEmpty()) {
+                        logger.warn(
+                                "Skipping projection insert for absence {}: member {} not found",
+                                e.aggregateId(),
+                                e.memberId());
+                        continue;
+                    }
+                    jdbcTemplate.update(
+                            """
+                            INSERT INTO absences_projection
+                                (id, member_id, organization_id, absence_type, start_date, end_date,
+                                 hours_per_day, notes, status)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT')
+                            """,
+                            e.aggregateId(),
+                            e.memberId(),
+                            organizationId.get(),
+                            e.absenceType(),
+                            e.date(),
+                            e.date(),
+                            BigDecimal.valueOf(e.hours()),
+                            e.reason());
+                }
+                case AbsenceUpdated e -> {
+                    jdbcTemplate.update(
+                            """
+                            UPDATE absences_projection
+                            SET hours_per_day = ?, absence_type = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                            """, BigDecimal.valueOf(e.hours()), e.absenceType(), e.reason(), e.aggregateId());
+                }
+                case AbsenceStatusChanged e -> {
+                    jdbcTemplate.update("""
+                            UPDATE absences_projection
+                            SET status = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                            """, e.toStatus(), e.aggregateId());
+                }
+                case AbsenceDeleted e -> {
+                    jdbcTemplate.update("DELETE FROM absences_projection WHERE id = ?", e.aggregateId());
+                }
+                default -> {
+                    // Unknown event type - skip projection update
+                }
+            }
+        }
+    }
+
+    private Optional<UUID> resolveOrganizationId(MemberId memberId) {
+        return memberRepository.findById(memberId).map(member -> member.getOrganizationId()
+                .value());
+    }
+
+    private void evictCalendarCache(UUID memberId) {
+        try {
+            calendarProjection.evictMemberCache(memberId);
+        } catch (Exception e) {
+            logger.warn("Failed to evict calendar cache for member {}: {}", memberId, e.getMessage());
         }
     }
 
