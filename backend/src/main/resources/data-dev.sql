@@ -44,6 +44,7 @@ ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     status = EXCLUDED.status,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ============================================================================
 -- 2. Fiscal Year Pattern (April-start Japanese fiscal year)
@@ -63,6 +64,7 @@ ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     start_month = EXCLUDED.start_month,
     start_day = EXCLUDED.start_day;
+@@
 
 -- ============================================================================
 -- 3. Monthly Period Pattern (21st to 20th billing cycle)
@@ -80,6 +82,7 @@ VALUES (
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     start_day = EXCLUDED.start_day;
+@@
 
 -- ============================================================================
 -- 4. Organization (references tenant and patterns)
@@ -108,6 +111,7 @@ ON CONFLICT (id) DO UPDATE SET
     fiscal_year_pattern_id = EXCLUDED.fiscal_year_pattern_id,
     monthly_period_pattern_id = EXCLUDED.monthly_period_pattern_id,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ============================================================================
 -- 5. Projects (multiple projects for realistic testing)
@@ -135,6 +139,7 @@ ON CONFLICT (id) DO UPDATE SET
     valid_from = EXCLUDED.valid_from,
     valid_until = EXCLUDED.valid_until,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- Active project: Infrastructure & DevOps
 INSERT INTO projects (
@@ -158,6 +163,7 @@ ON CONFLICT (id) DO UPDATE SET
     valid_from = EXCLUDED.valid_from,
     valid_until = EXCLUDED.valid_until,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- Inactive project: Legacy System (closed, no new entries allowed)
 INSERT INTO projects (
@@ -181,6 +187,7 @@ ON CONFLICT (id) DO UPDATE SET
     valid_from = EXCLUDED.valid_from,
     valid_until = EXCLUDED.valid_until,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ============================================================================
 -- 6. Members (using UUIDs that match frontend hardcoded values)
@@ -208,6 +215,7 @@ ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
     is_active = EXCLUDED.is_active,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- Bob (Regular User / Engineer) - Reports to Alice
 INSERT INTO members (
@@ -231,6 +239,7 @@ ON CONFLICT (id) DO UPDATE SET
     manager_id = EXCLUDED.manager_id,
     is_active = EXCLUDED.is_active,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- Charlie (Subordinate Engineer) - Reports to Alice
 INSERT INTO members (
@@ -254,6 +263,7 @@ ON CONFLICT (id) DO UPDATE SET
     manager_id = EXCLUDED.manager_id,
     is_active = EXCLUDED.is_active,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- David (Independent) - No manager
 INSERT INTO members (
@@ -276,6 +286,7 @@ ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
     is_active = EXCLUDED.is_active,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ============================================================================
 -- 7. Work Log Entries - Comprehensive test data
@@ -421,6 +432,7 @@ ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     project_id = EXCLUDED.project_id,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ---------------------------------------------------------------------------
 -- 7.2 Charlie's Work Log Entries (Junior Engineer - Reports to Alice)
@@ -495,6 +507,7 @@ ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     entered_by = EXCLUDED.entered_by,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ---------------------------------------------------------------------------
 -- 7.3 Alice's Work Log Entries (Manager - also logs her own work)
@@ -569,6 +582,7 @@ ON CONFLICT (id) DO UPDATE SET
     status = EXCLUDED.status,
     project_id = EXCLUDED.project_id,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ---------------------------------------------------------------------------
 -- 7.4 David's Work Log Entries (Independent - no manager)
@@ -627,6 +641,7 @@ ON CONFLICT (id) DO UPDATE SET
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ============================================================================
 -- 8. Sample Absences (various types and statuses)
@@ -718,6 +733,7 @@ ON CONFLICT (id) DO UPDATE SET
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
     updated_at = CURRENT_TIMESTAMP;
+@@
 
 -- ============================================================================
 -- 9-13. Event Store Records and Monthly Projections
@@ -1245,6 +1261,7 @@ BEGIN
             last_updated = CURRENT_TIMESTAMP;
     END LOOP;
 END $$;
+@@
 
 -- ============================================================================
 -- Verification Queries (commented out - for manual testing)

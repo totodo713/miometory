@@ -14,6 +14,7 @@ spring:
       data-locations: classpath:data-dev.sql
       # Continue on error to handle idempotent re-runs gracefully
       continue-on-error: false
+      separator: "@@"
 
   # Flyway runs before SQL init by default (order is correct)
   flyway:
