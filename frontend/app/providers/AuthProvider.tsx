@@ -40,11 +40,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     function handleUnauthorized() {
       setUser(null);
       sessionStorage.removeItem(STORAGE_KEY);
-      router.replace("/login");
+      // Navigation to /login is handled by AuthGuard on protected pages.
+      // Calling router.replace here races with batched state updates,
+      // causing an infinite redirect loop (login→worklog→login→…).
     }
     window.addEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
     return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
-  }, [router]);
+  }, []);
 
   const login = useCallback(async (email: string, password: string, rememberMe: boolean) => {
     const response = await api.auth.login({ email, password, rememberMe });
