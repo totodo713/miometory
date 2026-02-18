@@ -214,7 +214,7 @@ ON CONFLICT DO NOTHING;
 -- Feature: 012-login-auth-ui
 -- ============================================================================
 -- All users share password: Password1
--- BCrypt hash: $2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa
+-- BCrypt hash: $2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u
 -- UUIDs match existing members table IDs
 -- ============================================================================
 
@@ -223,28 +223,28 @@ VALUES
     -- Bob Engineer (USER)
     ('00000000-0000-0000-0000-000000000001',
      'bob.engineer@miometry.example.com',
-     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Bob Engineer',
      '00000000-0000-0000-0000-000000000002',
      'active', 0, NOW()),
     -- Alice Manager (ADMIN)
     ('00000000-0000-0000-0000-000000000002',
      'alice.manager@miometry.example.com',
-     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Alice Manager',
      '00000000-0000-0000-0000-000000000001',
      'active', 0, NOW()),
     -- Charlie Engineer (USER)
     ('00000000-0000-0000-0000-000000000003',
      'charlie.engineer@miometry.example.com',
-     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Charlie Engineer',
      '00000000-0000-0000-0000-000000000002',
      'active', 0, NOW()),
     -- David Independent (USER)
     ('00000000-0000-0000-0000-000000000004',
      'david.independent@miometry.example.com',
-     '$2b$12$bawss6NrKtMDDfawSnhOf9II1ocekHacZKU/4NJ9mEs.Q773OCa',
+     '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'David Independent',
      '00000000-0000-0000-0000-000000000002',
      'active', 0, NOW())

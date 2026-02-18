@@ -41,7 +41,7 @@ describe("Login page", () => {
 
   test("remember me checkbox toggles", () => {
     render(<LoginPage />);
-    const cb = screen.getByLabelText("remember-me") as HTMLInputElement;
+    const cb = screen.getByLabelText("ログイン状態を保持する") as HTMLInputElement;
     expect(cb.checked).toBe(false);
     fireEvent.click(cb);
     expect(cb.checked).toBe(true);

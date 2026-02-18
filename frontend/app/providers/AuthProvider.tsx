@@ -28,6 +28,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Restore user from sessionStorage on mount
   useEffect(() => {
+    if (typeof window === "undefined") {
+      setIsLoading(false);
+      return;
+    }
     try {
       const stored = sessionStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -58,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(null);
     sessionStorage.removeItem(STORAGE_KEY);
-    router.push("/login");
+    router.replace("/login");
   }, [router]);
 
   const value = useMemo(() => ({ user, isLoading, login, logout }), [user, isLoading, login, logout]);

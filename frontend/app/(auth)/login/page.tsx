@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { ApiError } from "@/services/api";
 
@@ -50,7 +51,7 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      await login(email, password, remember);
+      await login(email.toLowerCase(), password, remember);
       router.replace("/worklog");
     } catch (err: unknown) {
       setError(getErrorMessage(err));
@@ -59,14 +60,22 @@ export default function LoginPage() {
     }
   }
 
-  // Don't render form while checking auth state
+  // Show loading spinner while checking auth state
   if (isLoading) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" label="読み込み中..." />
+      </div>
+    );
   }
 
   // Already authenticated, redirecting
   if (user) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <LoadingSpinner size="lg" label="リダイレクト中..." />
+      </div>
+    );
   }
 
   return (
@@ -85,7 +94,6 @@ export default function LoginPage() {
             <input
               id="email"
               type="email"
-              aria-label="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -101,7 +109,6 @@ export default function LoginPage() {
             <input
               id="password"
               type="password"
-              aria-label="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -113,7 +120,6 @@ export default function LoginPage() {
             <input
               id="remember"
               type="checkbox"
-              aria-label="remember-me"
               checked={remember}
               onChange={(e) => setRemember(e.target.checked)}
               className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"

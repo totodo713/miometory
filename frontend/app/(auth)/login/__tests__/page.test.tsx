@@ -34,7 +34,7 @@ describe("Login page", () => {
 
   test("remember me checkbox toggles", () => {
     render(<LoginPage />);
-    const cb = screen.getByLabelText("remember-me") as HTMLInputElement;
+    const cb = screen.getByLabelText("ログイン状態を保持する") as HTMLInputElement;
     expect(cb.checked).toBe(false);
     fireEvent.click(cb);
     expect(cb.checked).toBe(true);
@@ -44,14 +44,14 @@ describe("Login page", () => {
     mockLogin.mockResolvedValue(undefined);
     render(<LoginPage />);
 
-    fireEvent.change(screen.getByLabelText("email"), {
+    fireEvent.change(screen.getByLabelText("メールアドレス"), {
       target: { value: "bob@example.com" },
     });
-    fireEvent.change(screen.getByLabelText("password"), {
+    fireEvent.change(screen.getByLabelText("パスワード"), {
       target: { value: "Password1" },
     });
     fireEvent.click(screen.getByRole("button", { name: /ログイン/i }));
 
-    expect(mockLogin).toHaveBeenCalledWith("bob@example.com", "Password1", false);
+    expect(mockLogin).toHaveBeenCalledWith("bob@example.com", "Password1", false); // email is already lowercase
   });
 });
