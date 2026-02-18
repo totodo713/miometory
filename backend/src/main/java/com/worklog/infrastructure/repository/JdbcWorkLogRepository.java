@@ -215,59 +215,56 @@ public class JdbcWorkLogRepository {
 
     /**
      * Updates the projection table based on domain events.
-     * Skips projection update if required data (e.g. member) cannot be resolved.
+     * SQL failures propagate to the caller, rolling back the enclosing transaction
+     * so that the event store and projection stay consistent.
      */
     private void updateProjection(WorkLogEntry entry, List<DomainEvent> events) {
         for (DomainEvent event : events) {
-            try {
-                switch (event) {
-                    case WorkLogEntryCreated e -> {
-                        Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
-                        if (organizationId.isEmpty()) {
-                            logger.warn(
-                                    "Skipping projection insert for entry {}: member {} not found",
-                                    e.aggregateId(),
-                                    e.memberId());
-                            continue;
-                        }
-                        jdbcTemplate.update(
-                                """
-                                INSERT INTO work_log_entries_projection
-                                    (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)
-                                """,
+            switch (event) {
+                case WorkLogEntryCreated e -> {
+                    Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
+                    if (organizationId.isEmpty()) {
+                        logger.warn(
+                                "Skipping projection insert for entry {}: member {} not found",
                                 e.aggregateId(),
-                                e.memberId(),
-                                organizationId.get(),
-                                e.projectId(),
-                                e.date(),
-                                BigDecimal.valueOf(e.hours()),
-                                e.comment(),
-                                e.enteredBy());
+                                e.memberId());
+                        continue;
                     }
-                    case WorkLogEntryUpdated e -> {
-                        jdbcTemplate.update("""
-                                UPDATE work_log_entries_projection
-                                SET hours = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
-                                WHERE id = ?
-                                """, BigDecimal.valueOf(e.hours()), e.comment(), e.aggregateId());
-                    }
-                    case WorkLogEntryStatusChanged e -> {
-                        jdbcTemplate.update("""
-                                UPDATE work_log_entries_projection
-                                SET status = ?, updated_at = CURRENT_TIMESTAMP
-                                WHERE id = ?
-                                """, e.toStatus(), e.aggregateId());
-                    }
-                    case WorkLogEntryDeleted e -> {
-                        jdbcTemplate.update("DELETE FROM work_log_entries_projection WHERE id = ?", e.aggregateId());
-                    }
-                    default -> {
-                        // Unknown event type - skip projection update
-                    }
+                    jdbcTemplate.update(
+                            """
+                            INSERT INTO work_log_entries_projection
+                                (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)
+                            """,
+                            e.aggregateId(),
+                            e.memberId(),
+                            organizationId.get(),
+                            e.projectId(),
+                            e.date(),
+                            BigDecimal.valueOf(e.hours()),
+                            e.comment(),
+                            e.enteredBy());
                 }
-            } catch (Exception e) {
-                logger.warn("Failed to update projection for event {}: {}", event.eventType(), e.getMessage());
+                case WorkLogEntryUpdated e -> {
+                    jdbcTemplate.update("""
+                            UPDATE work_log_entries_projection
+                            SET hours = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                            """, BigDecimal.valueOf(e.hours()), e.comment(), e.aggregateId());
+                }
+                case WorkLogEntryStatusChanged e -> {
+                    jdbcTemplate.update("""
+                            UPDATE work_log_entries_projection
+                            SET status = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                            """, e.toStatus(), e.aggregateId());
+                }
+                case WorkLogEntryDeleted e -> {
+                    jdbcTemplate.update("DELETE FROM work_log_entries_projection WHERE id = ?", e.aggregateId());
+                }
+                default -> {
+                    // Unknown event type - skip projection update
+                }
             }
         }
     }

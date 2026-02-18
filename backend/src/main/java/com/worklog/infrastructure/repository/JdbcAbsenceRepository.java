@@ -215,61 +215,58 @@ public class JdbcAbsenceRepository {
 
     /**
      * Updates the projection table based on domain events.
-     * Skips projection update if required data (e.g. member) cannot be resolved.
+     * SQL failures propagate to the caller, rolling back the enclosing transaction
+     * so that the event store and projection stay consistent.
      */
     private void updateProjection(Absence absence, List<DomainEvent> events) {
         for (DomainEvent event : events) {
-            try {
-                switch (event) {
-                    case AbsenceRecorded e -> {
-                        Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
-                        if (organizationId.isEmpty()) {
-                            logger.warn(
-                                    "Skipping projection insert for absence {}: member {} not found",
-                                    e.aggregateId(),
-                                    e.memberId());
-                            continue;
-                        }
-                        jdbcTemplate.update(
-                                """
-                                INSERT INTO absences_projection
-                                    (id, member_id, organization_id, absence_type, start_date, end_date,
-                                     hours_per_day, notes, status)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT')
-                                """,
+            switch (event) {
+                case AbsenceRecorded e -> {
+                    Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
+                    if (organizationId.isEmpty()) {
+                        logger.warn(
+                                "Skipping projection insert for absence {}: member {} not found",
                                 e.aggregateId(),
-                                e.memberId(),
-                                organizationId.get(),
-                                e.absenceType(),
-                                e.date(),
-                                e.date(),
-                                BigDecimal.valueOf(e.hours()),
-                                e.reason());
+                                e.memberId());
+                        continue;
                     }
-                    case AbsenceUpdated e -> {
-                        jdbcTemplate.update(
-                                """
-                                UPDATE absences_projection
-                                SET hours_per_day = ?, absence_type = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
-                                WHERE id = ?
-                                """, BigDecimal.valueOf(e.hours()), e.absenceType(), e.reason(), e.aggregateId());
-                    }
-                    case AbsenceStatusChanged e -> {
-                        jdbcTemplate.update("""
-                                UPDATE absences_projection
-                                SET status = ?, updated_at = CURRENT_TIMESTAMP
-                                WHERE id = ?
-                                """, e.toStatus(), e.aggregateId());
-                    }
-                    case AbsenceDeleted e -> {
-                        jdbcTemplate.update("DELETE FROM absences_projection WHERE id = ?", e.aggregateId());
-                    }
-                    default -> {
-                        // Unknown event type - skip projection update
-                    }
+                    jdbcTemplate.update(
+                            """
+                            INSERT INTO absences_projection
+                                (id, member_id, organization_id, absence_type, start_date, end_date,
+                                 hours_per_day, notes, status)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'DRAFT')
+                            """,
+                            e.aggregateId(),
+                            e.memberId(),
+                            organizationId.get(),
+                            e.absenceType(),
+                            e.date(),
+                            e.date(),
+                            BigDecimal.valueOf(e.hours()),
+                            e.reason());
                 }
-            } catch (Exception e) {
-                logger.warn("Failed to update projection for event {}: {}", event.eventType(), e.getMessage());
+                case AbsenceUpdated e -> {
+                    jdbcTemplate.update(
+                            """
+                            UPDATE absences_projection
+                            SET hours_per_day = ?, absence_type = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                            """, BigDecimal.valueOf(e.hours()), e.absenceType(), e.reason(), e.aggregateId());
+                }
+                case AbsenceStatusChanged e -> {
+                    jdbcTemplate.update("""
+                            UPDATE absences_projection
+                            SET status = ?, updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                            """, e.toStatus(), e.aggregateId());
+                }
+                case AbsenceDeleted e -> {
+                    jdbcTemplate.update("DELETE FROM absences_projection WHERE id = ?", e.aggregateId());
+                }
+                default -> {
+                    // Unknown event type - skip projection update
+                }
             }
         }
     }
