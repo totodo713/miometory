@@ -89,7 +89,10 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
   // Load existing entries
   // biome-ignore lint/correctness/useExhaustiveDependencies: projectRows intentionally excluded to avoid infinite loop
   useEffect(() => {
-    if (!memberId) return;
+    if (!memberId) {
+      setIsLoading(false);
+      return;
+    }
 
     async function loadEntries() {
       try {

@@ -11,6 +11,8 @@ import com.worklog.domain.worklog.events.WorkLogEntryCreated;
 import com.worklog.domain.worklog.events.WorkLogEntryDeleted;
 import com.worklog.domain.worklog.events.WorkLogEntryStatusChanged;
 import com.worklog.domain.worklog.events.WorkLogEntryUpdated;
+import java.lang.reflect.Constructor;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -610,6 +612,39 @@ class WorkLogEntryTest {
             entry.update(TimeAmount.of(7.0), "Updated", testMemberId);
 
             assertTrue(entry.getUpdatedAt().isAfter(originalUpdatedAt));
+        }
+    }
+
+    @Nested
+    @DisplayName("Event replay")
+    class EventReplay {
+
+        @Test
+        @DisplayName("should set enteredBy to memberId when replaying legacy event with null enteredBy")
+        void shouldFallbackEnteredByToMemberIdWhenNull() throws Exception {
+            // Simulate a legacy WorkLogEntryCreated event where enteredBy is null
+            WorkLogEntryCreated legacyEvent = new WorkLogEntryCreated(
+                    UUID.randomUUID(),
+                    Instant.now(),
+                    UUID.randomUUID(),
+                    testMemberId.value(),
+                    testProjectId.value(),
+                    testDate,
+                    8.0,
+                    "Legacy entry",
+                    null // enteredBy was not stored in older events
+                    );
+
+            // Create empty aggregate via reflection (same as repository does)
+            Constructor<WorkLogEntry> constructor = WorkLogEntry.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            WorkLogEntry entry = constructor.newInstance();
+
+            entry.replay(legacyEvent);
+
+            assertEquals(testMemberId, entry.getEnteredBy());
+            assertEquals(testMemberId, entry.getMemberId());
+            assertFalse(entry.isProxyEntry());
         }
     }
 }
