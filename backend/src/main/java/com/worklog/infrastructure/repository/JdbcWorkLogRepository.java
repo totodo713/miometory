@@ -1,6 +1,7 @@
 package com.worklog.infrastructure.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.worklog.WorkLogEntry;
 import com.worklog.domain.worklog.WorkLogEntryId;
@@ -10,12 +11,15 @@ import com.worklog.domain.worklog.events.WorkLogEntryStatusChanged;
 import com.worklog.domain.worklog.events.WorkLogEntryUpdated;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
+import com.worklog.infrastructure.projection.MonthlyCalendarProjection;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,18 +33,30 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public class JdbcWorkLogRepository {
 
+    private static final Logger logger = LoggerFactory.getLogger(JdbcWorkLogRepository.class);
+
     private final EventStore eventStore;
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
+    private final JdbcMemberRepository memberRepository;
+    private final MonthlyCalendarProjection calendarProjection;
 
-    public JdbcWorkLogRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
+    public JdbcWorkLogRepository(
+            EventStore eventStore,
+            ObjectMapper objectMapper,
+            JdbcTemplate jdbcTemplate,
+            JdbcMemberRepository memberRepository,
+            MonthlyCalendarProjection calendarProjection) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
+        this.memberRepository = memberRepository;
+        this.calendarProjection = calendarProjection;
     }
 
     /**
      * Save a work log entry aggregate by appending its uncommitted events.
+     * Also updates the projection table synchronously within the same transaction.
      */
     @Transactional
     public void save(WorkLogEntry entry) {
@@ -50,9 +66,12 @@ public class JdbcWorkLogRepository {
         }
 
         eventStore.append(entry.getId().value(), entry.getAggregateType(), events, entry.getVersion());
+        updateProjection(entry, events);
 
         entry.clearUncommittedEvents();
         entry.setVersion(entry.getVersion() + events.size());
+
+        evictCalendarCache(entry.getMemberId().value());
     }
 
     /**
@@ -191,6 +210,78 @@ public class JdbcWorkLogRepository {
             return constructor.newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Failed to create empty WorkLogEntry instance", e);
+        }
+    }
+
+    /**
+     * Updates the projection table based on domain events.
+     * Skips projection update if required data (e.g. member) cannot be resolved.
+     */
+    private void updateProjection(WorkLogEntry entry, List<DomainEvent> events) {
+        for (DomainEvent event : events) {
+            try {
+                switch (event) {
+                    case WorkLogEntryCreated e -> {
+                        Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
+                        if (organizationId.isEmpty()) {
+                            logger.warn(
+                                    "Skipping projection insert for entry {}: member {} not found",
+                                    e.aggregateId(),
+                                    e.memberId());
+                            continue;
+                        }
+                        jdbcTemplate.update(
+                                """
+                                INSERT INTO work_log_entries_projection
+                                    (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)
+                                """,
+                                e.aggregateId(),
+                                e.memberId(),
+                                organizationId.get(),
+                                e.projectId(),
+                                e.date(),
+                                BigDecimal.valueOf(e.hours()),
+                                e.comment(),
+                                e.enteredBy());
+                    }
+                    case WorkLogEntryUpdated e -> {
+                        jdbcTemplate.update("""
+                                UPDATE work_log_entries_projection
+                                SET hours = ?, notes = ?, updated_at = CURRENT_TIMESTAMP
+                                WHERE id = ?
+                                """, BigDecimal.valueOf(e.hours()), e.comment(), e.aggregateId());
+                    }
+                    case WorkLogEntryStatusChanged e -> {
+                        jdbcTemplate.update("""
+                                UPDATE work_log_entries_projection
+                                SET status = ?, updated_at = CURRENT_TIMESTAMP
+                                WHERE id = ?
+                                """, e.toStatus(), e.aggregateId());
+                    }
+                    case WorkLogEntryDeleted e -> {
+                        jdbcTemplate.update("DELETE FROM work_log_entries_projection WHERE id = ?", e.aggregateId());
+                    }
+                    default -> {
+                        // Unknown event type - skip projection update
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to update projection for event {}: {}", event.eventType(), e.getMessage());
+            }
+        }
+    }
+
+    private Optional<UUID> resolveOrganizationId(MemberId memberId) {
+        return memberRepository.findById(memberId).map(member -> member.getOrganizationId()
+                .value());
+    }
+
+    private void evictCalendarCache(UUID memberId) {
+        try {
+            calendarProjection.evictMemberCache(memberId);
+        } catch (Exception e) {
+            logger.warn("Failed to evict calendar cache for member {}: {}", memberId, e.getMessage());
         }
     }
 
