@@ -173,7 +173,7 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
                 this.hours = TimeAmount.of(e.hours());
                 this.comment = e.comment();
                 this.status = WorkLogStatus.DRAFT;
-                this.enteredBy = MemberId.of(e.enteredBy());
+                this.enteredBy = e.enteredBy() != null ? MemberId.of(e.enteredBy()) : this.memberId;
                 this.createdAt = e.occurredAt();
                 this.updatedAt = e.occurredAt();
             }
