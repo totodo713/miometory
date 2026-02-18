@@ -206,26 +206,26 @@ public class MonthlySummaryProjection {
             WITH latest_approval AS (
                 SELECT
                     aggregate_id,
-                    occurred_at
+                    created_at
                 FROM event_store
                 WHERE aggregate_type = 'MonthlyApproval'
                 AND event_type = 'MonthlyApprovalCreated'
                 AND CAST(payload->>'memberId' AS UUID) = ?
                 AND CAST(payload->>'fiscalMonthStart' AS DATE) = ?
                 AND CAST(payload->>'fiscalMonthEnd' AS DATE) = ?
-                ORDER BY occurred_at DESC
+                ORDER BY created_at DESC
                 LIMIT 1
             ),
             latest_status AS (
                 SELECT
                     e.event_type,
                     e.payload,
-                    e.occurred_at
+                    e.created_at
                 FROM event_store e
                 INNER JOIN latest_approval la ON e.aggregate_id = la.aggregate_id
                 WHERE e.aggregate_type = 'MonthlyApproval'
                 AND e.event_type IN ('MonthlyApprovalCreated', 'MonthSubmittedForApproval', 'MonthApproved', 'MonthRejected')
-                ORDER BY e.occurred_at DESC
+                ORDER BY e.created_at DESC
                 LIMIT 1
             )
             SELECT
