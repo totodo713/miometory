@@ -22,6 +22,10 @@ spring:
 
 # Development-specific settings
 worklog:
+  auth:
+    # Seed data tenant/organization UUIDs for local development
+    default-tenant-id: 550e8400-e29b-41d4-a716-446655440001
+    default-organization-id: 880e8400-e29b-41d4-a716-446655440001
   cache:
     enabled: false  # Disable Redis cache in dev for simpler debugging
   rate-limit:

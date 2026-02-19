@@ -109,6 +109,7 @@ class AuthServiceTest {
         assertTrue(passwordEncoder.matches("Password123", userSlot.captured.hashedPassword))
 
         verify(exactly = 1) { userRepository.save(any()) }
+        verify(exactly = 1) { memberRepository.save(any()) }
         verify(exactly = 1) { emailService.sendVerificationEmail(any(), any()) }
     }
 
