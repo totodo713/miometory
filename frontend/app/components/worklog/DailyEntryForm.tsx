@@ -10,6 +10,7 @@ import { ProjectSelector } from "./ProjectSelector";
 interface DailyEntryFormProps {
   date: Date;
   memberId: string;
+  enteredBy?: string;
   onClose: () => void;
   onSave: () => void;
 }
@@ -62,7 +63,7 @@ function validateField(field: "project" | "hours" | "comment", value: string | n
   return undefined;
 }
 
-export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFormProps) {
+export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: DailyEntryFormProps) {
   const { isProxyMode, targetMember } = useProxyMode();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
   const [projectRows, setProjectRows] = useState<ProjectRow[]>([{ projectId: "", hours: 0, comment: "", errors: {} }]);
@@ -279,6 +280,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
               date: date.toISOString().split("T")[0],
               hours: row.hours,
               comment: row.comment || undefined,
+              ...(enteredBy && enteredBy !== memberId ? { enteredBy } : {}),
             });
           }
         }
@@ -301,7 +303,7 @@ export function DailyEntryForm({ date, memberId, onClose, onSave }: DailyEntryFo
         setIsSaving(false);
       }
     },
-    [projectRows, memberId, date, totalExceeds24, onSave],
+    [projectRows, memberId, date, totalExceeds24, onSave, enteredBy],
   );
 
   // Handle close with unsaved changes warning

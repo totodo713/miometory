@@ -16,7 +16,7 @@ import { MonthlySummary } from "@/components/worklog/MonthlySummary";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/services/api";
 import { exportCsv } from "@/services/csvService";
-import { useProxyMode } from "@/services/worklogStore";
+import { useCalendarRefresh, useProxyMode } from "@/services/worklogStore";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 
 export default function WorkLogPage() {
@@ -32,6 +32,9 @@ export default function WorkLogPage() {
   // Proxy mode state
   const { isProxyMode, targetMember, disableProxyMode } = useProxyMode();
 
+  // Calendar refresh key - changes after save to trigger data reload
+  const { calendarRefreshKey } = useCalendarRefresh();
+
   // Get current year and month
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -40,6 +43,7 @@ export default function WorkLogPage() {
   // Use target member ID if in proxy mode, otherwise use current user
   const effectiveMemberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: calendarRefreshKey is an intentional refresh trigger, not consumed in effect body
   useEffect(() => {
     async function loadCalendar() {
       setIsLoading(true);
@@ -60,7 +64,7 @@ export default function WorkLogPage() {
     }
 
     loadCalendar();
-  }, [year, month, effectiveMemberId]);
+  }, [year, month, effectiveMemberId, calendarRefreshKey]);
 
   const handlePreviousMonth = () => {
     if (month === 1) {

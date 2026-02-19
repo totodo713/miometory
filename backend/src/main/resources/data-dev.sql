@@ -427,6 +427,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -502,6 +503,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -577,6 +579,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -637,6 +640,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -1181,6 +1185,12 @@ BEGIN
         reviewed_at = EXCLUDED.reviewed_at,
         reviewed_by = EXCLUDED.reviewed_by,
         updated_at = CURRENT_TIMESTAMP;
+
+    -- =========================================================================
+    -- Clear stale calendar/summary cache before rebuilding
+    -- =========================================================================
+    DELETE FROM monthly_calendar_projection;
+    DELETE FROM monthly_summary_projection;
 
     -- =========================================================================
     -- 12. Monthly Calendar Projection (dynamically computed per member)

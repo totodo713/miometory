@@ -91,6 +91,9 @@ interface WorkLogState {
   // Proxy entry mode (T156-T160)
   proxyMode: ProxyMode | null;
 
+  // Calendar refresh trigger (incremented after save to force data reload)
+  calendarRefreshKey: number;
+
   // Actions
   setSelectedDate: (date: Date) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -100,6 +103,9 @@ interface WorkLogState {
   setLoading: (isLoading: boolean) => void;
   setCopiedProjects: (projects: CopiedProjects | null) => void;
   clearCopiedProjects: () => void;
+
+  // Calendar refresh
+  incrementCalendarRefreshKey: () => void;
 
   // Proxy mode actions
   enableProxyMode: (managerId: string, targetMember: SubordinateMember) => void;
@@ -126,6 +132,7 @@ const initialState = {
   isLoading: false,
   copiedProjects: null,
   proxyMode: null,
+  calendarRefreshKey: 0,
 };
 
 /**
@@ -159,6 +166,8 @@ export const useWorkLogStore = create<WorkLogState>()(
         setCopiedProjects: (projects) => set({ copiedProjects: projects }),
 
         clearCopiedProjects: () => set({ copiedProjects: null }),
+
+        incrementCalendarRefreshKey: () => set((state) => ({ calendarRefreshKey: state.calendarRefreshKey + 1 })),
 
         enableProxyMode: (managerId, targetMember) =>
           set({
@@ -252,6 +261,16 @@ export function useCopiedProjects() {
     clearCopiedProjects,
     hasProjects: copiedProjects !== null && copiedProjects.projectIds.length > 0,
   };
+}
+
+/**
+ * Helper hook to trigger calendar data refresh after save
+ */
+export function useCalendarRefresh() {
+  const calendarRefreshKey = useWorkLogStore((state) => state.calendarRefreshKey);
+  const triggerRefresh = useWorkLogStore((state) => state.incrementCalendarRefreshKey);
+
+  return { calendarRefreshKey, triggerRefresh };
 }
 
 /**

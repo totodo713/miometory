@@ -183,7 +183,7 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                 )}
 
                 {/* Status badge */}
-                {dateEntry.status !== "DRAFT" && (
+                {(dateEntry.status !== "DRAFT" || hasAnyHours) && (
                   <div className="mt-1">
                     <span
                       className={`

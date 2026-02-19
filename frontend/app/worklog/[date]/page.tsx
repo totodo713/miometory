@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import { DailyEntryForm } from "@/components/worklog/DailyEntryForm";
 import { useAuth } from "@/hooks/useAuth";
-import { useProxyMode } from "@/services/worklogStore";
+import { useCalendarRefresh, useProxyMode } from "@/services/worklogStore";
 
 interface PageProps {
   params: Promise<{
@@ -28,6 +28,9 @@ export default function DailyEntryPage({ params }: PageProps) {
 
   // Proxy mode state - get effective member ID
   const { isProxyMode, targetMember } = useProxyMode();
+
+  // Calendar refresh trigger
+  const { triggerRefresh } = useCalendarRefresh();
 
   // Parse date string to Date object
   let parsedDate: Date;
@@ -51,13 +54,20 @@ export default function DailyEntryPage({ params }: PageProps) {
   };
 
   const handleSave = () => {
-    // Navigate back to calendar after successful save
+    // Trigger calendar data refresh before navigating back
+    triggerRefresh();
     router.push("/worklog");
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DailyEntryForm date={parsedDate} memberId={memberId} onClose={handleClose} onSave={handleSave} />
+      <DailyEntryForm
+        date={parsedDate}
+        memberId={memberId}
+        enteredBy={userId ?? undefined}
+        onClose={handleClose}
+        onSave={handleSave}
+      />
     </div>
   );
 }
