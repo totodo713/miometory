@@ -3,9 +3,13 @@ package com.worklog.application.auth;
 import com.worklog.application.audit.AuditLogService;
 import com.worklog.application.validation.PasswordValidator;
 import com.worklog.domain.audit.AuditLog;
+import com.worklog.domain.member.Member;
+import com.worklog.domain.member.MemberId;
+import com.worklog.domain.organization.OrganizationId;
 import com.worklog.domain.role.Role;
 import com.worklog.domain.session.UserSession;
 import com.worklog.domain.shared.ServiceConfigurationException;
+import com.worklog.domain.tenant.TenantId;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.email.EmailService;
@@ -13,7 +17,9 @@ import com.worklog.infrastructure.persistence.JdbcEmailVerificationTokenStore;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.persistence.JdbcUserSessionRepository;
 import com.worklog.infrastructure.persistence.RoleRepository;
+import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,29 +39,38 @@ public class AuthServiceImpl implements AuthService {
     private final JdbcUserRepository userRepository;
     private final JdbcUserSessionRepository sessionRepository;
     private final RoleRepository roleRepository;
+    private final JdbcMemberRepository memberRepository;
     private final AuditLogService auditLogService;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
     private final JdbcEmailVerificationTokenStore tokenStore;
     private final String defaultRoleName;
+    private final UUID defaultTenantId;
+    private final UUID defaultOrganizationId;
 
     public AuthServiceImpl(
             JdbcUserRepository userRepository,
             JdbcUserSessionRepository sessionRepository,
             RoleRepository roleRepository,
+            JdbcMemberRepository memberRepository,
             AuditLogService auditLogService,
             EmailService emailService,
             PasswordEncoder passwordEncoder,
             JdbcEmailVerificationTokenStore tokenStore,
-            @Value("${worklog.auth.default-role-name:USER}") String defaultRoleName) {
+            @Value("${worklog.auth.default-role-name:USER}") String defaultRoleName,
+            @Value("${worklog.auth.default-tenant-id}") UUID defaultTenantId,
+            @Value("${worklog.auth.default-organization-id}") UUID defaultOrganizationId) {
         this.userRepository = userRepository;
         this.sessionRepository = sessionRepository;
         this.roleRepository = roleRepository;
+        this.memberRepository = memberRepository;
         this.auditLogService = auditLogService;
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.tokenStore = tokenStore;
         this.defaultRoleName = defaultRoleName;
+        this.defaultTenantId = defaultTenantId;
+        this.defaultOrganizationId = defaultOrganizationId;
     }
 
     @Override
@@ -86,6 +101,18 @@ public class AuthServiceImpl implements AuthService {
 
         // Save user
         User savedUser = userRepository.save(user);
+
+        // Create corresponding member record so projections work
+        Member member = new Member(
+                MemberId.of(savedUser.getId().value()),
+                TenantId.of(defaultTenantId),
+                OrganizationId.of(defaultOrganizationId),
+                savedUser.getEmail(),
+                savedUser.getName(),
+                null,
+                true,
+                Instant.now());
+        memberRepository.save(member);
 
         // Generate verification token and send email
         String token = tokenStore.generateToken(savedUser.getId().value());

@@ -224,11 +224,8 @@ public class JdbcAbsenceRepository {
                 case AbsenceRecorded e -> {
                     Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
                     if (organizationId.isEmpty()) {
-                        logger.warn(
-                                "Skipping projection insert for absence {}: member {} not found",
-                                e.aggregateId(),
-                                e.memberId());
-                        continue;
+                        throw new IllegalStateException("Cannot create projection for absence " + e.aggregateId()
+                                + ": member " + e.memberId() + " not found in members table");
                     }
                     jdbcTemplate.update(
                             """

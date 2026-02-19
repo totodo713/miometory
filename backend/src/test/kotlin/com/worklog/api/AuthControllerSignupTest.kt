@@ -39,7 +39,8 @@ class AuthControllerSignupTest : IntegrationTestBase() {
 
     @BeforeEach
     fun setUp() {
-        // Clean up test users to ensure isolation
+        // Clean up test members and users to ensure isolation (also by email for reused containers)
+        jdbcTemplate.update("DELETE FROM members WHERE email LIKE '%@signup-test.example.com'")
         jdbcTemplate.update("DELETE FROM users WHERE email LIKE '%@signup-test.example.com'")
     }
 

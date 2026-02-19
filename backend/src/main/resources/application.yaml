@@ -91,6 +91,9 @@ worklog:
   auth:
     # Default role assigned to new users during signup
     default-role-name: ${DEFAULT_ROLE_NAME:USER}
+    # Default tenant and organization for new signups (matches seed data)
+    default-tenant-id: ${DEFAULT_TENANT_ID:550e8400-e29b-41d4-a716-446655440001}
+    default-organization-id: ${DEFAULT_ORGANIZATION_ID:880e8400-e29b-41d4-a716-446655440001}
   # Frontend Base URL for email links (password reset, email verification)
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
