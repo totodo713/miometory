@@ -91,14 +91,16 @@ public class ApprovalService {
 
         approval.submit(command.submittedBy(), workLogIds, absIds);
 
-        // Update all work log entries to SUBMITTED status
+        // Update all work log entries to SUBMITTED status (skip entries already SUBMITTED via daily submit)
         for (UUID entryId : workLogEntryIds) {
             WorkLogEntry entry = workLogRepository
                     .findById(WorkLogEntryId.of(entryId))
                     .orElseThrow(() ->
                             new DomainException("WORK_LOG_ENTRY_NOT_FOUND", "Work log entry not found: " + entryId));
-            entry.changeStatus(WorkLogStatus.SUBMITTED, command.submittedBy());
-            workLogRepository.save(entry);
+            if (entry.getStatus() == WorkLogStatus.DRAFT) {
+                entry.changeStatus(WorkLogStatus.SUBMITTED, command.submittedBy());
+                workLogRepository.save(entry);
+            }
         }
 
         // Update all absences to SUBMITTED status

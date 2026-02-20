@@ -3,7 +3,11 @@ package com.worklog.application.service;
 import com.worklog.application.command.CopyFromPreviousMonthCommand;
 import com.worklog.application.command.CreateWorkLogEntryCommand;
 import com.worklog.application.command.DeleteWorkLogEntryCommand;
+import com.worklog.application.command.RecallDailyEntriesCommand;
+import com.worklog.application.command.SubmitDailyEntriesCommand;
 import com.worklog.application.command.UpdateWorkLogEntryCommand;
+import com.worklog.domain.approval.ApprovalStatus;
+import com.worklog.domain.approval.MonthlyApproval;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.project.ProjectId;
 import com.worklog.domain.shared.DomainException;
@@ -11,6 +15,8 @@ import com.worklog.domain.shared.FiscalMonthPeriod;
 import com.worklog.domain.shared.TimeAmount;
 import com.worklog.domain.worklog.WorkLogEntry;
 import com.worklog.domain.worklog.WorkLogEntryId;
+import com.worklog.domain.worklog.WorkLogStatus;
+import com.worklog.infrastructure.repository.JdbcApprovalRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
 import java.math.BigDecimal;
@@ -34,10 +40,15 @@ public class WorkLogEntryService {
 
     private final JdbcWorkLogRepository workLogRepository;
     private final JdbcMemberRepository memberRepository;
+    private final JdbcApprovalRepository approvalRepository;
 
-    public WorkLogEntryService(JdbcWorkLogRepository workLogRepository, JdbcMemberRepository memberRepository) {
+    public WorkLogEntryService(
+            JdbcWorkLogRepository workLogRepository,
+            JdbcMemberRepository memberRepository,
+            JdbcApprovalRepository approvalRepository) {
         this.workLogRepository = workLogRepository;
         this.memberRepository = memberRepository;
+        this.approvalRepository = approvalRepository;
     }
 
     /**
@@ -140,6 +151,101 @@ public class WorkLogEntryService {
 
         // Persist
         workLogRepository.save(entry);
+    }
+
+    /**
+     * Submits all DRAFT entries for a member on a specific date.
+     *
+     * Transitions all DRAFT entries to SUBMITTED atomically.
+     * Only the member themselves can submit their own entries.
+     *
+     * @param command The submit command
+     * @return List of updated entries (now SUBMITTED)
+     * @throws DomainException if submitter is not the member, or no DRAFT entries found
+     */
+    @Transactional
+    public List<WorkLogEntry> submitDailyEntries(SubmitDailyEntriesCommand command) {
+        // Validate self-submission
+        if (!command.memberId().equals(command.submittedBy())) {
+            throw new DomainException(
+                    "SELF_SUBMISSION_ONLY",
+                    "Only the member can submit their own entries. Proxy submission is not allowed.");
+        }
+
+        // Query DRAFT entries for member + date
+        List<WorkLogEntry> draftEntries = workLogRepository.findByDateRange(
+                command.memberId(), command.date(), command.date(), WorkLogStatus.DRAFT);
+
+        if (draftEntries.isEmpty()) {
+            throw new DomainException(
+                    "NO_DRAFT_ENTRIES",
+                    "No DRAFT entries found for member " + command.memberId() + " on " + command.date());
+        }
+
+        // Transition all DRAFT entries to SUBMITTED
+        MemberId submittedBy = MemberId.of(command.submittedBy());
+        for (WorkLogEntry entry : draftEntries) {
+            entry.changeStatus(WorkLogStatus.SUBMITTED, submittedBy);
+            workLogRepository.save(entry);
+        }
+
+        return draftEntries;
+    }
+
+    /**
+     * Recalls all SUBMITTED entries for a member on a specific date.
+     *
+     * Transitions all SUBMITTED entries back to DRAFT atomically.
+     * Blocked if any entry is part of a MonthlyApproval with non-PENDING status.
+     * Only the member themselves can recall their own entries.
+     *
+     * @param command The recall command
+     * @return List of updated entries (now DRAFT)
+     * @throws DomainException if recaller is not the member, no SUBMITTED entries found, or blocked by approval
+     */
+    @Transactional
+    public List<WorkLogEntry> recallDailyEntries(RecallDailyEntriesCommand command) {
+        // Validate self-recall
+        if (!command.memberId().equals(command.recalledBy())) {
+            throw new DomainException(
+                    "SELF_RECALL_ONLY", "Only the member can recall their own entries. Proxy recall is not allowed.");
+        }
+
+        // Query SUBMITTED entries for member + date
+        List<WorkLogEntry> submittedEntries = workLogRepository.findByDateRange(
+                command.memberId(), command.date(), command.date(), WorkLogStatus.SUBMITTED);
+
+        if (submittedEntries.isEmpty()) {
+            throw new DomainException(
+                    "NO_SUBMITTED_ENTRIES",
+                    "No SUBMITTED entries found for member " + command.memberId() + " on " + command.date());
+        }
+
+        // Check if any of these entries are part of a MonthlyApproval with non-PENDING status
+        FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(command.date());
+        java.util.Optional<MonthlyApproval> approval =
+                approvalRepository.findByMemberAndFiscalMonth(MemberId.of(command.memberId()), fiscalMonth);
+        if (approval.isPresent() && approval.get().getStatus() != ApprovalStatus.PENDING) {
+            // Only block if the approval actually contains any of the entries being recalled
+            java.util.Set<UUID> approvalEntryIds = approval.get().getWorkLogEntryIds();
+            boolean hasOverlap = submittedEntries.stream()
+                    .anyMatch(entry -> approvalEntryIds.contains(entry.getId().value()));
+            if (hasOverlap) {
+                throw new DomainException(
+                        "RECALL_BLOCKED_BY_APPROVAL",
+                        "Cannot recall entries — the monthly approval for this period is in "
+                                + approval.get().getStatus() + " status.");
+            }
+        }
+
+        // Transition all SUBMITTED entries back to DRAFT
+        MemberId recalledBy = MemberId.of(command.recalledBy());
+        for (WorkLogEntry entry : submittedEntries) {
+            entry.changeStatus(WorkLogStatus.DRAFT, recalledBy);
+            workLogRepository.save(entry);
+        }
+
+        return submittedEntries;
     }
 
     /**

@@ -376,6 +376,38 @@ export const api = {
         count: number;
       }>(`/api/v1/worklog/projects/previous-month?${query}`);
     },
+
+    /**
+     * Submit all DRAFT entries for a member on a specific date
+     */
+    submitDailyEntries: (data: { memberId: string; date: string; submittedBy: string }) =>
+      apiClient.post<{
+        submittedCount: number;
+        date: string;
+        entries: Array<{
+          id: string;
+          projectId: string;
+          hours: number;
+          status: string;
+          version: number;
+        }>;
+      }>("/api/v1/worklog/entries/submit-daily", data),
+
+    /**
+     * Recall all SUBMITTED entries for a member on a specific date back to DRAFT
+     */
+    recallDailyEntries: (data: { memberId: string; date: string; recalledBy: string }) =>
+      apiClient.post<{
+        recalledCount: number;
+        date: string;
+        entries: Array<{
+          id: string;
+          projectId: string;
+          hours: number;
+          status: string;
+          version: number;
+        }>;
+      }>("/api/v1/worklog/entries/recall-daily", data),
   },
 
   /**
