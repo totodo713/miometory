@@ -93,6 +93,8 @@ class ProjectControllerTest : IntegrationTestBase() {
         val memberId = UUID.randomUUID()
         val projectId = UUID.randomUUID()
         val entryDate = LocalDate.of(2026, 1, 5) // Within Dec 21 - Jan 20 fiscal month
+        createTestMember(memberId)
+        createTestProject(projectId)
 
         // Create entry
         val createRequest =
@@ -169,6 +171,10 @@ class ProjectControllerTest : IntegrationTestBase() {
         val projectId1 = UUID.randomUUID()
         val projectId2 = UUID.randomUUID()
         val entryDate = LocalDate.of(2026, 1, 8)
+        createTestMember(memberId1)
+        createTestMember(memberId2)
+        createTestProject(projectId1)
+        createTestProject(projectId2)
 
         // Create entry for member 1
         val request1 =
@@ -208,6 +214,8 @@ class ProjectControllerTest : IntegrationTestBase() {
     }
 
     private fun createWorkLogEntry(memberId: UUID, projectId: UUID, date: LocalDate, hours: Double, comment: String) {
+        createTestMember(memberId)
+        createTestProject(projectId)
         val request =
             mapOf(
                 "memberId" to memberId.toString(),

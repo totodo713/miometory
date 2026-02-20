@@ -44,9 +44,11 @@ class ApprovalControllerTest : IntegrationTestBase() {
     }
 
     /**
-     * Helper: Create work log entry
+     * Helper: Create work log entry (ensures member exists first)
      */
     private fun createWorkLogEntry(memberId: UUID, projectId: UUID, date: LocalDate, hours: Double = 8.0): String {
+        createTestMember(memberId)
+        createTestProject(projectId)
         val request =
             mapOf(
                 "memberId" to memberId.toString(),

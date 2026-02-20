@@ -9,14 +9,14 @@
  */
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Calendar } from "@/components/worklog/Calendar";
 import { CopyPreviousMonthDialog } from "@/components/worklog/CopyPreviousMonthDialog";
 import { MonthlySummary } from "@/components/worklog/MonthlySummary";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/services/api";
 import { exportCsv } from "@/services/csvService";
-import { useProxyMode } from "@/services/worklogStore";
+import { useCalendarRefresh, useProxyMode } from "@/services/worklogStore";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 
 export default function WorkLogPage() {
@@ -32,6 +32,9 @@ export default function WorkLogPage() {
   // Proxy mode state
   const { isProxyMode, targetMember, disableProxyMode } = useProxyMode();
 
+  // Calendar refresh key - changes after save to trigger data reload
+  const { calendarRefreshKey } = useCalendarRefresh();
+
   // Get current year and month
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -40,27 +43,35 @@ export default function WorkLogPage() {
   // Use target member ID if in proxy mode, otherwise use current user
   const effectiveMemberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
-  useEffect(() => {
-    async function loadCalendar() {
-      setIsLoading(true);
-      setError(null);
+  const loadCalendar = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const data = await api.worklog.getCalendar({
-          year,
-          month,
-          memberId: effectiveMemberId,
-        });
-        setCalendarData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load calendar");
-      } finally {
-        setIsLoading(false);
-      }
+    try {
+      const data = await api.worklog.getCalendar({
+        year,
+        month,
+        memberId: effectiveMemberId,
+      });
+      setCalendarData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load calendar");
+    } finally {
+      setIsLoading(false);
     }
-
-    loadCalendar();
   }, [year, month, effectiveMemberId]);
+
+  // Initial load and parameter change
+  useEffect(() => {
+    loadCalendar();
+  }, [loadCalendar]);
+
+  // Refresh after save
+  useEffect(() => {
+    if (calendarRefreshKey > 0) {
+      loadCalendar();
+    }
+  }, [calendarRefreshKey, loadCalendar]);
 
   const handlePreviousMonth = () => {
     if (month === 1) {

@@ -208,12 +208,13 @@ describe("Calendar Component", () => {
       expect(screen.getByText("MIXED")).toBeInTheDocument();
     });
 
-    it("should not display DRAFT status badge", () => {
+    it("should display DRAFT badge only for days with hours", () => {
       render(<Calendar year={2026} month={1} dates={mockDates} />);
 
-      // DRAFT status should not be shown as a badge
-      const draftBadge = screen.queryByText("DRAFT");
-      expect(draftBadge).not.toBeInTheDocument();
+      // DRAFT badge should be shown for days with hours (22nd: 7.5h work, 25th: 8h absence)
+      // but NOT for days without hours (23rd: 0h, 28th: 0h holiday)
+      const draftBadges = screen.getAllByText("DRAFT");
+      expect(draftBadges).toHaveLength(2);
     });
 
     it("should apply correct color classes for APPROVED status", () => {

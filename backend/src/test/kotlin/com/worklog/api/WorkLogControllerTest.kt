@@ -1,6 +1,7 @@
 package com.worklog.api
 
 import com.worklog.IntegrationTestBase
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -27,6 +28,12 @@ class WorkLogControllerTest : IntegrationTestBase() {
 
     private val testMemberId = UUID.randomUUID()
     private val testProjectId = UUID.randomUUID()
+
+    @BeforeEach
+    fun setUp() {
+        createTestMember(testMemberId)
+        createTestProject(testProjectId)
+    }
 
     @Test
     fun `POST entries should create new work log entry and return 201`() {
@@ -310,6 +317,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         val yesterday = LocalDate.now().minusDays(1)
         val twoDaysAgo = LocalDate.now().minusDays(2)
         val memberId = UUID.randomUUID()
+        createTestMember(memberId)
 
         // Entry 1 (yesterday)
         restTemplate.postForEntity(
@@ -359,6 +367,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
     fun `GET entries should filter by status`() {
         // Arrange - Create entry and keep it in DRAFT
         val memberId = UUID.randomUUID()
+        createTestMember(memberId)
         val date = LocalDate.now().minusDays(1)
 
         restTemplate.postForEntity(
@@ -729,6 +738,9 @@ class WorkLogControllerTest : IntegrationTestBase() {
         val project1 = UUID.randomUUID()
         val project2 = UUID.randomUUID()
         val project3 = UUID.randomUUID()
+        createTestProject(project1)
+        createTestProject(project2)
+        createTestProject(project3)
 
         // Act: Create 3 entries totaling 24 hours
         val request1 =
@@ -789,6 +801,9 @@ class WorkLogControllerTest : IntegrationTestBase() {
         val project1 = UUID.randomUUID()
         val project2 = UUID.randomUUID()
         val project3 = UUID.randomUUID()
+        createTestProject(project1)
+        createTestProject(project2)
+        createTestProject(project3)
 
         // Create 2 entries totaling 20 hours
         val request1 =
@@ -848,6 +863,8 @@ class WorkLogControllerTest : IntegrationTestBase() {
         val testDate = LocalDate.now().minusDays(3)
         val project1 = UUID.randomUUID()
         val project2 = UUID.randomUUID()
+        createTestProject(project1)
+        createTestProject(project2)
 
         // Create entry 1 with 12 hours
         val request1 =
@@ -910,6 +927,7 @@ class WorkLogControllerTest : IntegrationTestBase() {
         // Arrange
         val testDate = LocalDate.now().minusDays(4)
         val projects = List(4) { UUID.randomUUID() }
+        projects.forEach { createTestProject(it) }
 
         // Act: Create 4 entries with 6 hours each (total = 24)
         projects.forEach { projectId ->
@@ -931,10 +949,12 @@ class WorkLogControllerTest : IntegrationTestBase() {
         }
 
         // Try to add one more entry (should fail)
+        val extraProjectId = UUID.randomUUID()
+        createTestProject(extraProjectId)
         val extraRequest =
             mapOf(
                 "memberId" to testMemberId.toString(),
-                "projectId" to UUID.randomUUID().toString(),
+                "projectId" to extraProjectId.toString(),
                 "date" to testDate.toString(),
                 "hours" to 0.25,
                 "comment" to "Extra entry - should fail",

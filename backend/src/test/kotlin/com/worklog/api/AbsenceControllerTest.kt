@@ -1,6 +1,7 @@
 package com.worklog.api
 
 import com.worklog.IntegrationTestBase
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -29,6 +30,12 @@ class AbsenceControllerTest : IntegrationTestBase() {
 
     private val testMemberId = UUID.randomUUID()
     private val testProjectId = UUID.randomUUID()
+
+    @BeforeEach
+    fun setUp() {
+        createTestMember(testMemberId)
+        createTestProject(testProjectId)
+    }
 
     // ================================================================================
     // POST /api/v1/absences - Create absence tests
@@ -460,6 +467,7 @@ class AbsenceControllerTest : IntegrationTestBase() {
         // Arrange - Create 3 work entries totaling 20 hours
         val testDate = LocalDate.now().minusDays(8)
         val projects = listOf(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID())
+        projects.forEach { createTestProject(it) }
         val hours = listOf(8.0, 7.0, 5.0) // Total: 20h
 
         projects.forEachIndexed { index, projectId ->
@@ -622,6 +630,7 @@ class AbsenceControllerTest : IntegrationTestBase() {
         val yesterday = LocalDate.now().minusDays(1)
         val twoDaysAgo = LocalDate.now().minusDays(2)
         val memberId = UUID.randomUUID()
+        createTestMember(memberId)
 
         // Absence 1 (yesterday)
         restTemplate.postForEntity(
@@ -672,6 +681,7 @@ class AbsenceControllerTest : IntegrationTestBase() {
     fun `GET absences should filter by status`() {
         // Arrange - Create absence and keep it in DRAFT
         val memberId = UUID.randomUUID()
+        createTestMember(memberId)
         val date = LocalDate.now().minusDays(1)
 
         restTemplate.postForEntity(

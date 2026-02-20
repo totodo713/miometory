@@ -427,6 +427,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -502,6 +503,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -577,6 +579,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -637,6 +640,7 @@ VALUES
         CURRENT_TIMESTAMP
     )
 ON CONFLICT (id) DO UPDATE SET
+    work_date = EXCLUDED.work_date,
     hours = EXCLUDED.hours,
     notes = EXCLUDED.notes,
     status = EXCLUDED.status,
@@ -1181,6 +1185,98 @@ BEGIN
         reviewed_at = EXCLUDED.reviewed_at,
         reviewed_by = EXCLUDED.reviewed_by,
         updated_at = CURRENT_TIMESTAMP;
+
+    -- =========================================================================
+    -- Reconcile work_log_entries_projection with event store
+    -- =========================================================================
+    -- On subsequent seed runs, the multi-row projection INSERT may fail to
+    -- update dates due to PostgreSQL snapshot isolation within a single
+    -- INSERT ... ON CONFLICT statement. This reconciliation step ensures
+    -- projection dates, hours, and statuses always match the event store.
+    --
+    -- Three-step idempotent reconciliation:
+    --   Step 1: UPDATE rows whose dates/hours diverged from the event store.
+    --   Step 2: INSERT projection rows for events that have no projection yet.
+    --   Step 3: DELETE projection rows whose aggregate was deleted in the event store.
+    -- Each step is independently idempotent, so re-running seed data is safe.
+
+    -- Step 1: Update existing projection rows whose dates/hours diverged
+    UPDATE work_log_entries_projection p
+    SET work_date = CAST(e.payload->>'date' AS DATE),
+        hours = CAST(e.payload->>'hours' AS DECIMAL),
+        notes = e.payload->>'comment',
+        updated_at = CURRENT_TIMESTAMP
+    FROM event_store e
+    WHERE e.aggregate_id = p.id
+      AND e.event_type = 'WorkLogEntryCreated'
+      AND e.aggregate_type = 'WorkLogEntry'
+      AND (p.work_date != CAST(e.payload->>'date' AS DATE)
+           OR p.hours != CAST(e.payload->>'hours' AS DECIMAL));
+
+    -- Step 2: Update projection statuses from latest status change events
+    UPDATE work_log_entries_projection p
+    SET status = latest.to_status,
+        updated_at = CURRENT_TIMESTAMP
+    FROM (
+        SELECT DISTINCT ON (aggregate_id)
+            aggregate_id,
+            payload->>'toStatus' as to_status
+        FROM event_store
+        WHERE event_type = 'WorkLogEntryStatusChanged'
+          AND aggregate_type = 'WorkLogEntry'
+        ORDER BY aggregate_id, version DESC
+    ) latest
+    WHERE latest.aggregate_id = p.id
+      AND p.status != latest.to_status;
+
+    -- Step 3: Insert missing projection entries from event store
+    INSERT INTO work_log_entries_projection
+        (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by, version, created_at, updated_at)
+    SELECT
+        e.aggregate_id,
+        CAST(e.payload->>'memberId' AS UUID),
+        m.organization_id,
+        CAST(e.payload->>'projectId' AS UUID),
+        CAST(e.payload->>'date' AS DATE),
+        CAST(e.payload->>'hours' AS DECIMAL),
+        e.payload->>'comment',
+        COALESCE(
+            (SELECT s.payload->>'toStatus'
+             FROM event_store s
+             WHERE s.aggregate_id = e.aggregate_id
+               AND s.event_type = 'WorkLogEntryStatusChanged'
+             ORDER BY s.version DESC LIMIT 1),
+            'DRAFT'
+        ),
+        CAST(e.payload->>'enteredBy' AS UUID),
+        0,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    FROM event_store e
+    JOIN members m ON CAST(e.payload->>'memberId' AS UUID) = m.id
+    WHERE e.event_type = 'WorkLogEntryCreated'
+      AND e.aggregate_type = 'WorkLogEntry'
+      AND e.aggregate_id NOT IN (
+          SELECT aggregate_id FROM event_store
+          WHERE event_type = 'WorkLogEntryDeleted' AND aggregate_type = 'WorkLogEntry'
+      )
+      AND NOT EXISTS (
+          SELECT 1 FROM work_log_entries_projection p WHERE p.id = e.aggregate_id
+      )
+    ON CONFLICT (member_id, project_id, work_date) DO UPDATE SET
+        id = EXCLUDED.id,
+        hours = EXCLUDED.hours,
+        notes = EXCLUDED.notes,
+        status = EXCLUDED.status,
+        entered_by = EXCLUDED.entered_by,
+        organization_id = EXCLUDED.organization_id,
+        updated_at = CURRENT_TIMESTAMP;
+
+    -- =========================================================================
+    -- Clear stale calendar/summary cache before rebuilding
+    -- =========================================================================
+    DELETE FROM monthly_calendar_projection;
+    DELETE FROM monthly_summary_projection;
 
     -- =========================================================================
     -- 12. Monthly Calendar Projection (dynamically computed per member)

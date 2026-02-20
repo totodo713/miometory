@@ -10,6 +10,7 @@ import com.worklog.infrastructure.persistence.JdbcEmailVerificationTokenStore
 import com.worklog.infrastructure.persistence.JdbcUserRepository
 import com.worklog.infrastructure.persistence.JdbcUserSessionRepository
 import com.worklog.infrastructure.persistence.RoleRepository
+import com.worklog.infrastructure.repository.JdbcMemberRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -40,6 +41,7 @@ class AuthServiceTest {
     private val userRepository: JdbcUserRepository = mockk(relaxed = true)
     private val sessionRepository: JdbcUserSessionRepository = mockk(relaxed = true)
     private val roleRepository: RoleRepository = mockk(relaxed = true)
+    private val memberRepository: JdbcMemberRepository = mockk(relaxed = true)
     private val auditLogService: AuditLogService = mockk(relaxed = true)
     private val emailService: EmailService = mockk(relaxed = true)
     private val passwordEncoder: BCryptPasswordEncoder = BCryptPasswordEncoder()
@@ -67,11 +69,14 @@ class AuthServiceTest {
                 userRepository,
                 sessionRepository,
                 roleRepository,
+                memberRepository,
                 auditLogService,
                 emailService,
                 passwordEncoder,
                 tokenStore,
                 "USER", // defaultRoleName
+                UUID.fromString("550e8400-e29b-41d4-a716-446655440001"), // defaultTenantId
+                UUID.fromString("880e8400-e29b-41d4-a716-446655440001"), // defaultOrganizationId
             )
     }
 
@@ -104,6 +109,7 @@ class AuthServiceTest {
         assertTrue(passwordEncoder.matches("Password123", userSlot.captured.hashedPassword))
 
         verify(exactly = 1) { userRepository.save(any()) }
+        verify(exactly = 1) { memberRepository.save(any()) }
         verify(exactly = 1) { emailService.sendVerificationEmail(any(), any()) }
     }
 

@@ -134,6 +134,35 @@ public class JdbcWorkLogRepository {
     }
 
     /**
+     * Check if a non-deleted work log entry exists for a given member, project, and date.
+     * Uses a direct SQL query against the event store to avoid full aggregate reconstruction.
+     *
+     * @param memberId Member ID
+     * @param projectId Project ID
+     * @param date Date to check
+     * @return true if a non-deleted entry exists
+     */
+    public boolean existsByMemberProjectAndDate(UUID memberId, UUID projectId, LocalDate date) {
+        String sql = """
+            SELECT COUNT(*) > 0
+            FROM event_store
+            WHERE aggregate_type = 'WorkLogEntry'
+            AND event_type = 'WorkLogEntryCreated'
+            AND CAST(payload->>'memberId' AS UUID) = ?
+            AND CAST(payload->>'projectId' AS UUID) = ?
+            AND CAST(payload->>'date' AS DATE) = ?
+            AND aggregate_id NOT IN (
+                SELECT aggregate_id
+                FROM event_store
+                WHERE aggregate_type = 'WorkLogEntry'
+                AND event_type = 'WorkLogEntryDeleted'
+            )
+            """;
+
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, memberId, projectId, date));
+    }
+
+    /**
      * Find work log entries by date range with optional status filter.
      * Reconstructs aggregates from events.
      *
@@ -223,18 +252,29 @@ public class JdbcWorkLogRepository {
             switch (event) {
                 case WorkLogEntryCreated e -> {
                     Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
+                    // V13 migration backfills member records for users who signed up
+                    // before the fix. If this still fails, the member record is genuinely missing.
                     if (organizationId.isEmpty()) {
                         logger.warn(
-                                "Skipping projection insert for entry {}: member {} not found",
+                                "Cannot create projection for entry {}: member {} not found in members table",
                                 e.aggregateId(),
                                 e.memberId());
-                        continue;
+                        throw new IllegalStateException("Cannot create projection for entry " + e.aggregateId()
+                                + ": member " + e.memberId() + " not found in members table");
                     }
                     jdbcTemplate.update(
                             """
                             INSERT INTO work_log_entries_projection
                                 (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by)
                             VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)
+                            ON CONFLICT (member_id, project_id, work_date) DO UPDATE SET
+                                id = EXCLUDED.id,
+                                hours = EXCLUDED.hours,
+                                notes = EXCLUDED.notes,
+                                status = work_log_entries_projection.status,
+                                entered_by = EXCLUDED.entered_by,
+                                organization_id = EXCLUDED.organization_id,
+                                updated_at = CURRENT_TIMESTAMP
                             """,
                             e.aggregateId(),
                             e.memberId(),
