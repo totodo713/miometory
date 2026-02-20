@@ -8,9 +8,10 @@
  */
 
 import { useRouter } from "next/navigation";
-import { use } from "react";
+import { use, useMemo } from "react";
 import { DailyEntryForm } from "@/components/worklog/DailyEntryForm";
 import { useAuth } from "@/hooks/useAuth";
+import { useRejectionStatus } from "@/hooks/useRejectionStatus";
 import { useCalendarRefresh, useProxyMode } from "@/services/worklogStore";
 
 interface PageProps {
@@ -32,22 +33,51 @@ export default function DailyEntryPage({ params }: PageProps) {
   // Calendar refresh trigger
   const { triggerRefresh } = useCalendarRefresh();
 
-  // Parse date string to Date object
-  let parsedDate: Date;
-  try {
-    parsedDate = new Date(date);
-    // Validate date
-    if (Number.isNaN(parsedDate.getTime())) {
-      throw new Error("Invalid date");
+  // Parse date string to Date object (no early return before hooks)
+  const parsedDate = useMemo(() => {
+    const d = new Date(date);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }, [date]);
+
+  // Use target member ID if in proxy mode, otherwise use current user
+  const memberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
+
+  // Compute fiscal month period from date (21st–20th pattern)
+  const { fiscalMonthStart, fiscalMonthEnd } = useMemo(() => {
+    if (!parsedDate) {
+      return { fiscalMonthStart: "", fiscalMonthEnd: "" };
     }
-  } catch (_error) {
-    // Invalid date format - redirect back to calendar
+    const day = parsedDate.getDate();
+    const month = parsedDate.getMonth();
+    const year = parsedDate.getFullYear();
+
+    if (day <= 20) {
+      const prevMonth = month === 0 ? 11 : month - 1;
+      const prevYear = month === 0 ? year - 1 : year;
+      return {
+        fiscalMonthStart: `${prevYear}-${String(prevMonth + 1).padStart(2, "0")}-21`,
+        fiscalMonthEnd: `${year}-${String(month + 1).padStart(2, "0")}-20`,
+      };
+    }
+    const nextMonth = month === 11 ? 0 : month + 1;
+    const nextYear = month === 11 ? year + 1 : year;
+    return {
+      fiscalMonthStart: `${year}-${String(month + 1).padStart(2, "0")}-21`,
+      fiscalMonthEnd: `${nextYear}-${String(nextMonth + 1).padStart(2, "0")}-20`,
+    };
+  }, [parsedDate]);
+
+  // Load rejection status for the fiscal month
+  const { getRejectionForDate } = useRejectionStatus(memberId, fiscalMonthStart, fiscalMonthEnd);
+
+  // Invalid date - redirect back to calendar (after all hooks)
+  if (!parsedDate) {
     router.push("/worklog");
     return null;
   }
 
-  // Use target member ID if in proxy mode, otherwise use current user
-  const memberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
+  const dateStr = parsedDate.toISOString().split("T")[0];
+  const rejectionInfo = getRejectionForDate(dateStr);
 
   const handleClose = () => {
     router.push("/worklog");
@@ -65,6 +95,8 @@ export default function DailyEntryPage({ params }: PageProps) {
         date={parsedDate}
         memberId={memberId}
         enteredBy={userId ?? undefined}
+        rejectionSource={rejectionInfo.rejectionSource}
+        rejectionReason={rejectionInfo.rejectionReason}
         onClose={handleClose}
         onSave={handleSave}
       />

@@ -6,14 +6,22 @@ import { useProxyMode } from "../../services/worklogStore";
 import type { WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
 import { ProjectSelector } from "./ProjectSelector";
+import { RejectionBanner } from "./RejectionBanner";
 import { SubmitDailyButton } from "./SubmitDailyButton";
 
 interface DailyEntryFormProps {
   date: Date;
   memberId: string;
   enteredBy?: string;
+  rejectionSource?: "monthly" | "daily" | null;
+  rejectionReason?: string | null;
   onClose: () => void;
   onSave: () => void;
+}
+
+/** Returns true when the row's status allows editing (DRAFT, REJECTED, or new). */
+function isEditableStatus(status: WorkLogStatus | undefined): boolean {
+  return !status || status === "DRAFT" || status === "REJECTED";
 }
 
 interface ProjectRow {
@@ -64,7 +72,15 @@ function validateField(field: "project" | "hours" | "comment", value: string | n
   return undefined;
 }
 
-export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: DailyEntryFormProps) {
+export function DailyEntryForm({
+  date,
+  memberId,
+  enteredBy,
+  rejectionSource,
+  rejectionReason,
+  onClose,
+  onSave,
+}: DailyEntryFormProps) {
   const { isProxyMode, targetMember } = useProxyMode();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
   const [projectRows, setProjectRows] = useState<ProjectRow[]>([{ projectId: "", hours: 0, comment: "", errors: {} }]);
@@ -390,6 +406,13 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
             </div>
           )}
 
+          {/* Rejection Banner */}
+          {rejectionSource && rejectionReason && (
+            <div className="mb-6">
+              <RejectionBanner rejectionReason={rejectionReason} rejectionSource={rejectionSource} />
+            </div>
+          )}
+
           {/* Tab Switcher */}
           <div className="mb-6 border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
@@ -491,7 +514,7 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
                           value={row.projectId}
                           onChange={(projectId) => updateProjectRow(index, "projectId", projectId)}
                           disabled={
-                            (row.status !== "DRAFT" && row.status !== undefined) || !!row.id // Disable for existing entries (FR-008)
+                            !isEditableStatus(row.status) || !!row.id // Disable for existing entries (FR-008)
                           }
                           error={row.errors.project}
                           placeholder="Select a project..."
@@ -508,7 +531,7 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
                           type="number"
                           value={row.hours}
                           onChange={(e) => updateProjectRow(index, "hours", Number.parseFloat(e.target.value) || 0)}
-                          disabled={row.status !== "DRAFT" && row.status !== undefined}
+                          disabled={!isEditableStatus(row.status)}
                           step="0.25"
                           min="0"
                           max="24"
@@ -519,7 +542,7 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
 
                       {/* Remove Button */}
                       <div className="pt-6">
-                        {projectRows.length > 1 && (row.status === "DRAFT" || !row.status) && (
+                        {projectRows.length > 1 && isEditableStatus(row.status) && (
                           <button
                             type="button"
                             onClick={() => removeProjectRow(index)}
@@ -541,7 +564,7 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
                         id={`comment-${index}`}
                         value={row.comment}
                         onChange={(e) => updateProjectRow(index, "comment", e.target.value)}
-                        disabled={row.status !== "DRAFT" && row.status !== undefined}
+                        disabled={!isEditableStatus(row.status)}
                         rows={2}
                         className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
                         placeholder="Optional comment..."
@@ -550,7 +573,7 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
                     </div>
 
                     {/* Delete Button (for existing entries) */}
-                    {row.id && row.status === "DRAFT" && (
+                    {row.id && isEditableStatus(row.status) && (
                       <div className="mt-4">
                         <button
                           type="button"
@@ -598,13 +621,14 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
                 <SubmitDailyButton
                   date={date}
                   memberId={memberId}
-                  hasDraftEntries={projectRows.some((row) => row.status === "DRAFT" || !row.status)}
+                  hasDraftEntries={projectRows.some((row) => isEditableStatus(row.status))}
                   hasSubmittedEntries={projectRows.length > 0 && projectRows.every((row) => row.status === "SUBMITTED")}
                   hasUnsavedChanges={hasUnsavedChanges}
-                  draftEntryCount={projectRows.filter((row) => row.status === "DRAFT" || !row.status).length}
+                  draftEntryCount={projectRows.filter((row) => isEditableStatus(row.status)).length}
                   draftTotalHours={projectRows
-                    .filter((row) => row.status === "DRAFT" || !row.status)
+                    .filter((row) => isEditableStatus(row.status))
                     .reduce((sum, row) => sum + row.hours, 0)}
+                  wasRejected={!!rejectionSource}
                   onSaveFirst={() => handleSave(false)}
                   onSubmitSuccess={() => {
                     onSave();

@@ -16,6 +16,7 @@ import com.worklog.domain.worklog.WorkLogEntryId
 import com.worklog.domain.worklog.WorkLogStatus
 import com.worklog.infrastructure.repository.JdbcAbsenceRepository
 import com.worklog.infrastructure.repository.JdbcApprovalRepository
+import com.worklog.infrastructure.repository.JdbcMemberRepository
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -56,6 +57,9 @@ class ApprovalServiceTest {
     @Mock
     private lateinit var absenceRepository: JdbcAbsenceRepository
 
+    @Mock
+    private lateinit var memberRepository: JdbcMemberRepository
+
     private lateinit var approvalService: ApprovalService
 
     // Test fixtures
@@ -75,6 +79,7 @@ class ApprovalServiceTest {
                 approvalRepository,
                 workLogRepository,
                 absenceRepository,
+                memberRepository,
             )
     }
 

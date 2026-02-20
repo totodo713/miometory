@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../services/api";
+import { RejectionBanner } from "./RejectionBanner";
 import { SubmitButton } from "./SubmitButton";
 
 export interface ProjectSummary {
@@ -122,12 +123,16 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
             >
               {summary.approvalStatus}
             </span>
-            {summary.rejectionReason && (
-              <p className="text-xs text-red-600 max-w-xs text-right">Reason: {summary.rejectionReason}</p>
-            )}
           </div>
         )}
       </div>
+
+      {/* Rejection Banner */}
+      {summary.approvalStatus === "REJECTED" && summary.rejectionReason && (
+        <div className="mb-6">
+          <RejectionBanner rejectionReason={summary.rejectionReason} rejectionSource="monthly" />
+        </div>
+      )}
 
       {/* Submit Button */}
       <div className="mb-6">

@@ -153,9 +153,9 @@ public class WorkLogSubmitDailyTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("Should return 403 when submittedBy differs from memberId")
+        @DisplayName("Should return 403 when submittedBy is not member and not authorized proxy")
         @SuppressWarnings("unchecked")
-        void shouldReturn403WhenSubmittedByDifferentMember() {
+        void shouldReturn403WhenSubmittedByUnauthorizedProxy() {
             // Arrange: create an entry so we are not hitting 404 first
             createDraftEntry(memberId, projectId, testDate, 8.0);
 
@@ -169,7 +169,7 @@ public class WorkLogSubmitDailyTest extends IntegrationTestBase {
             assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
             Map<String, Object> body = response.getBody();
             assertNotNull(body);
-            assertEquals("SELF_SUBMISSION_ONLY", body.get("errorCode"));
+            assertEquals("PROXY_ENTRY_NOT_ALLOWED", body.get("errorCode"));
         }
     }
 

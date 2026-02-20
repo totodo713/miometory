@@ -13,7 +13,9 @@ import com.worklog.domain.shared.TimeAmount;
 import com.worklog.domain.worklog.WorkLogEntry;
 import com.worklog.domain.worklog.WorkLogEntryId;
 import com.worklog.domain.worklog.WorkLogStatus;
+import com.worklog.eventsourcing.EventStore;
 import com.worklog.infrastructure.repository.JdbcApprovalRepository;
+import com.worklog.infrastructure.repository.JdbcDailyRejectionLogRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
 import java.time.LocalDate;
@@ -48,6 +50,12 @@ class WorkLogEntryServiceRecallTest {
     @Mock
     private JdbcApprovalRepository approvalRepository;
 
+    @Mock
+    private JdbcDailyRejectionLogRepository dailyRejectionLogRepository;
+
+    @Mock
+    private EventStore eventStore;
+
     private WorkLogEntryService service;
 
     private static final UUID MEMBER_ID = UUID.randomUUID();
@@ -55,7 +63,8 @@ class WorkLogEntryServiceRecallTest {
 
     @BeforeEach
     void setUp() {
-        service = new WorkLogEntryService(workLogRepository, memberRepository, approvalRepository);
+        service = new WorkLogEntryService(
+                workLogRepository, memberRepository, approvalRepository, dailyRejectionLogRepository, eventStore);
     }
 
     @Test
@@ -86,20 +95,23 @@ class WorkLogEntryServiceRecallTest {
     }
 
     @Test
-    @DisplayName("should throw SELF_RECALL_ONLY when recalledBy differs from memberId")
+    @DisplayName("should throw PROXY_ENTRY_NOT_ALLOWED when recalledBy is not authorized")
     void shouldThrowWhenRecalledByDifferentMember() {
-        // Arrange: recalledBy is a different member
+        // Arrange: recalledBy is a different member who is not a manager
         UUID otherMemberId = UUID.randomUUID();
+        when(memberRepository.isSubordinateOf(MemberId.of(otherMemberId), MemberId.of(MEMBER_ID)))
+                .thenReturn(false);
+
         RecallDailyEntriesCommand command = new RecallDailyEntriesCommand(MEMBER_ID, WORK_DATE, otherMemberId);
 
         // Act & Assert
         DomainException exception = assertThrows(DomainException.class, () -> service.recallDailyEntries(command));
 
-        assertEquals("SELF_RECALL_ONLY", exception.getErrorCode());
-        assertTrue(exception.getMessage().contains("Proxy recall is not allowed"));
+        assertEquals("PROXY_ENTRY_NOT_ALLOWED", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("does not have permission"));
 
-        // Repository should never be called
-        verifyNoInteractions(workLogRepository);
+        // Work log repository should never be called
+        verify(workLogRepository, never()).findByDateRange(any(), any(), any(), any());
     }
 
     @Test
@@ -141,6 +153,10 @@ class WorkLogEntryServiceRecallTest {
         when(approvalRepository.findByMemberAndFiscalMonth(MemberId.of(MEMBER_ID), fiscalMonth))
                 .thenReturn(Optional.of(approval));
 
+        // No daily rejection log exists — entries were never daily-rejected
+        when(dailyRejectionLogRepository.existsByMemberIdAndDate(MEMBER_ID, WORK_DATE))
+                .thenReturn(false);
+
         RecallDailyEntriesCommand command = new RecallDailyEntriesCommand(MEMBER_ID, WORK_DATE, MEMBER_ID);
 
         // Act & Assert
@@ -151,6 +167,39 @@ class WorkLogEntryServiceRecallTest {
 
         // save() should never be called — recall was blocked
         verify(workLogRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("should allow recall when entries were daily-rejected (rejection log exists)")
+    void shouldAllowRecallWhenDailyRejected() {
+        // Arrange: SUBMITTED entry that overlaps with a SUBMITTED MonthlyApproval
+        WorkLogEntry entry1 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 4.0);
+
+        when(workLogRepository.findByDateRange(MEMBER_ID, WORK_DATE, WORK_DATE, WorkLogStatus.SUBMITTED))
+                .thenReturn(List.of(entry1));
+
+        FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(WORK_DATE);
+        MonthlyApproval approval = MonthlyApproval.create(MemberId.of(MEMBER_ID), fiscalMonth);
+        approval.submit(
+                MemberId.of(MEMBER_ID), Set.of(WorkLogEntryId.of(entry1.getId().value())), Set.of());
+        approval.clearUncommittedEvents();
+
+        when(approvalRepository.findByMemberAndFiscalMonth(MemberId.of(MEMBER_ID), fiscalMonth))
+                .thenReturn(Optional.of(approval));
+
+        // Daily rejection log EXISTS — entries went through a daily rejection cycle
+        when(dailyRejectionLogRepository.existsByMemberIdAndDate(MEMBER_ID, WORK_DATE))
+                .thenReturn(true);
+
+        RecallDailyEntriesCommand command = new RecallDailyEntriesCommand(MEMBER_ID, WORK_DATE, MEMBER_ID);
+
+        // Act
+        List<WorkLogEntry> result = service.recallDailyEntries(command);
+
+        // Assert: recall succeeds, entries are DRAFT
+        assertEquals(1, result.size());
+        assertEquals(WorkLogStatus.DRAFT, result.getFirst().getStatus());
+        verify(workLogRepository, times(1)).save(any(WorkLogEntry.class));
     }
 
     /**

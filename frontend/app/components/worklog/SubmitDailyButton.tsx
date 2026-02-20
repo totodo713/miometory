@@ -2,16 +2,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, api } from "../../services/api";
-import { useCalendarRefresh } from "../../services/worklogStore";
+import { useCalendarRefresh, useProxyMode } from "../../services/worklogStore";
 
 interface SubmitDailyButtonProps {
   date: Date;
   memberId: string;
+  submittedBy?: string;
   hasDraftEntries: boolean;
   hasSubmittedEntries: boolean;
   hasUnsavedChanges: boolean;
   draftEntryCount: number;
   draftTotalHours: number;
+  wasRejected?: boolean;
   onSaveFirst: () => Promise<void>;
   onSubmitSuccess: () => void;
 }
@@ -19,14 +21,17 @@ interface SubmitDailyButtonProps {
 export function SubmitDailyButton({
   date,
   memberId,
+  submittedBy,
   hasDraftEntries,
   hasSubmittedEntries,
   hasUnsavedChanges,
   draftEntryCount,
   draftTotalHours,
+  wasRejected,
   onSaveFirst,
   onSubmitSuccess,
 }: SubmitDailyButtonProps) {
+  const { isProxyMode, managerId } = useProxyMode();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecalling, setIsRecalling] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -106,10 +111,11 @@ export function SubmitDailyButton({
       }
 
       const dateStr = date.toISOString().split("T")[0];
+      const effectiveSubmittedBy = isProxyMode && managerId ? managerId : (submittedBy ?? memberId);
       const result = await api.worklog.submitDailyEntries({
         memberId,
         date: dateStr,
-        submittedBy: memberId,
+        submittedBy: effectiveSubmittedBy,
       });
 
       setSubmitSuccess(`${result.submittedCount} entries submitted successfully.`);
@@ -136,10 +142,11 @@ export function SubmitDailyButton({
       setSubmitSuccess(null);
 
       const dateStr = date.toISOString().split("T")[0];
+      const effectiveRecalledBy = isProxyMode && managerId ? managerId : (submittedBy ?? memberId);
       const result = await api.worklog.recallDailyEntries({
         memberId,
         date: dateStr,
-        recalledBy: memberId,
+        recalledBy: effectiveRecalledBy,
       });
 
       setSubmitSuccess(`${result.recalledCount} entries recalled to draft.`);
@@ -171,7 +178,7 @@ export function SubmitDailyButton({
           disabled={isRecalling}
           className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {isRecalling ? "Recalling..." : "Recall"}
+          {isRecalling ? "Recalling..." : isProxyMode ? "(Proxy) Recall" : "Recall"}
         </button>
         {submitError && (
           <div role="alert" aria-live="polite" className="text-red-600 text-sm mt-1 max-w-xs text-right">
@@ -200,7 +207,7 @@ export function SubmitDailyButton({
           disabled={isSubmitting}
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "Submitting..." : "Submit"}
+          {isSubmitting ? "Submitting..." : `${isProxyMode ? "(Proxy) " : ""}${wasRejected ? "Resubmit" : "Submit"}`}
         </button>
         {submitError && (
           <div role="alert" aria-live="polite" className="text-red-600 text-sm mt-1 max-w-xs text-right">

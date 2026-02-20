@@ -4,6 +4,7 @@ import com.worklog.application.command.CopyFromPreviousMonthCommand;
 import com.worklog.application.command.CreateWorkLogEntryCommand;
 import com.worklog.application.command.DeleteWorkLogEntryCommand;
 import com.worklog.application.command.RecallDailyEntriesCommand;
+import com.worklog.application.command.RejectDailyEntriesCommand;
 import com.worklog.application.command.SubmitDailyEntriesCommand;
 import com.worklog.application.command.UpdateWorkLogEntryCommand;
 import com.worklog.domain.approval.ApprovalStatus;
@@ -16,13 +17,20 @@ import com.worklog.domain.shared.TimeAmount;
 import com.worklog.domain.worklog.WorkLogEntry;
 import com.worklog.domain.worklog.WorkLogEntryId;
 import com.worklog.domain.worklog.WorkLogStatus;
+import com.worklog.domain.worklog.events.DailyEntriesRejected;
+import com.worklog.eventsourcing.EventStore;
 import com.worklog.infrastructure.repository.JdbcApprovalRepository;
+import com.worklog.infrastructure.repository.JdbcDailyRejectionLogRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,14 +49,20 @@ public class WorkLogEntryService {
     private final JdbcWorkLogRepository workLogRepository;
     private final JdbcMemberRepository memberRepository;
     private final JdbcApprovalRepository approvalRepository;
+    private final JdbcDailyRejectionLogRepository dailyRejectionLogRepository;
+    private final EventStore eventStore;
 
     public WorkLogEntryService(
             JdbcWorkLogRepository workLogRepository,
             JdbcMemberRepository memberRepository,
-            JdbcApprovalRepository approvalRepository) {
+            JdbcApprovalRepository approvalRepository,
+            JdbcDailyRejectionLogRepository dailyRejectionLogRepository,
+            EventStore eventStore) {
         this.workLogRepository = workLogRepository;
         this.memberRepository = memberRepository;
         this.approvalRepository = approvalRepository;
+        this.dailyRejectionLogRepository = dailyRejectionLogRepository;
+        this.eventStore = eventStore;
     }
 
     /**
@@ -165,31 +179,34 @@ public class WorkLogEntryService {
      */
     @Transactional
     public List<WorkLogEntry> submitDailyEntries(SubmitDailyEntriesCommand command) {
-        // Validate self-submission
+        // Validate submission permission: self or authorized proxy
         if (!command.memberId().equals(command.submittedBy())) {
-            throw new DomainException(
-                    "SELF_SUBMISSION_ONLY",
-                    "Only the member can submit their own entries. Proxy submission is not allowed.");
+            validateProxyEntryPermission(command.submittedBy(), command.memberId());
         }
 
-        // Query DRAFT entries for member + date
+        // Query DRAFT and REJECTED entries for member + date (both are submittable)
         List<WorkLogEntry> draftEntries = workLogRepository.findByDateRange(
                 command.memberId(), command.date(), command.date(), WorkLogStatus.DRAFT);
+        List<WorkLogEntry> rejectedEntries = workLogRepository.findByDateRange(
+                command.memberId(), command.date(), command.date(), WorkLogStatus.REJECTED);
 
-        if (draftEntries.isEmpty()) {
+        List<WorkLogEntry> submittableEntries = new ArrayList<>(draftEntries);
+        submittableEntries.addAll(rejectedEntries);
+
+        if (submittableEntries.isEmpty()) {
             throw new DomainException(
                     "NO_DRAFT_ENTRIES",
-                    "No DRAFT entries found for member " + command.memberId() + " on " + command.date());
+                    "No DRAFT or REJECTED entries found for member " + command.memberId() + " on " + command.date());
         }
 
-        // Transition all DRAFT entries to SUBMITTED
+        // Transition all submittable entries to SUBMITTED
         MemberId submittedBy = MemberId.of(command.submittedBy());
-        for (WorkLogEntry entry : draftEntries) {
+        for (WorkLogEntry entry : submittableEntries) {
             entry.changeStatus(WorkLogStatus.SUBMITTED, submittedBy);
             workLogRepository.save(entry);
         }
 
-        return draftEntries;
+        return submittableEntries;
     }
 
     /**
@@ -205,10 +222,9 @@ public class WorkLogEntryService {
      */
     @Transactional
     public List<WorkLogEntry> recallDailyEntries(RecallDailyEntriesCommand command) {
-        // Validate self-recall
+        // Validate recall permission: self or authorized proxy
         if (!command.memberId().equals(command.recalledBy())) {
-            throw new DomainException(
-                    "SELF_RECALL_ONLY", "Only the member can recall their own entries. Proxy recall is not allowed.");
+            validateProxyEntryPermission(command.recalledBy(), command.memberId());
         }
 
         // Query SUBMITTED entries for member + date
@@ -221,20 +237,31 @@ public class WorkLogEntryService {
                     "No SUBMITTED entries found for member " + command.memberId() + " on " + command.date());
         }
 
-        // Check if any of these entries are part of a MonthlyApproval with non-PENDING status
+        // Check if any of these entries are part of a MonthlyApproval that blocks recall.
+        // Only SUBMITTED and APPROVED approvals block recall; PENDING and REJECTED do not.
+        // Additionally, if entries were daily-rejected (have a daily rejection log), they were
+        // released from the monthly approval and can be recalled after daily re-submission.
         FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(command.date());
-        java.util.Optional<MonthlyApproval> approval =
+        Optional<MonthlyApproval> approval =
                 approvalRepository.findByMemberAndFiscalMonth(MemberId.of(command.memberId()), fiscalMonth);
-        if (approval.isPresent() && approval.get().getStatus() != ApprovalStatus.PENDING) {
+        if (approval.isPresent()
+                && (approval.get().getStatus() == ApprovalStatus.SUBMITTED
+                        || approval.get().getStatus() == ApprovalStatus.APPROVED)) {
             // Only block if the approval actually contains any of the entries being recalled
-            java.util.Set<UUID> approvalEntryIds = approval.get().getWorkLogEntryIds();
+            Set<UUID> approvalEntryIds = approval.get().getWorkLogEntryIds();
             boolean hasOverlap = submittedEntries.stream()
                     .anyMatch(entry -> approvalEntryIds.contains(entry.getId().value()));
             if (hasOverlap) {
-                throw new DomainException(
-                        "RECALL_BLOCKED_BY_APPROVAL",
-                        "Cannot recall entries — the monthly approval for this period is in "
-                                + approval.get().getStatus() + " status.");
+                // If entries were daily-rejected (a daily rejection log exists for this date),
+                // they were released from the monthly approval and can be recalled after re-submission.
+                boolean wasDailyRejected =
+                        dailyRejectionLogRepository.existsByMemberIdAndDate(command.memberId(), command.date());
+                if (!wasDailyRejected) {
+                    throw new DomainException(
+                            "RECALL_BLOCKED_BY_APPROVAL",
+                            "Cannot recall entries — the monthly approval for this period is in "
+                                    + approval.get().getStatus() + " status.");
+                }
             }
         }
 
@@ -249,6 +276,73 @@ public class WorkLogEntryService {
     }
 
     /**
+     * Rejects all SUBMITTED entries for a member on a specific date.
+     *
+     * Transitions all SUBMITTED entries to DRAFT atomically.
+     * Persists a daily rejection log record for visibility.
+     * Emits a DailyEntriesRejected domain event.
+     * Blocked if entries are part of a monthly approval that has been approved.
+     *
+     * @param command The reject command
+     * @return List of updated entries (now DRAFT)
+     * @throws DomainException if no SUBMITTED entries found or blocked by approval
+     */
+    @Transactional
+    public List<WorkLogEntry> rejectDailyEntries(RejectDailyEntriesCommand command) {
+        // Validate rejection permission: rejectedBy must be a manager of the member
+        if (command.rejectedBy().equals(command.memberId())) {
+            throw new DomainException("SELF_REJECTION_NOT_ALLOWED", "Members cannot reject their own entries.");
+        }
+        validateProxyEntryPermission(command.rejectedBy(), command.memberId());
+
+        // Query SUBMITTED entries for member + date
+        List<WorkLogEntry> submittedEntries = workLogRepository.findByDateRange(
+                command.memberId(), command.date(), command.date(), WorkLogStatus.SUBMITTED);
+
+        if (submittedEntries.isEmpty()) {
+            throw new DomainException(
+                    "NO_SUBMITTED_ENTRIES_FOR_DATE",
+                    "No SUBMITTED entries found for member " + command.memberId() + " on " + command.date());
+        }
+
+        // Check if any of these entries are part of a monthly approval that has been approved
+        FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(command.date());
+        Optional<MonthlyApproval> approval =
+                approvalRepository.findByMemberAndFiscalMonth(MemberId.of(command.memberId()), fiscalMonth);
+        if (approval.isPresent() && approval.get().getStatus() == ApprovalStatus.APPROVED) {
+            throw new DomainException(
+                    "REJECT_BLOCKED_BY_APPROVAL",
+                    "Cannot reject daily entries — the monthly approval for this period has been approved.");
+        }
+
+        // Collect affected entry IDs
+        Set<UUID> affectedEntryIds =
+                submittedEntries.stream().map(e -> e.getId().value()).collect(Collectors.toSet());
+
+        // Transition all SUBMITTED entries back to DRAFT
+        MemberId rejectedBy = MemberId.of(command.rejectedBy());
+        for (WorkLogEntry entry : submittedEntries) {
+            entry.changeStatus(WorkLogStatus.DRAFT, rejectedBy);
+            workLogRepository.save(entry);
+        }
+
+        // Persist daily rejection log (UPSERT)
+        dailyRejectionLogRepository.save(
+                command.memberId(), command.date(), command.rejectedBy(), command.rejectionReason(), affectedEntryIds);
+
+        // Emit domain event (service-level event, not aggregate-level)
+        DailyEntriesRejected event = DailyEntriesRejected.create(
+                MemberId.of(command.memberId()),
+                command.date(),
+                rejectedBy,
+                command.rejectionReason(),
+                affectedEntryIds);
+        eventStore.append(event.aggregateId(), "DailyRejection", List.of(event), 0);
+
+        return submittedEntries;
+    }
+
+    /**
      * Validates that the daily total hours for a member on a specific date
      * does not exceed 24 hours.
      *
@@ -258,7 +352,7 @@ public class WorkLogEntryService {
      * @param excludeEntryId Entry ID to exclude from calculation (for updates)
      * @throws DomainException if 24-hour limit would be exceeded
      */
-    private void validateDailyLimit(UUID memberId, java.time.LocalDate date, TimeAmount newHours, UUID excludeEntryId) {
+    private void validateDailyLimit(UUID memberId, LocalDate date, TimeAmount newHours, UUID excludeEntryId) {
         BigDecimal existingTotal = workLogRepository.getTotalHoursForDate(memberId, date, excludeEntryId);
 
         BigDecimal newTotal = existingTotal.add(newHours.hours());

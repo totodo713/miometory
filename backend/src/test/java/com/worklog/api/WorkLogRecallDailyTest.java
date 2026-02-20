@@ -175,9 +175,9 @@ public class WorkLogRecallDailyTest extends IntegrationTestBase {
         }
 
         @Test
-        @DisplayName("Should return 403 when recalledBy differs from memberId")
+        @DisplayName("Should return 403 when recalledBy is not member and not authorized proxy")
         @SuppressWarnings("unchecked")
-        void shouldReturn403WhenRecalledByDifferentMember() {
+        void shouldReturn403WhenRecalledByUnauthorizedProxy() {
             // Arrange: create and submit entries so we are not hitting 404 first
             createDraftEntry(memberId, projectId, testDate, 8.0);
             submitEntries(memberId, testDate);
@@ -192,7 +192,7 @@ public class WorkLogRecallDailyTest extends IntegrationTestBase {
             assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
             Map<String, Object> body = response.getBody();
             assertNotNull(body);
-            assertEquals("SELF_RECALL_ONLY", body.get("errorCode"));
+            assertEquals("PROXY_ENTRY_NOT_ALLOWED", body.get("errorCode"));
         }
 
         @Test

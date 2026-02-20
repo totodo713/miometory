@@ -459,17 +459,18 @@ class WorkLogEntryTest {
         }
 
         @Test
-        @DisplayName("should throw exception when deleting REJECTED entry")
-        void shouldRejectDeleteOfRejectedEntry() {
+        @DisplayName("should allow deleting REJECTED entry")
+        void shouldAllowDeleteOfRejectedEntry() {
             entry.changeStatus(WorkLogStatus.SUBMITTED, deleter);
             entry.clearUncommittedEvents();
             entry.changeStatus(WorkLogStatus.REJECTED, deleter);
             entry.clearUncommittedEvents();
 
-            DomainException exception = assertThrows(DomainException.class, () -> entry.delete(deleter));
+            entry.delete(deleter);
 
-            assertEquals("ENTRY_NOT_DELETABLE", exception.getErrorCode());
-            assertTrue(exception.getMessage().contains("REJECTED"));
+            var events = entry.getUncommittedEvents();
+            assertEquals(1, events.size());
+            assertInstanceOf(WorkLogEntryDeleted.class, events.getFirst());
         }
     }
 

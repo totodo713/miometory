@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { api } from "@/services/api";
+import { useProxyMode } from "@/services/worklogStore";
 import type { ApprovalStatus } from "@/types/approval";
 
 interface SubmitButtonProps {
@@ -9,6 +10,7 @@ interface SubmitButtonProps {
   fiscalMonthStart: string;
   fiscalMonthEnd: string;
   approvalStatus: ApprovalStatus | null;
+  submittedBy?: string;
   onSubmitSuccess?: () => void;
 }
 
@@ -22,8 +24,10 @@ export function SubmitButton({
   fiscalMonthStart,
   fiscalMonthEnd,
   approvalStatus,
+  submittedBy,
   onSubmitSuccess,
 }: SubmitButtonProps) {
+  const { isProxyMode, managerId } = useProxyMode();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +44,7 @@ export function SubmitButton({
         memberId,
         fiscalMonthStart,
         fiscalMonthEnd,
-        submittedBy: memberId, // TODO: Get from SecurityContext when available
+        submittedBy: isProxyMode && managerId ? managerId : (submittedBy ?? memberId),
       });
 
       onSubmitSuccess?.();
@@ -54,11 +58,12 @@ export function SubmitButton({
   };
 
   const getButtonText = () => {
-    if (isSubmitting) return "Submitting...";
+    const proxyPrefix = isProxyMode ? "(Proxy) " : "";
+    if (isSubmitting) return `${proxyPrefix}Submitting...`;
     if (isApproved) return "Approved";
     if (isSubmitted) return "Submitted";
-    if (approvalStatus === "REJECTED") return "Resubmit for Approval";
-    return "Submit for Approval";
+    if (approvalStatus === "REJECTED") return `${proxyPrefix}Resubmit for Approval`;
+    return `${proxyPrefix}Submit for Approval`;
   };
 
   const getButtonStyle = () => {
