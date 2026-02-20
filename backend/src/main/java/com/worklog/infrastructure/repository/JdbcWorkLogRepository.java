@@ -232,6 +232,14 @@ public class JdbcWorkLogRepository {
                             INSERT INTO work_log_entries_projection
                                 (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by)
                             VALUES (?, ?, ?, ?, ?, ?, ?, 'DRAFT', ?)
+                            ON CONFLICT (member_id, project_id, work_date) DO UPDATE SET
+                                id = EXCLUDED.id,
+                                hours = EXCLUDED.hours,
+                                notes = EXCLUDED.notes,
+                                status = 'DRAFT',
+                                entered_by = EXCLUDED.entered_by,
+                                organization_id = EXCLUDED.organization_id,
+                                updated_at = CURRENT_TIMESTAMP
                             """,
                             e.aggregateId(),
                             e.memberId(),

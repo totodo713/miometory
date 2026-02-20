@@ -5,22 +5,24 @@
 -- entries lost their projection rows due to previously-fixed bugs.
 
 -- ============================================================================
--- 1. Fix misaligned projection dates
--- Update projection rows where work_date differs from the event store payload date
+-- 1. Delete misaligned and missing projection rows, then re-insert from event store
 -- ============================================================================
-UPDATE work_log_entries_projection p
-SET work_date = (es.payload->>'date')::date,
-    updated_at = CURRENT_TIMESTAMP
-FROM event_store es
+-- Using DELETE + INSERT instead of UPDATE to avoid unique constraint collisions
+-- when multiple rows shift dates in conflicting directions.
+
+-- Delete projection rows whose work_date differs from the event store
+DELETE FROM work_log_entries_projection p
+USING event_store es
 WHERE es.aggregate_id = p.id
   AND es.event_type = 'WorkLogEntryCreated'
+  AND es.aggregate_type = 'WorkLogEntry'
   AND p.work_date != (es.payload->>'date')::date;
 
 -- ============================================================================
--- 2. Backfill missing projection entries
--- Re-insert entries that exist in event store but not in projection
+-- 2. Insert/re-insert all entries from event store that are missing in projection
 -- ============================================================================
-INSERT INTO work_log_entries_projection (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by)
+INSERT INTO work_log_entries_projection
+    (id, member_id, organization_id, project_id, work_date, hours, notes, status, entered_by)
 SELECT
     es.aggregate_id,
     (es.payload->>'memberId')::uuid,
@@ -29,36 +31,54 @@ SELECT
     (es.payload->>'date')::date,
     (es.payload->>'hours')::numeric,
     es.payload->>'comment',
-    'DRAFT',
+    COALESCE(
+        (SELECT s.payload->>'toStatus'
+         FROM event_store s
+         WHERE s.aggregate_id = es.aggregate_id
+           AND s.event_type = 'WorkLogEntryStatusChanged'
+         ORDER BY s.version DESC LIMIT 1),
+        'DRAFT'
+    ),
     (es.payload->>'enteredBy')::uuid
 FROM event_store es
 LEFT JOIN members m ON m.id = (es.payload->>'memberId')::uuid
 WHERE es.event_type = 'WorkLogEntryCreated'
   AND es.aggregate_type = 'WorkLogEntry'
   AND NOT EXISTS (SELECT 1 FROM work_log_entries_projection p WHERE p.id = es.aggregate_id)
-  -- Exclude deleted entries
   AND NOT EXISTS (
       SELECT 1 FROM event_store es2
       WHERE es2.aggregate_id = es.aggregate_id
         AND es2.event_type = 'WorkLogEntryDeleted'
   )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (member_id, project_id, work_date) DO UPDATE SET
+    id = EXCLUDED.id,
+    hours = EXCLUDED.hours,
+    notes = EXCLUDED.notes,
+    status = EXCLUDED.status,
+    entered_by = EXCLUDED.entered_by,
+    organization_id = EXCLUDED.organization_id,
+    updated_at = CURRENT_TIMESTAMP;
 
 -- ============================================================================
 -- 3. Apply status updates from subsequent events
--- Set projection status to the latest WorkLogEntryStatusChanged event
 -- ============================================================================
 UPDATE work_log_entries_projection p
-SET status = es.payload->>'toStatus',
+SET status = latest.to_status,
     updated_at = CURRENT_TIMESTAMP
-FROM event_store es
-WHERE es.aggregate_id = p.id
-  AND es.event_type = 'WorkLogEntryStatusChanged'
-  AND es.version = (SELECT MAX(version) FROM event_store WHERE aggregate_id = p.id AND event_type = 'WorkLogEntryStatusChanged');
+FROM (
+    SELECT DISTINCT ON (aggregate_id)
+        aggregate_id,
+        payload->>'toStatus' as to_status
+    FROM event_store
+    WHERE event_type = 'WorkLogEntryStatusChanged'
+      AND aggregate_type = 'WorkLogEntry'
+    ORDER BY aggregate_id, version DESC
+) latest
+WHERE latest.aggregate_id = p.id
+  AND p.status != latest.to_status;
 
 -- ============================================================================
 -- 4. Invalidate stale calendar and summary cache
--- Forces recalculation on next API request
 -- ============================================================================
 DELETE FROM monthly_calendar_projection;
 DELETE FROM monthly_summary_projection;

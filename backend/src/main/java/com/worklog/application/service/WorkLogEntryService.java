@@ -58,6 +58,17 @@ public class WorkLogEntryService {
             validateProxyEntryPermission(command.enteredBy(), command.memberId());
         }
 
+        // Check for existing entry with same member, project, date
+        List<WorkLogEntry> existingEntries =
+                workLogRepository.findByDateRange(command.memberId(), command.date(), command.date(), null);
+        boolean duplicateExists =
+                existingEntries.stream().anyMatch(e -> e.getProjectId().value().equals(command.projectId()));
+        if (duplicateExists) {
+            throw new DomainException(
+                    "DUPLICATE_ENTRY",
+                    "An entry already exists for this project on this date. Please update the existing entry.");
+        }
+
         // Validate hours format (0.25h increments, max 24h)
         TimeAmount hours = TimeAmount.of(command.hours());
 
