@@ -606,6 +606,33 @@ export const api = {
         rejectionReason: string | null;
       }>(`/api/v1/worklog/approvals/member/${params.memberId}?${query}`);
     },
+
+    getDetail: (approvalId: string) =>
+      apiClient.get<{
+        approvalId: string;
+        status: string;
+        memberName: string;
+        fiscalMonthStart: string;
+        fiscalMonthEnd: string;
+        totalWorkHours: number;
+        totalAbsenceHours: number;
+        projectBreakdown: Array<{
+          projectCode: string;
+          projectName: string;
+          hours: number;
+        }>;
+        dailyApprovalSummary: {
+          approvedCount: number;
+          rejectedCount: number;
+          unapprovedCount: number;
+        };
+        unresolvedEntries: Array<{
+          entryId: string;
+          date: string;
+          projectCode: string;
+          rejectionComment: string;
+        }>;
+      }>(`/api/v1/worklog/approvals/${approvalId}/detail`),
   },
 
   /**
@@ -703,6 +730,251 @@ export const api = {
         }>;
         count: number;
       }>(`/api/v1/members/${memberId}/projects`),
+  },
+
+  /**
+   * Admin endpoints
+   */
+  admin: {
+    getContext: () =>
+      apiClient.get<{
+        role: string;
+        permissions: string[];
+        tenantId: string | null;
+        tenantName: string | null;
+        memberId: string | null;
+      }>("/api/v1/admin/context"),
+
+    members: {
+      list: (params?: {
+        page?: number;
+        size?: number;
+        search?: string;
+        organizationId?: string;
+        isActive?: boolean;
+      }) => {
+        const query = new URLSearchParams();
+        if (params?.page !== undefined) query.set("page", params.page.toString());
+        if (params?.size !== undefined) query.set("size", params.size.toString());
+        if (params?.search) query.set("search", params.search);
+        if (params?.organizationId) query.set("organizationId", params.organizationId);
+        if (params?.isActive !== undefined) query.set("isActive", params.isActive.toString());
+        return apiClient.get<{
+          content: Array<{
+            id: string;
+            email: string;
+            displayName: string;
+            organizationId: string | null;
+            managerId: string | null;
+            managerName: string | null;
+            isActive: boolean;
+          }>;
+          totalElements: number;
+          totalPages: number;
+          number: number;
+        }>(`/api/v1/admin/members?${query}`);
+      },
+      create: (data: { email: string; displayName: string; organizationId?: string; managerId?: string }) =>
+        apiClient.post<{ id: string }>("/api/v1/admin/members", data),
+      update: (id: string, data: { email: string; displayName: string; organizationId?: string; managerId?: string }) =>
+        apiClient.put<void>(`/api/v1/admin/members/${id}`, data),
+      deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/members/${id}/deactivate`, {}),
+      activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/members/${id}/activate`, {}),
+      assignTenantAdmin: (id: string) => apiClient.post<void>(`/api/v1/admin/members/${id}/assign-tenant-admin`, {}),
+    },
+
+    projects: {
+      list: (params?: { page?: number; size?: number; search?: string; isActive?: boolean }) => {
+        const query = new URLSearchParams();
+        if (params?.page !== undefined) query.set("page", params.page.toString());
+        if (params?.size !== undefined) query.set("size", params.size.toString());
+        if (params?.search) query.set("search", params.search);
+        if (params?.isActive !== undefined) query.set("isActive", params.isActive.toString());
+        return apiClient.get<{
+          content: Array<{
+            id: string;
+            code: string;
+            name: string;
+            isActive: boolean;
+            validFrom: string | null;
+            validUntil: string | null;
+            assignedMemberCount: number;
+          }>;
+          totalElements: number;
+          totalPages: number;
+          number: number;
+        }>(`/api/v1/admin/projects?${query}`);
+      },
+      create: (data: { code: string; name: string; validFrom?: string; validUntil?: string }) =>
+        apiClient.post<{ id: string }>("/api/v1/admin/projects", data),
+      update: (id: string, data: { name: string; validFrom?: string; validUntil?: string }) =>
+        apiClient.put<void>(`/api/v1/admin/projects/${id}`, data),
+      deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/projects/${id}/deactivate`, {}),
+      activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/projects/${id}/activate`, {}),
+    },
+
+    assignments: {
+      listByMember: (memberId: string) =>
+        apiClient.get<
+          Array<{
+            id: string;
+            memberId: string;
+            memberName: string;
+            memberEmail: string;
+            projectId: string;
+            projectCode: string;
+            projectName: string;
+            isActive: boolean;
+            assignedAt: string;
+          }>
+        >(`/api/v1/admin/assignments/by-member/${memberId}`),
+      listByProject: (projectId: string) =>
+        apiClient.get<
+          Array<{
+            id: string;
+            memberId: string;
+            memberName: string;
+            memberEmail: string;
+            projectId: string;
+            projectCode: string;
+            projectName: string;
+            isActive: boolean;
+            assignedAt: string;
+          }>
+        >(`/api/v1/admin/assignments/by-project/${projectId}`),
+      create: (data: { memberId: string; projectId: string }) =>
+        apiClient.post<{ id: string }>("/api/v1/admin/assignments", data),
+      deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/assignments/${id}/deactivate`, {}),
+      activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/assignments/${id}/activate`, {}),
+    },
+
+    tenants: {
+      list: (params?: { page?: number; size?: number; status?: string }) => {
+        const query = new URLSearchParams();
+        if (params?.page !== undefined) query.set("page", params.page.toString());
+        if (params?.size !== undefined) query.set("size", params.size.toString());
+        if (params?.status) query.set("status", params.status);
+        return apiClient.get<{
+          content: Array<{
+            id: string;
+            code: string;
+            name: string;
+            status: string;
+            createdAt: string;
+          }>;
+          totalElements: number;
+          totalPages: number;
+          number: number;
+        }>(`/api/v1/admin/tenants?${query}`);
+      },
+      create: (data: { code: string; name: string }) => apiClient.post<{ id: string }>("/api/v1/admin/tenants", data),
+      update: (id: string, data: { name: string }) => apiClient.put<void>(`/api/v1/admin/tenants/${id}`, data),
+      deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/tenants/${id}/deactivate`, {}),
+      activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/tenants/${id}/activate`, {}),
+    },
+
+    users: {
+      list: (params?: {
+        page?: number;
+        size?: number;
+        search?: string;
+        tenantId?: string;
+        roleId?: string;
+        accountStatus?: string;
+      }) => {
+        const query = new URLSearchParams();
+        if (params?.page !== undefined) query.set("page", params.page.toString());
+        if (params?.size !== undefined) query.set("size", params.size.toString());
+        if (params?.search) query.set("search", params.search);
+        if (params?.tenantId) query.set("tenantId", params.tenantId);
+        if (params?.roleId) query.set("roleId", params.roleId);
+        if (params?.accountStatus) query.set("accountStatus", params.accountStatus);
+        return apiClient.get<{
+          content: Array<{
+            id: string;
+            email: string;
+            name: string;
+            roleName: string;
+            tenantName: string | null;
+            accountStatus: string;
+            lastLoginAt: string | null;
+          }>;
+          totalElements: number;
+          totalPages: number;
+          number: number;
+        }>(`/api/v1/admin/users?${query}`);
+      },
+      changeRole: (id: string, data: { roleId: string }) => apiClient.put<void>(`/api/v1/admin/users/${id}/role`, data),
+      lock: (id: string, data: { durationMinutes: number }) =>
+        apiClient.patch<void>(`/api/v1/admin/users/${id}/lock`, data),
+      unlock: (id: string) => apiClient.patch<void>(`/api/v1/admin/users/${id}/unlock`, {}),
+      resetPassword: (id: string) => apiClient.post<void>(`/api/v1/admin/users/${id}/password-reset`, {}),
+    },
+  },
+
+  /**
+   * Daily approval endpoints (supervisor)
+   */
+  dailyApproval: {
+    getEntries: (params?: { dateFrom?: string; dateTo?: string; memberId?: string }) => {
+      const query = new URLSearchParams();
+      if (params?.dateFrom) query.set("dateFrom", params.dateFrom);
+      if (params?.dateTo) query.set("dateTo", params.dateTo);
+      if (params?.memberId) query.set("memberId", params.memberId);
+      return apiClient.get<
+        Array<{
+          date: string;
+          members: Array<{
+            memberId: string;
+            memberName: string;
+            entries: Array<{
+              entryId: string;
+              projectCode: string;
+              projectName: string;
+              hours: number;
+              comment: string | null;
+              approvalId: string | null;
+              approvalStatus: string | null;
+              approvalComment: string | null;
+            }>;
+          }>;
+        }>
+      >(`/api/v1/worklog/daily-approvals?${query}`);
+    },
+    approve: (data: { entryIds: string[]; comment?: string }) =>
+      apiClient.post<void>("/api/v1/worklog/daily-approvals/approve", data),
+    reject: (data: { entryId: string; comment: string }) =>
+      apiClient.post<void>("/api/v1/worklog/daily-approvals/reject", data),
+    recall: (approvalId: string) => apiClient.post<void>(`/api/v1/worklog/daily-approvals/${approvalId}/recall`, {}),
+  },
+
+  /**
+   * Notification endpoints
+   */
+  notification: {
+    list: (params?: { page?: number; size?: number; isRead?: boolean }) => {
+      const query = new URLSearchParams();
+      if (params?.page !== undefined) query.set("page", params.page.toString());
+      if (params?.size !== undefined) query.set("size", params.size.toString());
+      if (params?.isRead !== undefined) query.set("isRead", params.isRead.toString());
+      return apiClient.get<{
+        content: Array<{
+          id: string;
+          type: string;
+          referenceId: string;
+          title: string;
+          message: string;
+          isRead: boolean;
+          createdAt: string;
+        }>;
+        unreadCount: number;
+        totalElements: number;
+        totalPages: number;
+        number: number;
+      }>(`/api/v1/notifications?${query}`);
+    },
+    markRead: (id: string) => apiClient.patch<void>(`/api/v1/notifications/${id}/read`, {}),
+    markAllRead: () => apiClient.patch<void>("/api/v1/notifications/read-all", {}),
   },
 };
 

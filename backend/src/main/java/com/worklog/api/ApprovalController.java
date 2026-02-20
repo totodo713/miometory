@@ -240,6 +240,21 @@ public class ApprovalController {
     }
 
     /**
+     * Get detailed monthly approval information including daily approval status.
+     *
+     * GET /api/v1/worklog/approvals/{id}/detail
+     *
+     * Returns enriched approval data with project breakdown, absence summary,
+     * daily approval status counts, and unresolved daily rejections.
+     */
+    @GetMapping("/approvals/{id}/detail")
+    public ResponseEntity<ApprovalService.MonthlyApprovalDetail> getApprovalDetail(@PathVariable UUID id) {
+        ApprovalService.MonthlyApprovalDetail detail =
+                approvalService.getMonthlyApprovalDetail(MonthlyApprovalId.of(id));
+        return ResponseEntity.ok(detail);
+    }
+
+    /**
      * Response DTO for submit month endpoint.
      */
     public record SubmitMonthResponse(String approvalId) {}

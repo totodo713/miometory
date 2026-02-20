@@ -254,3 +254,150 @@ ON CONFLICT (email) DO UPDATE SET
     role_id = EXCLUDED.role_id,
     account_status = EXCLUDED.account_status,
     email_verified_at = EXCLUDED.email_verified_at;
+
+-- ============================================================================
+-- Admin Management Seed Data
+-- Feature: 015-admin-management
+-- ============================================================================
+-- Assigns admin roles to test users and creates sample approval/notification data.
+-- Depends on V18__admin_permissions_seed.sql for SYSTEM_ADMIN, TENANT_ADMIN, SUPERVISOR roles.
+-- ============================================================================
+
+-- System Admin user + member (new test user for global admin operations)
+INSERT INTO members (
+    id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at
+)
+VALUES (
+    '00000000-0000-0000-0000-000000000005',
+    '550e8400-e29b-41d4-a716-446655440001',
+    '880e8400-e29b-41d4-a716-446655440001',
+    'sysadmin@miometry.example.com',
+    'System Admin',
+    NULL,
+    true,
+    0,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT (id) DO UPDATE SET
+    display_name = EXCLUDED.display_name,
+    email = EXCLUDED.email,
+    is_active = EXCLUDED.is_active,
+    updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at)
+VALUES (
+    '00000000-0000-0000-0000-000000000005',
+    'sysadmin@miometry.example.com',
+    '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
+    'System Admin',
+    (SELECT id FROM roles WHERE name = 'SYSTEM_ADMIN'),
+    'active', 0, NOW()
+)
+ON CONFLICT (email) DO UPDATE SET
+    hashed_password = EXCLUDED.hashed_password,
+    name = EXCLUDED.name,
+    role_id = EXCLUDED.role_id,
+    account_status = EXCLUDED.account_status,
+    email_verified_at = EXCLUDED.email_verified_at;
+
+-- Assign Alice to SUPERVISOR role (she manages Bob and Charlie)
+UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'SUPERVISOR')
+WHERE email = 'alice.manager@miometry.example.com';
+
+-- Assign David to TENANT_ADMIN role
+UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'TENANT_ADMIN')
+WHERE email = 'david.independent@miometry.example.com';
+
+-- ============================================================================
+-- Sample Daily Entry Approvals (Alice approves/rejects Bob's entries)
+-- ============================================================================
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM daily_entry_approvals LIMIT 1) THEN
+        RAISE NOTICE 'Dev seed data: Daily entry approvals already exist, skipping';
+    ELSE
+        -- Alice APPROVED Bob's entry from 2 days ago
+        INSERT INTO daily_entry_approvals (id, work_log_entry_id, member_id, supervisor_id, status, comment, created_at, updated_at)
+        VALUES (
+            'da000000-0000-0000-0000-000000000001',
+            'a0000000-0000-0000-0000-000000000003',
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000002',
+            'APPROVED',
+            'Looks good',
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        );
+
+        -- Alice REJECTED Bob's entry from 4 days ago (excessive hours)
+        INSERT INTO daily_entry_approvals (id, work_log_entry_id, member_id, supervisor_id, status, comment, created_at, updated_at)
+        VALUES (
+            'da000000-0000-0000-0000-000000000002',
+            'a0000000-0000-0000-0000-000000000006',
+            '00000000-0000-0000-0000-000000000001',
+            '00000000-0000-0000-0000-000000000002',
+            'REJECTED',
+            'Please correct the hours - 12 hours seems excessive for a single day',
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        );
+
+        -- Alice APPROVED Charlie's entry from 2 days ago
+        INSERT INTO daily_entry_approvals (id, work_log_entry_id, member_id, supervisor_id, status, comment, created_at, updated_at)
+        VALUES (
+            'da000000-0000-0000-0000-000000000003',
+            'b0000000-0000-0000-0000-000000000003',
+            '00000000-0000-0000-0000-000000000003',
+            '00000000-0000-0000-0000-000000000002',
+            'APPROVED',
+            NULL,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        );
+
+        RAISE NOTICE 'Dev seed data: Daily entry approvals inserted';
+    END IF;
+END $$;
+
+-- ============================================================================
+-- Sample In-App Notifications
+-- ============================================================================
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM in_app_notifications LIMIT 1) THEN
+        RAISE NOTICE 'Dev seed data: Notifications already exist, skipping';
+    ELSE
+        INSERT INTO in_app_notifications (id, recipient_member_id, type, reference_id, title, message, is_read, created_at)
+        VALUES
+            -- Bob notified of daily approval
+            ('na000000-0000-0000-0000-000000000001',
+             '00000000-0000-0000-0000-000000000001',
+             'DAILY_APPROVED',
+             'da000000-0000-0000-0000-000000000001',
+             'Entry approved',
+             'Your entry for Sprint planning and story estimation was approved by Alice Manager',
+             false,
+             CURRENT_TIMESTAMP - INTERVAL '1 hour'),
+            -- Bob notified of daily rejection
+            ('na000000-0000-0000-0000-000000000002',
+             '00000000-0000-0000-0000-000000000001',
+             'DAILY_REJECTED',
+             'da000000-0000-0000-0000-000000000002',
+             'Entry rejected',
+             'Your entry for Feature development (overtime) was rejected by Alice Manager: Please correct the hours',
+             false,
+             CURRENT_TIMESTAMP - INTERVAL '30 minutes'),
+            -- Charlie notified of daily approval
+            ('na000000-0000-0000-0000-000000000003',
+             '00000000-0000-0000-0000-000000000003',
+             'DAILY_APPROVED',
+             'da000000-0000-0000-0000-000000000003',
+             'Entry approved',
+             'Your entry for UI/UX implementation and styling was approved by Alice Manager',
+             true,
+             CURRENT_TIMESTAMP - INTERVAL '2 hours');
+
+        RAISE NOTICE 'Dev seed data: In-app notifications inserted';
+    END IF;
+END $$;
