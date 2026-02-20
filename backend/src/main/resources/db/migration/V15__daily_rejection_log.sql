@@ -12,5 +12,3 @@ CREATE TABLE daily_rejection_log (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_daily_rejection_member_date UNIQUE (member_id, work_date)
 );
-
-CREATE INDEX idx_daily_rejection_member_date ON daily_rejection_log (member_id, work_date);

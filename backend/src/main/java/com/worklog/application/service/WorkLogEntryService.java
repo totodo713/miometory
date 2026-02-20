@@ -25,7 +25,9 @@ import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -188,7 +190,7 @@ public class WorkLogEntryService {
         List<WorkLogEntry> rejectedEntries = workLogRepository.findByDateRange(
                 command.memberId(), command.date(), command.date(), WorkLogStatus.REJECTED);
 
-        List<WorkLogEntry> submittableEntries = new java.util.ArrayList<>(draftEntries);
+        List<WorkLogEntry> submittableEntries = new ArrayList<>(draftEntries);
         submittableEntries.addAll(rejectedEntries);
 
         if (submittableEntries.isEmpty()) {
@@ -240,13 +242,13 @@ public class WorkLogEntryService {
         // Additionally, if entries were daily-rejected (have a daily rejection log), they were
         // released from the monthly approval and can be recalled after daily re-submission.
         FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(command.date());
-        java.util.Optional<MonthlyApproval> approval =
+        Optional<MonthlyApproval> approval =
                 approvalRepository.findByMemberAndFiscalMonth(MemberId.of(command.memberId()), fiscalMonth);
         if (approval.isPresent()
                 && (approval.get().getStatus() == ApprovalStatus.SUBMITTED
                         || approval.get().getStatus() == ApprovalStatus.APPROVED)) {
             // Only block if the approval actually contains any of the entries being recalled
-            java.util.Set<UUID> approvalEntryIds = approval.get().getWorkLogEntryIds();
+            Set<UUID> approvalEntryIds = approval.get().getWorkLogEntryIds();
             boolean hasOverlap = submittedEntries.stream()
                     .anyMatch(entry -> approvalEntryIds.contains(entry.getId().value()));
             if (hasOverlap) {
@@ -305,7 +307,7 @@ public class WorkLogEntryService {
 
         // Check if any of these entries are part of a monthly approval that has been approved
         FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(command.date());
-        java.util.Optional<MonthlyApproval> approval =
+        Optional<MonthlyApproval> approval =
                 approvalRepository.findByMemberAndFiscalMonth(MemberId.of(command.memberId()), fiscalMonth);
         if (approval.isPresent() && approval.get().getStatus() == ApprovalStatus.APPROVED) {
             throw new DomainException(
@@ -350,7 +352,7 @@ public class WorkLogEntryService {
      * @param excludeEntryId Entry ID to exclude from calculation (for updates)
      * @throws DomainException if 24-hour limit would be exceeded
      */
-    private void validateDailyLimit(UUID memberId, java.time.LocalDate date, TimeAmount newHours, UUID excludeEntryId) {
+    private void validateDailyLimit(UUID memberId, LocalDate date, TimeAmount newHours, UUID excludeEntryId) {
         BigDecimal existingTotal = workLogRepository.getTotalHoursForDate(memberId, date, excludeEntryId);
 
         BigDecimal newTotal = existingTotal.add(newHours.hours());

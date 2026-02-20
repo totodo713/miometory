@@ -1,5 +1,7 @@
 package com.worklog.domain.worklog.events;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
 import java.time.Instant;
@@ -32,10 +34,11 @@ public record DailyEntriesRejected(
             MemberId rejectedBy,
             String rejectionReason,
             Set<UUID> affectedEntryIds) {
+        UUID aggregateId = UUID.nameUUIDFromBytes((memberId.value() + ":" + workDate).getBytes(UTF_8));
         return new DailyEntriesRejected(
                 UUID.randomUUID(),
                 Instant.now(),
-                memberId.value(),
+                aggregateId,
                 memberId.value(),
                 workDate,
                 rejectedBy.value(),

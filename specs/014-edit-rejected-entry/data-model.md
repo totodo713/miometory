@@ -19,18 +19,18 @@
 | enteredBy | UUID | Required | Self or proxy manager |
 | version | long | Auto-increment | Optimistic locking |
 
-**Status Transitions** (unchanged):
+**Status Transitions** (updated):
 ```
 DRAFT → SUBMITTED (daily or monthly submit)
 SUBMITTED → APPROVED (monthly approve)
-SUBMITTED → REJECTED (monthly reject, then auto → DRAFT)
-SUBMITTED → DRAFT (daily recall)
-REJECTED → DRAFT (auto-transition)
+SUBMITTED → REJECTED (monthly reject)
+SUBMITTED → DRAFT (daily reject or daily recall)
+REJECTED → SUBMITTED (monthly resubmit)
 ```
 
-**Edit Rules** (unchanged):
-- `isEditable()`: true only when status == DRAFT
-- `isDeletable()`: true only when status == DRAFT
+**Edit Rules** (updated):
+- `isEditable()`: true when status == DRAFT || REJECTED
+- `isDeletable()`: true when status == DRAFT || REJECTED
 
 ### Absence (Aggregate)
 
@@ -81,9 +81,9 @@ Lightweight record tracking per-day rejection by a manager. Used for daily rejec
 | Field | Type | Constraints | Notes |
 |-------|------|-------------|-------|
 | id | UUID | PK | Auto-generated |
-| memberId | UUID | Required, FK → members | Target member |
+| memberId | UUID | Required | Target member |
 | workDate | LocalDate | Required | Rejected date |
-| rejectedBy | UUID | Required, FK → members | Manager who rejected |
+| rejectedBy | UUID | Required | Manager who rejected |
 | rejectionReason | String | Required, max 1000 chars | Manager's feedback |
 | affectedEntryIds | UUID[] | Required | Entries that were transitioned to DRAFT |
 | createdAt | Instant | Auto | When rejection occurred |
@@ -103,8 +103,6 @@ CREATE TABLE daily_rejection_log (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_daily_rejection_member_date UNIQUE (member_id, work_date)
 );
-
-CREATE INDEX idx_daily_rejection_member_date ON daily_rejection_log (member_id, work_date);
 ```
 
 ---

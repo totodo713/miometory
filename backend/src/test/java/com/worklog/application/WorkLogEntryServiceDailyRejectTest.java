@@ -1,5 +1,6 @@
 package com.worklog.application;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -110,6 +112,30 @@ class WorkLogEntryServiceDailyRejectTest {
 
             // Verify eventStore.append() was called with DailyEntriesRejected event type
             verify(eventStore).append(any(UUID.class), eq("DailyRejection"), anyList(), eq(0L));
+        }
+
+        @Test
+        @DisplayName("should use memberId:workDate derived aggregateId for event store")
+        void shouldUseDerivedAggregateIdForEventStore() {
+            // Arrange
+            when(memberRepository.isSubordinateOf(MemberId.of(MANAGER_ID), MemberId.of(MEMBER_ID)))
+                    .thenReturn(true);
+
+            WorkLogEntry entry1 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 4.0);
+            when(workLogRepository.findByDateRange(MEMBER_ID, WORK_DATE, WORK_DATE, WorkLogStatus.SUBMITTED))
+                    .thenReturn(List.of(entry1));
+
+            RejectDailyEntriesCommand command =
+                    new RejectDailyEntriesCommand(MEMBER_ID, WORK_DATE, MANAGER_ID, REJECTION_REASON);
+
+            // Act
+            service.rejectDailyEntries(command);
+
+            // Assert: aggregateId should be deterministic UUID from "memberId:workDate"
+            UUID expectedAggregateId = UUID.nameUUIDFromBytes((MEMBER_ID + ":" + WORK_DATE).getBytes(UTF_8));
+            ArgumentCaptor<UUID> aggregateIdCaptor = ArgumentCaptor.forClass(UUID.class);
+            verify(eventStore).append(aggregateIdCaptor.capture(), eq("DailyRejection"), anyList(), eq(0L));
+            assertEquals(expectedAggregateId, aggregateIdCaptor.getValue());
         }
 
         @Test
