@@ -1193,6 +1193,12 @@ BEGIN
     -- update dates due to PostgreSQL snapshot isolation within a single
     -- INSERT ... ON CONFLICT statement. This reconciliation step ensures
     -- projection dates, hours, and statuses always match the event store.
+    --
+    -- Three-step idempotent reconciliation:
+    --   Step 1: UPDATE rows whose dates/hours diverged from the event store.
+    --   Step 2: INSERT projection rows for events that have no projection yet.
+    --   Step 3: DELETE projection rows whose aggregate was deleted in the event store.
+    -- Each step is independently idempotent, so re-running seed data is safe.
 
     -- Step 1: Update existing projection rows whose dates/hours diverged
     UPDATE work_log_entries_projection p

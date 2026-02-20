@@ -9,7 +9,7 @@
  */
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Calendar } from "@/components/worklog/Calendar";
 import { CopyPreviousMonthDialog } from "@/components/worklog/CopyPreviousMonthDialog";
 import { MonthlySummary } from "@/components/worklog/MonthlySummary";
@@ -43,28 +43,35 @@ export default function WorkLogPage() {
   // Use target member ID if in proxy mode, otherwise use current user
   const effectiveMemberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: calendarRefreshKey is an intentional refresh trigger, not consumed in effect body
-  useEffect(() => {
-    async function loadCalendar() {
-      setIsLoading(true);
-      setError(null);
+  const loadCalendar = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const data = await api.worklog.getCalendar({
-          year,
-          month,
-          memberId: effectiveMemberId,
-        });
-        setCalendarData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load calendar");
-      } finally {
-        setIsLoading(false);
-      }
+    try {
+      const data = await api.worklog.getCalendar({
+        year,
+        month,
+        memberId: effectiveMemberId,
+      });
+      setCalendarData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load calendar");
+    } finally {
+      setIsLoading(false);
     }
+  }, [year, month, effectiveMemberId]);
 
+  // Initial load and parameter change
+  useEffect(() => {
     loadCalendar();
-  }, [year, month, effectiveMemberId, calendarRefreshKey]);
+  }, [loadCalendar]);
+
+  // Refresh after save
+  useEffect(() => {
+    if (calendarRefreshKey > 0) {
+      loadCalendar();
+    }
+  }, [calendarRefreshKey, loadCalendar]);
 
   const handlePreviousMonth = () => {
     if (month === 1) {

@@ -223,7 +223,13 @@ public class JdbcAbsenceRepository {
             switch (event) {
                 case AbsenceRecorded e -> {
                     Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
+                    // V13 migration backfills member records for users who signed up
+                    // before the fix. If this still fails, the member record is genuinely missing.
                     if (organizationId.isEmpty()) {
+                        logger.warn(
+                                "Cannot create projection for absence {}: member {} not found in members table",
+                                e.aggregateId(),
+                                e.memberId());
                         throw new IllegalStateException("Cannot create projection for absence " + e.aggregateId()
                                 + ": member " + e.memberId() + " not found in members table");
                     }

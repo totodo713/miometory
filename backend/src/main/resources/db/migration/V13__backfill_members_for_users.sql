@@ -2,6 +2,12 @@
 -- Description: Creates member records for users that signed up but had no corresponding
 -- member row, then rebuilds projections for any orphaned events.
 -- Fix: Signup only created users row, not members row, causing projections to be skipped.
+--
+-- UUIDs used below:
+--   550e8400-e29b-41d4-a716-446655440001  = default dev tenant  (see data-dev.sql / V2)
+--   880e8400-e29b-41d4-a716-446655440001  = default dev org     (see data-dev.sql / V2)
+-- The EXISTS guards ensure this migration is a safe no-op in production environments
+-- where these dev-specific tenant/organization rows do not exist.
 
 -- ============================================================================
 -- Backfill members for users without member records
