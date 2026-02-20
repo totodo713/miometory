@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../../services/api";
+import { ApiError, api } from "../../services/api";
 import { useCalendarRefresh } from "../../services/worklogStore";
 
 interface SubmitDailyButtonProps {
@@ -34,6 +34,7 @@ export function SubmitDailyButton({
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const { triggerRefresh } = useCalendarRefresh();
   const dialogRef = useRef<HTMLDivElement>(null);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle escape key and focus trap for confirmation dialog
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
@@ -76,6 +77,22 @@ export function SubmitDailyButton({
     }
   }, [showConfirmDialog]);
 
+  // Cleanup dismiss timer on unmount
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) {
+        clearTimeout(dismissTimerRef.current);
+      }
+    };
+  }, []);
+
+  const scheduleDismiss = () => {
+    if (dismissTimerRef.current) {
+      clearTimeout(dismissTimerRef.current);
+    }
+    dismissTimerRef.current = setTimeout(() => setSubmitSuccess(null), 3000);
+  };
+
   const handleSubmit = async () => {
     try {
       setShowConfirmDialog(false);
@@ -98,17 +115,12 @@ export function SubmitDailyButton({
       setSubmitSuccess(`${result.submittedCount} entries submitted successfully.`);
       triggerRefresh();
       onSubmitSuccess();
-
-      // Auto-dismiss success after 3 seconds
-      setTimeout(() => setSubmitSuccess(null), 3000);
+      scheduleDismiss();
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        // Check for 409 conflict
-        if (error.message.includes("409") || error.message.includes("modified") || error.message.includes("conflict")) {
-          setSubmitError("Entries were modified by another session. Please refresh and try again.");
-        } else {
-          setSubmitError(error.message);
-        }
+      if (error instanceof ApiError && (error.status === 409 || error.status === 412)) {
+        setSubmitError("Entries were modified by another session. Please refresh and try again.");
+      } else if (error instanceof Error) {
+        setSubmitError(error.message);
       } else {
         setSubmitError("Failed to submit entries. Please try again.");
       }
@@ -133,22 +145,14 @@ export function SubmitDailyButton({
       setSubmitSuccess(`${result.recalledCount} entries recalled to draft.`);
       triggerRefresh();
       onSubmitSuccess();
-
-      // Auto-dismiss success after 3 seconds
-      setTimeout(() => setSubmitSuccess(null), 3000);
+      scheduleDismiss();
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        if ("status" in error && (error as { status: number }).status === 422) {
-          setSubmitError("Manager has already acted on this submission. Recall is no longer available.");
-        } else if (
-          ("status" in error && (error as { status: number }).status === 409) ||
-          error.message.includes("conflict") ||
-          error.message.includes("modified")
-        ) {
-          setSubmitError("Entries were modified by another session. Please refresh and try again.");
-        } else {
-          setSubmitError(error.message);
-        }
+      if (error instanceof ApiError && error.status === 422) {
+        setSubmitError("Manager has already acted on this submission. Recall is no longer available.");
+      } else if (error instanceof ApiError && (error.status === 409 || error.status === 412)) {
+        setSubmitError("Entries were modified by another session. Please refresh and try again.");
+      } else if (error instanceof Error) {
+        setSubmitError(error.message);
       } else {
         setSubmitError("Failed to recall entries. Please try again.");
       }

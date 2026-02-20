@@ -1,15 +1,28 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock API module
-vi.mock("../../../../app/services/api", () => ({
-  api: {
-    worklog: {
-      submitDailyEntries: vi.fn(),
-      recallDailyEntries: vi.fn(),
+// Mock API module — factory is hoisted, so ApiError must be defined inline
+vi.mock("../../../../app/services/api", () => {
+  class ApiError extends Error {
+    status: number;
+    code?: string;
+    constructor(message: string, status: number, code?: string) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+      this.code = code;
+    }
+  }
+  return {
+    ApiError,
+    api: {
+      worklog: {
+        submitDailyEntries: vi.fn(),
+        recallDailyEntries: vi.fn(),
+      },
     },
-  },
-}));
+  };
+});
 
 // Mock worklog store
 vi.mock("../../../../app/services/worklogStore", () => ({
@@ -20,7 +33,7 @@ vi.mock("../../../../app/services/worklogStore", () => ({
 }));
 
 import { SubmitDailyButton } from "../../../../app/components/worklog/SubmitDailyButton";
-import { api } from "../../../../app/services/api";
+import { ApiError, api } from "../../../../app/services/api";
 
 const mockSubmitDailyEntries = api.worklog.submitDailyEntries as ReturnType<typeof vi.fn>;
 const mockRecallDailyEntries = api.worklog.recallDailyEntries as ReturnType<typeof vi.fn>;
@@ -123,7 +136,7 @@ describe("SubmitDailyButton", () => {
   });
 
   it("shows conflict-specific message on 409 error", async () => {
-    mockSubmitDailyEntries.mockRejectedValue(new Error("409 conflict"));
+    mockSubmitDailyEntries.mockRejectedValue(new ApiError("Conflict", 409, "OPTIMISTIC_LOCK_FAILURE"));
 
     render(<SubmitDailyButton {...defaultProps} />);
     fireEvent.click(screen.getByRole("button", { name: "Submit" }));
@@ -193,8 +206,7 @@ describe("SubmitDailyButton", () => {
     });
 
     it("shows error when recall is blocked by approval", async () => {
-      const error = Object.assign(new Error("422 RECALL_BLOCKED_BY_APPROVAL"), { status: 422 });
-      mockRecallDailyEntries.mockRejectedValue(error);
+      mockRecallDailyEntries.mockRejectedValue(new ApiError("Blocked", 422, "RECALL_BLOCKED_BY_APPROVAL"));
 
       render(<SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />);
       fireEvent.click(screen.getByRole("button", { name: "Recall" }));

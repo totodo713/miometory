@@ -598,14 +598,12 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
                 <SubmitDailyButton
                   date={date}
                   memberId={memberId}
-                  hasDraftEntries={projectRows.some((row) => row.status === "DRAFT" || (row.id && !row.status))}
-                  hasSubmittedEntries={projectRows.some((row) => row.status === "SUBMITTED")}
+                  hasDraftEntries={projectRows.some((row) => row.status === "DRAFT" || !row.status)}
+                  hasSubmittedEntries={projectRows.length > 0 && projectRows.every((row) => row.status === "SUBMITTED")}
                   hasUnsavedChanges={hasUnsavedChanges}
-                  draftEntryCount={
-                    projectRows.filter((row) => row.status === "DRAFT" || (row.id && !row.status)).length
-                  }
+                  draftEntryCount={projectRows.filter((row) => row.status === "DRAFT" || !row.status).length}
                   draftTotalHours={projectRows
-                    .filter((row) => row.status === "DRAFT" || (row.id && !row.status))
+                    .filter((row) => row.status === "DRAFT" || !row.status)
                     .reduce((sum, row) => sum + row.hours, 0)}
                   onSaveFirst={() => handleSave(false)}
                   onSubmitSuccess={() => {

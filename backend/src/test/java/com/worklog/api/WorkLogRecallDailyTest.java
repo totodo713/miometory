@@ -3,6 +3,7 @@ package com.worklog.api;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.worklog.IntegrationTestBase;
+import com.worklog.domain.shared.FiscalMonthPeriod;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,6 +34,8 @@ public class WorkLogRecallDailyTest extends IntegrationTestBase {
     private static final String ENTRIES_URL = "/api/v1/worklog/entries";
     private static final String SUBMIT_DAILY_URL = "/api/v1/worklog/entries/submit-daily";
     private static final String RECALL_DAILY_URL = "/api/v1/worklog/entries/recall-daily";
+    private static final String SUBMISSIONS_URL = "/api/v1/worklog/submissions";
+    private static final String APPROVALS_URL = "/api/v1/worklog/approvals";
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -190,6 +193,39 @@ public class WorkLogRecallDailyTest extends IntegrationTestBase {
             Map<String, Object> body = response.getBody();
             assertNotNull(body);
             assertEquals("SELF_RECALL_ONLY", body.get("errorCode"));
+        }
+
+        @Test
+        @DisplayName("Should return 422 when entries are part of a non-PENDING MonthlyApproval")
+        @SuppressWarnings("unchecked")
+        void shouldReturn422WhenBlockedByApproval() {
+            // Arrange: create entries and submit them daily
+            createDraftEntry(memberId, projectId, testDate, 4.0);
+            createDraftEntry(memberId, projectId2, testDate, 3.5);
+            submitEntries(memberId, testDate);
+
+            // Submit the fiscal month for approval (MonthlyApproval transitions to SUBMITTED status)
+            // This is sufficient to block recall — any non-PENDING approval status blocks it.
+            FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(testDate);
+            Map<String, Object> monthRequest = new LinkedHashMap<>();
+            monthRequest.put("memberId", memberId.toString());
+            monthRequest.put("fiscalMonthStart", fiscalMonth.startDate().toString());
+            monthRequest.put("fiscalMonthEnd", fiscalMonth.endDate().toString());
+            monthRequest.put("submittedBy", memberId.toString());
+
+            ResponseEntity<Map> submitMonthResponse =
+                    restTemplate.postForEntity(SUBMISSIONS_URL, monthRequest, Map.class);
+            assertEquals(HttpStatus.CREATED, submitMonthResponse.getStatusCode());
+
+            // Act: try to recall the entries that are now part of a SUBMITTED MonthlyApproval
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                    RECALL_DAILY_URL, recallRequest(memberId, testDate, memberId), Map.class);
+
+            // Assert: 422 Unprocessable Entity — recall blocked by approval
+            assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, response.getStatusCode());
+            Map<String, Object> body = response.getBody();
+            assertNotNull(body);
+            assertEquals("RECALL_BLOCKED_BY_APPROVAL", body.get("errorCode"));
         }
     }
 

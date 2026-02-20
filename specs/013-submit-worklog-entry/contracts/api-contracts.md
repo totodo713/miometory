@@ -102,6 +102,12 @@ Recall all SUBMITTED entries for a member on a specific date back to DRAFT statu
 
 ---
 
+## Security Notes
+
+> **TODO (pre-existing pattern):** Both `submittedBy` and `recalledBy` are currently client-supplied fields and are not validated against the authenticated user's identity from `SecurityContext`. This matches the existing pattern used throughout the codebase (e.g., `enteredBy` in entry creation). When Spring Security integration is completed (tracked separately), these fields should be derived from the authenticated session rather than accepted from the request body.
+
+---
+
 ## Existing Endpoints (No Changes)
 
 The following endpoints remain unchanged but are relevant to this feature:

@@ -221,15 +221,21 @@ public class WorkLogEntryService {
                     "No SUBMITTED entries found for member " + command.memberId() + " on " + command.date());
         }
 
-        // Check if entries are part of a MonthlyApproval with non-PENDING status
+        // Check if any of these entries are part of a MonthlyApproval with non-PENDING status
         FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(command.date());
         java.util.Optional<MonthlyApproval> approval =
                 approvalRepository.findByMemberAndFiscalMonth(MemberId.of(command.memberId()), fiscalMonth);
         if (approval.isPresent() && approval.get().getStatus() != ApprovalStatus.PENDING) {
-            throw new DomainException(
-                    "RECALL_BLOCKED_BY_APPROVAL",
-                    "Cannot recall entries — the monthly approval for this period is in "
-                            + approval.get().getStatus() + " status.");
+            // Only block if the approval actually contains any of the entries being recalled
+            java.util.Set<UUID> approvalEntryIds = approval.get().getWorkLogEntryIds();
+            boolean hasOverlap = submittedEntries.stream()
+                    .anyMatch(entry -> approvalEntryIds.contains(entry.getId().value()));
+            if (hasOverlap) {
+                throw new DomainException(
+                        "RECALL_BLOCKED_BY_APPROVAL",
+                        "Cannot recall entries — the monthly approval for this period is in "
+                                + approval.get().getStatus() + " status.");
+            }
         }
 
         // Transition all SUBMITTED entries back to DRAFT
