@@ -13,7 +13,7 @@ package com.worklog.domain.worklog;
  * - DRAFT entries are editable and deletable
  * - SUBMITTED entries are read-only (pending manager approval)
  * - APPROVED entries are read-only (locked permanently)
- * - REJECTED entries auto-transition to DRAFT for correction
+ * - REJECTED entries are editable and deletable (same as DRAFT, for correction)
  */
 public enum WorkLogStatus {
     /**
@@ -35,22 +35,24 @@ public enum WorkLogStatus {
     APPROVED,
     /**
      * Entry was rejected by manager.
-     * Auto-transitions to DRAFT for correction.
+     * Editable and deletable, same as DRAFT, for correction.
      */
     REJECTED;
 
     /**
      * Checks if this status allows editing.
+     * Both DRAFT and REJECTED entries can be edited.
      */
     public boolean isEditable() {
-        return this == DRAFT;
+        return this == DRAFT || this == REJECTED;
     }
 
     /**
      * Checks if this status allows deletion.
+     * Both DRAFT and REJECTED entries can be deleted.
      */
     public boolean isDeletable() {
-        return this == DRAFT;
+        return this == DRAFT || this == REJECTED;
     }
 
     /**
@@ -61,7 +63,7 @@ public enum WorkLogStatus {
             case DRAFT -> target == SUBMITTED;
             case SUBMITTED ->
                 target == APPROVED || target == REJECTED || target == DRAFT; // Allow direct to DRAFT on rejection
-            case REJECTED -> target == DRAFT;
+            case REJECTED -> target == DRAFT || target == SUBMITTED;
             case APPROVED -> false; // Approved entries cannot transition
         };
     }

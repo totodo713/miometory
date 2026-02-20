@@ -182,6 +182,16 @@ export function Calendar({ year, month, dates, onDateSelect }: CalendarProps) {
                   </div>
                 )}
 
+                {/* Rejection indicator */}
+                {dateEntry.rejectionSource && (
+                  <div className="mt-1">
+                    <span
+                      className="inline-block w-full h-0.5 rounded bg-red-400"
+                      title={`${dateEntry.rejectionSource === "monthly" ? "Monthly" : "Daily"} rejection: ${dateEntry.rejectionReason ?? ""}`}
+                    />
+                  </div>
+                )}
+
                 {/* Status badge */}
                 {(dateEntry.status !== "DRAFT" || hasAnyHours) && (
                   <div className="mt-1">

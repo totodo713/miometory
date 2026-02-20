@@ -2,18 +2,23 @@ package com.worklog.api;
 
 import com.worklog.api.dto.ApprovalQueueResponse;
 import com.worklog.api.dto.ApproveMonthRequest;
+import com.worklog.api.dto.MemberApprovalResponse;
 import com.worklog.api.dto.RejectMonthRequest;
 import com.worklog.api.dto.SubmitMonthRequest;
 import com.worklog.application.approval.ApprovalService;
 import com.worklog.application.approval.ApproveMonthCommand;
 import com.worklog.application.approval.RejectMonthCommand;
 import com.worklog.application.approval.SubmitMonthForApprovalCommand;
+import com.worklog.domain.approval.MonthlyApproval;
 import com.worklog.domain.approval.MonthlyApprovalId;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.shared.FiscalMonthPeriod;
 import com.worklog.infrastructure.projection.ApprovalQueueData;
 import com.worklog.infrastructure.projection.ApprovalQueueProjection;
+import com.worklog.infrastructure.repository.JdbcApprovalRepository;
+import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,10 +39,15 @@ public class ApprovalController {
 
     private final ApprovalService approvalService;
     private final ApprovalQueueProjection approvalQueueProjection;
+    private final JdbcApprovalRepository approvalRepository;
 
-    public ApprovalController(ApprovalService approvalService, ApprovalQueueProjection approvalQueueProjection) {
+    public ApprovalController(
+            ApprovalService approvalService,
+            ApprovalQueueProjection approvalQueueProjection,
+            JdbcApprovalRepository approvalRepository) {
         this.approvalService = approvalService;
         this.approvalQueueProjection = approvalQueueProjection;
+        this.approvalRepository = approvalRepository;
     }
 
     /**
@@ -183,6 +193,50 @@ public class ApprovalController {
         approvalService.rejectMonth(command);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Get approval status for a member's fiscal month.
+     *
+     * GET /api/v1/worklog/approvals/member/{memberId}?fiscalMonthStart=...&fiscalMonthEnd=...
+     *
+     * Returns the current approval status including rejection reason if rejected.
+     * Used by the member UI to display approval feedback.
+     *
+     * @param memberId Member ID
+     * @param fiscalMonthStart Fiscal month start date
+     * @param fiscalMonthEnd Fiscal month end date
+     * @return 200 OK with approval details, or 404 if no approval record exists
+     */
+    @GetMapping("/approvals/member/{memberId}")
+    public ResponseEntity<MemberApprovalResponse> getMemberApproval(
+            @PathVariable UUID memberId,
+            @RequestParam LocalDate fiscalMonthStart,
+            @RequestParam LocalDate fiscalMonthEnd) {
+        FiscalMonthPeriod fiscalMonth = new FiscalMonthPeriod(fiscalMonthStart, fiscalMonthEnd);
+
+        Optional<MonthlyApproval> approval =
+                approvalRepository.findByMemberAndFiscalMonth(MemberId.of(memberId), fiscalMonth);
+
+        if (approval.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        MonthlyApproval a = approval.get();
+
+        MemberApprovalResponse response = new MemberApprovalResponse(
+                a.getId().value(),
+                a.getMemberId().value(),
+                a.getFiscalMonth().startDate(),
+                a.getFiscalMonth().endDate(),
+                a.getStatus().toString(),
+                a.getSubmittedAt(),
+                a.getReviewedAt(),
+                a.getReviewedBy() != null ? a.getReviewedBy().value() : null,
+                null, // TODO: Fetch reviewer name from member repository
+                a.getRejectionReason());
+
+        return ResponseEntity.ok(response);
     }
 
     /**

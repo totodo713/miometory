@@ -94,7 +94,7 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
         if (!isEditable()) {
             throw new DomainException(
                     "ENTRY_NOT_EDITABLE",
-                    "Cannot update entry in " + status + " status. Only DRAFT entries can be edited.");
+                    "Cannot update entry in " + status + " status. Only DRAFT or REJECTED entries can be edited.");
         }
 
         validateComment(comment);
@@ -114,7 +114,7 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
         if (!isDeletable()) {
             throw new DomainException(
                     "ENTRY_NOT_DELETABLE",
-                    "Cannot delete entry in " + status + " status. Only DRAFT entries can be deleted.");
+                    "Cannot delete entry in " + status + " status. Only DRAFT or REJECTED entries can be deleted.");
         }
 
         WorkLogEntryDeleted event = WorkLogEntryDeleted.create(this.id, deletedBy);
@@ -141,18 +141,18 @@ public class WorkLogEntry extends AggregateRoot<WorkLogEntryId> {
 
     /**
      * Checks if the entry can be edited.
-     * Only DRAFT entries are editable.
+     * DRAFT and REJECTED entries are editable.
      */
     public boolean isEditable() {
-        return status == WorkLogStatus.DRAFT;
+        return status.isEditable();
     }
 
     /**
      * Checks if the entry can be deleted.
-     * Only DRAFT entries can be deleted.
+     * DRAFT and REJECTED entries can be deleted.
      */
     public boolean isDeletable() {
-        return status == WorkLogStatus.DRAFT;
+        return status.isDeletable();
     }
 
     /**

@@ -408,6 +408,43 @@ export const api = {
           version: number;
         }>;
       }>("/api/v1/worklog/entries/recall-daily", data),
+
+    /**
+     * Reject all SUBMITTED entries for a member on a specific date
+     */
+    rejectDailyEntries: (data: { memberId: string; date: string; rejectedBy: string; rejectionReason: string }) =>
+      apiClient.post<{
+        rejectedCount: number;
+        date: string;
+        rejectionReason: string;
+        entries: Array<{
+          id: string;
+          projectId: string;
+          hours: number;
+          status: string;
+          version: number;
+        }>;
+      }>("/api/v1/worklog/entries/reject-daily", data),
+
+    /**
+     * Get daily rejection log entries for a member within a date range
+     */
+    getDailyRejections: (params: { memberId: string; startDate: string; endDate: string }) => {
+      const query = new URLSearchParams({
+        memberId: params.memberId,
+        startDate: params.startDate,
+        endDate: params.endDate,
+      });
+      return apiClient.get<{
+        rejections: Array<{
+          date: string;
+          rejectionReason: string;
+          rejectedBy: string;
+          rejectedByName: string | null;
+          rejectedAt: string;
+        }>;
+      }>(`/api/v1/worklog/rejections/daily?${query}`);
+    },
   },
 
   /**
@@ -547,6 +584,28 @@ export const api = {
      */
     rejectMonth: (approvalId: string, data: { reviewedBy: string; rejectionReason: string }) =>
       apiClient.post<void>(`/api/v1/worklog/approvals/${approvalId}/reject`, data),
+
+    /**
+     * Get member's approval status for a fiscal month
+     */
+    getMemberApproval: (params: { memberId: string; fiscalMonthStart: string; fiscalMonthEnd: string }) => {
+      const query = new URLSearchParams({
+        fiscalMonthStart: params.fiscalMonthStart,
+        fiscalMonthEnd: params.fiscalMonthEnd,
+      });
+      return apiClient.get<{
+        approvalId: string;
+        memberId: string;
+        fiscalMonthStart: string;
+        fiscalMonthEnd: string;
+        status: string;
+        submittedAt: string | null;
+        reviewedAt: string | null;
+        reviewedBy: string | null;
+        reviewerName: string | null;
+        rejectionReason: string | null;
+      }>(`/api/v1/worklog/approvals/member/${params.memberId}?${query}`);
+    },
   },
 
   /**

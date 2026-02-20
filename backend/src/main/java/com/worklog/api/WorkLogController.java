@@ -4,6 +4,7 @@ import com.worklog.api.dto.*;
 import com.worklog.application.command.CreateWorkLogEntryCommand;
 import com.worklog.application.command.DeleteWorkLogEntryCommand;
 import com.worklog.application.command.RecallDailyEntriesCommand;
+import com.worklog.application.command.RejectDailyEntriesCommand;
 import com.worklog.application.command.SubmitDailyEntriesCommand;
 import com.worklog.application.command.UpdateWorkLogEntryCommand;
 import com.worklog.application.service.WorkLogEntryService;
@@ -227,6 +228,34 @@ public class WorkLogController {
     }
 
     /**
+     * Reject all SUBMITTED entries for a member on a specific date.
+     *
+     * POST /api/v1/worklog/entries/reject-daily
+     *
+     * @return 200 OK with rejection results
+     */
+    @PostMapping("/reject-daily")
+    public ResponseEntity<RejectDailyEntriesResponse> rejectDailyEntries(
+            @RequestBody RejectDailyEntriesRequest request) {
+        RejectDailyEntriesCommand command = new RejectDailyEntriesCommand(
+                request.memberId(), request.date(), request.rejectedBy(), request.rejectionReason());
+
+        List<WorkLogEntry> entries = workLogService.rejectDailyEntries(command);
+
+        List<RejectDailyEntriesResponse.RejectedEntryItem> items = entries.stream()
+                .map(e -> new RejectDailyEntriesResponse.RejectedEntryItem(
+                        e.getId().value(),
+                        e.getProjectId().value(),
+                        e.getHours().hours(),
+                        e.getStatus().toString(),
+                        e.getVersion()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(
+                new RejectDailyEntriesResponse(items.size(), request.date(), request.rejectionReason(), items));
+    }
+
+    /**
      * Exception handler for DomainException, specifically handling validation errors
      * like the 24-hour daily limit (DAILY_LIMIT_EXCEEDED).
      *
@@ -248,7 +277,8 @@ public class WorkLogController {
             status = HttpStatus.CONFLICT;
         } else if (errorCode.contains("NOT_FOUND")
                 || errorCode.equals("NO_DRAFT_ENTRIES")
-                || errorCode.equals("NO_SUBMITTED_ENTRIES")) {
+                || errorCode.equals("NO_SUBMITTED_ENTRIES")
+                || errorCode.equals("NO_SUBMITTED_ENTRIES_FOR_DATE")) {
             status = HttpStatus.NOT_FOUND;
         } else if (errorCode.equals("SELF_SUBMISSION_ONLY")
                 || errorCode.equals("SELF_RECALL_ONLY")
@@ -264,7 +294,8 @@ public class WorkLogController {
                 || errorCode.contains("NOT_EDITABLE")
                 || errorCode.contains("NOT_DELETABLE")
                 || errorCode.contains("INCREMENT")
-                || errorCode.equals("RECALL_BLOCKED_BY_APPROVAL")) {
+                || errorCode.equals("RECALL_BLOCKED_BY_APPROVAL")
+                || errorCode.equals("REJECT_BLOCKED_BY_APPROVAL")) {
             status = HttpStatus.UNPROCESSABLE_ENTITY;
         } else {
             status = HttpStatus.BAD_REQUEST;

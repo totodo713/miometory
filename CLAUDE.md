@@ -156,6 +156,8 @@ When responding to PR review comments:
 - PostgreSQL 17 (users table via V11 migration, session-based auth via Spring Security) (012-login-auth-ui)
 - Java 21 (domain), Kotlin 2.3.0 (infrastructure), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Next.js 16.x, React 19.x, Tailwind CSS, Zustand (013-submit-worklog-entry)
 - PostgreSQL 17 with JSONB event store (event sourcing) (013-submit-worklog-entry)
+- Java 21 (domain), Kotlin 2.3.0 (infrastructure/tests), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Next.js 16.x, React 19.x, Tailwind CSS, Zustand (014-edit-rejected-entry)
+- PostgreSQL 17 with JSONB event store + projection tables, Flyway migrations (014-edit-rejected-entry)
 
 ## Recent Changes
 - 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl

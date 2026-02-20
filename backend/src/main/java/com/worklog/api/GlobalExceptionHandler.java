@@ -58,7 +58,8 @@ public class GlobalExceptionHandler {
                         || errorCode.contains("CANNOT_SUBMIT")
                         || errorCode.contains("CANNOT_APPROVE")
                         || errorCode.contains("CANNOT_REJECT")
-                        || errorCode.contains("RECALL_BLOCKED_BY_APPROVAL"));
+                        || errorCode.contains("RECALL_BLOCKED_BY_APPROVAL")
+                        || errorCode.contains("REJECT_BLOCKED_BY_APPROVAL"));
     }
 
     /**
@@ -158,6 +159,8 @@ public class GlobalExceptionHandler {
                 errorCode = "REJECTION_REASON_REQUIRED";
             } else if (message.contains("rejectionReason must not exceed")) {
                 errorCode = "REJECTION_REASON_TOO_LONG";
+            } else if (message.contains("rejectedBy is required")) {
+                errorCode = "REJECTED_BY_REQUIRED";
             }
         }
 

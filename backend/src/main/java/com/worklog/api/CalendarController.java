@@ -2,15 +2,23 @@ package com.worklog.api;
 
 import com.worklog.api.dto.DailyCalendarEntry;
 import com.worklog.api.dto.MonthlyCalendarResponse;
+import com.worklog.domain.approval.MonthlyApproval;
+import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainException;
+import com.worklog.domain.shared.FiscalMonthPeriod;
 import com.worklog.infrastructure.projection.DailyEntryProjection;
 import com.worklog.infrastructure.projection.MonthlyCalendarProjection;
 import com.worklog.infrastructure.projection.MonthlySummaryData;
 import com.worklog.infrastructure.projection.MonthlySummaryProjection;
+import com.worklog.infrastructure.repository.JdbcApprovalRepository;
+import com.worklog.infrastructure.repository.JdbcDailyRejectionLogRepository;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,11 +34,18 @@ public class CalendarController {
 
     private final MonthlyCalendarProjection calendarProjection;
     private final MonthlySummaryProjection summaryProjection;
+    private final JdbcApprovalRepository approvalRepository;
+    private final JdbcDailyRejectionLogRepository dailyRejectionLogRepository;
 
     public CalendarController(
-            MonthlyCalendarProjection calendarProjection, MonthlySummaryProjection summaryProjection) {
+            MonthlyCalendarProjection calendarProjection,
+            MonthlySummaryProjection summaryProjection,
+            JdbcApprovalRepository approvalRepository,
+            JdbcDailyRejectionLogRepository dailyRejectionLogRepository) {
         this.calendarProjection = calendarProjection;
         this.summaryProjection = summaryProjection;
+        this.approvalRepository = approvalRepository;
+        this.dailyRejectionLogRepository = dailyRejectionLogRepository;
     }
 
     /**
@@ -72,16 +87,57 @@ public class CalendarController {
         // Get daily entries from projection
         List<DailyEntryProjection> projections = calendarProjection.getDailyEntries(memberId, periodStart, periodEnd);
 
-        // Convert to response DTOs
+        // Get monthly approval status
+        FiscalMonthPeriod fiscalMonth = new FiscalMonthPeriod(periodStart, periodEnd);
+        Optional<MonthlyApproval> approval =
+                approvalRepository.findByMemberAndFiscalMonth(MemberId.of(memberId), fiscalMonth);
+
+        MonthlyCalendarResponse.MonthlyApprovalSummary approvalSummary = approval.map(
+                        a -> new MonthlyCalendarResponse.MonthlyApprovalSummary(
+                                a.getId().value(),
+                                a.getStatus().toString(),
+                                a.getRejectionReason(),
+                                a.getReviewedBy() != null ? a.getReviewedBy().value() : null,
+                                null, // TODO: Fetch reviewer name from member repository
+                                a.getReviewedAt()))
+                .orElse(null);
+
+        // Get daily rejection log entries for enrichment
+        Map<LocalDate, JdbcDailyRejectionLogRepository.DailyRejectionRecord> dailyRejections =
+                dailyRejectionLogRepository.findByMemberIdAndDateRange(memberId, periodStart, periodEnd).stream()
+                        .collect(Collectors.toMap(
+                                JdbcDailyRejectionLogRepository.DailyRejectionRecord::workDate, Function.identity()));
+
+        // Determine if the month is currently in REJECTED status
+        boolean isMonthlyRejected = approvalSummary != null && "REJECTED".equals(approvalSummary.status());
+
+        // Convert to response DTOs with rejection enrichment
         List<DailyCalendarEntry> entries = projections.stream()
-                .map(p -> new DailyCalendarEntry(
-                        p.date(),
-                        p.totalWorkHours(),
-                        p.totalAbsenceHours(),
-                        p.status(),
-                        p.isWeekend(),
-                        p.isHoliday(),
-                        p.hasProxyEntries()))
+                .map(p -> {
+                    String rejectionSource = null;
+                    String rejectionReason = null;
+
+                    // Daily rejection takes precedence over monthly
+                    JdbcDailyRejectionLogRepository.DailyRejectionRecord dailyRejection = dailyRejections.get(p.date());
+                    if (dailyRejection != null && "DRAFT".equals(p.status())) {
+                        rejectionSource = "daily";
+                        rejectionReason = dailyRejection.rejectionReason();
+                    } else if (isMonthlyRejected && "DRAFT".equals(p.status())) {
+                        rejectionSource = "monthly";
+                        rejectionReason = approvalSummary.rejectionReason();
+                    }
+
+                    return new DailyCalendarEntry(
+                            p.date(),
+                            p.totalWorkHours(),
+                            p.totalAbsenceHours(),
+                            p.status(),
+                            p.isWeekend(),
+                            p.isHoliday(),
+                            p.hasProxyEntries(),
+                            rejectionSource,
+                            rejectionReason);
+                })
                 .collect(Collectors.toList());
 
         MonthlyCalendarResponse response = new MonthlyCalendarResponse(
@@ -89,7 +145,8 @@ public class CalendarController {
                 "Member Name", // TODO: Fetch from member repository
                 periodStart,
                 periodEnd,
-                entries);
+                entries,
+                approvalSummary);
 
         return ResponseEntity.ok(response);
     }

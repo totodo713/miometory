@@ -64,6 +64,8 @@ export interface DailyCalendarEntry {
   isWeekend: boolean;
   isHoliday: boolean;
   hasProxyEntries: boolean;
+  rejectionSource: "monthly" | "daily" | null;
+  rejectionReason: string | null;
 }
 
 /**
@@ -75,6 +77,19 @@ export interface MonthlyCalendarResponse {
   periodStart: string; // ISO date format
   periodEnd: string; // ISO date format
   dates: DailyCalendarEntry[];
+  monthlyApproval: MonthlyApprovalSummary | null;
+}
+
+/**
+ * Summary of monthly approval status in calendar response
+ */
+export interface MonthlyApprovalSummary {
+  approvalId: string;
+  status: string;
+  rejectionReason: string | null;
+  reviewedBy: string | null;
+  reviewerName: string | null;
+  reviewedAt: string | null;
 }
 
 /**

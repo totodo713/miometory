@@ -12,6 +12,7 @@ import com.worklog.domain.worklog.WorkLogEntryId;
 import com.worklog.domain.worklog.WorkLogStatus;
 import com.worklog.infrastructure.repository.JdbcAbsenceRepository;
 import com.worklog.infrastructure.repository.JdbcApprovalRepository;
+import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,14 +42,17 @@ public class ApprovalService {
     private final JdbcApprovalRepository approvalRepository;
     private final JdbcWorkLogRepository workLogRepository;
     private final JdbcAbsenceRepository absenceRepository;
+    private final JdbcMemberRepository memberRepository;
 
     public ApprovalService(
             JdbcApprovalRepository approvalRepository,
             JdbcWorkLogRepository workLogRepository,
-            JdbcAbsenceRepository absenceRepository) {
+            JdbcAbsenceRepository absenceRepository,
+            JdbcMemberRepository memberRepository) {
         this.approvalRepository = approvalRepository;
         this.workLogRepository = workLogRepository;
         this.absenceRepository = absenceRepository;
+        this.memberRepository = memberRepository;
     }
 
     /**
@@ -67,6 +71,15 @@ public class ApprovalService {
      */
     @Transactional
     public MonthlyApprovalId submitMonth(SubmitMonthForApprovalCommand command) {
+        // Validate proxy permission if submitting on behalf of someone else
+        if (!command.memberId().equals(command.submittedBy())) {
+            if (!memberRepository.isSubordinateOf(command.submittedBy(), command.memberId())) {
+                throw new DomainException(
+                        "PROXY_ENTRY_NOT_ALLOWED",
+                        "Manager does not have permission to submit on behalf of member " + command.memberId());
+            }
+        }
+
         // Find or create approval record
         MonthlyApproval approval = approvalRepository
                 .findByMemberAndFiscalMonth(command.memberId(), command.fiscalMonth())

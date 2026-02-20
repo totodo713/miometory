@@ -13,7 +13,9 @@ import com.worklog.domain.shared.TimeAmount;
 import com.worklog.domain.worklog.WorkLogEntry;
 import com.worklog.domain.worklog.WorkLogEntryId;
 import com.worklog.domain.worklog.WorkLogStatus;
+import com.worklog.eventsourcing.EventStore;
 import com.worklog.infrastructure.repository.JdbcApprovalRepository;
+import com.worklog.infrastructure.repository.JdbcDailyRejectionLogRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
 import java.time.LocalDate;
@@ -48,6 +50,12 @@ class WorkLogEntryServiceRecallTest {
     @Mock
     private JdbcApprovalRepository approvalRepository;
 
+    @Mock
+    private JdbcDailyRejectionLogRepository dailyRejectionLogRepository;
+
+    @Mock
+    private EventStore eventStore;
+
     private WorkLogEntryService service;
 
     private static final UUID MEMBER_ID = UUID.randomUUID();
@@ -55,7 +63,8 @@ class WorkLogEntryServiceRecallTest {
 
     @BeforeEach
     void setUp() {
-        service = new WorkLogEntryService(workLogRepository, memberRepository, approvalRepository);
+        service = new WorkLogEntryService(
+                workLogRepository, memberRepository, approvalRepository, dailyRejectionLogRepository, eventStore);
     }
 
     @Test
@@ -86,20 +95,23 @@ class WorkLogEntryServiceRecallTest {
     }
 
     @Test
-    @DisplayName("should throw SELF_RECALL_ONLY when recalledBy differs from memberId")
+    @DisplayName("should throw PROXY_ENTRY_NOT_ALLOWED when recalledBy is not authorized")
     void shouldThrowWhenRecalledByDifferentMember() {
-        // Arrange: recalledBy is a different member
+        // Arrange: recalledBy is a different member who is not a manager
         UUID otherMemberId = UUID.randomUUID();
+        when(memberRepository.isSubordinateOf(MemberId.of(otherMemberId), MemberId.of(MEMBER_ID)))
+                .thenReturn(false);
+
         RecallDailyEntriesCommand command = new RecallDailyEntriesCommand(MEMBER_ID, WORK_DATE, otherMemberId);
 
         // Act & Assert
         DomainException exception = assertThrows(DomainException.class, () -> service.recallDailyEntries(command));
 
-        assertEquals("SELF_RECALL_ONLY", exception.getErrorCode());
-        assertTrue(exception.getMessage().contains("Proxy recall is not allowed"));
+        assertEquals("PROXY_ENTRY_NOT_ALLOWED", exception.getErrorCode());
+        assertTrue(exception.getMessage().contains("does not have permission"));
 
-        // Repository should never be called
-        verifyNoInteractions(workLogRepository);
+        // Work log repository should never be called
+        verify(workLogRepository, never()).findByDateRange(any(), any(), any(), any());
     }
 
     @Test

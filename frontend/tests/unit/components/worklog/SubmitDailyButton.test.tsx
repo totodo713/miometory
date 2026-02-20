@@ -30,6 +30,11 @@ vi.mock("../../../../app/services/worklogStore", () => ({
     calendarRefreshKey: 0,
     triggerRefresh: vi.fn(),
   }),
+  useProxyMode: () => ({
+    isProxyMode: false,
+    managerId: null,
+    targetMember: null,
+  }),
 }));
 
 import { SubmitDailyButton } from "../../../../app/components/worklog/SubmitDailyButton";
