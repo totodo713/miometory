@@ -55,6 +55,21 @@ public class JdbcDailyRejectionLogRepository {
     }
 
     /**
+     * Check if a daily rejection log entry exists for a member on a specific date.
+     * Used by recall logic to determine if entries went through a daily rejection cycle.
+     */
+    public boolean existsByMemberIdAndDate(UUID memberId, LocalDate workDate) {
+        String sql = """
+                SELECT COUNT(*) > 0
+                FROM daily_rejection_log
+                WHERE member_id = ?
+                AND work_date = ?
+                """;
+
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, memberId, workDate));
+    }
+
+    /**
      * Find daily rejection log entries for a member within a date range.
      * Used to enrich calendar entries with daily rejection data.
      */

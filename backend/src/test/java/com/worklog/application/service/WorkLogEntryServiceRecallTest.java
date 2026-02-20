@@ -153,6 +153,10 @@ class WorkLogEntryServiceRecallTest {
         when(approvalRepository.findByMemberAndFiscalMonth(MemberId.of(MEMBER_ID), fiscalMonth))
                 .thenReturn(Optional.of(approval));
 
+        // No daily rejection log exists — entries were never daily-rejected
+        when(dailyRejectionLogRepository.existsByMemberIdAndDate(MEMBER_ID, WORK_DATE))
+                .thenReturn(false);
+
         RecallDailyEntriesCommand command = new RecallDailyEntriesCommand(MEMBER_ID, WORK_DATE, MEMBER_ID);
 
         // Act & Assert
@@ -163,6 +167,39 @@ class WorkLogEntryServiceRecallTest {
 
         // save() should never be called — recall was blocked
         verify(workLogRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("should allow recall when entries were daily-rejected (rejection log exists)")
+    void shouldAllowRecallWhenDailyRejected() {
+        // Arrange: SUBMITTED entry that overlaps with a SUBMITTED MonthlyApproval
+        WorkLogEntry entry1 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 4.0);
+
+        when(workLogRepository.findByDateRange(MEMBER_ID, WORK_DATE, WORK_DATE, WorkLogStatus.SUBMITTED))
+                .thenReturn(List.of(entry1));
+
+        FiscalMonthPeriod fiscalMonth = FiscalMonthPeriod.forDate(WORK_DATE);
+        MonthlyApproval approval = MonthlyApproval.create(MemberId.of(MEMBER_ID), fiscalMonth);
+        approval.submit(
+                MemberId.of(MEMBER_ID), Set.of(WorkLogEntryId.of(entry1.getId().value())), Set.of());
+        approval.clearUncommittedEvents();
+
+        when(approvalRepository.findByMemberAndFiscalMonth(MemberId.of(MEMBER_ID), fiscalMonth))
+                .thenReturn(Optional.of(approval));
+
+        // Daily rejection log EXISTS — entries went through a daily rejection cycle
+        when(dailyRejectionLogRepository.existsByMemberIdAndDate(MEMBER_ID, WORK_DATE))
+                .thenReturn(true);
+
+        RecallDailyEntriesCommand command = new RecallDailyEntriesCommand(MEMBER_ID, WORK_DATE, MEMBER_ID);
+
+        // Act
+        List<WorkLogEntry> result = service.recallDailyEntries(command);
+
+        // Assert: recall succeeds, entries are DRAFT
+        assertEquals(1, result.size());
+        assertEquals(WorkLogStatus.DRAFT, result.getFirst().getStatus());
+        verify(workLogRepository, times(1)).save(any(WorkLogEntry.class));
     }
 
     /**

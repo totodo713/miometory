@@ -122,6 +122,21 @@ abstract class IntegrationTestBase {
     }
 
     /**
+     * Sets the manager for a member. Call after creating both members.
+     * This establishes the subordinate relationship used by isSubordinateOf().
+     * Uses a separate committed transaction so the data is visible to HTTP requests.
+     */
+    protected fun setManagerForMember(memberId: UUID, managerId: UUID) {
+        executeInNewTransaction {
+            baseJdbcTemplate.update(
+                "UPDATE members SET manager_id = ? WHERE id = ?",
+                managerId,
+                memberId,
+            )
+        }
+    }
+
+    /**
      * Creates a project record for testing. Call this before creating work log entries that reference the project.
      * Uses a separate committed transaction so the data is visible to HTTP requests.
      */

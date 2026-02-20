@@ -250,13 +250,11 @@ public class WorkLogEntryService {
             boolean hasOverlap = submittedEntries.stream()
                     .anyMatch(entry -> approvalEntryIds.contains(entry.getId().value()));
             if (hasOverlap) {
-                // If entries were re-submitted after the monthly approval was created
-                // (i.e., they went through a rejection/edit/re-submit cycle), allow recall.
-                java.time.Instant approvalSubmittedAt = approval.get().getSubmittedAt();
-                boolean allReSubmittedAfterApproval = submittedEntries.stream()
-                        .filter(entry -> approvalEntryIds.contains(entry.getId().value()))
-                        .allMatch(entry -> entry.getUpdatedAt().isAfter(approvalSubmittedAt));
-                if (!allReSubmittedAfterApproval) {
+                // If entries were daily-rejected (a daily rejection log exists for this date),
+                // they were released from the monthly approval and can be recalled after re-submission.
+                boolean wasDailyRejected =
+                        dailyRejectionLogRepository.existsByMemberIdAndDate(command.memberId(), command.date());
+                if (!wasDailyRejected) {
                     throw new DomainException(
                             "RECALL_BLOCKED_BY_APPROVAL",
                             "Cannot recall entries — the monthly approval for this period is in "
@@ -289,6 +287,12 @@ public class WorkLogEntryService {
      */
     @Transactional
     public List<WorkLogEntry> rejectDailyEntries(RejectDailyEntriesCommand command) {
+        // Validate rejection permission: rejectedBy must be a manager of the member
+        if (command.rejectedBy().equals(command.memberId())) {
+            throw new DomainException("SELF_REJECTION_NOT_ALLOWED", "Members cannot reject their own entries.");
+        }
+        validateProxyEntryPermission(command.rejectedBy(), command.memberId());
+
         // Query SUBMITTED entries for member + date
         List<WorkLogEntry> submittedEntries = workLogRepository.findByDateRange(
                 command.memberId(), command.date(), command.date(), WorkLogStatus.SUBMITTED);

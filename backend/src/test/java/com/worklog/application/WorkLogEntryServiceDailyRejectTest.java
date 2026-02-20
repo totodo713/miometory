@@ -78,7 +78,11 @@ class WorkLogEntryServiceDailyRejectTest {
         @Test
         @DisplayName("should reject all SUBMITTED entries for date")
         void shouldRejectAllSubmittedEntriesForDate() {
-            // Arrange: 2 SUBMITTED entries for the same member and date
+            // Arrange: manager has permission over member
+            when(memberRepository.isSubordinateOf(MemberId.of(MANAGER_ID), MemberId.of(MEMBER_ID)))
+                    .thenReturn(true);
+
+            // 2 SUBMITTED entries for the same member and date
             WorkLogEntry entry1 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 4.0);
             WorkLogEntry entry2 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 3.5);
 
@@ -111,7 +115,11 @@ class WorkLogEntryServiceDailyRejectTest {
         @Test
         @DisplayName("should return all affected entries")
         void shouldReturnAllAffectedEntries() {
-            // Arrange: 3 SUBMITTED entries
+            // Arrange: manager has permission over member
+            when(memberRepository.isSubordinateOf(MemberId.of(MANAGER_ID), MemberId.of(MEMBER_ID)))
+                    .thenReturn(true);
+
+            // 3 SUBMITTED entries
             WorkLogEntry entry1 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 1.0);
             WorkLogEntry entry2 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 2.0);
             WorkLogEntry entry3 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 0.5);
@@ -141,9 +149,49 @@ class WorkLogEntryServiceDailyRejectTest {
     class ErrorCases {
 
         @Test
+        @DisplayName("should throw SELF_REJECTION_NOT_ALLOWED when member tries to reject own entries")
+        void shouldThrowWhenMemberRejectsOwnEntries() {
+            // Arrange: member tries to reject their own entries
+            RejectDailyEntriesCommand command =
+                    new RejectDailyEntriesCommand(MEMBER_ID, WORK_DATE, MEMBER_ID, REJECTION_REASON);
+
+            // Act & Assert
+            DomainException exception = assertThrows(DomainException.class, () -> service.rejectDailyEntries(command));
+
+            assertEquals("SELF_REJECTION_NOT_ALLOWED", exception.getErrorCode());
+
+            // Repository should never be called
+            verify(workLogRepository, never()).findByDateRange(any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("should throw PROXY_ENTRY_NOT_ALLOWED when rejectedBy is not a manager")
+        void shouldThrowWhenRejectedByNonManager() {
+            // Arrange: rejectedBy is not a manager of the member
+            UUID nonManagerId = UUID.randomUUID();
+            when(memberRepository.isSubordinateOf(MemberId.of(nonManagerId), MemberId.of(MEMBER_ID)))
+                    .thenReturn(false);
+
+            RejectDailyEntriesCommand command =
+                    new RejectDailyEntriesCommand(MEMBER_ID, WORK_DATE, nonManagerId, REJECTION_REASON);
+
+            // Act & Assert
+            DomainException exception = assertThrows(DomainException.class, () -> service.rejectDailyEntries(command));
+
+            assertEquals("PROXY_ENTRY_NOT_ALLOWED", exception.getErrorCode());
+
+            // Repository should never be called
+            verify(workLogRepository, never()).findByDateRange(any(), any(), any(), any());
+        }
+
+        @Test
         @DisplayName("should throw NO_SUBMITTED_ENTRIES_FOR_DATE when no SUBMITTED entries exist")
         void shouldThrowWhenNoSubmittedEntriesExist() {
-            // Arrange: no submitted entries for the date
+            // Arrange: manager has permission
+            when(memberRepository.isSubordinateOf(MemberId.of(MANAGER_ID), MemberId.of(MEMBER_ID)))
+                    .thenReturn(true);
+
+            // No submitted entries for the date
             when(workLogRepository.findByDateRange(MEMBER_ID, WORK_DATE, WORK_DATE, WorkLogStatus.SUBMITTED))
                     .thenReturn(Collections.emptyList());
 
@@ -166,7 +214,11 @@ class WorkLogEntryServiceDailyRejectTest {
         @Test
         @DisplayName("should throw REJECT_BLOCKED_BY_APPROVAL when monthly approval is APPROVED")
         void shouldThrowWhenBlockedByApprovedApproval() {
-            // Arrange: SUBMITTED entries exist
+            // Arrange: manager has permission
+            when(memberRepository.isSubordinateOf(MemberId.of(MANAGER_ID), MemberId.of(MEMBER_ID)))
+                    .thenReturn(true);
+
+            // SUBMITTED entries exist
             WorkLogEntry entry1 = createSubmittedEntry(MEMBER_ID, UUID.randomUUID(), WORK_DATE, 4.0);
 
             when(workLogRepository.findByDateRange(MEMBER_ID, WORK_DATE, WORK_DATE, WorkLogStatus.SUBMITTED))

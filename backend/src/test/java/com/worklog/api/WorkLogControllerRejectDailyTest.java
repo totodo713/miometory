@@ -50,6 +50,7 @@ public class WorkLogControllerRejectDailyTest extends IntegrationTestBase {
 
         createTestMember(memberId, "member-" + memberId + "@example.com");
         createTestMember(managerId, "manager-" + managerId + "@example.com");
+        setManagerForMember(memberId, managerId); // Establish manager-subordinate relationship
         createTestProject(projectId, "PROJ-" + projectId.toString().substring(0, 8));
     }
 
