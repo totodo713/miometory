@@ -57,7 +57,8 @@ public class GlobalExceptionHandler {
                         || errorCode.contains("CANNOT_MODIFY")
                         || errorCode.contains("CANNOT_SUBMIT")
                         || errorCode.contains("CANNOT_APPROVE")
-                        || errorCode.contains("CANNOT_REJECT"));
+                        || errorCode.contains("CANNOT_REJECT")
+                        || errorCode.contains("RECALL_BLOCKED_BY_APPROVAL"));
     }
 
     /**

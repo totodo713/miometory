@@ -3,6 +3,8 @@ package com.worklog.api;
 import com.worklog.api.dto.*;
 import com.worklog.application.command.CreateWorkLogEntryCommand;
 import com.worklog.application.command.DeleteWorkLogEntryCommand;
+import com.worklog.application.command.RecallDailyEntriesCommand;
+import com.worklog.application.command.SubmitDailyEntriesCommand;
 import com.worklog.application.command.UpdateWorkLogEntryCommand;
 import com.worklog.application.service.WorkLogEntryService;
 import com.worklog.domain.shared.DomainException;
@@ -171,6 +173,60 @@ public class WorkLogController {
     }
 
     /**
+     * Submit all DRAFT entries for a member on a specific date.
+     *
+     * POST /api/v1/worklog/entries/submit-daily
+     *
+     * @return 200 OK with submission results
+     */
+    @PostMapping("/submit-daily")
+    public ResponseEntity<SubmitDailyEntriesResponse> submitDailyEntries(
+            @RequestBody SubmitDailyEntriesRequest request) {
+        SubmitDailyEntriesCommand command =
+                new SubmitDailyEntriesCommand(request.memberId(), request.date(), request.submittedBy());
+
+        List<WorkLogEntry> entries = workLogService.submitDailyEntries(command);
+
+        List<SubmitDailyEntriesResponse.EntryStatusItem> items = entries.stream()
+                .map(e -> new SubmitDailyEntriesResponse.EntryStatusItem(
+                        e.getId().value(),
+                        e.getProjectId().value(),
+                        e.getHours().hours(),
+                        e.getStatus().toString(),
+                        e.getVersion()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(new SubmitDailyEntriesResponse(items.size(), request.date(), items));
+    }
+
+    /**
+     * Recall all SUBMITTED entries for a member on a specific date.
+     *
+     * POST /api/v1/worklog/entries/recall-daily
+     *
+     * @return 200 OK with recall results
+     */
+    @PostMapping("/recall-daily")
+    public ResponseEntity<RecallDailyEntriesResponse> recallDailyEntries(
+            @RequestBody RecallDailyEntriesRequest request) {
+        RecallDailyEntriesCommand command =
+                new RecallDailyEntriesCommand(request.memberId(), request.date(), request.recalledBy());
+
+        List<WorkLogEntry> entries = workLogService.recallDailyEntries(command);
+
+        List<RecallDailyEntriesResponse.EntryStatusItem> items = entries.stream()
+                .map(e -> new RecallDailyEntriesResponse.EntryStatusItem(
+                        e.getId().value(),
+                        e.getProjectId().value(),
+                        e.getHours().hours(),
+                        e.getStatus().toString(),
+                        e.getVersion()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(new RecallDailyEntriesResponse(items.size(), request.date(), items));
+    }
+
+    /**
      * Exception handler for DomainException, specifically handling validation errors
      * like the 24-hour daily limit (DAILY_LIMIT_EXCEEDED).
      *
@@ -190,8 +246,14 @@ public class WorkLogController {
 
         if (errorCode.contains("OPTIMISTIC_LOCK") || errorCode.contains("VERSION_MISMATCH")) {
             status = HttpStatus.CONFLICT;
-        } else if (errorCode.contains("NOT_FOUND")) {
+        } else if (errorCode.contains("NOT_FOUND")
+                || errorCode.equals("NO_DRAFT_ENTRIES")
+                || errorCode.equals("NO_SUBMITTED_ENTRIES")) {
             status = HttpStatus.NOT_FOUND;
+        } else if (errorCode.equals("SELF_SUBMISSION_ONLY")
+                || errorCode.equals("SELF_RECALL_ONLY")
+                || errorCode.contains("PROXY_ENTRY_NOT_ALLOWED")) {
+            status = HttpStatus.FORBIDDEN;
         } else if (errorCode.contains("LIMIT")
                 || errorCode.contains("VALIDATION")
                 || errorCode.contains("INVALID")
@@ -201,7 +263,8 @@ public class WorkLogController {
                 || errorCode.contains("TOO_LONG")
                 || errorCode.contains("NOT_EDITABLE")
                 || errorCode.contains("NOT_DELETABLE")
-                || errorCode.contains("INCREMENT")) {
+                || errorCode.contains("INCREMENT")
+                || errorCode.equals("RECALL_BLOCKED_BY_APPROVAL")) {
             status = HttpStatus.UNPROCESSABLE_ENTITY;
         } else {
             status = HttpStatus.BAD_REQUEST;

@@ -6,6 +6,7 @@ import { useProxyMode } from "../../services/worklogStore";
 import type { WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
 import { ProjectSelector } from "./ProjectSelector";
+import { SubmitDailyButton } from "./SubmitDailyButton";
 
 interface DailyEntryFormProps {
   date: Date;
@@ -594,6 +595,23 @@ export function DailyEntryForm({ date, memberId, enteredBy, onClose, onSave }: D
                     {isSaving ? "Saving..." : "Save"}
                   </button>
                 )}
+                <SubmitDailyButton
+                  date={date}
+                  memberId={memberId}
+                  hasDraftEntries={projectRows.some((row) => row.status === "DRAFT" || (row.id && !row.status))}
+                  hasSubmittedEntries={projectRows.some((row) => row.status === "SUBMITTED")}
+                  hasUnsavedChanges={hasUnsavedChanges}
+                  draftEntryCount={
+                    projectRows.filter((row) => row.status === "DRAFT" || (row.id && !row.status)).length
+                  }
+                  draftTotalHours={projectRows
+                    .filter((row) => row.status === "DRAFT" || (row.id && !row.status))
+                    .reduce((sum, row) => sum + row.hours, 0)}
+                  onSaveFirst={() => handleSave(false)}
+                  onSubmitSuccess={() => {
+                    onSave();
+                  }}
+                />
               </div>
             </div>
           )}
