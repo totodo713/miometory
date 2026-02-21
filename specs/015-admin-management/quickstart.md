@@ -43,12 +43,12 @@ After implementing the admin permissions migration (V16), the following test use
 
 | User | Email | Role | Tenant |
 |------|-------|------|--------|
-| System Admin | admin@miometry.dev | SYSTEM_ADMIN | (global) |
-| Tenant Admin | tenant-admin@acme.dev | TENANT_ADMIN | ACME |
-| Supervisor | manager@acme.dev | SUPERVISOR | ACME |
-| Regular User | user@acme.dev | USER | ACME |
+| System Admin | sysadmin@miometry.example.com | SYSTEM_ADMIN | (global) |
+| Tenant Admin | david.independent@miometry.example.com | TENANT_ADMIN | dev tenant |
+| Supervisor | alice.manager@miometry.example.com | SUPERVISOR | dev tenant |
+| Regular User | bob.engineer@miometry.example.com | USER | dev tenant |
 
-Password for all dev users: `password123`
+Password for all dev users: `password123` (bcrypt hash in seed data)
 
 ## Key Development Paths
 

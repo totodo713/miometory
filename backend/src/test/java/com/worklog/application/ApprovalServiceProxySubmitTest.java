@@ -47,6 +47,9 @@ class ApprovalServiceProxySubmitTest {
     @Mock
     private JdbcMemberRepository memberRepository;
 
+    @Mock
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     private ApprovalService service;
 
     private static final MemberId MEMBER_ID = MemberId.of(UUID.randomUUID());
@@ -56,7 +59,8 @@ class ApprovalServiceProxySubmitTest {
 
     @BeforeEach
     void setUp() {
-        service = new ApprovalService(approvalRepository, workLogRepository, absenceRepository, memberRepository);
+        service = new ApprovalService(
+                approvalRepository, workLogRepository, absenceRepository, memberRepository, jdbcTemplate);
     }
 
     @Test

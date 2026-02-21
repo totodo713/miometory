@@ -263,58 +263,72 @@ ON CONFLICT (email) DO UPDATE SET
 -- Depends on V18__admin_permissions_seed.sql for SYSTEM_ADMIN, TENANT_ADMIN, SUPERVISOR roles.
 -- ============================================================================
 
--- System Admin user + member (new test user for global admin operations)
-INSERT INTO members (
-    id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at
-)
-VALUES (
-    '00000000-0000-0000-0000-000000000005',
-    '550e8400-e29b-41d4-a716-446655440001',
-    '880e8400-e29b-41d4-a716-446655440001',
-    'sysadmin@miometry.example.com',
-    'System Admin',
-    NULL,
-    true,
-    0,
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
-)
-ON CONFLICT (id) DO UPDATE SET
-    display_name = EXCLUDED.display_name,
-    email = EXCLUDED.email,
-    is_active = EXCLUDED.is_active,
-    updated_at = CURRENT_TIMESTAMP;
+-- Admin seed data: only insert if the dev tenant and roles exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM tenant WHERE id = '550e8400-e29b-41d4-a716-446655440001')
+       AND EXISTS (SELECT 1 FROM roles WHERE name = 'SYSTEM_ADMIN')
+    THEN
+        -- System Admin user + member (new test user for global admin operations)
+        INSERT INTO members (
+            id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at
+        )
+        VALUES (
+            '00000000-0000-0000-0000-000000000005',
+            '550e8400-e29b-41d4-a716-446655440001',
+            '880e8400-e29b-41d4-a716-446655440001',
+            'sysadmin@miometry.example.com',
+            'System Admin',
+            NULL,
+            true,
+            0,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+        )
+        ON CONFLICT (id) DO UPDATE SET
+            display_name = EXCLUDED.display_name,
+            email = EXCLUDED.email,
+            is_active = EXCLUDED.is_active,
+            updated_at = CURRENT_TIMESTAMP;
 
-INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at)
-VALUES (
-    '00000000-0000-0000-0000-000000000005',
-    'sysadmin@miometry.example.com',
-    '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
-    'System Admin',
-    (SELECT id FROM roles WHERE name = 'SYSTEM_ADMIN'),
-    'active', 0, NOW()
-)
-ON CONFLICT (email) DO UPDATE SET
-    hashed_password = EXCLUDED.hashed_password,
-    name = EXCLUDED.name,
-    role_id = EXCLUDED.role_id,
-    account_status = EXCLUDED.account_status,
-    email_verified_at = EXCLUDED.email_verified_at;
+        INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at)
+        VALUES (
+            '00000000-0000-0000-0000-000000000005',
+            'sysadmin@miometry.example.com',
+            '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
+            'System Admin',
+            (SELECT id FROM roles WHERE name = 'SYSTEM_ADMIN'),
+            'active', 0, NOW()
+        )
+        ON CONFLICT (email) DO UPDATE SET
+            hashed_password = EXCLUDED.hashed_password,
+            name = EXCLUDED.name,
+            role_id = EXCLUDED.role_id,
+            account_status = EXCLUDED.account_status,
+            email_verified_at = EXCLUDED.email_verified_at;
 
--- Assign Alice to SUPERVISOR role (she manages Bob and Charlie)
-UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'SUPERVISOR')
-WHERE email = 'alice.manager@miometry.example.com';
+        -- Assign Alice to SUPERVISOR role (she manages Bob and Charlie)
+        UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'SUPERVISOR')
+        WHERE email = 'alice.manager@miometry.example.com';
 
--- Assign David to TENANT_ADMIN role
-UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'TENANT_ADMIN')
-WHERE email = 'david.independent@miometry.example.com';
+        -- Assign David to TENANT_ADMIN role
+        UPDATE users SET role_id = (SELECT id FROM roles WHERE name = 'TENANT_ADMIN')
+        WHERE email = 'david.independent@miometry.example.com';
+
+        RAISE NOTICE 'Dev seed data: Admin management roles and users inserted';
+    ELSE
+        RAISE NOTICE 'Dev seed data: Skipping admin management seed (tenant or roles not found)';
+    END IF;
+END $$;
 
 -- ============================================================================
 -- Sample Daily Entry Approvals (Alice approves/rejects Bob's entries)
 -- ============================================================================
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM daily_entry_approvals LIMIT 1) THEN
+    IF NOT EXISTS (SELECT 1 FROM members WHERE id = '00000000-0000-0000-0000-000000000001') THEN
+        RAISE NOTICE 'Dev seed data: Skipping daily entry approvals (dev members not found)';
+    ELSIF EXISTS (SELECT 1 FROM daily_entry_approvals LIMIT 1) THEN
         RAISE NOTICE 'Dev seed data: Daily entry approvals already exist, skipping';
     ELSE
         -- Alice APPROVED Bob's entry from 2 days ago
@@ -365,7 +379,9 @@ END $$;
 -- ============================================================================
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM in_app_notifications LIMIT 1) THEN
+    IF NOT EXISTS (SELECT 1 FROM members WHERE id = '00000000-0000-0000-0000-000000000001') THEN
+        RAISE NOTICE 'Dev seed data: Skipping notifications (dev members not found)';
+    ELSIF EXISTS (SELECT 1 FROM in_app_notifications LIMIT 1) THEN
         RAISE NOTICE 'Dev seed data: Notifications already exist, skipping';
     ELSE
         INSERT INTO in_app_notifications (id, recipient_member_id, type, reference_id, title, message, is_read, created_at)

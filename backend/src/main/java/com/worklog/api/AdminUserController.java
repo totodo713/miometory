@@ -33,28 +33,28 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}/role")
-    @PreAuthorize("hasPermission(null, 'user.manage')")
+    @PreAuthorize("hasPermission(null, 'user.update_role')")
     public ResponseEntity<Void> changeRole(@PathVariable UUID id, @RequestBody ChangeRoleRequest request) {
         adminUserService.changeRole(id, request.roleId());
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{id}/lock")
-    @PreAuthorize("hasPermission(null, 'user.manage')")
+    @PreAuthorize("hasPermission(null, 'user.lock')")
     public ResponseEntity<Void> lockUser(@PathVariable UUID id, @RequestBody LockRequest request) {
         adminUserService.lockUser(id, request.durationMinutes());
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{id}/unlock")
-    @PreAuthorize("hasPermission(null, 'user.manage')")
+    @PreAuthorize("hasPermission(null, 'user.lock')")
     public ResponseEntity<Void> unlockUser(@PathVariable UUID id) {
         adminUserService.unlockUser(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/password-reset")
-    @PreAuthorize("hasPermission(null, 'user.manage')")
+    @PreAuthorize("hasPermission(null, 'user.reset_password')")
     public ResponseEntity<Void> resetPassword(@PathVariable UUID id) {
         adminUserService.resetPassword(id);
         return ResponseEntity.ok().build();

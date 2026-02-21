@@ -161,7 +161,7 @@ public class AdminMemberService {
                 command.email(),
                 command.displayName(),
                 command.managerId() != null ? MemberId.of(command.managerId()) : null);
-        memberRepository.save(member, 0);
+        memberRepository.save(member);
     }
 
     /**
@@ -182,7 +182,7 @@ public class AdminMemberService {
             MemberId parentManager = member.getManagerId();
             for (Member report : directReports) {
                 report.assignManager(parentManager);
-                memberRepository.save(report, 0);
+                memberRepository.save(report);
             }
 
             if (parentManager == null) {
@@ -195,7 +195,7 @@ public class AdminMemberService {
         }
 
         member.deactivate();
-        memberRepository.save(member, 0);
+        memberRepository.save(member);
     }
 
     /**
@@ -211,7 +211,7 @@ public class AdminMemberService {
         }
 
         member.activate();
-        memberRepository.save(member, 0);
+        memberRepository.save(member);
     }
 
     /**

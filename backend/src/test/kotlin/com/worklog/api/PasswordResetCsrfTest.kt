@@ -36,7 +36,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
     excludeFilters = [
         org.springframework.context.annotation.ComponentScan.Filter(
             type = org.springframework.context.annotation.FilterType.ASSIGNABLE_TYPE,
-            classes = [com.worklog.infrastructure.config.RateLimitFilter::class],
+            classes = [
+                com.worklog.infrastructure.config.RateLimitFilter::class,
+                com.worklog.infrastructure.config.TenantStatusFilter::class,
+            ],
         ),
     ],
 )

@@ -220,12 +220,17 @@ public class JdbcMemberRepository {
     }
 
     /**
-     * Saves a member (insert only, for backward compatibility).
+     * Saves a member using automatic version detection.
+     * For new records, version starts at 0. For existing records, uses the current DB version.
      *
      * @param member The member to save
      */
     public void save(Member member) {
-        save(member, 0);
+        List<Integer> versions = jdbcTemplate.query(
+                "SELECT version FROM members WHERE id = ?",
+                (rs, rowNum) -> rs.getInt("version"),
+                member.getId().value());
+        save(member, versions.isEmpty() ? 0 : versions.get(0));
     }
 
     /**
