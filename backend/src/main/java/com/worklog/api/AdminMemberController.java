@@ -1,12 +1,16 @@
 package com.worklog.api;
 
+import com.worklog.application.command.AssignManagerCommand;
 import com.worklog.application.command.InviteMemberCommand;
+import com.worklog.application.command.TransferMemberCommand;
 import com.worklog.application.command.UpdateMemberCommand;
 import com.worklog.application.service.AdminMemberService;
+import com.worklog.application.service.AdminOrganizationService;
 import com.worklog.application.service.UserContextService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -23,10 +27,15 @@ import org.springframework.web.bind.annotation.*;
 public class AdminMemberController {
 
     private final AdminMemberService adminMemberService;
+    private final AdminOrganizationService adminOrganizationService;
     private final UserContextService userContextService;
 
-    public AdminMemberController(AdminMemberService adminMemberService, UserContextService userContextService) {
+    public AdminMemberController(
+            AdminMemberService adminMemberService,
+            AdminOrganizationService adminOrganizationService,
+            UserContextService userContextService) {
         this.adminMemberService = adminMemberService;
+        this.adminOrganizationService = adminOrganizationService;
         this.userContextService = userContextService;
     }
 
@@ -94,6 +103,34 @@ public class AdminMemberController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/manager")
+    @PreAuthorize("hasPermission(null, 'organization.update')")
+    public ResponseEntity<Void> assignManager(
+            @PathVariable UUID id, @RequestBody @Valid AssignManagerRequest request, Authentication authentication) {
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
+        var command = new AssignManagerCommand(id, request.managerId());
+        adminOrganizationService.assignManager(command, tenantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/manager")
+    @PreAuthorize("hasPermission(null, 'organization.update')")
+    public ResponseEntity<Void> removeManager(@PathVariable UUID id, Authentication authentication) {
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
+        adminOrganizationService.removeManager(id, tenantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/organization")
+    @PreAuthorize("hasPermission(null, 'organization.update')")
+    public ResponseEntity<Void> transferMember(
+            @PathVariable UUID id, @RequestBody @Valid TransferMemberRequest request, Authentication authentication) {
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
+        var command = new TransferMemberCommand(id, request.organizationId());
+        adminOrganizationService.transferMember(command, tenantId);
+        return ResponseEntity.noContent().build();
+    }
+
     // Request/Response DTOs
 
     public record InviteMemberRequest(
@@ -109,4 +146,8 @@ public class AdminMemberController {
             UUID managerId) {}
 
     public record CreateMemberResponse(String id, String temporaryPassword) {}
+
+    public record AssignManagerRequest(@NotNull UUID managerId) {}
+
+    public record TransferMemberRequest(@NotNull UUID organizationId) {}
 }

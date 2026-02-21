@@ -171,6 +171,39 @@ public class JdbcMemberRepository {
     }
 
     /**
+     * Checks whether assigning proposedManagerId as the manager of memberId
+     * would create a circular reference in the manager chain.
+     *
+     * Uses a recursive CTE to traverse the manager chain from proposedManagerId upward.
+     * If memberId appears anywhere in the chain, a circular reference would be created.
+     *
+     * Self-assignment (memberId == proposedManagerId) is the simplest circular case.
+     *
+     * @param memberId          the member who would receive a new manager
+     * @param proposedManagerId the proposed manager
+     * @return true if assigning proposedManagerId as manager of memberId would create a cycle
+     */
+    public boolean wouldCreateCircularReference(MemberId memberId, MemberId proposedManagerId) {
+        // Self-assignment is the simplest circular reference case
+        if (memberId.equals(proposedManagerId)) {
+            return true;
+        }
+
+        String sql = """
+                WITH RECURSIVE chain AS (
+                    SELECT manager_id, 1 AS depth FROM members WHERE id = ?
+                    UNION ALL
+                    SELECT m.manager_id, c.depth + 1 FROM members m
+                    JOIN chain c ON m.id = c.manager_id
+                    WHERE c.manager_id IS NOT NULL AND c.depth < 10
+                )
+                SELECT COUNT(*) FROM chain WHERE manager_id = ?
+                """;
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, proposedManagerId.value(), memberId.value());
+        return count != null && count > 0;
+    }
+
+    /**
      * Saves a member (insert or update).
      * Uses optimistic locking: update only succeeds if the version matches.
      *
@@ -184,6 +217,7 @@ public class JdbcMemberRepository {
                                manager_id, is_active, version, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
+                organization_id = EXCLUDED.organization_id,
                 email = EXCLUDED.email,
                 display_name = EXCLUDED.display_name,
                 manager_id = EXCLUDED.manager_id,

@@ -8,6 +8,7 @@ import com.worklog.eventsourcing.StoredEvent;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +23,12 @@ public class OrganizationRepository {
 
     private final EventStore eventStore;
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
 
-    public OrganizationRepository(EventStore eventStore, ObjectMapper objectMapper) {
+    public OrganizationRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -41,8 +44,13 @@ public class OrganizationRepository {
         eventStore.append(
                 organization.getId().value(), organization.getAggregateType(), events, organization.getVersion());
 
-        organization.clearUncommittedEvents();
+        // Bump aggregate version to reflect appended events before updating projection
         organization.setVersion(organization.getVersion() + events.size());
+
+        // Update projection table for query performance
+        updateProjection(organization);
+
+        organization.clearUncommittedEvents();
     }
 
     /**
@@ -67,6 +75,36 @@ public class OrganizationRepository {
 
         organization.clearUncommittedEvents();
         return Optional.of(organization);
+    }
+
+    /**
+     * Updates the projection table for query performance.
+     * Keeps the organization read model in sync with the event store
+     * within the same transactional boundary.
+     */
+    private void updateProjection(Organization organization) {
+        jdbcTemplate.update(
+                "INSERT INTO organization "
+                        + "(id, tenant_id, parent_id, code, name, level, status, version, "
+                        + "fiscal_year_pattern_id, monthly_period_pattern_id, created_at, updated_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
+                        + "ON CONFLICT (id) DO UPDATE SET "
+                        + "name = EXCLUDED.name, "
+                        + "status = EXCLUDED.status, "
+                        + "version = EXCLUDED.version, "
+                        + "fiscal_year_pattern_id = EXCLUDED.fiscal_year_pattern_id, "
+                        + "monthly_period_pattern_id = EXCLUDED.monthly_period_pattern_id, "
+                        + "updated_at = NOW()",
+                organization.getId().value(),
+                organization.getTenantId().value(),
+                organization.getParentId() != null ? organization.getParentId().value() : null,
+                organization.getCode().value(),
+                organization.getName(),
+                organization.getLevel(),
+                organization.getStatus().name(),
+                organization.getVersion(),
+                organization.getFiscalYearPatternId(),
+                organization.getMonthlyPeriodPatternId());
     }
 
     /**

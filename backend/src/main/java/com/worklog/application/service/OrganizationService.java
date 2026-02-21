@@ -38,17 +38,18 @@ public class OrganizationService {
         OrganizationId parentId = command.parentId() != null ? new OrganizationId(command.parentId()) : null;
         Code code = Code.of(command.code());
 
-        // Validate parent exists if provided
-        if (parentId != null && !organizationRepository.existsById(parentId)) {
-            throw new IllegalArgumentException("Parent organization not found: " + command.parentId());
+        // Validate parent exists if provided and calculate level
+        int level = 1;
+        if (parentId != null) {
+            Organization parentOrg = organizationRepository
+                    .findById(parentId)
+                    .orElseThrow(
+                            () -> new IllegalArgumentException("Parent organization not found: " + command.parentId()));
+            level = parentOrg.getLevel() + 1;
         }
 
-        // TODO: Validate circular reference
-        // This would require loading the entire parent chain, which should be done
-        // in a dedicated validation service or through a projection/read model
-
         Organization organization =
-                Organization.create(organizationId, tenantId, parentId, code, command.name(), command.level());
+                Organization.create(organizationId, tenantId, parentId, code, command.name(), level);
 
         // Assign patterns if provided
         if (command.fiscalYearPatternId() != null || command.monthlyPeriodPatternId() != null) {
