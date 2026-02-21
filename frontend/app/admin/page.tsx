@@ -41,6 +41,13 @@ export default function AdminDashboard() {
             href="/worklog/daily-approval"
           />
         )}
+        {hasPermission("organization.view") && (
+          <DashboardCard
+            title="組織管理"
+            description="組織の階層構造・マネージャー割当・パターン設定を管理します"
+            href="/admin/organizations"
+          />
+        )}
         {hasPermission("tenant.view") && (
           <DashboardCard
             title="テナント管理"
