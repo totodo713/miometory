@@ -44,11 +44,13 @@ public class OrganizationRepository {
         eventStore.append(
                 organization.getId().value(), organization.getAggregateType(), events, organization.getVersion());
 
+        // Bump aggregate version to reflect appended events before updating projection
+        organization.setVersion(organization.getVersion() + events.size());
+
         // Update projection table for query performance
         updateProjection(organization);
 
         organization.clearUncommittedEvents();
-        organization.setVersion(organization.getVersion() + events.size());
     }
 
     /**
