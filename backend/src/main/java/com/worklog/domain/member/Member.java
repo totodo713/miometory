@@ -15,7 +15,7 @@ public class Member {
 
     private final MemberId id;
     private final TenantId tenantId;
-    private final OrganizationId organizationId;
+    private OrganizationId organizationId;
     private String email;
     private String displayName;
     private MemberId managerId; // T012: Manager ID for proxy entry permission
@@ -106,6 +106,18 @@ public class Member {
     public void removeManager() {
         this.managerId = null;
         this.updatedAt = Instant.now();
+    }
+
+    /**
+     * Changes the organization this member belongs to.
+     * Removes the manager assignment since managers are organization-specific,
+     * and a transfer to a different organization invalidates the current manager relationship.
+     *
+     * @param newOrganizationId the target organization
+     */
+    public void changeOrganization(OrganizationId newOrganizationId) {
+        this.organizationId = Objects.requireNonNull(newOrganizationId, "Organization ID cannot be null");
+        removeManager();
     }
 
     /**

@@ -15,6 +15,72 @@
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 import { getCsrfToken } from "./csrf";
 
+/**
+ * Organization types for admin API
+ */
+interface OrganizationRow {
+  id: string;
+  tenantId: string;
+  parentId: string | null;
+  parentName: string | null;
+  code: string;
+  name: string;
+  level: number;
+  status: "ACTIVE" | "INACTIVE";
+  memberCount: number;
+  fiscalYearPatternId: string | null;
+  monthlyPeriodPatternId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface OrganizationPage {
+  content: OrganizationRow[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+}
+
+/**
+ * Member types for organization member management
+ */
+interface MemberRow {
+  id: string;
+  email: string;
+  displayName: string;
+  organizationId: string;
+  managerId: string | null;
+  managerDisplayName: string | null;
+  managerIsActive: boolean | null;
+  status: string;
+  version: number;
+}
+
+interface MemberPage {
+  content: MemberRow[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+}
+
+/**
+ * Pattern option types for fiscal year and monthly period patterns
+ */
+interface FiscalYearPatternOption {
+  id: string;
+  tenantId: string;
+  name: string;
+  startMonth: number;
+  startDay: number;
+}
+
+interface MonthlyPeriodPatternOption {
+  id: string;
+  tenantId: string;
+  name: string;
+  startDay: number;
+}
+
 // Normalize API base URL to ensure consistent URL construction
 // This prevents issues when NEXT_PUBLIC_API_URL contains path prefixes
 const API_BASE_URL = (() => {
@@ -781,6 +847,11 @@ export const api = {
       deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/members/${id}/deactivate`, {}),
       activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/members/${id}/activate`, {}),
       assignTenantAdmin: (id: string) => apiClient.post<void>(`/api/v1/admin/members/${id}/assign-tenant-admin`, {}),
+      assignManager: (memberId: string, managerId: string) =>
+        apiClient.put<void>(`/api/v1/admin/members/${memberId}/manager`, { managerId }),
+      removeManager: (memberId: string) => apiClient.delete<void>(`/api/v1/admin/members/${memberId}/manager`),
+      transferMember: (memberId: string, organizationId: string) =>
+        apiClient.put<void>(`/api/v1/admin/members/${memberId}/organization`, { organizationId }),
     },
 
     projects: {
@@ -910,6 +981,54 @@ export const api = {
       unlock: (id: string) => apiClient.patch<void>(`/api/v1/admin/users/${id}/unlock`, {}),
       resetPassword: (id: string) => apiClient.post<void>(`/api/v1/admin/users/${id}/password-reset`, {}),
     },
+
+    organizations: {
+      list: (params?: { page?: number; size?: number; search?: string; isActive?: boolean; parentId?: string }) => {
+        const query = new URLSearchParams();
+        if (params?.page !== undefined) query.set("page", String(params.page));
+        if (params?.size !== undefined) query.set("size", String(params.size));
+        if (params?.search) query.set("search", params.search);
+        if (params?.isActive !== undefined) query.set("isActive", String(params.isActive));
+        if (params?.parentId) query.set("parentId", params.parentId);
+        const qs = query.toString();
+        return apiClient.get<OrganizationPage>(`/api/v1/admin/organizations${qs ? `?${qs}` : ""}`);
+      },
+      create: (data: { code: string; name: string; parentId?: string }) =>
+        apiClient.post<{ id: string }>("/api/v1/admin/organizations", data),
+      update: (id: string, data: { name: string }) => apiClient.put<void>(`/api/v1/admin/organizations/${id}`, data),
+      deactivate: (id: string) =>
+        apiClient.patch<{ warnings: string[] }>(`/api/v1/admin/organizations/${id}/deactivate`, {}),
+      activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/organizations/${id}/activate`, {}),
+      listMembers: (orgId: string, params?: { page?: number; size?: number; isActive?: boolean }) => {
+        const query = new URLSearchParams();
+        if (params?.page !== undefined) query.set("page", String(params.page));
+        if (params?.size !== undefined) query.set("size", String(params.size));
+        if (params?.isActive !== undefined) query.set("isActive", String(params.isActive));
+        const qs = query.toString();
+        return apiClient.get<MemberPage>(`/api/v1/admin/organizations/${orgId}/members${qs ? `?${qs}` : ""}`);
+      },
+      getOrganizationTree: (includeInactive?: boolean) => {
+        const query = new URLSearchParams();
+        if (includeInactive !== undefined) query.set("includeInactive", String(includeInactive));
+        const qs = query.toString();
+        return apiClient.get<OrganizationTreeNode[]>(`/api/v1/admin/organizations/tree${qs ? `?${qs}` : ""}`);
+      },
+      assignPatterns: (orgId: string, fiscalYearPatternId: string | null, monthlyPeriodPatternId: string | null) =>
+        apiClient.put<void>(`/api/v1/admin/organizations/${orgId}/patterns`, {
+          fiscalYearPatternId,
+          monthlyPeriodPatternId,
+        }),
+    },
+
+    /**
+     * Pattern list endpoints (tenant-scoped)
+     */
+    patterns: {
+      listFiscalYearPatterns: (tenantId: string) =>
+        apiClient.get<FiscalYearPatternOption[]>(`/api/v1/tenants/${tenantId}/fiscal-year-patterns`),
+      listMonthlyPeriodPatterns: (tenantId: string) =>
+        apiClient.get<MonthlyPeriodPatternOption[]>(`/api/v1/tenants/${tenantId}/monthly-period-patterns`),
+    },
   },
 
   /**
@@ -994,3 +1113,29 @@ export async function checkAuth(): Promise<boolean> {
     return true;
   }
 }
+
+/**
+ * Organization tree node type for tree view
+ */
+interface OrganizationTreeNode {
+  id: string;
+  code: string;
+  name: string;
+  level: number;
+  status: "ACTIVE" | "INACTIVE";
+  memberCount: number;
+  children: OrganizationTreeNode[];
+}
+
+/**
+ * Export organization types for use in components
+ */
+export type {
+  OrganizationRow,
+  OrganizationPage,
+  MemberRow,
+  MemberPage,
+  OrganizationTreeNode,
+  FiscalYearPatternOption,
+  MonthlyPeriodPatternOption,
+};

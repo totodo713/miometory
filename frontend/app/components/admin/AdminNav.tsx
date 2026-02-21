@@ -17,6 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/members", label: "メンバー管理", permission: "member.view" },
   { href: "/admin/projects", label: "プロジェクト管理", permission: "project.view" },
   { href: "/admin/assignments", label: "アサイン管理", permission: "assignment.view" },
+  { href: "/admin/organizations", label: "組織管理", permission: "organization.view" },
 ];
 
 export function AdminNav() {

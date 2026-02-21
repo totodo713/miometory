@@ -160,6 +160,8 @@ When responding to PR review comments:
 - PostgreSQL 17 with JSONB event store + projection tables, Flyway migrations (014-edit-rejected-entry)
 - Java 21 (domain), Kotlin 2.3.0 (infrastructure/config), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Security, Spring Data JDBC, Next.js 16.x, React 19.x, Tailwind CSS v4, Zustand, Biome (015-admin-management)
 - PostgreSQL 17 with JSONB event store (event-sourced aggregates) + projection tables (Spring Data JDBC entities), Flyway migrations (015-admin-management)
+- Java 21 (domain layer), Kotlin 2.3.0 (infrastructure/config), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Next.js 16.x, React 19.x, Tailwind CSS (016-org-management)
+- PostgreSQL 17 with JSONB event store (event sourcing for Organization), direct JDBC (Member projection) (016-org-management)
 
 ## Recent Changes
 - 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl

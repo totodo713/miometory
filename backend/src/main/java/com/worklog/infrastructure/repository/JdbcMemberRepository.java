@@ -8,8 +8,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -171,6 +173,64 @@ public class JdbcMemberRepository {
     }
 
     /**
+     * Checks whether assigning proposedManagerId as the manager of memberId
+     * would create a circular reference in the manager chain.
+     *
+     * Uses iterative chain traversal with a visited set: starts from proposedManagerId
+     * and follows the manager chain upward. If memberId is encountered in the chain,
+     * a circular reference would be created.
+     *
+     * Self-assignment (memberId == proposedManagerId) is the simplest circular case.
+     *
+     * @param memberId          the member who would receive a new manager
+     * @param proposedManagerId the proposed manager
+     * @return true if assigning proposedManagerId as manager of memberId would create a cycle
+     */
+    public boolean wouldCreateCircularReference(MemberId memberId, MemberId proposedManagerId) {
+        // Self-assignment is the simplest circular reference case
+        if (memberId.equals(proposedManagerId)) {
+            return true;
+        }
+
+        // Traverse the manager chain starting from proposedManagerId
+        Set<UUID> visited = new HashSet<>();
+        UUID currentId = proposedManagerId.value();
+
+        while (currentId != null) {
+            if (!visited.add(currentId)) {
+                // Already visited — existing cycle in data (shouldn't happen but guard against it)
+                break;
+            }
+
+            // Look up the manager of the current member
+            List<UUID> managerIds = jdbcTemplate.query(
+                    "SELECT manager_id FROM members WHERE id = ?",
+                    (rs, rowNum) -> (UUID) rs.getObject("manager_id"),
+                    currentId);
+
+            if (managerIds.isEmpty()) {
+                // Member not found — no cycle
+                break;
+            }
+
+            UUID managerId = managerIds.get(0);
+            if (managerId == null) {
+                // Reached the top of the chain — no cycle
+                break;
+            }
+
+            if (managerId.equals(memberId.value())) {
+                // Found memberId in the chain — would create a cycle
+                return true;
+            }
+
+            currentId = managerId;
+        }
+
+        return false;
+    }
+
+    /**
      * Saves a member (insert or update).
      * Uses optimistic locking: update only succeeds if the version matches.
      *
@@ -184,6 +244,7 @@ public class JdbcMemberRepository {
                                manager_id, is_active, version, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
+                organization_id = EXCLUDED.organization_id,
                 email = EXCLUDED.email,
                 display_name = EXCLUDED.display_name,
                 manager_id = EXCLUDED.manager_id,
