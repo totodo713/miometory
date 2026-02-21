@@ -253,4 +253,47 @@ describe("DailyApprovalDashboard", () => {
       expect(screen.getByText(/選択した1件を承認/)).toBeInTheDocument();
     });
   });
+
+  // --- Floating Error Bar ---
+
+  describe("Floating Error Bar", () => {
+    it("shows error in floating bar when bulk approve fails", async () => {
+      const user = userEvent.setup();
+      mockApprove.mockRejectedValue(new Error("エラーが発生しました"));
+      renderDashboard();
+      await waitForDataLoad();
+      const checkboxes = screen.getAllByRole("checkbox");
+      await user.click(checkboxes[0]);
+      await user.click(screen.getByText(/選択した1件を承認/));
+      expect(await screen.findByRole("alert")).toBeInTheDocument();
+      expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
+    });
+
+    it("dismisses error when close button is clicked", async () => {
+      const user = userEvent.setup();
+      mockApprove.mockRejectedValue(new Error("エラーが発生しました"));
+      renderDashboard();
+      await waitForDataLoad();
+      const checkboxes = screen.getAllByRole("checkbox");
+      await user.click(checkboxes[0]);
+      await user.click(screen.getByText(/選択した1件を承認/));
+      await screen.findByRole("alert");
+      await user.click(screen.getByLabelText("エラーを閉じる"));
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    });
+
+    it("shows error and selection count together", async () => {
+      const user = userEvent.setup();
+      mockApprove.mockRejectedValue(new Error("エラーが発生しました"));
+      renderDashboard();
+      await waitForDataLoad();
+      const checkboxes = screen.getAllByRole("checkbox");
+      await user.click(checkboxes[0]);
+      await user.click(screen.getByText(/選択した1件を承認/));
+      await screen.findByRole("alert");
+      // Both error and selection count should be visible
+      expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
+      expect(screen.getByText(/1件選択中/)).toBeInTheDocument();
+    });
+  });
 });

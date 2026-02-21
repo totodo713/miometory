@@ -336,7 +336,7 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
                         <tr className="bg-gray-50/50">
                           <td colSpan={3} />
                           <td className="py-2 px-3 text-right font-semibold text-gray-700 tabular-nums">
-                            合計: {member.entries.reduce((sum, e) => sum + e.hours, 0)}h
+                            合計: {parseFloat(member.entries.reduce((sum, e) => sum + e.hours, 0).toFixed(2))}h
                           </td>
                           <td colSpan={3} />
                         </tr>
@@ -350,13 +350,15 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
         </div>
       )}
 
-      {/* Reject modal */}
       {/* Floating action bar */}
       {(selectedEntries.size > 0 || error) && (
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
-          <div className="mx-auto max-w-5xl px-6 py-3 space-y-2">
+          <div className="mx-auto px-6 py-3 space-y-2">
             {error && (
-              <div className="flex items-center justify-between gap-3 rounded-md bg-red-50 border border-red-200 px-3 py-2">
+              <div
+                role="alert"
+                className="flex items-center justify-between gap-3 rounded-md bg-red-50 border border-red-200 px-3 py-2"
+              >
                 <p className="text-sm text-red-700">{error}</p>
                 <button
                   type="button"
