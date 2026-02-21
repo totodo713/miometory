@@ -29,6 +29,7 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.junit.jupiter.MockitoExtension
+import org.springframework.jdbc.core.JdbcTemplate
 import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
@@ -60,6 +61,9 @@ class ApprovalServiceTest {
     @Mock
     private lateinit var memberRepository: JdbcMemberRepository
 
+    @Mock
+    private lateinit var jdbcTemplate: JdbcTemplate
+
     private lateinit var approvalService: ApprovalService
 
     // Test fixtures
@@ -80,6 +84,7 @@ class ApprovalServiceTest {
                 workLogRepository,
                 absenceRepository,
                 memberRepository,
+                jdbcTemplate,
             )
     }
 

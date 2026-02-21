@@ -8,6 +8,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
+import { MonthlyApprovalSummaryView } from "@/components/worklog/MonthlyApprovalSummary";
 import { api } from "@/services/api";
 import type { PendingApproval } from "@/types/approval";
 
@@ -18,9 +19,23 @@ export default function ApprovalPage() {
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>("");
   const [rejectingApprovalId, setRejectingApprovalId] = useState<string | null>(null);
+  const [detailData, setDetailData] = useState<Awaited<ReturnType<typeof api.approval.getDetail>> | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   // TODO: Get actual manager ID from auth context
   const managerId = "00000000-0000-0000-0000-000000000002";
+
+  const handleViewDetail = async (approvalId: string) => {
+    setDetailLoading(true);
+    try {
+      const detail = await api.approval.getDetail(approvalId);
+      setDetailData(detail);
+    } catch {
+      setDetailData(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   const loadApprovalQueue = useCallback(async () => {
     setIsLoading(true);
@@ -191,6 +206,14 @@ export default function ApprovalPage() {
                   <div className="flex items-center gap-2 ml-4">
                     <button
                       type="button"
+                      onClick={() => handleViewDetail(approval.approvalId)}
+                      disabled={detailLoading}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      詳細
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleApprove(approval.approvalId)}
                       disabled={actionInProgress === approval.approvalId}
                       className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -212,6 +235,25 @@ export default function ApprovalPage() {
           </div>
         )}
       </div>
+
+      {/* Detail Modal */}
+      {detailData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <MonthlyApprovalSummaryView
+              memberName={detailData.memberName}
+              fiscalMonthStart={detailData.fiscalMonthStart}
+              fiscalMonthEnd={detailData.fiscalMonthEnd}
+              totalWorkHours={detailData.totalWorkHours}
+              totalAbsenceHours={detailData.totalAbsenceHours}
+              projectBreakdown={detailData.projectBreakdown}
+              dailyApprovalSummary={detailData.dailyApprovalSummary}
+              unresolvedEntries={detailData.unresolvedEntries}
+              onClose={() => setDetailData(null)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Rejection Dialog */}
       {rejectingApprovalId && (

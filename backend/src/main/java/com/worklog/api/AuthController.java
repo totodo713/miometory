@@ -13,9 +13,14 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -86,6 +91,15 @@ public class AuthController {
         HttpSession session = httpRequest.getSession(true);
         session.setAttribute("userId", response.user().getId().value());
         session.setAttribute("sessionId", response.sessionId());
+
+        // Set up Spring Security Authentication so controllers can access the authenticated user
+        var authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        var authentication =
+                new UsernamePasswordAuthenticationToken(response.user().getEmail(), null, authorities);
+        var securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
 
         // Calculate session expiration (30 minutes from now)
         Instant sessionExpiresAt = Instant.now().plusSeconds(session.getMaxInactiveInterval());

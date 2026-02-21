@@ -15,9 +15,12 @@ import com.worklog.infrastructure.repository.JdbcApprovalRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.JdbcWorkLogRepository;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,16 +46,19 @@ public class ApprovalService {
     private final JdbcWorkLogRepository workLogRepository;
     private final JdbcAbsenceRepository absenceRepository;
     private final JdbcMemberRepository memberRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public ApprovalService(
             JdbcApprovalRepository approvalRepository,
             JdbcWorkLogRepository workLogRepository,
             JdbcAbsenceRepository absenceRepository,
-            JdbcMemberRepository memberRepository) {
+            JdbcMemberRepository memberRepository,
+            JdbcTemplate jdbcTemplate) {
         this.approvalRepository = approvalRepository;
         this.workLogRepository = workLogRepository;
         this.absenceRepository = absenceRepository;
         this.memberRepository = memberRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -256,4 +262,140 @@ public class ApprovalService {
         //     );
         // }
     }
+
+    @Transactional(readOnly = true)
+    public MonthlyApprovalDetail getMonthlyApprovalDetail(MonthlyApprovalId approvalId) {
+        MonthlyApproval approval = approvalRepository
+                .findById(approvalId)
+                .orElseThrow(
+                        () -> new DomainException("APPROVAL_NOT_FOUND", "Monthly approval not found: " + approvalId));
+
+        var member = memberRepository
+                .findById(approval.getMemberId())
+                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
+
+        // Project breakdown
+        List<Map<String, Object>> projectRows = jdbcTemplate.queryForList(
+                """
+                SELECT p.code AS project_code, p.name AS project_name, SUM(wle.hours) AS total_hours
+                FROM work_log_entries_projection wle
+                JOIN projects p ON p.id = wle.project_id
+                WHERE wle.member_id = ? AND wle.work_date BETWEEN ? AND ?
+                GROUP BY p.code, p.name
+                ORDER BY p.code
+                """,
+                approval.getMemberId().value(),
+                java.sql.Date.valueOf(approval.getFiscalMonth().startDate()),
+                java.sql.Date.valueOf(approval.getFiscalMonth().endDate()));
+
+        List<ProjectBreakdown> projectBreakdowns = projectRows.stream()
+                .map(row -> new ProjectBreakdown(
+                        (String) row.get("project_code"),
+                        (String) row.get("project_name"),
+                        ((Number) row.get("total_hours")).doubleValue()))
+                .toList();
+
+        double totalWorkHours =
+                projectBreakdowns.stream().mapToDouble(ProjectBreakdown::hours).sum();
+
+        // Absence summary
+        Double absenceHours = jdbcTemplate.queryForObject(
+                """
+                SELECT COALESCE(SUM(hours), 0) FROM absence_projection
+                WHERE member_id = ? AND start_date >= ? AND start_date <= ?
+                """,
+                Double.class,
+                approval.getMemberId().value(),
+                java.sql.Date.valueOf(approval.getFiscalMonth().startDate()),
+                java.sql.Date.valueOf(approval.getFiscalMonth().endDate()));
+        double totalAbsenceHours = absenceHours != null ? absenceHours : 0;
+
+        // Daily approval status summary
+        List<Map<String, Object>> dailyStatusRows = jdbcTemplate.queryForList(
+                """
+                SELECT dea.status, COUNT(*) AS cnt
+                FROM daily_entry_approvals dea
+                JOIN work_log_entries_projection wle ON wle.id = dea.work_log_entry_id
+                WHERE wle.member_id = ? AND wle.work_date BETWEEN ? AND ? AND dea.status != 'RECALLED'
+                GROUP BY dea.status
+                """,
+                approval.getMemberId().value(),
+                java.sql.Date.valueOf(approval.getFiscalMonth().startDate()),
+                java.sql.Date.valueOf(approval.getFiscalMonth().endDate()));
+
+        int approvedCount = 0;
+        int rejectedCount = 0;
+        for (var row : dailyStatusRows) {
+            String status = (String) row.get("status");
+            int cnt = ((Number) row.get("cnt")).intValue();
+            if ("APPROVED".equals(status)) approvedCount = cnt;
+            else if ("REJECTED".equals(status)) rejectedCount = cnt;
+        }
+
+        // Count total entries and unapproved
+        Integer totalEntries = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM work_log_entries_projection WHERE member_id = ? AND work_date BETWEEN ? AND ?",
+                Integer.class,
+                approval.getMemberId().value(),
+                java.sql.Date.valueOf(approval.getFiscalMonth().startDate()),
+                java.sql.Date.valueOf(approval.getFiscalMonth().endDate()));
+        int total = totalEntries != null ? totalEntries : 0;
+        int unapprovedCount = total - approvedCount - rejectedCount;
+
+        DailyApprovalSummary dailySummary =
+                new DailyApprovalSummary(approvedCount, rejectedCount, Math.max(0, unapprovedCount));
+
+        // Unresolved daily rejections
+        List<Map<String, Object>> unresolvedRows = jdbcTemplate.queryForList(
+                """
+                SELECT wle.id AS entry_id, wle.work_date, p.code AS project_code, dea.comment
+                FROM daily_entry_approvals dea
+                JOIN work_log_entries_projection wle ON wle.id = dea.work_log_entry_id
+                JOIN projects p ON p.id = wle.project_id
+                WHERE wle.member_id = ? AND wle.work_date BETWEEN ? AND ?
+                AND dea.status = 'REJECTED'
+                ORDER BY wle.work_date
+                """,
+                approval.getMemberId().value(),
+                java.sql.Date.valueOf(approval.getFiscalMonth().startDate()),
+                java.sql.Date.valueOf(approval.getFiscalMonth().endDate()));
+
+        List<UnresolvedEntry> unresolvedEntries = unresolvedRows.stream()
+                .map(row -> new UnresolvedEntry(
+                        row.get("entry_id").toString(),
+                        row.get("work_date").toString(),
+                        (String) row.get("project_code"),
+                        (String) row.get("comment")))
+                .toList();
+
+        return new MonthlyApprovalDetail(
+                approval.getId().value().toString(),
+                approval.getStatus().toString(),
+                member.getDisplayName(),
+                approval.getFiscalMonth().startDate().toString(),
+                approval.getFiscalMonth().endDate().toString(),
+                totalWorkHours,
+                totalAbsenceHours,
+                projectBreakdowns,
+                dailySummary,
+                unresolvedEntries);
+    }
+
+    public record MonthlyApprovalDetail(
+            String approvalId,
+            String status,
+            String memberName,
+            String fiscalMonthStart,
+            String fiscalMonthEnd,
+            double totalWorkHours,
+            double totalAbsenceHours,
+            List<ProjectBreakdown> projectBreakdown,
+            DailyApprovalSummary dailyApprovalSummary,
+            List<UnresolvedEntry> unresolvedEntries) {}
+
+    public record ProjectBreakdown(String projectCode, String projectName, double hours) {}
+
+    public record DailyApprovalSummary(int approvedCount, int rejectedCount, int unapprovedCount) {}
+
+    public record UnresolvedEntry(String entryId, String date, String projectCode, String rejectionComment) {}
 }
