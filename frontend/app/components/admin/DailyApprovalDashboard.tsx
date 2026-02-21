@@ -199,8 +199,6 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
         </div>
       )}
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">読み込み中...</div>
       ) : groups.length === 0 ? (
@@ -353,18 +351,38 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
       )}
 
       {/* Reject modal */}
-      {/* Floating bulk approve bar */}
-      {selectedEntries.size > 0 && (
+      {/* Floating action bar */}
+      {(selectedEntries.size > 0 || error) && (
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
-          <div className="mx-auto max-w-5xl flex items-center justify-between px-6 py-3">
-            <span className="text-sm text-gray-600">{selectedEntries.size}件選択中</span>
-            <button
-              type="button"
-              onClick={handleBulkApprove}
-              className="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-            >
-              選択した{selectedEntries.size}件を承認
-            </button>
+          <div className="mx-auto max-w-5xl px-6 py-3 space-y-2">
+            {error && (
+              <div className="flex items-center justify-between gap-3 rounded-md bg-red-50 border border-red-200 px-3 py-2">
+                <p className="text-sm text-red-700">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="shrink-0 text-red-400 hover:text-red-600"
+                  aria-label="エラーを閉じる"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="閉じる">
+                    <title>閉じる</title>
+                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            {selectedEntries.size > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">{selectedEntries.size}件選択中</span>
+                <button
+                  type="button"
+                  onClick={handleBulkApprove}
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  選択した{selectedEntries.size}件を承認
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
