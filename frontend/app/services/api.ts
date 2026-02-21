@@ -44,7 +44,7 @@ interface OrganizationPage {
 /**
  * Member types for organization member management
  */
-interface MemberRow {
+interface OrganizationMemberRow {
   id: string;
   email: string;
   displayName: string;
@@ -52,12 +52,12 @@ interface MemberRow {
   managerId: string | null;
   managerDisplayName: string | null;
   managerIsActive: boolean | null;
-  status: string;
+  status: "ACTIVE" | "INACTIVE";
   version: number;
 }
 
 interface MemberPage {
-  content: MemberRow[];
+  content: OrganizationMemberRow[];
   totalElements: number;
   totalPages: number;
   number: number;
@@ -1133,7 +1133,7 @@ interface OrganizationTreeNode {
 export type {
   OrganizationRow,
   OrganizationPage,
-  MemberRow,
+  OrganizationMemberRow,
   MemberPage,
   OrganizationTreeNode,
   FiscalYearPatternOption,

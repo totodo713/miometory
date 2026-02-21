@@ -15,7 +15,6 @@ interface OrganizationListProps {
 export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey, onSelectOrg }: OrganizationListProps) {
   const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
   const [totalPages, setTotalPages] = useState(0);
-  const [_totalElements, setTotalElements] = useState(0);
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -40,7 +39,6 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
       });
       setOrganizations(result.content);
       setTotalPages(result.totalPages);
-      setTotalElements(result.totalElements);
     } catch {
       // Error handled by API client
     } finally {
@@ -183,5 +181,3 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
     </div>
   );
 }
-
-export type { OrganizationRow };

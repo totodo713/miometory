@@ -14,6 +14,7 @@ import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.infrastructure.repository.OrganizationRepository;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,7 +184,7 @@ public class AdminOrganizationService {
             nodeMap.put(flat.id(), node);
         }
 
-        // Second pass: link children to parents
+        // Second pass: link children to parents (using mutable lists for building)
         for (FlatNode flat : flatNodes) {
             OrganizationTreeNode node = nodeMap.get(flat.id());
             if (flat.parentId() != null && nodeMap.containsKey(flat.parentId())) {
@@ -193,18 +194,20 @@ public class AdminOrganizationService {
             }
         }
 
-        return roots;
+        // Wrap children lists in unmodifiable views before returning
+        return roots.stream().map(AdminOrganizationService::makeUnmodifiable).toList();
     }
 
     /**
      * Creates a new organization.
-     * Validates parent organization if provided and checks code uniqueness.
-     * Uses command data directly since AdminOrganizationController calculates level.
+     * Validates parent organization if provided, checks code uniqueness,
+     * and calculates level from the parent hierarchy.
      */
     public UUID createOrganization(CreateOrganizationCommand command) {
         OrganizationId parentOrgId = null;
+        int level = 1;
 
-        // Validate parent if provided
+        // Validate parent if provided and calculate level
         if (command.parentId() != null) {
             parentOrgId = OrganizationId.of(command.parentId());
             Organization parentOrg = organizationRepository
@@ -218,6 +221,8 @@ public class AdminOrganizationService {
             if (!parentOrg.isActive()) {
                 throw new DomainException("PARENT_INACTIVE", "Cannot create organization under an inactive parent");
             }
+
+            level = parentOrg.getLevel() + 1;
         }
 
         // Check code uniqueness within tenant (case-insensitive)
@@ -230,8 +235,8 @@ public class AdminOrganizationService {
         // Create the organization aggregate
         OrganizationId newId = OrganizationId.generate();
         Code code = Code.of(command.code());
-        Organization organization = Organization.create(
-                newId, TenantId.of(command.tenantId()), parentOrgId, code, command.name(), command.level());
+        Organization organization =
+                Organization.create(newId, TenantId.of(command.tenantId()), parentOrgId, code, command.name(), level);
 
         // Assign patterns if provided
         if (command.fiscalYearPatternId() != null || command.monthlyPeriodPatternId() != null) {
@@ -244,7 +249,7 @@ public class AdminOrganizationService {
                 "Created organization {} (code: {}, level: {}) for tenant {}",
                 newId.value(),
                 command.code(),
-                command.level(),
+                level,
                 command.tenantId());
 
         return newId.value();
@@ -482,6 +487,9 @@ public class AdminOrganizationService {
         if (!member.getTenantId().value().equals(tenantId)) {
             throw new DomainException("TENANT_MISMATCH", "Cannot modify member from another tenant");
         }
+        if (!member.isActive()) {
+            throw new DomainException("MEMBER_INACTIVE", "Cannot transfer an inactive member");
+        }
 
         OrganizationId targetOrgId = OrganizationId.of(command.targetOrgId());
 
@@ -533,6 +541,28 @@ public class AdminOrganizationService {
             throw new DomainException("ORGANIZATION_INACTIVE", "Cannot assign patterns to an inactive organization");
         }
 
+        // Validate that pattern IDs exist and belong to the same tenant
+        if (fiscalYearPatternId != null) {
+            Long count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM fiscal_year_pattern WHERE id = ? AND tenant_id = ?",
+                    Long.class,
+                    fiscalYearPatternId,
+                    tenantId);
+            if (count == null || count == 0) {
+                throw new DomainException("PATTERN_NOT_FOUND", "Fiscal year pattern not found in this tenant");
+            }
+        }
+        if (monthlyPeriodPatternId != null) {
+            Long count = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM monthly_period_pattern WHERE id = ? AND tenant_id = ?",
+                    Long.class,
+                    monthlyPeriodPatternId,
+                    tenantId);
+            if (count == null || count == 0) {
+                throw new DomainException("PATTERN_NOT_FOUND", "Monthly period pattern not found in this tenant");
+            }
+        }
+
         organization.assignPatterns(fiscalYearPatternId, monthlyPeriodPatternId);
         organizationRepository.save(organization);
 
@@ -541,6 +571,20 @@ public class AdminOrganizationService {
                 orgId,
                 fiscalYearPatternId,
                 monthlyPeriodPatternId);
+    }
+
+    private static OrganizationTreeNode makeUnmodifiable(OrganizationTreeNode node) {
+        List<OrganizationTreeNode> unmodifiableChildren = node.children().stream()
+                .map(AdminOrganizationService::makeUnmodifiable)
+                .toList();
+        return new OrganizationTreeNode(
+                node.id(),
+                node.code(),
+                node.name(),
+                node.level(),
+                node.status(),
+                node.memberCount(),
+                Collections.unmodifiableList(unmodifiableChildren));
     }
 
     private static String escapeLike(String input) {

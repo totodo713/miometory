@@ -8,10 +8,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -176,9 +174,8 @@ public class JdbcMemberRepository {
      * Checks whether assigning proposedManagerId as the manager of memberId
      * would create a circular reference in the manager chain.
      *
-     * Uses iterative chain traversal with a visited set: starts from proposedManagerId
-     * and follows the manager chain upward. If memberId is encountered in the chain,
-     * a circular reference would be created.
+     * Uses a recursive CTE to traverse the manager chain from proposedManagerId upward.
+     * If memberId appears anywhere in the chain, a circular reference would be created.
      *
      * Self-assignment (memberId == proposedManagerId) is the simplest circular case.
      *
@@ -192,42 +189,18 @@ public class JdbcMemberRepository {
             return true;
         }
 
-        // Traverse the manager chain starting from proposedManagerId
-        Set<UUID> visited = new HashSet<>();
-        UUID currentId = proposedManagerId.value();
-
-        while (currentId != null) {
-            if (!visited.add(currentId)) {
-                // Already visited — existing cycle in data (shouldn't happen but guard against it)
-                break;
-            }
-
-            // Look up the manager of the current member
-            List<UUID> managerIds = jdbcTemplate.query(
-                    "SELECT manager_id FROM members WHERE id = ?",
-                    (rs, rowNum) -> (UUID) rs.getObject("manager_id"),
-                    currentId);
-
-            if (managerIds.isEmpty()) {
-                // Member not found — no cycle
-                break;
-            }
-
-            UUID managerId = managerIds.get(0);
-            if (managerId == null) {
-                // Reached the top of the chain — no cycle
-                break;
-            }
-
-            if (managerId.equals(memberId.value())) {
-                // Found memberId in the chain — would create a cycle
-                return true;
-            }
-
-            currentId = managerId;
-        }
-
-        return false;
+        String sql = """
+                WITH RECURSIVE chain AS (
+                    SELECT manager_id, 1 AS depth FROM members WHERE id = ?
+                    UNION ALL
+                    SELECT m.manager_id, c.depth + 1 FROM members m
+                    JOIN chain c ON m.id = c.manager_id
+                    WHERE c.manager_id IS NOT NULL AND c.depth < 10
+                )
+                SELECT COUNT(*) FROM chain WHERE manager_id = ?
+                """;
+        Long count = jdbcTemplate.queryForObject(sql, Long.class, proposedManagerId.value(), memberId.value());
+        return count != null && count > 0;
     }
 
     /**

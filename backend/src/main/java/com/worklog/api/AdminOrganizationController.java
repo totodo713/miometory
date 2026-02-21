@@ -4,15 +4,16 @@ import com.worklog.application.command.CreateOrganizationCommand;
 import com.worklog.application.service.AdminOrganizationService;
 import com.worklog.application.service.UserContextService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -20,17 +21,15 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/admin/organizations")
+@Validated
 public class AdminOrganizationController {
 
     private final AdminOrganizationService service;
     private final UserContextService userContextService;
-    private final JdbcTemplate jdbcTemplate;
 
-    public AdminOrganizationController(
-            AdminOrganizationService service, UserContextService userContextService, JdbcTemplate jdbcTemplate) {
+    public AdminOrganizationController(AdminOrganizationService service, UserContextService userContextService) {
         this.service = service;
         this.userContextService = userContextService;
-        this.jdbcTemplate = jdbcTemplate;
     }
 
     @GetMapping
@@ -39,8 +38,8 @@ public class AdminOrganizationController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) UUID parentId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size,
             Authentication authentication) {
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         return service.listOrganizations(tenantId, search, isActive, parentId, page, Math.min(size, 100));
@@ -61,17 +60,8 @@ public class AdminOrganizationController {
             @RequestBody @Valid CreateOrganizationRequest request, Authentication authentication) {
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
 
-        // Calculate level based on parent (will be validated again in service)
-        int level = 1;
-        if (request.parentId() != null) {
-            // Query parent to get level
-            Integer parentLevel = jdbcTemplate.queryForObject(
-                    "SELECT level FROM organization WHERE id = ?", Integer.class, request.parentId());
-            level = (parentLevel != null ? parentLevel : 0) + 1;
-        }
-
-        var command = new CreateOrganizationCommand(
-                tenantId, request.parentId(), request.code(), request.name(), level, null, null);
+        var command =
+                new CreateOrganizationCommand(tenantId, request.parentId(), request.code(), request.name(), null, null);
         UUID id = service.createOrganization(command);
         return new CreateOrganizationResponse(id);
     }
@@ -117,8 +107,8 @@ public class AdminOrganizationController {
     public AdminOrganizationService.OrganizationMemberPage listOrganizationMembers(
             @PathVariable UUID id,
             @RequestParam(required = false) Boolean isActive,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) int size,
             Authentication authentication) {
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         return service.listMembersByOrganization(id, tenantId, page, Math.min(size, 100), isActive);

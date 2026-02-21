@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { MemberRow, OrganizationRow } from "@/services/api";
+import type { OrganizationMemberRow, OrganizationRow } from "@/services/api";
 import { ApiError, api } from "@/services/api";
 
 type FormMode = "assignManager" | "transferOrg" | "createMember";
@@ -10,7 +10,7 @@ interface MemberManagerFormProps {
   mode: FormMode;
   organizationId: string;
   /** Target member for assignManager / transferOrg modes */
-  member?: MemberRow;
+  member?: OrganizationMemberRow;
   onClose: () => void;
   onSaved: () => void;
 }

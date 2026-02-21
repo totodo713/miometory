@@ -52,7 +52,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             code,
             "Test Organization",
-            1,
             null,
             null,
         )
@@ -77,7 +76,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             code,
             "First Org",
-            1,
             null,
             null,
         )
@@ -88,7 +86,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             code,
             "Second Org",
-            1,
             null,
             null,
         )
@@ -101,17 +98,29 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
 
     @Test
     fun `create organization exceeding max depth throws INVALID_LEVEL`() {
-        // Level 7 exceeds max of 6
-        val code = "DEEP_${UUID.randomUUID().toString().take(8)}"
+        // Build a chain 6 levels deep, then attempt to create a 7th level child
+        var currentParentId: UUID? = null
+        for (lvl in 1..6) {
+            val code = "DPL${lvl}_${UUID.randomUUID().toString().take(6)}"
+            val command = CreateOrganizationCommand(
+                tenantId,
+                currentParentId,
+                code,
+                "Depth Level $lvl",
+                null,
+                null,
+            )
+            currentParentId = service.createOrganization(command)
+        }
 
-        // Organization.create validates level in the domain
+        // Attempting to create a 7th level child should fail
+        val code = "DEEP7_${UUID.randomUUID().toString().take(6)}"
         val ex = assertFailsWith<DomainException> {
             val command = CreateOrganizationCommand(
                 tenantId,
-                null,
+                currentParentId,
                 code,
                 "Too Deep Org",
-                7,
                 null,
                 null,
             )
@@ -129,7 +138,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             parentCode,
             "Parent Org",
-            1,
             null,
             null,
         )
@@ -143,7 +151,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             parentId,
             childCode,
             "Child Org",
-            2,
             null,
             null,
         )
@@ -164,7 +171,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             code,
             "Original Name",
-            1,
             null,
             null,
         )
@@ -201,7 +207,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             parentCode,
             "Parent For Deactivation",
-            1,
             null,
             null,
         )
@@ -215,7 +220,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
                 parentId,
                 childCode,
                 "Child $i",
-                2,
                 null,
                 null,
             )
@@ -239,7 +243,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             code,
             "Org Without Children",
-            1,
             null,
             null,
         )
@@ -260,7 +263,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             code,
             "Org To Activate",
-            1,
             null,
             null,
         )
@@ -296,7 +298,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             code,
             uniqueName,
-            1,
             null,
             null,
         )
@@ -320,7 +321,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             activeCode,
             "Filter Active Org",
-            1,
             null,
             null,
         )
@@ -333,7 +333,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
             null,
             inactiveCode,
             "Filter Inactive Org",
-            1,
             null,
             null,
         )
@@ -365,7 +364,6 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
                 null,
                 code,
                 "Pagination Org $i",
-                1,
                 null,
                 null,
             )

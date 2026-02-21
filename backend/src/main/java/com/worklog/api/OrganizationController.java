@@ -46,7 +46,6 @@ public class OrganizationController {
                 request.parentId(),
                 request.code(),
                 request.name(),
-                request.level(),
                 request.fiscalYearPatternId(),
                 request.monthlyPeriodPatternId());
 
@@ -58,7 +57,6 @@ public class OrganizationController {
         response.put("parentId", request.parentId() != null ? request.parentId().toString() : null);
         response.put("code", request.code());
         response.put("name", request.name());
-        response.put("level", request.level());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -196,12 +194,7 @@ public class OrganizationController {
     // Request DTOs
 
     public record CreateOrganizationRequest(
-            UUID parentId,
-            String code,
-            String name,
-            int level,
-            UUID fiscalYearPatternId,
-            UUID monthlyPeriodPatternId) {}
+            UUID parentId, String code, String name, UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {}
 
     public record UpdateOrganizationRequest(String name) {}
 

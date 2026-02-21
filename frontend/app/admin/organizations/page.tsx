@@ -8,8 +8,8 @@ import { OrganizationTree } from "@/components/admin/OrganizationTree";
 import { useAdminContext } from "@/providers/AdminProvider";
 import type {
   FiscalYearPatternOption,
-  MemberRow,
   MonthlyPeriodPatternOption,
+  OrganizationMemberRow,
   OrganizationRow,
   OrganizationTreeNode,
 } from "@/services/api";
@@ -26,7 +26,7 @@ export default function AdminOrganizationsPage() {
 
   // Member detail view state (shared between list and tree views)
   const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string } | null>(null);
-  const [members, setMembers] = useState<MemberRow[]>([]);
+  const [members, setMembers] = useState<OrganizationMemberRow[]>([]);
   const [memberTotalPages, setMemberTotalPages] = useState(0);
   const [memberPage, setMemberPage] = useState(0);
   const [isMembersLoading, setIsMembersLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function AdminOrganizationsPage() {
 
   // MemberManagerForm state
   const [memberFormMode, setMemberFormMode] = useState<"assignManager" | "transferOrg" | "createMember" | null>(null);
-  const [targetMember, setTargetMember] = useState<MemberRow | undefined>(undefined);
+  const [targetMember, setTargetMember] = useState<OrganizationMemberRow | undefined>(undefined);
 
   // Pattern assignment state
   const [fiscalYearPatterns, setFiscalYearPatterns] = useState<FiscalYearPatternOption[]>([]);
@@ -81,7 +81,8 @@ export default function AdminOrganizationsPage() {
 
   // Load patterns when an org is selected
   useEffect(() => {
-    if (!selectedOrg || !adminContext?.tenantId) return;
+    const tenantId = adminContext?.tenantId;
+    if (!selectedOrg || !tenantId) return;
     let cancelled = false;
 
     const loadPatterns = async () => {
@@ -90,8 +91,8 @@ export default function AdminOrganizationsPage() {
       setPatternSuccess(null);
       try {
         const [fyPatterns, mpPatterns] = await Promise.all([
-          api.admin.patterns.listFiscalYearPatterns(adminContext.tenantId as string),
-          api.admin.patterns.listMonthlyPeriodPatterns(adminContext.tenantId as string),
+          api.admin.patterns.listFiscalYearPatterns(tenantId),
+          api.admin.patterns.listMonthlyPeriodPatterns(tenantId),
         ]);
         if (cancelled) return;
         setFiscalYearPatterns(fyPatterns);
@@ -148,18 +149,13 @@ export default function AdminOrganizationsPage() {
 
   const handleDeactivate = useCallback(
     async (id: string) => {
+      if (!confirm("この組織を無効化しますか？")) return;
       try {
         const result = await api.admin.organizations.deactivate(id);
         if (result.warnings && result.warnings.length > 0) {
-          const warningMsg = result.warnings.join("\n");
-          if (confirm(`警告:\n${warningMsg}\n\n組織を無効化しますか？`)) {
-            refresh();
-          }
-        } else {
-          if (confirm("この組織を無効化しますか？")) {
-            refresh();
-          }
+          alert(`無効化しました。\n\n警告:\n${result.warnings.join("\n")}`);
         }
+        refresh();
       } catch (err: unknown) {
         alert(err instanceof ApiError ? err.message : "エラーが発生しました");
       }
@@ -205,15 +201,31 @@ export default function AdminOrganizationsPage() {
     [initPatternSelections],
   );
 
-  const handleTreeSelectOrg = useCallback((org: OrganizationTreeNode) => {
+  const handleTreeSelectOrg = useCallback(async (org: OrganizationTreeNode) => {
     setSelectedOrg({ id: org.id, name: org.name });
     setMemberPage(0);
     setMembers([]);
-    // Tree nodes don't have pattern IDs, so initialize as null
-    setCurrentFiscalYearPatternId(null);
-    setCurrentMonthlyPeriodPatternId(null);
-    setSelectedFiscalYearPatternId("");
-    setSelectedMonthlyPeriodPatternId("");
+    // Fetch full org data to get pattern IDs
+    try {
+      const result = await api.admin.organizations.list({ search: org.code, size: 1 });
+      const fullOrg = result.content.find((o) => o.id === org.id);
+      if (fullOrg) {
+        setCurrentFiscalYearPatternId(fullOrg.fiscalYearPatternId ?? null);
+        setCurrentMonthlyPeriodPatternId(fullOrg.monthlyPeriodPatternId ?? null);
+        setSelectedFiscalYearPatternId(fullOrg.fiscalYearPatternId ?? "");
+        setSelectedMonthlyPeriodPatternId(fullOrg.monthlyPeriodPatternId ?? "");
+      } else {
+        setCurrentFiscalYearPatternId(null);
+        setCurrentMonthlyPeriodPatternId(null);
+        setSelectedFiscalYearPatternId("");
+        setSelectedMonthlyPeriodPatternId("");
+      }
+    } catch {
+      setCurrentFiscalYearPatternId(null);
+      setCurrentMonthlyPeriodPatternId(null);
+      setSelectedFiscalYearPatternId("");
+      setSelectedMonthlyPeriodPatternId("");
+    }
   }, []);
 
   const handleBackToList = useCallback(() => {
@@ -226,13 +238,13 @@ export default function AdminOrganizationsPage() {
     setPatternSuccess(null);
   }, []);
 
-  const handleAssignManager = useCallback((member: MemberRow) => {
+  const handleAssignManager = useCallback((member: OrganizationMemberRow) => {
     setTargetMember(member);
     setMemberFormMode("assignManager");
   }, []);
 
   const handleRemoveManager = useCallback(
-    async (member: MemberRow) => {
+    async (member: OrganizationMemberRow) => {
       if (!confirm(`${member.displayName} のマネージャー割り当てを解除しますか？`)) return;
       try {
         await api.admin.members.removeManager(member.id);
@@ -244,7 +256,7 @@ export default function AdminOrganizationsPage() {
     [refreshMembers],
   );
 
-  const handleTransferOrg = useCallback((member: MemberRow) => {
+  const handleTransferOrg = useCallback((member: OrganizationMemberRow) => {
     setTargetMember(member);
     setMemberFormMode("transferOrg");
   }, []);
@@ -324,9 +336,11 @@ export default function AdminOrganizationsPage() {
 
       {/* View mode tabs - only show when no org is selected */}
       {!selectedOrg && (
-        <div className="flex gap-0 mb-4 border-b border-gray-200">
+        <div role="tablist" className="flex gap-0 mb-4 border-b border-gray-200">
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "list"}
             onClick={() => handleViewModeChange("list")}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
               viewMode === "list"
@@ -338,6 +352,8 @@ export default function AdminOrganizationsPage() {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={viewMode === "tree"}
             onClick={() => handleViewModeChange("tree")}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
               viewMode === "tree"
