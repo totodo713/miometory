@@ -39,16 +39,46 @@ Frontend starts at http://localhost:3000.
 
 ## Test Users (Dev Seed Data)
 
-After implementing the admin permissions migration (V16), the following test users will be available:
+After implementing the admin permissions migration (V18), the following test users will be available:
 
-| User | Email | Role | Tenant |
-|------|-------|------|--------|
-| System Admin | sysadmin@miometry.example.com | SYSTEM_ADMIN | (global) |
-| Tenant Admin | david.independent@miometry.example.com | TENANT_ADMIN | dev tenant |
-| Supervisor | alice.manager@miometry.example.com | SUPERVISOR | dev tenant |
-| Regular User | bob.engineer@miometry.example.com | USER | dev tenant |
+### Miometry Tenant (Primary)
 
-Password for all dev users: `password123` (bcrypt hash in seed data)
+| User | Email | Role | Manager | Active |
+|------|-------|------|---------|--------|
+| System Admin | sysadmin@miometry.example.com | SYSTEM_ADMIN | — | yes |
+| David Independent | david.independent@miometry.example.com | TENANT_ADMIN | — | yes |
+| Alice Manager | alice.manager@miometry.example.com | SUPERVISOR | — | yes |
+| Bob Engineer | bob.engineer@miometry.example.com | USER | Alice | yes |
+| Charlie Engineer | charlie.engineer@miometry.example.com | USER | Alice | yes |
+| Eve Frontend | eve.frontend@miometry.example.com | USER | Alice | yes |
+| Frank Backend | frank.backend@miometry.example.com | USER | Alice | yes |
+| Grace Designer | grace.designer@miometry.example.com | USER | Alice | **no** |
+| Hank QA Lead | hank.qalead@miometry.example.com | SUPERVISOR | — | yes |
+| Ivy Support | ivy.support@miometry.example.com | USER | Hank | yes |
+| Kevin Intern | kevin.intern@miometry.example.com | USER | Hank | yes |
+
+### ACME Tenant (Cross-tenant Testing)
+
+| User | Email | Role | Manager | Active |
+|------|-------|------|---------|--------|
+| Jack ACME Admin | jack.admin@acme.example.com | TENANT_ADMIN | — | yes |
+| Kim ACME Staff | kim.staff@acme.example.com | USER | Jack | yes |
+
+Password for all dev users: `Password1` (bcrypt hash in seed data)
+
+### E2E Verification Scenarios
+
+| Scenario | Login As | What to Verify |
+|----------|----------|----------------|
+| Cross-tenant management | System Admin | Can see both MIOMETRY and ACME tenants |
+| Member management | David (TENANT_ADMIN) | List 11 members (10 active + 1 inactive), search, pagination |
+| Project management | David (TENANT_ADMIN) | List 6 projects (4 active + 2 inactive), create/edit/deactivate |
+| Daily approval (many) | Alice (SUPERVISOR) | 4+ SUBMITTED entries from Bob/Eve/Frank pending approval |
+| Daily approval (few) | Hank (SUPERVISOR) | 2 SUBMITTED entries from Ivy/Kevin pending approval |
+| Inactive member | David (TENANT_ADMIN) | Grace shows as inactive, can be reactivated |
+| Inactive project | David (TENANT_ADMIN) | RESEARCH-AI and LEGACY-SYS show as inactive |
+| Tenant isolation | Jack (ACME TENANT_ADMIN) | Only sees ACME members/projects, not Miometry |
+| User restrictions | Bob (USER) | Cannot access admin management pages |
 
 ## Key Development Paths
 
