@@ -487,9 +487,9 @@ export default function AdminOrganizationsPage() {
                         <td className="py-3 px-4">{member.displayName}</td>
                         <td className="py-3 px-4 text-gray-600">{member.email}</td>
                         <td className="py-3 px-4">
-                          {member.managerDisplayName ? (
+                          {member.managerName ? (
                             <span className="flex items-center gap-1.5">
-                              <span className="text-gray-700">{member.managerDisplayName}</span>
+                              <span className="text-gray-700">{member.managerName}</span>
                               {member.managerIsActive === false && (
                                 <span
                                   className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800"
@@ -506,10 +506,10 @@ export default function AdminOrganizationsPage() {
                         <td className="py-3 px-4">
                           <span
                             className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                              member.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                              member.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                             }`}
                           >
-                            {member.status === "ACTIVE" ? "有効" : "無効"}
+                            {member.isActive ? "有効" : "無効"}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">

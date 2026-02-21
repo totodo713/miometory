@@ -38,21 +38,19 @@ const targetMember = {
   id: "m1",
   email: "alice@test.com",
   displayName: "Alice",
-  organizationId: "org1",
   managerId: "mgr1",
-  managerDisplayName: "Bob",
+  managerName: "Bob",
   managerIsActive: true,
-  status: "ACTIVE",
-  version: 1,
+  isActive: true,
 };
 
 const availableMember = {
   id: "m2",
   email: "charlie@test.com",
   displayName: "Charlie",
-  organizationId: "org1",
   managerId: null,
   managerName: null,
+  managerIsActive: null,
   isActive: true,
 };
 

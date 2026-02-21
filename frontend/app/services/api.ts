@@ -48,12 +48,10 @@ interface OrganizationMemberRow {
   id: string;
   email: string;
   displayName: string;
-  organizationId: string;
   managerId: string | null;
-  managerDisplayName: string | null;
+  managerName: string | null;
   managerIsActive: boolean | null;
-  status: "ACTIVE" | "INACTIVE";
-  version: number;
+  isActive: boolean;
 }
 
 interface MemberPage {

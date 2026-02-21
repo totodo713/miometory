@@ -223,8 +223,8 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
                   </option>
                 ))}
               </select>
-              {member?.managerDisplayName && (
-                <p className="mt-1 text-xs text-gray-500">現在のマネージャー: {member.managerDisplayName}</p>
+              {member?.managerName && (
+                <p className="mt-1 text-xs text-gray-500">現在のマネージャー: {member.managerName}</p>
               )}
             </div>
           )}
