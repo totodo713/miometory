@@ -170,17 +170,6 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
             className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <div className="ml-auto">
-          {selectedEntries.size > 0 && (
-            <button
-              type="button"
-              onClick={handleBulkApprove}
-              className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-            >
-              選択した{selectedEntries.size}件を承認
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Summary statistics cards */}
@@ -360,6 +349,23 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
               ))}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Reject modal */}
+      {/* Floating bulk approve bar */}
+      {selectedEntries.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur-sm shadow-[0_-2px_8px_rgba(0,0,0,0.08)]">
+          <div className="mx-auto max-w-5xl flex items-center justify-between px-6 py-3">
+            <span className="text-sm text-gray-600">{selectedEntries.size}件選択中</span>
+            <button
+              type="button"
+              onClick={handleBulkApprove}
+              className="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            >
+              選択した{selectedEntries.size}件を承認
+            </button>
+          </div>
         </div>
       )}
 
