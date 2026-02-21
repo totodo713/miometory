@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, api } from "@/services/api";
 import type { ProjectRow } from "./ProjectList";
 
@@ -12,6 +12,15 @@ interface ProjectFormProps {
 
 export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
   const isEdit = project !== null;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const [code, setCode] = useState(project?.code ?? "");
   const [name, setName] = useState(project?.name ?? "");
   const [validFrom, setValidFrom] = useState(project?.validFrom ?? "");

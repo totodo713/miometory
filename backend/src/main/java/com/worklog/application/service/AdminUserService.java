@@ -38,9 +38,10 @@ public class AdminUserService {
         var countParams = new java.util.ArrayList<Object>();
 
         if (search != null && !search.isBlank()) {
-            sb.append(" AND (LOWER(u.email) LIKE LOWER(?) OR LOWER(u.name) LIKE LOWER(?))");
-            countSb.append(" AND (LOWER(u.email) LIKE LOWER(?) OR LOWER(u.name) LIKE LOWER(?))");
-            String pattern = "%" + search + "%";
+            sb.append(" AND (LOWER(u.email) LIKE LOWER(?) ESCAPE '\\' OR LOWER(u.name) LIKE LOWER(?) ESCAPE '\\')");
+            countSb.append(
+                    " AND (LOWER(u.email) LIKE LOWER(?) ESCAPE '\\' OR LOWER(u.name) LIKE LOWER(?) ESCAPE '\\')");
+            String pattern = "%" + escapeLike(search) + "%";
             params.add(pattern);
             params.add(pattern);
             countParams.add(pattern);
@@ -136,7 +137,7 @@ public class AdminUserService {
                 userId);
     }
 
-    public void resetPassword(UUID userId) {
+    public String resetPassword(UUID userId) {
         Boolean userExists =
                 jdbcTemplate.queryForObject("SELECT COUNT(*) > 0 FROM users WHERE id = ?", Boolean.class, userId);
         if (!Boolean.TRUE.equals(userExists)) {
@@ -146,6 +147,11 @@ public class AdminUserService {
         String tempPassword = UUID.randomUUID().toString().substring(0, 12);
         String hashed = passwordEncoder.encode(tempPassword);
         jdbcTemplate.update("UPDATE users SET hashed_password = ?, updated_at = NOW() WHERE id = ?", hashed, userId);
+        return tempPassword;
+    }
+
+    private static String escapeLike(String input) {
+        return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     public record UserRow(

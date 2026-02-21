@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, api } from "@/services/api";
 import type { MemberRow } from "./MemberList";
 
@@ -12,6 +12,15 @@ interface MemberFormProps {
 
 export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
   const isEdit = member !== null;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const [email, setEmail] = useState(member?.email ?? "");
   const [displayName, setDisplayName] = useState(member?.displayName ?? "");
   const [error, setError] = useState<string | null>(null);

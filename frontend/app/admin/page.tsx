@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAdminContext } from "@/providers/AdminProvider";
 
 export default function AdminDashboard() {
@@ -61,12 +62,12 @@ export default function AdminDashboard() {
 
 function DashboardCard({ title, description, href }: { title: string; description: string; href: string }) {
   return (
-    <a
+    <Link
       href={href}
       className="block p-6 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all"
     >
       <h2 className="text-lg font-semibold text-gray-900 mb-2">{title}</h2>
       <p className="text-sm text-gray-600">{description}</p>
-    </a>
+    </Link>
   );
 }

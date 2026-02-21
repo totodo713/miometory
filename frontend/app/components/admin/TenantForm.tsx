@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiError, api } from "@/services/api";
 import type { TenantRow } from "./TenantList";
 
@@ -12,6 +12,15 @@ interface TenantFormProps {
 
 export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
   const isEdit = tenant !== null;
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const [code, setCode] = useState(tenant?.code ?? "");
   const [name, setName] = useState(tenant?.name ?? "");
   const [error, setError] = useState<string | null>(null);

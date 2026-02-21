@@ -69,8 +69,10 @@ public class AdminTenantService {
         tenantRepository.save(tenant);
 
         // Insert into tenant projection table (event sourced aggregate, projection needs manual insert)
+        // @Transactional on the class ensures atomicity between event store and projection writes
         jdbcTemplate.update(
-                "INSERT INTO tenant (id, code, name, status, created_at, updated_at) VALUES (?, ?, ?, 'ACTIVE', NOW(), NOW()) ON CONFLICT (id) DO NOTHING",
+                "INSERT INTO tenant (id, code, name, status, created_at, updated_at) VALUES (?, ?, ?, 'ACTIVE', NOW(), NOW())"
+                        + " ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status, updated_at = EXCLUDED.updated_at",
                 tenant.getId().value(),
                 code,
                 name);

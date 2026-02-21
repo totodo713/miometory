@@ -227,7 +227,7 @@ public class JdbcMemberRepository {
      */
     public void save(Member member) {
         List<Integer> versions = jdbcTemplate.query(
-                "SELECT version FROM members WHERE id = ?",
+                "SELECT version FROM members WHERE id = ? FOR UPDATE",
                 (rs, rowNum) -> rs.getInt("version"),
                 member.getId().value());
         save(member, versions.isEmpty() ? 0 : versions.get(0));

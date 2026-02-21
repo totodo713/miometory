@@ -2,7 +2,10 @@ package com.worklog.api;
 
 import com.worklog.application.command.CreateAssignmentCommand;
 import com.worklog.application.service.AdminAssignmentService;
+import com.worklog.application.service.UserContextService;
 import com.worklog.shared.AdminRole;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -16,10 +19,15 @@ import org.springframework.web.bind.annotation.*;
 public class AdminAssignmentController {
 
     private final AdminAssignmentService adminAssignmentService;
+    private final UserContextService userContextService;
     private final JdbcTemplate jdbcTemplate;
 
-    public AdminAssignmentController(AdminAssignmentService adminAssignmentService, JdbcTemplate jdbcTemplate) {
+    public AdminAssignmentController(
+            AdminAssignmentService adminAssignmentService,
+            UserContextService userContextService,
+            JdbcTemplate jdbcTemplate) {
         this.adminAssignmentService = adminAssignmentService;
+        this.userContextService = userContextService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -27,7 +35,7 @@ public class AdminAssignmentController {
     @PreAuthorize("hasPermission(null, 'assignment.view')")
     public List<AdminAssignmentService.AssignmentRow> listByMember(
             @PathVariable UUID memberId, Authentication authentication) {
-        UUID tenantId = resolveUserTenantId(authentication.getName());
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         enforceDirectReportIfSupervisor(authentication.getName(), memberId);
         return adminAssignmentService.listByMember(memberId, tenantId);
     }
@@ -36,7 +44,7 @@ public class AdminAssignmentController {
     @PreAuthorize("hasPermission(null, 'assignment.view')")
     public List<AdminAssignmentService.AssignmentRow> listByProject(
             @PathVariable UUID projectId, Authentication authentication) {
-        UUID tenantId = resolveUserTenantId(authentication.getName());
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         return adminAssignmentService.listByProject(projectId, tenantId);
     }
 
@@ -44,9 +52,9 @@ public class AdminAssignmentController {
     @PreAuthorize("hasPermission(null, 'assignment.create')")
     @ResponseStatus(HttpStatus.CREATED)
     public CreateAssignmentResponse createAssignment(
-            @RequestBody CreateAssignmentRequest request, Authentication authentication) {
-        UUID tenantId = resolveUserTenantId(authentication.getName());
-        UUID actorMemberId = resolveUserMemberId(authentication.getName());
+            @RequestBody @Valid CreateAssignmentRequest request, Authentication authentication) {
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
+        UUID actorMemberId = userContextService.resolveUserMemberId(authentication.getName());
 
         enforceDirectReportIfSupervisor(authentication.getName(), request.memberId());
 
@@ -58,14 +66,15 @@ public class AdminAssignmentController {
     @PatchMapping("/{id}/deactivate")
     @PreAuthorize("hasPermission(null, 'assignment.deactivate')")
     public void deactivateAssignment(@PathVariable UUID id, Authentication authentication) {
-        UUID tenantId = resolveUserTenantId(authentication.getName());
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         adminAssignmentService.deactivateAssignment(id, tenantId);
     }
 
+    // Intentionally reuses *.deactivate permission for both activate/deactivate
     @PatchMapping("/{id}/activate")
     @PreAuthorize("hasPermission(null, 'assignment.deactivate')")
     public void activateAssignment(@PathVariable UUID id, Authentication authentication) {
-        UUID tenantId = resolveUserTenantId(authentication.getName());
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         adminAssignmentService.activateAssignment(id, tenantId);
     }
 
@@ -76,22 +85,13 @@ public class AdminAssignmentController {
                 WHERE LOWER(u.email) = LOWER(?)
                 """, String.class, email);
         if (AdminRole.SUPERVISOR.equals(roleName)) {
-            UUID supervisorMemberId = resolveUserMemberId(email);
+            UUID supervisorMemberId = userContextService.resolveUserMemberId(email);
             adminAssignmentService.validateDirectReport(targetMemberId, supervisorMemberId);
         }
     }
 
-    private UUID resolveUserTenantId(String email) {
-        String sql = "SELECT m.tenant_id FROM members m WHERE LOWER(m.email) = LOWER(?) LIMIT 1";
-        return jdbcTemplate.queryForObject(sql, UUID.class, email);
-    }
-
-    private UUID resolveUserMemberId(String email) {
-        String sql = "SELECT m.id FROM members m WHERE LOWER(m.email) = LOWER(?) LIMIT 1";
-        return jdbcTemplate.queryForObject(sql, UUID.class, email);
-    }
-
-    public record CreateAssignmentRequest(UUID memberId, UUID projectId) {}
+    public record CreateAssignmentRequest(
+            @NotNull UUID memberId, @NotNull UUID projectId) {}
 
     public record CreateAssignmentResponse(String id) {}
 }

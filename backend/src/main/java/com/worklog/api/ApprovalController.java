@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -248,6 +249,7 @@ public class ApprovalController {
      * daily approval status counts, and unresolved daily rejections.
      */
     @GetMapping("/approvals/{id}/detail")
+    @PreAuthorize("hasPermission(null, 'monthly_approval.view')")
     public ResponseEntity<ApprovalService.MonthlyApprovalDetail> getApprovalDetail(@PathVariable UUID id) {
         ApprovalService.MonthlyApprovalDetail detail =
                 approvalService.getMonthlyApprovalDetail(MonthlyApprovalId.of(id));

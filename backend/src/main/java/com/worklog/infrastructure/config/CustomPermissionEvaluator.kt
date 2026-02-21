@@ -5,6 +5,7 @@ import org.springframework.security.access.PermissionEvaluator
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import java.io.Serializable
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Custom permission evaluator that checks `resource.action` permissions
@@ -17,9 +18,18 @@ import java.io.Serializable
  *
  * Resolves the authenticated user's role from SecurityContext, then queries
  * whether that role has the requested permission in the role_permissions table.
+ * Results are cached for 60 seconds to reduce database lookups.
  */
 @Component
 class CustomPermissionEvaluator(private val jdbcTemplate: JdbcTemplate) : PermissionEvaluator {
+
+    private data class CachedPermission(val allowed: Boolean, val cachedAt: Long)
+
+    private val cache = ConcurrentHashMap<String, CachedPermission>()
+
+    companion object {
+        private const val CACHE_TTL_MS = 60_000L
+    }
 
     /**
      * Checks if the authenticated user has the given permission.
@@ -31,7 +41,7 @@ class CustomPermissionEvaluator(private val jdbcTemplate: JdbcTemplate) : Permis
     override fun hasPermission(authentication: Authentication?, targetDomainObject: Any?, permission: Any?): Boolean {
         val email = authentication?.takeIf { it.isAuthenticated }?.name
         val permissionStr = permission as? String
-        return if (email != null && permissionStr != null) checkPermission(email, permissionStr) else false
+        return if (email != null && permissionStr != null) checkPermissionCached(email, permissionStr) else false
     }
 
     /**
@@ -43,6 +53,23 @@ class CustomPermissionEvaluator(private val jdbcTemplate: JdbcTemplate) : Permis
         targetType: String?,
         permission: Any?,
     ): Boolean = hasPermission(authentication, null, permission)
+
+    private fun checkPermissionCached(email: String, permission: String): Boolean {
+        val cacheKey = "$email:$permission"
+        val now = System.currentTimeMillis()
+
+        // Evict expired entries on access
+        cache.entries.removeIf { now - it.value.cachedAt > CACHE_TTL_MS }
+
+        val cached = cache[cacheKey]
+        if (cached != null && now - cached.cachedAt <= CACHE_TTL_MS) {
+            return cached.allowed
+        }
+
+        val result = checkPermission(email, permission)
+        cache[cacheKey] = CachedPermission(result, now)
+        return result
+    }
 
     private fun checkPermission(email: String, permission: String): Boolean {
         val sql = """

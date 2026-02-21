@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import type { ProjectRow } from "@/components/admin/ProjectList";
 import { ProjectList } from "@/components/admin/ProjectList";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 export default function AdminProjectsPage() {
   const [editingProject, setEditingProject] = useState<ProjectRow | null>(null);
@@ -16,16 +16,24 @@ export default function AdminProjectsPage() {
   const handleDeactivate = useCallback(
     async (id: string) => {
       if (!confirm("このプロジェクトを無効化しますか？")) return;
-      await api.admin.projects.deactivate(id);
-      refresh();
+      try {
+        await api.admin.projects.deactivate(id);
+        refresh();
+      } catch (err: unknown) {
+        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+      }
     },
     [refresh],
   );
 
   const handleActivate = useCallback(
     async (id: string) => {
-      await api.admin.projects.activate(id);
-      refresh();
+      try {
+        await api.admin.projects.activate(id);
+        refresh();
+      } catch (err: unknown) {
+        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+      }
     },
     [refresh],
   );

@@ -17,6 +17,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,16 +34,19 @@ public class AdminMemberService {
     private final JdbcUserRepository userRepository;
     private final RoleRepository roleRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminMemberService(
             JdbcMemberRepository memberRepository,
             JdbcUserRepository userRepository,
             RoleRepository roleRepository,
-            JdbcTemplate jdbcTemplate) {
+            JdbcTemplate jdbcTemplate,
+            PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -66,10 +70,10 @@ public class AdminMemberService {
         countParams.add(tenantId);
 
         if (search != null && !search.isBlank()) {
-            String clause = " AND (LOWER(m.email) LIKE ? OR LOWER(m.display_name) LIKE ?)";
+            String clause = " AND (LOWER(m.email) LIKE ? ESCAPE '\\' OR LOWER(m.display_name) LIKE ? ESCAPE '\\')";
             sb.append(clause);
             countSb.append(clause);
-            String pattern = "%" + search.toLowerCase() + "%";
+            String pattern = "%" + escapeLike(search).toLowerCase() + "%";
             params.add(pattern);
             params.add(pattern);
             countParams.add(pattern);
@@ -119,8 +123,9 @@ public class AdminMemberService {
 
     /**
      * Invites a new member: creates both User (UNVERIFIED) and Member records.
+     * Returns both the member ID and a temporary password for the invited user.
      */
-    public UUID inviteMember(InviteMemberCommand command, UUID tenantId) {
+    public InviteMemberResult inviteMember(InviteMemberCommand command, UUID tenantId) {
         if (userRepository.existsByEmail(command.email())) {
             throw new DomainException("DUPLICATE_EMAIL", "A user with this email already exists");
         }
@@ -129,9 +134,11 @@ public class AdminMemberService {
                 .findByName("USER")
                 .orElseThrow(() -> new DomainException("ROLE_NOT_FOUND", "USER role not found"));
 
-        // Create user with a temporary password (the invited member resets it)
-        var user = User.create(
-                command.email(), command.displayName(), "$2b$12$placeholder_hash_for_invite", userRole.getId());
+        // Generate a real temporary password and encode it
+        String tempPassword = UUID.randomUUID().toString().substring(0, 12);
+        String hashedPassword = passwordEncoder.encode(tempPassword);
+
+        var user = User.create(command.email(), command.displayName(), hashedPassword, userRole.getId());
         userRepository.save(user);
 
         var member = Member.create(
@@ -142,11 +149,15 @@ public class AdminMemberService {
                 command.managerId() != null ? MemberId.of(command.managerId()) : null);
         memberRepository.save(member);
 
-        return member.getId().value();
+        return new InviteMemberResult(member.getId().value(), tempPassword);
     }
+
+    public record InviteMemberResult(UUID memberId, String temporaryPassword) {}
 
     /**
      * Updates an existing member's details.
+     * Note: organizationId changes are not yet supported. The field is accepted in the command
+     * for forward compatibility but is currently ignored.
      */
     public void updateMember(UpdateMemberCommand command, UUID tenantId) {
         var member = memberRepository
@@ -236,6 +247,10 @@ public class AdminMemberService {
 
         user.changeRole(tenantAdminRole.getId());
         userRepository.save(user);
+    }
+
+    private static String escapeLike(String input) {
+        return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     // DTOs

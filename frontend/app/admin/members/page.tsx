@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
 import { MemberList } from "@/components/admin/MemberList";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 export default function AdminMembersPage() {
   const [editingMember, setEditingMember] = useState<MemberRow | null>(null);
@@ -18,16 +18,24 @@ export default function AdminMembersPage() {
   const handleDeactivate = useCallback(
     async (id: string) => {
       if (!confirm("このメンバーを無効化しますか？")) return;
-      await api.admin.members.deactivate(id);
-      refresh();
+      try {
+        await api.admin.members.deactivate(id);
+        refresh();
+      } catch (err: unknown) {
+        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+      }
     },
     [refresh],
   );
 
   const handleActivate = useCallback(
     async (id: string) => {
-      await api.admin.members.activate(id);
-      refresh();
+      try {
+        await api.admin.members.activate(id);
+        refresh();
+      } catch (err: unknown) {
+        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+      }
     },
     [refresh],
   );

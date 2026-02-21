@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { TenantForm } from "@/components/admin/TenantForm";
 import type { TenantRow } from "@/components/admin/TenantList";
 import { TenantList } from "@/components/admin/TenantList";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 export default function AdminTenantsPage() {
   const [editingTenant, setEditingTenant] = useState<TenantRow | null>(null);
@@ -16,16 +16,24 @@ export default function AdminTenantsPage() {
   const handleDeactivate = useCallback(
     async (id: string) => {
       if (!confirm("このテナントを無効化しますか？")) return;
-      await api.admin.tenants.deactivate(id);
-      refresh();
+      try {
+        await api.admin.tenants.deactivate(id);
+        refresh();
+      } catch (err: unknown) {
+        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+      }
     },
     [refresh],
   );
 
   const handleActivate = useCallback(
     async (id: string) => {
-      await api.admin.tenants.activate(id);
-      refresh();
+      try {
+        await api.admin.tenants.activate(id);
+        refresh();
+      } catch (err: unknown) {
+        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+      }
     },
     [refresh],
   );

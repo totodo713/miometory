@@ -4,6 +4,7 @@ import com.worklog.shared.AdminRole
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.dao.EmptyResultDataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
@@ -66,7 +67,7 @@ class TenantStatusFilter(private val jdbcTemplate: JdbcTemplate) : OncePerReques
             jdbcTemplate.queryForObject(sql, { rs, _ ->
                 Pair(rs.getString("role_name"), rs.getString("tenant_status"))
             }, email)
-        } catch (_: Exception) {
+        } catch (_: EmptyResultDataAccessException) {
             null
         }
     }

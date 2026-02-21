@@ -198,6 +198,7 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
                                 type="checkbox"
                                 checked={selectedEntries.has(entry.entryId)}
                                 onChange={() => toggleEntry(entry.entryId)}
+                                aria-label={`${entry.projectName}の承認を選択`}
                               />
                             )}
                           </td>
@@ -272,6 +273,7 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
               onChange={(e) => setRejectComment(e.target.value)}
               placeholder="差戻理由を入力してください（必須）"
               rows={3}
+              aria-label="差戻コメント"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <div className="flex justify-end gap-3 mt-4">

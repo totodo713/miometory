@@ -1,6 +1,9 @@
 package com.worklog.api;
 
 import com.worklog.application.service.AdminUserService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,19 +32,20 @@ public class AdminUserController {
             @RequestParam(required = false) String accountStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return adminUserService.listUsers(search, tenantId, roleId, accountStatus, page, size);
+        int effectiveSize = Math.min(size, 100);
+        return adminUserService.listUsers(search, tenantId, roleId, accountStatus, page, effectiveSize);
     }
 
     @PutMapping("/{id}/role")
     @PreAuthorize("hasPermission(null, 'user.update_role')")
-    public ResponseEntity<Void> changeRole(@PathVariable UUID id, @RequestBody ChangeRoleRequest request) {
+    public ResponseEntity<Void> changeRole(@PathVariable UUID id, @RequestBody @Valid ChangeRoleRequest request) {
         adminUserService.changeRole(id, request.roleId());
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{id}/lock")
     @PreAuthorize("hasPermission(null, 'user.lock')")
-    public ResponseEntity<Void> lockUser(@PathVariable UUID id, @RequestBody LockRequest request) {
+    public ResponseEntity<Void> lockUser(@PathVariable UUID id, @RequestBody @Valid LockUserRequest request) {
         adminUserService.lockUser(id, request.durationMinutes());
         return ResponseEntity.ok().build();
     }
@@ -55,14 +59,16 @@ public class AdminUserController {
 
     @PostMapping("/{id}/password-reset")
     @PreAuthorize("hasPermission(null, 'user.reset_password')")
-    public ResponseEntity<Void> resetPassword(@PathVariable UUID id) {
-        adminUserService.resetPassword(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<ResetPasswordResponse> resetPassword(@PathVariable UUID id) {
+        String tempPassword = adminUserService.resetPassword(id);
+        return ResponseEntity.ok(new ResetPasswordResponse(tempPassword));
     }
 
-    // Request DTOs
+    // Request/Response DTOs
 
-    public record ChangeRoleRequest(UUID roleId) {}
+    public record ChangeRoleRequest(@NotNull UUID roleId) {}
 
-    public record LockRequest(int durationMinutes) {}
+    public record LockUserRequest(@Positive int durationMinutes) {}
+
+    public record ResetPasswordResponse(String temporaryPassword) {}
 }

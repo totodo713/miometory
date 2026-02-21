@@ -8,7 +8,12 @@ import com.worklog.domain.shared.DomainException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,8 +101,9 @@ public class DailyApprovalService {
     }
 
     public void approveEntries(ApproveDailyEntryCommand command) {
-        // Group entries by member for notification
+        // Track entries per member for notification with correct referenceId
         Map<UUID, String> memberNames = new HashMap<>();
+        Map<UUID, UUID> memberFirstEntryId = new HashMap<>();
 
         for (UUID entryId : command.entryIds()) {
             Map<String, Object> entry = jdbcTemplate.queryForMap(
@@ -112,6 +118,7 @@ public class DailyApprovalService {
             }
 
             memberNames.put(memberId, (String) entry.get("display_name"));
+            memberFirstEntryId.putIfAbsent(memberId, entryId);
 
             // Check no active approval exists
             Integer existing = jdbcTemplate.queryForObject(
@@ -136,12 +143,12 @@ public class DailyApprovalService {
                     Timestamp.from(Instant.now()));
         }
 
-        // Send one notification per member
+        // Send one notification per member with their own entry ID as referenceId
         for (var memberEntry : memberNames.entrySet()) {
             notificationService.createNotification(
                     memberEntry.getKey(),
                     NotificationType.DAILY_APPROVED,
-                    command.entryIds().get(0),
+                    memberFirstEntryId.get(memberEntry.getKey()),
                     "日次記録が承認されました",
                     "上司があなたの日次記録を承認しました");
         }

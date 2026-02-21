@@ -99,8 +99,7 @@ public class AuthController {
         var securityContext = SecurityContextHolder.createEmptyContext();
         securityContext.setAuthentication(authentication);
         SecurityContextHolder.setContext(securityContext);
-        session.setAttribute(
-                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, securityContext);
 
         // Calculate session expiration (30 minutes from now)
         Instant sessionExpiresAt = Instant.now().plusSeconds(session.getMaxInactiveInterval());

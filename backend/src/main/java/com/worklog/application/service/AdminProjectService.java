@@ -26,8 +26,14 @@ public class AdminProjectService {
     public ProjectPage listProjects(UUID tenantId, String search, Boolean isActive, int page, int size) {
         var sb = new StringBuilder("""
             SELECT p.id, p.code, p.name, p.is_active, p.valid_from, p.valid_until,
-                   (SELECT COUNT(*) FROM member_project_assignments mpa WHERE mpa.project_id = p.id AND mpa.is_active = true) AS assigned_member_count
+                   COALESCE(mpa_count.cnt, 0) AS assigned_member_count
             FROM projects p
+            LEFT JOIN (
+                SELECT project_id, COUNT(*) AS cnt
+                FROM member_project_assignments
+                WHERE is_active = true
+                GROUP BY project_id
+            ) mpa_count ON mpa_count.project_id = p.id
             WHERE p.tenant_id = ?
             """);
         var countSb = new StringBuilder("SELECT COUNT(*) FROM projects p WHERE p.tenant_id = ?");
@@ -37,10 +43,10 @@ public class AdminProjectService {
         countParams.add(tenantId);
 
         if (search != null && !search.isBlank()) {
-            String clause = " AND (LOWER(p.code) LIKE ? OR LOWER(p.name) LIKE ?)";
+            String clause = " AND (LOWER(p.code) LIKE ? ESCAPE '\\' OR LOWER(p.name) LIKE ? ESCAPE '\\')";
             sb.append(clause);
             countSb.append(clause);
-            String pattern = "%" + search.toLowerCase() + "%";
+            String pattern = "%" + escapeLike(search).toLowerCase() + "%";
             params.add(pattern);
             params.add(pattern);
             countParams.add(pattern);
@@ -146,6 +152,10 @@ public class AdminProjectService {
         if (rows == 0) {
             throw new DomainException("PROJECT_NOT_FOUND", "Project not found");
         }
+    }
+
+    private static String escapeLike(String input) {
+        return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     public record ProjectRow(

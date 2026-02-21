@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Provides the authenticated user's admin context (role, permissions, tenant info).
+ * Intentionally open to all authenticated users - needed for frontend to determine admin UI visibility
  */
 @RestController
 @RequestMapping("/api/v1/admin")

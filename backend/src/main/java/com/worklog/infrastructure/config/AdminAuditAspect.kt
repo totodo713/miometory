@@ -30,7 +30,14 @@ class AdminAuditAspect(private val auditLogService: AuditLogService) {
             "execution(* com.worklog.api.DailyApprovalController.*(..))",
     )
     fun auditAdminAction(joinPoint: ProceedingJoinPoint): Any? {
-        val result = joinPoint.proceed()
+        var error: Throwable? = null
+        var result: Any? = null
+
+        try {
+            result = joinPoint.proceed()
+        } catch (@Suppress("TooGenericExceptionCaught") e: Throwable) {
+            error = e
+        }
 
         try {
             val authentication = SecurityContextHolder.getContext().authentication
@@ -41,11 +48,25 @@ class AdminAuditAspect(private val auditLogService: AuditLogService) {
             val controllerName = joinPoint.target.javaClass.simpleName
             val methodName = joinPoint.signature.name
             val eventType = "ADMIN_ACTION"
+            val status = if (error == null) "SUCCESS" else "FAILURE"
 
             val details = buildString {
-                append("""{"controller":"$controllerName","method":"$methodName"""")
+                append("""{"controller":"""")
+                append(escapeJson(controllerName))
+                append("""","method":"""")
+                append(escapeJson(methodName))
+                append("""","status":"""")
+                append(status)
+                append('"')
                 if (email != null) {
-                    append(""","actor":"$email"""")
+                    append(""","actor":"""")
+                    append(escapeJson(email))
+                    append('"')
+                }
+                if (error != null) {
+                    append(""","error":"""")
+                    append(escapeJson(error.message ?: "Unknown error"))
+                    append('"')
                 }
                 append("}")
             }
@@ -55,8 +76,15 @@ class AdminAuditAspect(private val auditLogService: AuditLogService) {
             log.warn("Failed to log admin audit event: {}", e.message)
         }
 
+        if (error != null) {
+            throw error
+        }
+
         return result
     }
+
+    private fun escapeJson(value: String): String = value.replace("\\", "\\\\").replace("\"", "\\\"")
+        .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
 
     private fun resolveUserId(email: String?): UserId? {
         if (email == null) return null

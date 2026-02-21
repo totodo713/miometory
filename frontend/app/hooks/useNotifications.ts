@@ -51,7 +51,7 @@ export function useNotifications() {
         if (!document.hidden) {
           fetchNotifications();
         }
-      }, 3000);
+      }, 30000);
     };
 
     startPolling();

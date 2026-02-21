@@ -25,8 +25,16 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
@@ -34,7 +42,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
       const result = await api.admin.projects.list({
         page,
         size: 20,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         isActive: showInactive ? undefined : true,
       });
       setProjects(result.content);
@@ -44,7 +52,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
     } finally {
       setIsLoading(false);
     }
-  }, [page, search, showInactive]);
+  }, [page, debouncedSearch, showInactive]);
 
   useEffect(() => {
     loadProjects();
@@ -61,6 +69,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
             setSearch(e.target.value);
             setPage(0);
           }}
+          aria-label="コードまたは名前で検索"
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">

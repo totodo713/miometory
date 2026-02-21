@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { UserRow } from "@/components/admin/UserList";
 import { UserList } from "@/components/admin/UserList";
 import { ApiError, api } from "@/services/api";
@@ -15,6 +15,17 @@ export default function AdminUsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (roleDialogUser) setRoleDialogUser(null);
+        if (lockDialogUser) setLockDialogUser(null);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [roleDialogUser, lockDialogUser]);
 
   const handleChangeRole = useCallback((user: UserRow) => {
     setRoleDialogUser(user);

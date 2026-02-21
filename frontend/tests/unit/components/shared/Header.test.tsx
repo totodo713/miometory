@@ -8,6 +8,26 @@ vi.mock("@/providers/AuthProvider", () => ({
   useAuthContext: () => mockUseAuthContext(),
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/worklog",
+}));
+
+vi.mock("next/link", () => ({
+  default: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
+}));
+
+vi.mock("@/services/api", () => ({
+  api: {
+    admin: {
+      getContext: () => Promise.reject(new Error("no access")),
+    },
+  },
+}));
+
+vi.mock("@/components/shared/NotificationBell", () => ({
+  NotificationBell: () => <div data-testid="notification-bell" />,
+}));
+
 describe("Header", () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -33,8 +33,16 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [accountStatus, setAccountStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
@@ -42,7 +50,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
       const result = await api.admin.users.list({
         page,
         size: 20,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         accountStatus: accountStatus || undefined,
       });
       setUsers(result.content);
@@ -52,7 +60,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
     } finally {
       setIsLoading(false);
     }
-  }, [page, search, accountStatus]);
+  }, [page, debouncedSearch, accountStatus]);
 
   useEffect(() => {
     loadUsers();
@@ -69,6 +77,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
             setSearch(e.target.value);
             setPage(0);
           }}
+          aria-label="メールまたは名前で検索"
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
@@ -77,6 +86,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
             setAccountStatus(e.target.value);
             setPage(0);
           }}
+          aria-label="アカウントステータスで絞り込み"
           className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">すべてのステータス</option>
