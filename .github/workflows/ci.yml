@@ -142,6 +142,7 @@ jobs:
   e2e-test:
     name: E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: contains(github.event.pull_request.labels.*.name, 'e2e-test')
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -212,9 +213,10 @@ jobs:
               exit 1
             fi
 
-            # Install Playwright browsers with OS dependencies and run E2E
-            npx playwright install --with-deps chromium
-            CI=true npx playwright test
+            # Install Playwright: OS deps (needs root) + browser binary (as user)
+            sudo npx playwright install-deps chromium
+            npx playwright install chromium
+            CI=true npx playwright test --project=chromium
 
             # Cleanup
             kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
