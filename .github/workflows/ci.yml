@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run lint and format checks in devcontainer
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/devcontainer.json
           push: never
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build and test backend in devcontainer
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/devcontainer.json
           push: never
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build and test frontend in devcontainer
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/devcontainer.json
           push: never
@@ -86,7 +86,7 @@ jobs:
           path: backend/build/reports/jacoco/
 
       - name: Post coverage comment on PR
-        uses: madrapps/jacoco-report@v1.7.1
+        uses: madrapps/jacoco-report@7c362aca34caf958e7b1c03464bd8781db9f8da7 # v1.7.1
         with:
           paths: backend/build/reports/jacoco/test/jacocoTestReport.xml
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -102,7 +102,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run E2E tests in devcontainer
-        uses: devcontainers/ci@v0.3
+        uses: devcontainers/ci@8bf61b26e9c3a98f69cb6ce2f88d24ff59b785c6 # v0.3
         with:
           configFile: .devcontainer/devcontainer.json
           push: never
