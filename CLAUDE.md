@@ -92,13 +92,16 @@ Domain logic is in Java; infrastructure/config is in Kotlin.
 
 ```
 (auth)/           # Auth pages (login, signup, password-reset) — route group
+admin/            # Admin panel (members, organizations, tenants, users, projects, assignments)
 components/
   auth/           # Auth components (PasswordStrengthIndicator, UnverifiedBanner)
   shared/         # ErrorBoundary, LoadingSpinner, SessionTimeoutDialog
   worklog/        # Calendar, DailyEntryForm, MonthlySummary, AbsenceForm, CsvUploader
 hooks/            # Custom hooks (useAutoSave, useWorkLogEntry)
 lib/              # Utils, types, validation helpers
+providers/        # React context providers (AdminProvider, AuthProvider, SessionProvider)
 services/         # API client layer
+types/            # Domain type definitions (absence, approval, worklog)
 worklog/          # Worklog pages (calendar, approval)
 ```
 
@@ -106,7 +109,7 @@ Uses `@/` path alias for imports. API client in `services/api.ts`.
 
 ### Database
 
-PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/resources/db/migration/` (V1–V12 + dev seed data). Dev profile auto-loads `data-dev.sql` with test users and sample data.
+PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/resources/db/migration/` (V1–V9 + dev seed data). Dev profile auto-loads `data-dev.sql` with test users and sample data.
 
 ### Key Design Decisions
 
@@ -133,6 +136,19 @@ PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/reso
 - No wildcard imports. Run `./gradlew formatAll` before committing
 - New entities require: domain model + migration + seed data in same PR (see AGENTS.md checklist)
 
+## Hooks (`.claude/hooks/`)
+
+- `format-on-edit.sh` (PostToolUse): Auto-formats files after Write/Edit (Biome for frontend, Spotless for backend)
+- `git-safety-check.sh` (PreToolUse): Blocks dangerous git patterns (force push, --no-verify, branch -D, checkout ., reset --hard, clean, config)
+- Hook pattern: read JSON from stdin → parse with `python3` → exit 0 (allow) or exit 2 (block)
+- New hooks should follow fail-open principle (exit 0 on parse errors)
+
+## Git Safety
+
+Permissions in `settings.local.json` use granular git command patterns (not `Bash(git *)`).
+Intentionally excluded (require user confirmation): `git reset`, `git clean`, `git restore`, `git config`
+PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `checkout .`, `stash drop/clear`, `rebase -i` within allowed commands
+
 ## PR Review Response Rules
 
 When responding to PR review comments:
@@ -141,29 +157,7 @@ When responding to PR review comments:
 3. Update the PR Description (body) to reflect all changes after addressing feedback
 4. Reply API: `gh api repos/{owner}/{repo}/pulls/{pr}/comments -X POST -f body="..." -F in_reply_to={comment_id}`
 
-## Active Technologies
-- TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl (006-password-reset-frontend)
-- localStorage (rate limiting state), sessionStorage (token backup) (006-password-reset-frontend)
-- Kotlin 2.3.0 + Java 21 (Spring Boot 3.5.9) + Spring Boot Test, Testcontainers 1.21.1, spring-security-test, MockK, JUnit 5 (007-password-reset-tests)
-- PostgreSQL 16 (via Testcontainers), Flyway migrations (V11__user_auth.sql) (007-password-reset-tests)
-- Java 21 (domain), Kotlin 2.3.0 (infrastructure) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security (009-fix-signup-role-error)
-- PostgreSQL 16 (via Spring Data JDBC for Role entity, event sourcing for aggregates) (009-fix-signup-role-error)
-- Java 21 (domain), Kotlin 2.3.0 (infrastructure/tests) + Spring Boot 3.5.9, Spring Data JDBC, PostgreSQL JDBC Driver (010-fix-auditlog-persistence)
-- PostgreSQL 17 (`audit_logs` table with JSONB + INET columns) (010-fix-auditlog-persistence)
-- Kotlin 2.3.0 (infrastructure/tests), Java 21 (domain) + Spring Boot 3.5.9, detekt (static analysis), SLF4J (logging) (011-fix-detekt-baseline)
-- N/A (no storage changes) (011-fix-detekt-baseline)
-- TypeScript 5.x (frontend), Kotlin 2.3.0 / Java 21 (backend) + Next.js 16.x, React 19.x, Tailwind CSS v4, Spring Boot 3.5.9 (012-login-auth-ui)
-- PostgreSQL 17 (users table via V11 migration, session-based auth via Spring Security) (012-login-auth-ui)
-- Java 21 (domain), Kotlin 2.3.0 (infrastructure), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Next.js 16.x, React 19.x, Tailwind CSS, Zustand (013-submit-worklog-entry)
-- PostgreSQL 17 with JSONB event store (event sourcing) (013-submit-worklog-entry)
-- Java 21 (domain), Kotlin 2.3.0 (infrastructure/tests), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Next.js 16.x, React 19.x, Tailwind CSS, Zustand (014-edit-rejected-entry)
-- PostgreSQL 17 with JSONB event store + projection tables, Flyway migrations (014-edit-rejected-entry)
-- Java 21 (domain), Kotlin 2.3.0 (infrastructure/config), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Security, Spring Data JDBC, Next.js 16.x, React 19.x, Tailwind CSS v4, Zustand, Biome (015-admin-management)
-- PostgreSQL 17 with JSONB event store (event-sourced aggregates) + projection tables (Spring Data JDBC entities), Flyway migrations (015-admin-management)
-- Java 21 (domain layer), Kotlin 2.3.0 (infrastructure/config), TypeScript 5.x (frontend) + Spring Boot 3.5.9, Spring Data JDBC, Spring Security, Next.js 16.x, React 19.x, Tailwind CSS (016-org-management)
-- PostgreSQL 17 with JSONB event store (event sourcing for Organization), direct JDBC (Member projection) (016-org-management)
-- TypeScript 5.x + Next.js 16.x, React 19.x, Tailwind CSS v4 (017-daily-approval-layout)
-- N/A (no backend changes) (017-daily-approval-layout)
+## Testing Stack
 
-## Recent Changes
-- 006-password-reset-frontend: Added TypeScript 5.x with React 19.x, Next.js 16.x (App Router) + React Testing Library, Vitest, zod, @zxcvbn-ts/core, next-intl
+- **Frontend**: Vitest, React Testing Library, Playwright (E2E), @axe-core/playwright (a11y)
+- **Backend**: JUnit 5, Spring Boot Test, Testcontainers 1.21.1, spring-security-test, MockK
