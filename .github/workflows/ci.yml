@@ -1,0 +1,160 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-format:
+    name: Lint & Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run lint and format checks in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/devcontainer.json
+          push: never
+          runCmd: |
+            cd backend && ./gradlew checkFormat --no-daemon
+            cd ../frontend && npm ci && npm run check:ci
+
+  build-test-backend:
+    name: Build & Test Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test backend in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/devcontainer.json
+          push: never
+          runCmd: |
+            cd backend && ./gradlew build test --no-daemon
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/build/test-results/test/
+          retention-days: 7
+
+  build-test-frontend:
+    name: Build & Test Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and test frontend in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/devcontainer.json
+          push: never
+          runCmd: |
+            cd frontend && npm ci && npm run build && npm test -- --run
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-test-results
+          path: frontend/tests/unit/
+          retention-days: 7
+
+  coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [build-test-backend]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate coverage report in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/devcontainer.json
+          push: never
+          runCmd: |
+            cd backend && ./gradlew jacocoTestReport --no-daemon
+
+      - name: Upload JaCoCo report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/build/reports/jacoco/
+          retention-days: 14
+
+      - name: Post coverage comment on PR
+        uses: madrapps/jacoco-report@v1.7.1
+        with:
+          paths: backend/build/reports/jacoco/test/jacocoTestReport.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 80
+          min-coverage-changed-files: 80
+          title: "Backend Coverage Report"
+
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'e2e-test')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run E2E tests in devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/devcontainer.json
+          push: never
+          runCmd: |
+            # Install dependencies
+            cd /workspaces/miometory/frontend && npm ci
+            cd /workspaces/miometory/backend && ./gradlew build --no-daemon -x test
+
+            # Start backend in background
+            cd /workspaces/miometory/backend
+            ./gradlew bootRun --args='--spring.profiles.active=dev' --no-daemon &
+            BACKEND_PID=$!
+
+            # Wait for backend to be ready
+            echo "Waiting for backend..."
+            for i in $(seq 1 60); do
+              if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
+                echo "Backend is ready"
+                break
+              fi
+              sleep 2
+            done
+
+            # Install Playwright browsers and run E2E
+            cd /workspaces/miometory/frontend
+            npx playwright install chromium
+            CI=true npx playwright test
+
+            # Cleanup
+            kill $BACKEND_PID 2>/dev/null || true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 14
+
+      - name: Upload Playwright screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots
+          path: frontend/test-results/
+          retention-days: 7
