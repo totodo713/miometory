@@ -138,6 +138,7 @@ public class {Aggregate} extends AggregateRoot<{Aggregate}Id> {
     // private TenantId tenantId;
     // Add fields for each property
     // private String name;
+    private boolean deleted;
 
     private {Aggregate}() {}
 
@@ -170,6 +171,12 @@ public class {Aggregate} extends AggregateRoot<{Aggregate}Id> {
      * Soft-delete (if delete operation is included).
      */
     public void delete() {
+        if (!isDeletable()) {
+            throw new DomainException(
+                    "{AGGREGATE}_NOT_DELETABLE",
+                    "Cannot delete {aggregate} in current state");
+        }
+
         {Aggregate}Deleted event = {Aggregate}Deleted.create(this.id.value());
         raiseEvent(event);
     }
@@ -186,7 +193,9 @@ public class {Aggregate} extends AggregateRoot<{Aggregate}Id> {
                 // this.name = e.name();
             }
             case {Aggregate}Deleted e -> {
-                // handle deletion state
+                this.deleted = true;
+                // If aggregate tracks updatedAt:
+                // this.updatedAt = e.occurredAt();
             }
             default ->
                 throw new IllegalArgumentException(
@@ -201,6 +210,14 @@ public class {Aggregate} extends AggregateRoot<{Aggregate}Id> {
     //     }
     // }
 
+    /**
+     * Whether this aggregate can be deleted in its current state.
+     * Customize based on business rules (e.g. status-based: return status.isDeletable()).
+     */
+    public boolean isDeletable() {
+        return !deleted;
+    }
+
     // Getters
 
     @Override
@@ -211,6 +228,10 @@ public class {Aggregate} extends AggregateRoot<{Aggregate}Id> {
     @Override
     public String getAggregateType() {
         return "{Aggregate}";
+    }
+
+    public boolean isDeleted() {
+        return deleted;
     }
 
     // public TenantId getTenantId() { return tenantId; }

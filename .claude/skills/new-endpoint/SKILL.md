@@ -33,7 +33,7 @@ Generate files in order. Follow templates in `references/aggregate-template.md`.
 **Event mapping:**
 - `create` → `{Aggregate}Created`
 - `update` → `{Aggregate}Updated`
-- `delete` → `{Aggregate}Deleted` (soft-delete via status change)
+- `delete` → `{Aggregate}Deleted` (soft-delete via boolean flag)
 
 ## Step 3: Application Layer
 
@@ -81,7 +81,7 @@ DTOs are nested records inside the controller class.
 
 ## Step 6: Migration (delegate)
 
-Invoke `/create-migration` with these details:
+Provide the following context in the conversation, then invoke `/create-migration` (an interactive skill that will guide you through the migration creation):
 - **Table name**: snake_case of aggregate (e.g. `project`)
 - **Columns**: map fields using type table below + `tenant_id UUID REFERENCES tenant(id)` if scoped
 - **Indexes**: `idx_{table}_tenant` for tenant_id, plus any FK columns

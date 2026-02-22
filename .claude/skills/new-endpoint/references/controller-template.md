@@ -10,6 +10,7 @@ File goes in `backend/src/main/java/com/worklog/api/{Aggregate}Controller.java`.
 package com.worklog.api;
 
 import com.worklog.application.command.Create{Aggregate}Command;
+import com.worklog.application.command.Update{Aggregate}Command;
 import com.worklog.application.service.{Aggregate}Service;
 import com.worklog.domain.{aggregate}.{Aggregate};
 import java.util.HashMap;
@@ -55,7 +56,8 @@ public class {Aggregate}Controller {
 
     @PatchMapping("/{id}")
     public ResponseEntity<Void> update(@PathVariable UUID id, @RequestBody UpdateRequest request) {
-        service.update(id, {request.fields()});
+        Update{Aggregate}Command command = new Update{Aggregate}Command(id, {request.fields()});
+        service.update(command);
         return ResponseEntity.noContent().build();
     }
 

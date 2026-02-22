@@ -12,8 +12,8 @@ package com.worklog.application.command;
 // Create command — all fields needed for creation
 public record Create{Aggregate}Command({allFields}) {}
 
-// Update command — only mutable fields
-public record Update{Aggregate}Command({mutableFields}) {}
+// Update command — ID + mutable fields
+public record Update{Aggregate}Command(UUID id, {mutableFields}) {}
 ```
 
 If tenant-scoped, include `UUID tenantId` as the first field in CreateCommand.
@@ -51,12 +51,12 @@ public class {Aggregate}Service {
     }
 
     @Transactional
-    public void update(UUID id, {updateParams}) {
+    public void update(Update{Aggregate}Command command) {
         {Aggregate} agg = repository
-                .findById(new {Aggregate}Id(id))
-                .orElseThrow(() -> new IllegalArgumentException("{Aggregate} not found: " + id));
+                .findById(new {Aggregate}Id(command.id()))
+                .orElseThrow(() -> new IllegalArgumentException("{Aggregate} not found: " + command.id()));
 
-        agg.update({params});
+        agg.update({command.fields()});
         repository.save(agg);
     }
 
@@ -81,5 +81,6 @@ public class {Aggregate}Service {
 - `@Transactional` on all write methods (create, update, delete)
 - Read methods (findById) do NOT need `@Transactional`
 - Constructor injection (no `@Autowired`)
-- `create()` returns `UUID`, `update()`/`delete()` return `void`
+- `create()` returns `UUID`; `update()` and `delete()` return `void`
+- `update()` takes a command object (not individual params) — consistent with `create()`
 - Throw `IllegalArgumentException` for not-found (consistent with existing code)
