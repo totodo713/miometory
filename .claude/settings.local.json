@@ -82,6 +82,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/sensitive-file-guard.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -92,6 +102,11 @@
             "type": "command",
             "command": ".claude/hooks/format-on-edit.sh",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/auto-test-on-edit.sh",
+            "timeout": 45
           }
         ]
       }
