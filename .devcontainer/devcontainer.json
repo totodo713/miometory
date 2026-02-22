@@ -15,8 +15,8 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
   "forwardPorts": [8080, 3000, 5432, 6379],
-  // Intentional: && chain ensures fail-fast — if any step fails, subsequent steps are skipped.
-  "postCreateCommand": "mkdir -p ~/.gradle && cd backend && ./gradlew dependencies --no-daemon && cd ../frontend && npm install",
+  // Intentional: bash -c with set -e ensures fail-fast — if any step fails, subsequent steps are skipped.
+  "postCreateCommand": "bash -c 'set -e && mkdir -p ~/.gradle && cd backend && ./gradlew dependencies --no-daemon && cd ../frontend && npm install'",
   "customizations": {
     "vscode": {
       "extensions": [
