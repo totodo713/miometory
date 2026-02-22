@@ -1,5 +1,6 @@
 package com.worklog.application.service;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -32,12 +33,28 @@ public class UserContextService {
 
     /**
      * Resolves the member ID for the authenticated user by looking up their member record.
+     * Throws if no member record is found — use for endpoints that require a valid member.
      *
      * @param email the user's email address
-     * @return the member ID associated with the user
+     * @return the member ID associated with the user (never null)
+     * @throws org.springframework.dao.EmptyResultDataAccessException if no member found
      */
     public UUID resolveUserMemberId(String email) {
         String sql = "SELECT m.id FROM members m WHERE LOWER(m.email) = LOWER(?) LIMIT 1";
         return jdbcTemplate.queryForObject(sql, UUID.class, email);
+    }
+
+    /**
+     * Resolves the member ID for the authenticated user, returning null if no member record exists.
+     * Use for endpoints that should gracefully handle users without a member record
+     * (e.g., notifications, admin context).
+     *
+     * @param email the user's email address
+     * @return the member ID, or null if no member record exists
+     */
+    public UUID resolveUserMemberIdOrNull(String email) {
+        String sql = "SELECT m.id FROM members m WHERE LOWER(m.email) = LOWER(?) LIMIT 1";
+        List<UUID> results = jdbcTemplate.queryForList(sql, UUID.class, email);
+        return results.isEmpty() ? null : results.get(0);
     }
 }

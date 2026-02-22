@@ -2,11 +2,13 @@ package com.worklog.api;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Provides the authenticated user's admin context (role, permissions, tenant info).
@@ -36,7 +38,11 @@ public class AdminContextController {
             WHERE LOWER(u.email) = LOWER(?)
             """;
 
-        var row = jdbcTemplate.queryForMap(sql, email);
+        var rows = jdbcTemplate.queryForList(sql, email);
+        if (rows.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User context not found");
+        }
+        var row = rows.get(0);
         String roleName = (String) row.get("role_name");
         UUID memberId = (UUID) row.get("member_id");
         UUID tenantId = (UUID) row.get("tenant_id");

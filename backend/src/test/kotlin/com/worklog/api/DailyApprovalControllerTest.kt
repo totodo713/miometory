@@ -21,6 +21,7 @@ class DailyApprovalControllerTest : AdminIntegrationTestBase() {
     private lateinit var regularEmail: String
     private lateinit var supervisorMemberId: UUID
     private lateinit var subordinateMemberId: UUID
+    private lateinit var projectId: UUID
 
     @BeforeEach
     fun setup() {
@@ -36,6 +37,8 @@ class DailyApprovalControllerTest : AdminIntegrationTestBase() {
             "subordinate-$suffix@test.com",
             managerId = supervisorMemberId,
         )
+
+        projectId = createProjectInTenant()
     }
 
     @Test
@@ -96,5 +99,71 @@ class DailyApprovalControllerTest : AdminIntegrationTestBase() {
                 .with(user(regularEmail)),
         )
             .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `approve returns 204 for supervisor with valid entry`() {
+        val entryId = createSubmittedEntry(subordinateMemberId, projectId)
+        mockMvc.perform(
+            post("/api/v1/worklog/daily-approvals/approve")
+                .with(user(supervisorEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"entryIds":["$entryId"],"comment":"Looks good"}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `reject returns 204 for supervisor with valid entry`() {
+        val entryId = createSubmittedEntry(subordinateMemberId, projectId)
+        mockMvc.perform(
+            post("/api/v1/worklog/daily-approvals/reject")
+                .with(user(supervisorEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"entryId":"$entryId","comment":"Please fix hours"}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `recall returns 204 for supervisor with approved entry`() {
+        val entryId = createSubmittedEntry(subordinateMemberId, projectId)
+
+        // First approve the entry
+        mockMvc.perform(
+            post("/api/v1/worklog/daily-approvals/approve")
+                .with(user(supervisorEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"entryIds":["$entryId"],"comment":null}"""),
+        )
+            .andExpect(status().isNoContent)
+
+        // Get the approval ID (unique partial index guarantees at most one active row)
+        val approvalId = baseJdbcTemplate.queryForObject(
+            "SELECT id FROM daily_entry_approvals WHERE work_log_entry_id = ? AND status <> 'RECALLED' LIMIT 1",
+            UUID::class.java,
+            entryId,
+        )
+
+        // Recall the approval
+        mockMvc.perform(
+            post("/api/v1/worklog/daily-approvals/$approvalId/recall")
+                .with(user(supervisorEmail)),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    private fun createSubmittedEntry(memberId: UUID, projectId: UUID): UUID {
+        val entryId = UUID.randomUUID()
+        baseJdbcTemplate.update(
+            """INSERT INTO work_log_entries_projection
+               (id, member_id, organization_id, project_id, work_date, hours, notes, status, version, created_at, updated_at)
+               VALUES (?, ?, ?, ?, '2026-01-15', 8.0, 'Test entry', 'SUBMITTED', 0, NOW(), NOW())""",
+            entryId,
+            memberId,
+            UUID.fromString(ADM_TEST_ORG_ID),
+            projectId,
+        )
+        return entryId
     }
 }

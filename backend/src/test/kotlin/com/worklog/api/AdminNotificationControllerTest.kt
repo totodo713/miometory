@@ -115,4 +115,44 @@ class AdminNotificationControllerTest : AdminIntegrationTestBase() {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.unreadCount").value(0))
     }
+
+    @Test
+    fun `list notifications returns empty page for user without member record`() {
+        val noMemberEmail = "nomember-${UUID.randomUUID().toString().take(8)}@test.com"
+        createUser(noMemberEmail, USER_ROLE_ID, "No Member User")
+        // Deliberately NOT creating a member record for this user
+
+        mockMvc.perform(
+            get("/api/v1/notifications")
+                .with(user(noMemberEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.content").isArray)
+            .andExpect(jsonPath("$.content").isEmpty)
+            .andExpect(jsonPath("$.unreadCount").value(0))
+    }
+
+    @Test
+    fun `mark read succeeds for user without member record`() {
+        val noMemberEmail = "nomember-${UUID.randomUUID().toString().take(8)}@test.com"
+        createUser(noMemberEmail, USER_ROLE_ID, "No Member User")
+
+        mockMvc.perform(
+            patch("/api/v1/notifications/${UUID.randomUUID()}/read")
+                .with(user(noMemberEmail)),
+        )
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `mark all read succeeds for user without member record`() {
+        val noMemberEmail = "nomember-${UUID.randomUUID().toString().take(8)}@test.com"
+        createUser(noMemberEmail, USER_ROLE_ID, "No Member User")
+
+        mockMvc.perform(
+            patch("/api/v1/notifications/read-all")
+                .with(user(noMemberEmail)),
+        )
+            .andExpect(status().isOk)
+    }
 }
