@@ -1,5 +1,6 @@
 package com.worklog.infrastructure.config
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.cors.CorsConfiguration
@@ -9,15 +10,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 /**
  * CORS configuration for Miometry application.
  *
- * Development mode: Allow requests from frontend dev server (localhost:3000).
- *
- * TODO: For production:
- * - Restrict allowed origins to actual frontend domain
- * - Consider using environment variables for allowed origins
- * - Review allowed methods and headers
+ * Allowed origins are configurable via the CORS_ALLOWED_ORIGINS environment variable
+ * (comma-separated). Defaults to localhost:3000 and localhost:3001 for development.
  */
 @Configuration
-class CorsConfig {
+class CorsConfig(
+    @Value("\${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}")
+    private val allowedOriginsConfig: String,
+) {
     companion object {
         private const val CORS_MAX_AGE_SECONDS = 3600L
     }
@@ -26,12 +26,7 @@ class CorsConfig {
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
 
-        // Allow frontend dev server (Next.js default port)
-        configuration.allowedOrigins =
-            listOf(
-                "http://localhost:3000",
-                "http://localhost:3001", // Alternative port if 3000 is busy
-            )
+        configuration.allowedOrigins = allowedOriginsConfig.split(",").map { it.trim() }
 
         // Allow common HTTP methods
         configuration.allowedMethods =

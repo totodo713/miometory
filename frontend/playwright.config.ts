@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const frontendPort = process.env.PORT || "3000";
+const frontendBaseURL = `http://localhost:${frontendPort}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
@@ -8,7 +11,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: frontendBaseURL,
     trace: "on-first-retry",
   },
   projects: [
@@ -23,7 +26,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run dev",
-    url: "http://localhost:3000",
+    url: frontendBaseURL,
     reuseExistingServer: !process.env.CI,
   },
 });

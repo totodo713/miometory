@@ -181,6 +181,18 @@ NEXT_PUBLIC_MOCK_AUTH=true
 | `MAIL_SMTP_STARTTLS` | `false` | Enable STARTTLS |
 | `FRONTEND_BASE_URL` | `http://localhost:3000` | Base URL for links in emails (password reset, email verification) |
 
+### Parallel Development (Worktrees / Sub-agents)
+
+Environment variables to avoid port conflicts when running multiple instances:
+
+| Variable | Default | Example |
+|----------|---------|---------|
+| `SERVER_PORT` | `8080` | `SERVER_PORT=8081` |
+| `PORT` | `3000` | `PORT=3001` |
+| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8080/api/v1` | `http://localhost:8081/api/v1` |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,http://localhost:3001` | `http://localhost:3001` |
+| `FRONTEND_BASE_URL` | `http://localhost:3000` | `http://localhost:3001` |
+
 ---
 
 ## Current Features (All 7 User Stories Complete)

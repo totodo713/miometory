@@ -15,7 +15,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
-  const baseURL = "http://localhost:3000";
+  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const memberId = "00000000-0000-0000-0000-000000000001";
 
   test.beforeEach(async ({ page }) => {

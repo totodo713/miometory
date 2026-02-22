@@ -15,7 +15,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
-  const baseURL = "http://localhost:3000";
+  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
 
   test("password reset request page has no violations", async ({ page }) => {
     await page.goto(`${baseURL}/password-reset/request`);

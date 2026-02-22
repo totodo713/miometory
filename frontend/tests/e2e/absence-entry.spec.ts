@@ -15,7 +15,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Absence Entry Workflow", () => {
-  const baseURL = "http://localhost:3000";
+  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const memberId = "00000000-0000-0000-0000-000000000001";
   const testDate = "2026-01-20";
 

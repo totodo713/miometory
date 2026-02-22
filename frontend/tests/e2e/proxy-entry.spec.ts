@@ -16,7 +16,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Proxy Entry Workflow", () => {
-  const baseURL = "http://localhost:3000";
+  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const managerId = "00000000-0000-0000-0000-000000000001";
   const subordinateId = "00000000-0000-0000-0000-000000000002";
   const subordinateName = "Test Engineer";
