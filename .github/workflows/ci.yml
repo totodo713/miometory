@@ -213,8 +213,8 @@ jobs:
               exit 1
             fi
 
-            # Install Playwright: OS deps (needs root) + browser binary (as user)
-            sudo npx playwright install-deps chromium
+            # Install Playwright: OS deps (needs root, preserve PATH for npx) + browser binary
+            sudo env "PATH=$PATH" npx playwright install-deps chromium
             npx playwright install chromium
             CI=true npx playwright test --project=chromium
 
