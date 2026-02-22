@@ -72,7 +72,9 @@
       "Bash(git add:*)",
       "Bash(git check-ignore:*)",
       "Bash(gh pr:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(gh api:*)"
     ]
   },
   "hooks": {
