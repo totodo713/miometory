@@ -40,7 +40,7 @@ jobs:
           configFile: .devcontainer/devcontainer.json
           push: never
           runCmd: |
-            cd backend && ./gradlew build test --no-daemon
+            cd backend && ./gradlew build jacocoTestReport --no-daemon
 
       - name: Upload test results
         if: always()
@@ -49,6 +49,14 @@ jobs:
           name: backend-test-results
           path: backend/build/test-results/test/
           retention-days: 7
+
+      - name: Upload JaCoCo report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: backend/build/reports/jacoco/
+          retention-days: 14
 
   build-test-frontend:
     name: Build & Test Frontend
@@ -64,14 +72,6 @@ jobs:
           runCmd: |
             cd frontend && npm ci && npm run build && npm test -- --run
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-test-results
-          path: frontend/tests/unit/
-          retention-days: 7
-
   coverage:
     name: Coverage Report
     runs-on: ubuntu-latest
@@ -79,20 +79,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate coverage report in devcontainer
-        uses: devcontainers/ci@v0.3
-        with:
-          configFile: .devcontainer/devcontainer.json
-          push: never
-          runCmd: |
-            cd backend && ./gradlew jacocoTestReport --no-daemon
-
-      - name: Upload JaCoCo report
-        uses: actions/upload-artifact@v4
+      - name: Download JaCoCo report
+        uses: actions/download-artifact@v4
         with:
           name: jacoco-report
           path: backend/build/reports/jacoco/
-          retention-days: 14
 
       - name: Post coverage comment on PR
         uses: madrapps/jacoco-report@v1.7.1
@@ -125,15 +116,23 @@ jobs:
             ./gradlew bootRun --args='--spring.profiles.active=dev' --no-daemon &
             BACKEND_PID=$!
 
-            # Wait for backend to be ready
+            # Wait for backend to be ready (timeout after 120s)
             echo "Waiting for backend..."
+            BACKEND_READY=false
             for i in $(seq 1 60); do
               if curl -sf http://localhost:8080/actuator/health > /dev/null 2>&1; then
                 echo "Backend is ready"
+                BACKEND_READY=true
                 break
               fi
               sleep 2
             done
+
+            if [ "$BACKEND_READY" != "true" ]; then
+              echo "ERROR: Backend failed to start within 120 seconds"
+              kill $BACKEND_PID 2>/dev/null || true
+              exit 1
+            fi
 
             # Install Playwright browsers and run E2E
             cd /workspaces/miometory/frontend
