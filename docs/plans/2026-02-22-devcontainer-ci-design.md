@@ -147,3 +147,16 @@ permissions:
 3. **devcontainers/ci for CI**: ローカルとCI環境の完全一致を実現
 4. **Label-triggered E2E**: コスト効率とフレキシビリティのバランス
 5. **Concurrency cancellation**: 同一PRの古いジョブを自動キャンセル
+
+## Post-Implementation Notes
+
+実装後のコードレビューで以下の改善を適用:
+
+1. **`set -e` in runCmd** (I-1): 全CIジョブの`runCmd`先頭に`set -e`を追加し、途中のコマンド失敗を確実に検出
+2. **User creation delegation comment** (I-2): Dockerfileに、non-rootユーザー作成がcommon-utils featureに委譲されている理由（GIDコンフリクト回避）をコメントで記録
+3. **GHCR devcontainer image caching** (I-3): mainマージ時にdevcontainerイメージをGHCRにプッシュし、PRジョブでは`cacheFrom`で再利用。Gradle/npm依存キャッシュはdevcontainer内部のため未実装（イメージレイヤーキャッシュが主な効果）
+4. **Healthcheck timeout/start_period** (M-1): `docker-compose.dev.yml`のPostgreSQL/Redisヘルスチェックに`timeout`と`start_period`を追加
+5. **postCreateCommand fail-fast comment** (M-2): `devcontainer.json`に`&&`チェーンによるfail-fast動作が意図的である旨のコメントを追加
+6. **Skip redundant jobs on `labeled` event** (M-3): `labeled`イベント時に非E2Eジョブをスキップし、E2Eジョブのみ実行
+7. **Frontend test artifact upload** (M-4): フロントエンドテスト結果をJUnit XML形式で出力し、artifactとしてアップロード
+8. **Design document update** (M-5): 本セクションを追加し、実装と設計ドキュメントの乖離を解消
