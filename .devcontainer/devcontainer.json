@@ -3,14 +3,21 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "backend",
   "workspaceFolder": "/workspaces/miometory",
+  "remoteUser": "vscode",
   "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": false,
+      "username": "vscode",
+      "userUid": "1000",
+      "userGid": "1000"
+    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {}
   },
   "forwardPorts": [8080, 3000, 5432, 6379],
-  "postCreateCommand": "cd backend && ./gradlew dependencies --no-daemon && cd ../frontend && npm install",
+  "postCreateCommand": "mkdir -p ~/.gradle && cd backend && ./gradlew dependencies --no-daemon && cd ../frontend && npm install",
   "customizations": {
     "vscode": {
       "extensions": [
