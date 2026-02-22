@@ -36,6 +36,7 @@ public class NotificationController {
     @PatchMapping("/{id}/read")
     public void markRead(@PathVariable UUID id, Authentication authentication) {
         UUID memberId = userContextService.resolveUserMemberIdOrNull(authentication.getName());
+        // Users without a member record have no notifications — silently succeed as a no-op
         if (memberId == null) {
             return;
         }
@@ -45,6 +46,7 @@ public class NotificationController {
     @PatchMapping("/read-all")
     public void markAllRead(Authentication authentication) {
         UUID memberId = userContextService.resolveUserMemberIdOrNull(authentication.getName());
+        // Users without a member record have no notifications — silently succeed as a no-op
         if (memberId == null) {
             return;
         }

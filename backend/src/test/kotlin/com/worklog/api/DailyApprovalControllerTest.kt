@@ -138,9 +138,9 @@ class DailyApprovalControllerTest : AdminIntegrationTestBase() {
         )
             .andExpect(status().isNoContent)
 
-        // Get the approval ID
+        // Get the approval ID (unique partial index guarantees at most one active row)
         val approvalId = baseJdbcTemplate.queryForObject(
-            "SELECT id FROM daily_entry_approvals WHERE work_log_entry_id = ? AND status <> 'RECALLED'",
+            "SELECT id FROM daily_entry_approvals WHERE work_log_entry_id = ? AND status <> 'RECALLED' LIMIT 1",
             UUID::class.java,
             entryId,
         )
@@ -158,10 +158,10 @@ class DailyApprovalControllerTest : AdminIntegrationTestBase() {
         baseJdbcTemplate.update(
             """INSERT INTO work_log_entries_projection
                (id, member_id, organization_id, project_id, work_date, hours, notes, status, version, created_at, updated_at)
-               VALUES (?, ?, ?::UUID, ?, CURRENT_DATE - INTERVAL '1 day', 8.0, 'Test entry', 'SUBMITTED', 0, NOW(), NOW())""",
+               VALUES (?, ?, ?, ?, '2026-01-15', 8.0, 'Test entry', 'SUBMITTED', 0, NOW(), NOW())""",
             entryId,
             memberId,
-            ADM_TEST_ORG_ID,
+            UUID.fromString(ADM_TEST_ORG_ID),
             projectId,
         )
         return entryId
