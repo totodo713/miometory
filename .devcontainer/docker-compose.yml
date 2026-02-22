@@ -1,0 +1,65 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    volumes:
+      - ..:/workspaces/miometory:cached
+    command: sleep infinity
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/worklog
+      SPRING_DATASOURCE_USERNAME: worklog
+      SPRING_DATASOURCE_PASSWORD: worklog
+      REDIS_HOST: redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    volumes:
+      - ..:/workspaces/miometory:cached
+    command: sleep infinity
+    environment:
+      NODE_ENV: development
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: worklog
+      POSTGRES_PASSWORD: worklog
+      POSTGRES_DB: worklog
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U worklog"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  postgres-data:
+  redis-data:

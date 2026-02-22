@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:17-alpine
     container_name: miometry-postgres
     environment:
       POSTGRES_USER: worklog
@@ -13,6 +13,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U worklog"]
       interval: 5s
+      timeout: 5s
+      start_period: 10s
       retries: 5
 
   redis:
@@ -25,6 +27,8 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
+      timeout: 5s
+      start_period: 5s
       retries: 5
 
 volumes:

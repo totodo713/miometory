@@ -31,6 +31,12 @@ worklog:
   rate-limit:
     enabled: false  # Disable rate limiting in dev
 
+# Actuator - disable mail health check (no SMTP server in dev/CI)
+management:
+  health:
+    mail:
+      enabled: false
+
 # Logging - More verbose for development
 logging:
   level:
