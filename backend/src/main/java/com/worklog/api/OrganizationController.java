@@ -51,12 +51,16 @@ public class OrganizationController {
 
         UUID organizationId = organizationService.createOrganization(command);
 
+        // Load created organization to include computed level in response
+        Organization organization = organizationService.findById(organizationId);
+
         Map<String, Object> response = new HashMap<>();
         response.put("id", organizationId.toString());
         response.put("tenantId", tenantId.toString());
         response.put("parentId", request.parentId() != null ? request.parentId().toString() : null);
         response.put("code", request.code());
         response.put("name", request.name());
+        response.put("level", organization != null ? organization.getLevel() : null);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

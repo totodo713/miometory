@@ -500,7 +500,7 @@ describe("DailyEntryForm", () => {
       const user = userEvent.setup();
       render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
-      await waitForLoading();
+      await waitForProjectSelector();
       // Select project from dropdown
       const projectCombobox = screen.getByRole("combobox", {
         name: /project/i,
@@ -524,7 +524,7 @@ describe("DailyEntryForm", () => {
       const user = userEvent.setup();
       render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
-      await waitForLoading();
+      await waitForProjectSelector();
       // Select project from dropdown
       const projectCombobox = screen.getByRole("combobox", {
         name: /project/i,
