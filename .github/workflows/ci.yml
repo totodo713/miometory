@@ -212,8 +212,8 @@ jobs:
               exit 1
             fi
 
-            # Install Playwright browsers and run E2E
-            npx playwright install chromium
+            # Install Playwright browsers with OS dependencies and run E2E
+            npx playwright install --with-deps chromium
             CI=true npx playwright test
 
             # Cleanup
