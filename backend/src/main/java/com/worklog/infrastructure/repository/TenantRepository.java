@@ -8,6 +8,7 @@ import com.worklog.eventsourcing.StoredEvent;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +23,12 @@ public class TenantRepository {
 
     private final EventStore eventStore;
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
 
-    public TenantRepository(EventStore eventStore, ObjectMapper objectMapper) {
+    public TenantRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -40,8 +43,13 @@ public class TenantRepository {
 
         eventStore.append(tenant.getId().value(), tenant.getAggregateType(), events, tenant.getVersion());
 
-        tenant.clearUncommittedEvents();
+        // Bump aggregate version to reflect appended events before updating projection
         tenant.setVersion(tenant.getVersion() + events.size());
+
+        // Update projection table for query performance
+        updateProjection(tenant);
+
+        tenant.clearUncommittedEvents();
     }
 
     /**
@@ -66,6 +74,27 @@ public class TenantRepository {
 
         tenant.clearUncommittedEvents();
         return Optional.of(tenant);
+    }
+
+    /**
+     * Updates the projection table for query performance.
+     * Keeps the tenant read model in sync with the event store
+     * within the same transactional boundary.
+     */
+    private void updateProjection(Tenant tenant) {
+        jdbcTemplate.update(
+                "INSERT INTO tenant (id, code, name, status, version, created_at, updated_at) "
+                        + "VALUES (?, ?, ?, ?, ?, NOW(), NOW()) "
+                        + "ON CONFLICT (id) DO UPDATE SET "
+                        + "name = EXCLUDED.name, "
+                        + "status = EXCLUDED.status, "
+                        + "version = EXCLUDED.version, "
+                        + "updated_at = NOW()",
+                tenant.getId().value(),
+                tenant.getCode().value(),
+                tenant.getName(),
+                tenant.getStatus().name(),
+                tenant.getVersion());
     }
 
     /**

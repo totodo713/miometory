@@ -25,10 +25,11 @@ class OrganizationControllerTest : IntegrationTestBase() {
 
     @BeforeEach
     fun setup() {
-        // Create a tenant for organization tests
+        // Create a tenant for organization tests (unique code per test to avoid projection conflicts)
+        val uniqueCode = "ORG_T_${java.util.UUID.randomUUID().toString().take(8)}"
         val tenantRequest =
             mapOf(
-                "code" to "ORG_TEST_TENANT",
+                "code" to uniqueCode,
                 "name" to "Organization Test Tenant",
             )
         val tenantResponse =
@@ -47,7 +48,6 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_ROOT_001",
                 "name" to "Root Organization",
-                "level" to 1,
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -79,7 +79,6 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_PARENT_001",
                 "name" to "Parent Organization",
-                "level" to 1,
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -97,7 +96,6 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_CHILD_001",
                 "name" to "Child Organization",
-                "level" to 2,
                 "parentId" to parentId,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -123,7 +121,7 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_GET_001",
                 "name" to "Test Organization",
-                "level" to 1,
+
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -175,7 +173,7 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_UPDATE_001",
                 "name" to "Original Name",
-                "level" to 1,
+
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -218,7 +216,7 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_DEACT_001",
                 "name" to "Test Organization",
-                "level" to 1,
+
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -259,7 +257,7 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_ACT_001",
                 "name" to "Test Organization",
-                "level" to 1,
+
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -302,18 +300,36 @@ class OrganizationControllerTest : IntegrationTestBase() {
 
     @Test
     fun `POST organization with level greater than 6 should return error`() {
-        // Arrange
+        // Arrange - Create a 6-level deep hierarchy
+        var currentParentId: String? = null
+        for (i in 1..6) {
+            val request =
+                mapOf(
+                    "code" to "ORG_LVL_${i}",
+                    "name" to "Level $i Organization",
+                    "parentId" to currentParentId,
+                    "fiscalYearPatternId" to null,
+                    "monthlyPeriodPatternId" to null,
+                )
+            val createResponse =
+                restTemplate.postForEntity(
+                    "/api/v1/tenants/$tenantId/organizations",
+                    request,
+                    Map::class.java,
+                )
+            assertEquals(HttpStatus.CREATED, createResponse.statusCode)
+            currentParentId = (createResponse.body as Map<*, *>)["id"] as String
+        }
+
+        // Act - Try to create a 7th level (exceeds max hierarchy level of 6)
         val request =
             mapOf(
-                "code" to "ORG_INVALID_001",
-                "name" to "Invalid Organization",
-                "level" to 7,
-                "parentId" to null,
+                "code" to "ORG_LVL_7",
+                "name" to "Level 7 Organization",
+                "parentId" to currentParentId,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
             )
-
-        // Act
         val response =
             restTemplate.postForEntity(
                 "/api/v1/tenants/$tenantId/organizations",
@@ -326,32 +342,13 @@ class OrganizationControllerTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `POST organization with level 1 and parentId should return error`() {
-        // Arrange - Create a dummy parent
-        val parentRequest =
-            mapOf(
-                "code" to "ORG_PARENT_002",
-                "name" to "Parent Organization",
-                "level" to 1,
-                "parentId" to null,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
-            )
-        val parentResponse =
-            restTemplate.postForEntity(
-                "/api/v1/tenants/$tenantId/organizations",
-                parentRequest,
-                Map::class.java,
-            )
-        val parentId = (parentResponse.body as Map<*, *>)["id"] as String
-
-        // Act - Try to create level 1 with parent
+    fun `POST organization with non-existent parentId should return error`() {
+        // Act - Try to create organization with a non-existent parent
         val request =
             mapOf(
                 "code" to "ORG_INVALID_002",
                 "name" to "Invalid Organization",
-                "level" to 1,
-                "parentId" to parentId,
+                "parentId" to "00000000-0000-0000-0000-000000000000",
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
             )
