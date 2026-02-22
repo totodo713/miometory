@@ -68,7 +68,11 @@
       "Bash(git tag)",
       "Bash(git tag *)",
       "Bash(git remote *)",
-      "Bash(git worktree *)"
+      "Bash(git worktree *)",
+      "Bash(git add:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(gh pr:*)",
+      "Bash(git:*)"
     ]
   },
   "hooks": {
