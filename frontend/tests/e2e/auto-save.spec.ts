@@ -12,7 +12,7 @@
  * - Auto-save doesn't trigger for read-only entries
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/auth";
 
 test.describe("Auto-Save Reliability", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";
