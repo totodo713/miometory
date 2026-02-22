@@ -12,7 +12,7 @@
  * - Calendar shows absence hours with appropriate styling (blue background, 🏖️ icon)
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/auth";
 
 test.describe("Absence Entry Workflow", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";

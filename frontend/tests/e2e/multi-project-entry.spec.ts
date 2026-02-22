@@ -6,7 +6,7 @@
  * and verify the 24-hour daily limit validation.
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/auth";
 
 test.describe("Multi-project time allocation", () => {
   const projectA = "11111111-1111-1111-1111-111111111111";
