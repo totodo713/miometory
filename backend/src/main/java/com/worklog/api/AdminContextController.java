@@ -36,7 +36,11 @@ public class AdminContextController {
             WHERE LOWER(u.email) = LOWER(?)
             """;
 
-        var row = jdbcTemplate.queryForMap(sql, email);
+        var rows = jdbcTemplate.queryForList(sql, email);
+        if (rows.isEmpty()) {
+            return new AdminContextResponse("NONE", List.of(), null, null, null);
+        }
+        var row = rows.get(0);
         String roleName = (String) row.get("role_name");
         UUID memberId = (UUID) row.get("member_id");
         UUID tenantId = (UUID) row.get("tenant_id");

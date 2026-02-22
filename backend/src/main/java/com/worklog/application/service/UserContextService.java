@@ -1,5 +1,6 @@
 package com.worklog.application.service;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ public class UserContextService {
      */
     public UUID resolveUserMemberId(String email) {
         String sql = "SELECT m.id FROM members m WHERE LOWER(m.email) = LOWER(?) LIMIT 1";
-        return jdbcTemplate.queryForObject(sql, UUID.class, email);
+        List<UUID> results = jdbcTemplate.queryForList(sql, UUID.class, email);
+        return results.isEmpty() ? null : results.get(0);
     }
 }

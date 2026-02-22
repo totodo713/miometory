@@ -251,7 +251,6 @@ VALUES
 ON CONFLICT (email) DO UPDATE SET
     hashed_password = EXCLUDED.hashed_password,
     name = EXCLUDED.name,
-    role_id = EXCLUDED.role_id,
     account_status = EXCLUDED.account_status,
     email_verified_at = EXCLUDED.email_verified_at;
 
@@ -263,11 +262,12 @@ ON CONFLICT (email) DO UPDATE SET
 -- Depends on V18__admin_permissions_seed.sql for SYSTEM_ADMIN, TENANT_ADMIN, SUPERVISOR roles.
 -- ============================================================================
 
--- Admin seed data: only insert if the dev tenant and roles exist
+-- Admin seed data: only insert if the dev tenant, roles, and base members exist
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM tenant WHERE id = '550e8400-e29b-41d4-a716-446655440001')
        AND EXISTS (SELECT 1 FROM roles WHERE name = 'SYSTEM_ADMIN')
+       AND EXISTS (SELECT 1 FROM members WHERE id = '00000000-0000-0000-0000-000000000002')
     THEN
         -- System Admin user + member (new test user for global admin operations)
         INSERT INTO members (

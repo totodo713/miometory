@@ -8,6 +8,7 @@ import com.worklog.application.service.UserContextService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +37,7 @@ public class DailyApprovalController {
     }
 
     @PostMapping("/approve")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(null, 'daily_approval.approve')")
     public void approveEntries(@RequestBody ApproveRequest request, Authentication authentication) {
         UUID supervisorMemberId = userContextService.resolveUserMemberId(authentication.getName());
@@ -44,6 +46,7 @@ public class DailyApprovalController {
     }
 
     @PostMapping("/reject")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(null, 'daily_approval.reject')")
     public void rejectEntry(@RequestBody RejectRequest request, Authentication authentication) {
         UUID supervisorMemberId = userContextService.resolveUserMemberId(authentication.getName());
@@ -52,6 +55,7 @@ public class DailyApprovalController {
     }
 
     @PostMapping("/{approvalId}/recall")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasPermission(null, 'daily_approval.recall')")
     public void recallApproval(@PathVariable UUID approvalId, Authentication authentication) {
         UUID supervisorMemberId = userContextService.resolveUserMemberId(authentication.getName());
