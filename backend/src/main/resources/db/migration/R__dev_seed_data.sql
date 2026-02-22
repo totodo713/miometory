@@ -317,7 +317,7 @@ BEGIN
 
         RAISE NOTICE 'Dev seed data: Admin management roles and users inserted';
     ELSE
-        RAISE NOTICE 'Dev seed data: Skipping admin management seed (tenant or roles not found)';
+        RAISE NOTICE 'Dev seed data: Skipping admin management seed (tenant, roles, or base members not found)';
     END IF;
 END $$;
 

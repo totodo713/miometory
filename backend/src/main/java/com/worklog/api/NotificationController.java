@@ -25,7 +25,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
-        UUID memberId = userContextService.resolveUserMemberId(authentication.getName());
+        UUID memberId = userContextService.resolveUserMemberIdOrNull(authentication.getName());
         if (memberId == null) {
             return new NotificationService.NotificationPage(List.of(), 0, 0, 0, 0);
         }
@@ -35,7 +35,7 @@ public class NotificationController {
 
     @PatchMapping("/{id}/read")
     public void markRead(@PathVariable UUID id, Authentication authentication) {
-        UUID memberId = userContextService.resolveUserMemberId(authentication.getName());
+        UUID memberId = userContextService.resolveUserMemberIdOrNull(authentication.getName());
         if (memberId == null) {
             return;
         }
@@ -44,7 +44,7 @@ public class NotificationController {
 
     @PatchMapping("/read-all")
     public void markAllRead(Authentication authentication) {
-        UUID memberId = userContextService.resolveUserMemberId(authentication.getName());
+        UUID memberId = userContextService.resolveUserMemberIdOrNull(authentication.getName());
         if (memberId == null) {
             return;
         }
