@@ -121,7 +121,6 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_GET_001",
                 "name" to "Test Organization",
-
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -173,7 +172,6 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_UPDATE_001",
                 "name" to "Original Name",
-
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -216,7 +214,6 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_DEACT_001",
                 "name" to "Test Organization",
-
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -257,7 +254,6 @@ class OrganizationControllerTest : IntegrationTestBase() {
             mapOf(
                 "code" to "ORG_ACT_001",
                 "name" to "Test Organization",
-
                 "parentId" to null,
                 "fiscalYearPatternId" to null,
                 "monthlyPeriodPatternId" to null,
@@ -305,7 +301,7 @@ class OrganizationControllerTest : IntegrationTestBase() {
         for (i in 1..6) {
             val request =
                 mapOf(
-                    "code" to "ORG_LVL_${i}",
+                    "code" to "ORG_LVL_$i",
                     "name" to "Level $i Organization",
                     "parentId" to currentParentId,
                     "fiscalYearPatternId" to null,

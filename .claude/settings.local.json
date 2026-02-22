@@ -8,8 +8,6 @@
       "Bash(npm test*)",
       "Bash(npm install*)",
       "Bash(npx *)",
-      "Bash(git *)",
-      "Bash(git diff --stat && echo \"---CACHED---\" && git diff --cached --stat)",
       "Bash(gh *)",
       "Bash(docker exec:*)",
       "Bash(xargs docker stop:*)",
@@ -37,10 +35,55 @@
       "WebFetch(domain:nextjs.org)",
       "WebFetch(domain:react.dev)",
       "WebFetch(domain:vitest.dev)",
-      "WebFetch(domain:biomejs.dev)"
+      "WebFetch(domain:biomejs.dev)",
+      "Bash(git status)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git diff)",
+      "Bash(git diff *)",
+      "Bash(git show *)",
+      "Bash(git blame *)",
+      "Bash(git reflog *)",
+      "Bash(git rev-parse *)",
+      "Bash(git ls-files *)",
+      "Bash(git ls-remote *)",
+      "Bash(git branch)",
+      "Bash(git branch *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(git push *)",
+      "Bash(git pull)",
+      "Bash(git pull *)",
+      "Bash(git fetch)",
+      "Bash(git fetch *)",
+      "Bash(git merge *)",
+      "Bash(git rebase *)",
+      "Bash(git cherry-pick *)",
+      "Bash(git revert *)",
+      "Bash(git stash)",
+      "Bash(git stash *)",
+      "Bash(git tag)",
+      "Bash(git tag *)",
+      "Bash(git remote *)",
+      "Bash(git worktree *)"
     ]
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/git-safety-check.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
