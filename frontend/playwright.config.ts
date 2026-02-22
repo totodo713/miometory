@@ -27,6 +27,6 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: frontendBaseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true,
   },
 });
