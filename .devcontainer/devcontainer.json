@@ -1,0 +1,37 @@
+{
+  "name": "Miometry Dev",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "backend",
+  "workspaceFolder": "/workspaces/miometory",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8080, 3000, 5432, 6379],
+  "postCreateCommand": "cd backend && ./gradlew dependencies --no-daemon && cd ../frontend && npm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "vmware.vscode-spring-boot",
+        "fwcd.kotlin",
+        "biomejs.biome",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        "java.jdt.ls.java.home": "/opt/java/openjdk",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "biomejs.biome",
+        "[java]": {
+          "editor.defaultFormatter": "redhat.java"
+        },
+        "[kotlin]": {
+          "editor.defaultFormatter": "fwcd.kotlin"
+        }
+      }
+    }
+  }
+}
