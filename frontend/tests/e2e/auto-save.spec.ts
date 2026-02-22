@@ -15,7 +15,6 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Auto-Save Reliability", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const memberId = "00000000-0000-0000-0000-000000000001";
   const testDate = "2026-01-15";
 
@@ -96,7 +95,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Wait for form to load with existing entry
@@ -121,7 +120,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
     // Navigate to form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Make changes
@@ -152,7 +151,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
     // Navigate to form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Clear project to create a validation error (empty project)
@@ -180,7 +179,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
     // Navigate to form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Make first change - this starts the 60s timer
@@ -205,7 +204,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.install({ time: new Date("2026-01-15T14:30:00") });
 
     // Navigate to form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Make change
@@ -251,7 +250,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
     // Navigate to form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Verify form is read-only
@@ -293,7 +292,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
     // Navigate to form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Make change

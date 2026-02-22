@@ -16,7 +16,6 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Proxy Entry Workflow", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const managerId = "00000000-0000-0000-0000-000000000001";
   const subordinateId = "00000000-0000-0000-0000-000000000002";
   const subordinateName = "Test Engineer";
@@ -197,7 +196,7 @@ test.describe("Proxy Entry Workflow", () => {
 
   test("manager can navigate to proxy entry page and see subordinates", async ({ page }) => {
     // Step 1: Navigate to worklog page
-    await page.goto(`${baseURL}/worklog?memberId=${managerId}`, {
+    await page.goto(`/worklog?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
@@ -221,7 +220,7 @@ test.describe("Proxy Entry Workflow", () => {
 
   test("manager can enable proxy mode and see proxy banner", async ({ page }) => {
     // Navigate to proxy page
-    await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
+    await page.goto(`/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
@@ -248,7 +247,7 @@ test.describe("Proxy Entry Workflow", () => {
 
   test("manager can exit proxy mode", async ({ page }) => {
     // Navigate to proxy page and enable proxy mode
-    await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
+    await page.goto(`/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
@@ -276,7 +275,7 @@ test.describe("Proxy Entry Workflow", () => {
 
   test("proxy entry form shows 'Entering as' banner", async ({ page }) => {
     // Navigate to proxy page and enable proxy mode
-    await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
+    await page.goto(`/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 
@@ -307,7 +306,7 @@ test.describe("Proxy Entry Workflow", () => {
 
   test("calendar shows proxy entry indicator for entries made by manager", async ({ page }) => {
     // Navigate to proxy page first to enable proxy mode
-    await page.goto(`${baseURL}/worklog/proxy?memberId=${managerId}`, {
+    await page.goto(`/worklog/proxy?memberId=${managerId}`, {
       waitUntil: "networkidle",
     });
 

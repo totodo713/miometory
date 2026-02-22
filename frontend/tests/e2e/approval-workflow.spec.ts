@@ -16,7 +16,6 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Approval Workflow", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const memberId = "00000000-0000-0000-0000-000000000001";
   const _managerId = "00000000-0000-0000-0000-000000000002";
   const projectId = "00000000-0000-0000-0000-000000000003";
@@ -312,7 +311,7 @@ test.describe("Approval Workflow", () => {
     createdEntryId = `entry-${Date.now()}`;
 
     // Step 1: Navigate to calendar
-    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
+    await page.goto(`/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Wait for calendar to be fully rendered with data
@@ -334,7 +333,7 @@ test.describe("Approval Workflow", () => {
 
     // Step 4: Navigate to entry to verify read-only state
     await page.locator(`button[aria-label*="January 25"]`).click();
-    await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
+    await expect(page).toHaveURL(new RegExp(`/worklog/${testDate}$`));
     await page.waitForLoadState("networkidle");
 
     // Step 5: Verify entry is read-only (inputs should be disabled)
@@ -357,7 +356,7 @@ test.describe("Approval Workflow", () => {
     createdEntryId = `entry-${Date.now()}`;
 
     // Step 1: Navigate to calendar
-    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
+    await page.goto(`/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Wait for calendar to be fully rendered
@@ -376,7 +375,7 @@ test.describe("Approval Workflow", () => {
 
     // Step 4: Navigate to entry and verify it's editable
     await page.locator(`button[aria-label*="January 25"]`).click();
-    await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
+    await expect(page).toHaveURL(new RegExp(`/worklog/${testDate}$`));
     await page.waitForLoadState("networkidle");
 
     // Wait for dialog
@@ -397,7 +396,7 @@ test.describe("Approval Workflow", () => {
     createdEntryId = `entry-${Date.now()}`;
 
     // Step 1: Navigate to calendar
-    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
+    await page.goto(`/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Wait for calendar to be fully rendered with data
@@ -426,7 +425,7 @@ test.describe("Approval Workflow", () => {
     createdEntryId = `entry-${Date.now()}`;
 
     // Step 1: Navigate to entry (in DRAFT state)
-    await page.goto(`${baseURL}/worklog/${testDate}`, {
+    await page.goto(`/worklog/${testDate}`, {
       waitUntil: "networkidle",
     });
 
@@ -439,14 +438,14 @@ test.describe("Approval Workflow", () => {
     await expect(removeButton.first()).toBeVisible();
 
     // Step 2: Go back to calendar
-    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
+    await page.goto(`/worklog`, { waitUntil: "networkidle" });
 
     // Submit month for approval
     await page.click('button:has-text("Submit for Approval")');
     await page.waitForTimeout(1000);
 
     // Step 3: Go back to entry
-    await page.goto(`${baseURL}/worklog/${testDate}`, {
+    await page.goto(`/worklog/${testDate}`, {
       waitUntil: "networkidle",
     });
     await page.waitForSelector('[role="dialog"]');

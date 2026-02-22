@@ -9,7 +9,6 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Multi-project time allocation", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const projectA = "11111111-1111-1111-1111-111111111111";
   const projectB = "22222222-2222-2222-2222-222222222222";
   const projectC = "33333333-3333-3333-3333-333333333333";
@@ -121,7 +120,7 @@ test.describe("Multi-project time allocation", () => {
     });
 
     // Navigate to the work log page
-    await page.goto(`${baseURL}/worklog`);
+    await page.goto(`/worklog`);
 
     // Wait for calendar to load
     await expect(page.locator("h1")).toContainText("Miometry");

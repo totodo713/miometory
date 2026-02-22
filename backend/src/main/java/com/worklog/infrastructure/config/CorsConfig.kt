@@ -26,7 +26,7 @@ class CorsConfig(
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
 
-        configuration.allowedOrigins = allowedOriginsConfig.split(",").map { it.trim() }
+        configuration.allowedOrigins = allowedOriginsConfig.split(",").map { it.trim() }.filter { it.isNotBlank() }
 
         // Allow common HTTP methods
         configuration.allowedMethods =

@@ -15,7 +15,6 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const memberId = "00000000-0000-0000-0000-000000000001";
 
   test.beforeEach(async ({ page }) => {
@@ -101,7 +100,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
   });
 
   test("calendar view has no accessibility violations", async ({ page }) => {
-    await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
+    await page.goto(`/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -111,7 +110,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
 
   test("daily entry form has no accessibility violations", async ({ page }) => {
     // Navigate directly to daily entry form (clicking date navigates, not opens dialog)
-    await page.goto(`${baseURL}/worklog/2026-01-15`);
+    await page.goto(`/worklog/2026-01-15`);
     await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -120,7 +119,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
   });
 
   test("all buttons have accessible names", async ({ page }) => {
-    await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
+    await page.goto(`/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
     // Check all buttons have aria-label or visible text
@@ -140,7 +139,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
   });
 
   test("modal dialog has proper ARIA attributes", async ({ page }) => {
-    await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
+    await page.goto(`/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
     // Open Copy Previous Month dialog (this is an actual modal)
@@ -153,7 +152,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
   });
 
   test("keyboard navigation works in calendar", async ({ page }) => {
-    await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
+    await page.goto(`/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
     // Tab to first interactive element
@@ -165,7 +164,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
   });
 
   test("escape key closes modal dialogs", async ({ page }) => {
-    await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
+    await page.goto(`/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
     // Open Copy Previous Month dialog (this is an actual modal)
@@ -181,7 +180,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
 
   test("form inputs have associated labels", async ({ page }) => {
     // Navigate directly to daily entry form
-    await page.goto(`${baseURL}/worklog/2026-01-15`);
+    await page.goto(`/worklog/2026-01-15`);
     await page.waitForLoadState("networkidle");
 
     // Check all inputs have labels
@@ -202,7 +201,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
   });
 
   test("focus is trapped in modal dialogs", async ({ page }) => {
-    await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
+    await page.goto(`/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
     // Open Copy Previous Month dialog (this is an actual modal)
@@ -226,7 +225,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
 
   test("error messages are announced to screen readers", async ({ page }) => {
     // Navigate directly to daily entry form
-    await page.goto(`${baseURL}/worklog/2026-01-15`);
+    await page.goto(`/worklog/2026-01-15`);
     await page.waitForLoadState("networkidle");
 
     // Check for role="alert" elements (error containers)
@@ -241,7 +240,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
   });
 
   test("color contrast meets WCAG AA standards", async ({ page }) => {
-    await page.goto(`${baseURL}/worklog?memberId=${memberId}`);
+    await page.goto(`/worklog?memberId=${memberId}`);
     await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page })

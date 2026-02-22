@@ -15,7 +15,6 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Absence Entry Workflow", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const memberId = "00000000-0000-0000-0000-000000000001";
   const testDate = "2026-01-20";
 
@@ -152,7 +151,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should record full day paid leave", async ({ page }) => {
     // Step 1: Navigate to calendar view
-    await page.goto(`${baseURL}/worklog`, { waitUntil: "networkidle" });
+    await page.goto(`/worklog`, { waitUntil: "networkidle" });
     await expect(page).toHaveURL(/\/worklog$/);
 
     // Wait for calendar to be fully rendered with data
@@ -162,7 +161,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.locator('button[aria-label*="January 20"]').click();
 
     // Step 3: Verify navigation to daily entry form
-    await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
+    await expect(page).toHaveURL(new RegExp(`/worklog/${testDate}$`));
     await page.waitForLoadState("networkidle");
 
     // Step 4: Switch to Absence tab
@@ -192,7 +191,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should record partial sick leave with work hours", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Step 1: Add work hours first (4 hours)
@@ -224,7 +223,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should validate 24-hour limit for combined work and absence", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Step 1: Add work hours (20 hours)
@@ -257,7 +256,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should allow combined work and absence up to 24 hours", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Step 1: Add work hours (16 hours)
@@ -296,7 +295,7 @@ test.describe("Absence Entry Workflow", () => {
 
     for (const absenceType of absenceTypes) {
       // Navigate to daily entry form
-      await page.goto(`${baseURL}/worklog/${testDate}`);
+      await page.goto(`/worklog/${testDate}`);
       await page.waitForLoadState("networkidle");
 
       // Switch to Absence tab
@@ -321,7 +320,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should support quarter-hour increments for absences", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
@@ -345,7 +344,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should validate absence reason length (max 500 characters)", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
@@ -379,7 +378,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should allow exactly 500 character reason", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
@@ -406,7 +405,7 @@ test.describe("Absence Entry Workflow", () => {
 
   test("should allow optional reason (null/empty)", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
@@ -452,7 +451,7 @@ test.describe("Absence Entry Workflow", () => {
     });
 
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
     // The DailyEntryForm header should show the existing absence hours
@@ -529,7 +528,7 @@ test.describe("Absence Entry Workflow", () => {
     });
 
     // Navigate to calendar
-    await page.goto(`${baseURL}/worklog`);
+    await page.goto(`/worklog`);
     await expect(page).toHaveURL(/\/worklog$/);
     await page.waitForLoadState("networkidle");
 
@@ -609,7 +608,7 @@ test.describe("Absence Entry Workflow", () => {
     });
 
     // Navigate to calendar
-    await page.goto(`${baseURL}/worklog`);
+    await page.goto(`/worklog`);
     await page.waitForLoadState("networkidle");
 
     // Monthly summary should show work and absence breakdown

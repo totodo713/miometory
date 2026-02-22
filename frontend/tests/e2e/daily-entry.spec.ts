@@ -14,7 +14,6 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Daily Entry Workflow", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
   const memberId = "00000000-0000-0000-0000-000000000001";
   const testDate = "2026-01-15";
 
@@ -158,7 +157,7 @@ test.describe("Daily Entry Workflow", () => {
     });
 
     // Step 1: Navigate to calendar view for January 2026
-    await page.goto(`${baseURL}/worklog?year=2026&month=1`, {
+    await page.goto(`/worklog?year=2026&month=1`, {
       waitUntil: "networkidle",
     });
 
@@ -187,7 +186,7 @@ test.describe("Daily Entry Workflow", () => {
     await page.locator('button[aria-label*="January 15"]').click();
 
     // Step 3: Verify navigation to daily entry form
-    await expect(page).toHaveURL(`${baseURL}/worklog/${testDate}`);
+    await expect(page).toHaveURL(new RegExp(`/worklog/${testDate}$`));
 
     // Wait for form to load
     await page.waitForLoadState("networkidle");
@@ -222,7 +221,7 @@ test.describe("Daily Entry Workflow", () => {
     await page.click('button:has-text("Save")');
 
     // Step 8: Verify redirect back to calendar
-    await expect(page).toHaveURL(`${baseURL}/worklog`);
+    await expect(page).toHaveURL(/\/worklog$/);
 
     // Step 9: Verify calendar is displayed again
     await expect(page.locator("h1")).toContainText("Miometry");
@@ -233,7 +232,7 @@ test.describe("Daily Entry Workflow", () => {
 
   test("should validate 24-hour maximum per day", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
     await page.waitForSelector('input[id="hours-0"]', { timeout: 10000 });
 
@@ -258,7 +257,7 @@ test.describe("Daily Entry Workflow", () => {
 
   test("should support 15-minute (0.25h) granularity", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
 
     // Enter time with 15-minute increments
     const projectInput = page.locator('input[id="project-0"]');
@@ -285,7 +284,7 @@ test.describe("Daily Entry Workflow", () => {
 
   test("should require project selection before saving", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
 
     // Enter hours without selecting project
     const hoursInput = page.locator('input[id="hours-0"]');
@@ -301,7 +300,7 @@ test.describe("Daily Entry Workflow", () => {
 
   test("should allow adding and removing project rows", async ({ page }) => {
     // Navigate to daily entry form
-    await page.goto(`${baseURL}/worklog/${testDate}`);
+    await page.goto(`/worklog/${testDate}`);
 
     // Initially should have 1 row
     const projectRows = page.locator('input[id^="project-"]');

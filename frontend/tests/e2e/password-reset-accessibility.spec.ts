@@ -15,10 +15,8 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
-  const baseURL = `http://localhost:${process.env.PORT || 3000}`;
-
   test("password reset request page has no violations", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/request`);
+    await page.goto(`/password-reset/request`);
     await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -28,7 +26,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
 
   test("password reset confirm page has no violations", async ({ page }) => {
     // Use a test token
-    await page.goto(`${baseURL}/password-reset/confirm?token=TEST_TOKEN`);
+    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
     await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -37,7 +35,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("form inputs have accessible labels", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/request`);
+    await page.goto(`/password-reset/request`);
     await page.waitForLoadState("networkidle");
 
     // Check email input has label
@@ -48,7 +46,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("password strength indicator is accessible", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/confirm?token=TEST_TOKEN`);
+    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
     await page.waitForLoadState("networkidle");
 
     // Type a password to trigger strength indicator
@@ -61,7 +59,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("error messages are announced to screen readers", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/request`);
+    await page.goto(`/password-reset/request`);
     await page.waitForLoadState("networkidle");
 
     // Submit without filling form
@@ -76,7 +74,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("color contrast meets WCAG AA standards", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/request`);
+    await page.goto(`/password-reset/request`);
     await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page })
@@ -88,7 +86,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("keyboard navigation works on request page", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/request`);
+    await page.goto(`/password-reset/request`);
     await page.waitForLoadState("networkidle");
 
     // Tab to email input
@@ -103,7 +101,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("keyboard navigation works on confirm page", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/confirm?token=TEST_TOKEN`);
+    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
     await page.waitForLoadState("networkidle");
 
     // Tab to new password input
@@ -123,7 +121,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("validation errors have proper ARIA attributes", async ({ page }) => {
-    await page.goto(`${baseURL}/password-reset/confirm?token=TEST_TOKEN`);
+    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
     await page.waitForLoadState("networkidle");
 
     // Fill invalid password
@@ -154,7 +152,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
       });
     });
 
-    await page.goto(`${baseURL}/password-reset/confirm?token=VALID_TOKEN`);
+    await page.goto(`/password-reset/confirm?token=VALID_TOKEN`);
     await page.waitForLoadState("networkidle");
 
     // Fill valid passwords
