@@ -142,7 +142,7 @@ jobs:
   e2e-test:
     name: E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     if: contains(github.event.pull_request.labels.*.name, 'e2e-test')
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

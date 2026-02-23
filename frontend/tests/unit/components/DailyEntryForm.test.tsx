@@ -374,6 +374,7 @@ describe("DailyEntryForm", () => {
       render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
+      await waitForProjectSelector();
       expect(screen.getAllByRole("combobox", { name: /project/i })).toHaveLength(1);
 
       await user.click(screen.getByRole("button", { name: /add project/i }));
@@ -388,6 +389,7 @@ describe("DailyEntryForm", () => {
       render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
+      await waitForProjectSelector();
       await user.click(screen.getByRole("button", { name: /add project/i }));
       await waitFor(() => {
         expect(screen.getAllByRole("combobox", { name: /project/i })).toHaveLength(2);
@@ -406,6 +408,7 @@ describe("DailyEntryForm", () => {
       render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
+      await waitForProjectSelector();
       // Add second project
       await user.click(screen.getByRole("button", { name: /add project/i }));
 
