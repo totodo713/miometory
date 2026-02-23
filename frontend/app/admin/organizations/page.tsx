@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
 import { MemberManagerForm } from "@/components/admin/MemberManagerForm";
+import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
 import { OrganizationForm } from "@/components/admin/OrganizationForm";
 import { OrganizationList } from "@/components/admin/OrganizationList";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
@@ -47,6 +49,8 @@ export default function AdminOrganizationsPage() {
   const [isPatternSaving, setIsPatternSaving] = useState(false);
   const [patternError, setPatternError] = useState<string | null>(null);
   const [patternSuccess, setPatternSuccess] = useState<string | null>(null);
+  const [showFiscalYearForm, setShowFiscalYearForm] = useState(false);
+  const [showMonthlyPeriodForm, setShowMonthlyPeriodForm] = useState(false);
 
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -404,45 +408,63 @@ export default function AdminOrganizationsPage() {
                     <label htmlFor="fiscal-year-pattern" className="block text-sm font-medium text-gray-700 mb-1">
                       会計年度パターン
                     </label>
-                    <select
-                      id="fiscal-year-pattern"
-                      value={selectedFiscalYearPatternId}
-                      onChange={(e) => {
-                        setSelectedFiscalYearPatternId(e.target.value);
-                        setPatternError(null);
-                        setPatternSuccess(null);
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">未設定</option>
-                      {fiscalYearPatterns.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.startMonth}月{p.startDay}日開始)
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select
+                        id="fiscal-year-pattern"
+                        value={selectedFiscalYearPatternId}
+                        onChange={(e) => {
+                          setSelectedFiscalYearPatternId(e.target.value);
+                          setPatternError(null);
+                          setPatternSuccess(null);
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">未設定</option>
+                        {fiscalYearPatterns.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.startMonth}月{p.startDay}日開始)
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowFiscalYearForm(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                      >
+                        + 新規作成
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label htmlFor="monthly-period-pattern" className="block text-sm font-medium text-gray-700 mb-1">
                       月次期間パターン
                     </label>
-                    <select
-                      id="monthly-period-pattern"
-                      value={selectedMonthlyPeriodPatternId}
-                      onChange={(e) => {
-                        setSelectedMonthlyPeriodPatternId(e.target.value);
-                        setPatternError(null);
-                        setPatternSuccess(null);
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">未設定</option>
-                      {monthlyPeriodPatterns.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.startDay}日開始)
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select
+                        id="monthly-period-pattern"
+                        value={selectedMonthlyPeriodPatternId}
+                        onChange={(e) => {
+                          setSelectedMonthlyPeriodPatternId(e.target.value);
+                          setPatternError(null);
+                          setPatternSuccess(null);
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">未設定</option>
+                        {monthlyPeriodPatterns.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.startDay}日開始)
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowMonthlyPeriodForm(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                      >
+                        + 新規作成
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -582,6 +604,32 @@ export default function AdminOrganizationsPage() {
           member={targetMember}
           onClose={handleMemberFormClose}
           onSaved={handleMemberFormSaved}
+        />
+      )}
+
+      {showFiscalYearForm && adminContext?.tenantId && (
+        <FiscalYearPatternForm
+          tenantId={adminContext.tenantId}
+          open={showFiscalYearForm}
+          onClose={() => setShowFiscalYearForm(false)}
+          onCreated={(pattern) => {
+            setFiscalYearPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId! }]);
+            setSelectedFiscalYearPatternId(pattern.id);
+            setShowFiscalYearForm(false);
+          }}
+        />
+      )}
+
+      {showMonthlyPeriodForm && adminContext?.tenantId && (
+        <MonthlyPeriodPatternForm
+          tenantId={adminContext.tenantId}
+          open={showMonthlyPeriodForm}
+          onClose={() => setShowMonthlyPeriodForm(false)}
+          onCreated={(pattern) => {
+            setMonthlyPeriodPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId! }]);
+            setSelectedMonthlyPeriodPatternId(pattern.id);
+            setShowMonthlyPeriodForm(false);
+          }}
         />
       )}
     </div>
