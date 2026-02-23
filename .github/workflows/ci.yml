@@ -191,7 +191,8 @@ jobs:
               exit 1
             fi
 
-            # Install Playwright: OS deps (needs root, preserve PATH for npx) + browser binary
+            # Run E2E tests from frontend directory
+            cd /workspaces/miometory/frontend
             sudo env "PATH=$PATH" npx playwright install-deps chromium
             npx playwright install chromium
             CI=true npx playwright test --project=chromium
