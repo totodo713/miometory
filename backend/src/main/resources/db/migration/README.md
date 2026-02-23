@@ -19,12 +19,6 @@ Flyway migrations for the Miometry database schema.
 | `V11__user_auth.sql` | Auth tables: users, roles, permissions, sessions, password reset tokens, audit logs | 004-user-login-auth |
 | `V12__email_verification_tokens.sql` | Email verification tokens table | 004-user-login-auth |
 
-### Repeatable Migrations
-
-| Migration | Description |
-|-----------|-------------|
-| `R__dev_seed_data.sql` | Development seed data (re-applied on change) |
-
 ## Conventions
 
 - **Naming**: `V{number}__{description}.sql` (double underscore separator)
