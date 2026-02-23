@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:20-slim
 # Non-root user (vscode) creation is delegated to the common-utils devcontainer
 # feature in devcontainer.json to avoid GID conflicts with the base image.
 
