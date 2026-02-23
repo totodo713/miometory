@@ -598,7 +598,6 @@ Expected: No output (valid)
 
 **Step 4: Commit (no new files — verification only)**
 
-<<<<<<< feature/devcontainer-ci
 1. **Multi-container devcontainer**: backend/frontend分離でコンテナの肥大化を防止
 2. **Backend as primary**: VS Codeのアタッチ先。Node.jsはfeatureで追加
 3. **devcontainers/ci for CI**: ローカルとCI環境の完全一致を実現
@@ -617,6 +616,3 @@ Expected: No output (valid)
 6. **Skip redundant jobs on `labeled` event** (M-3): `labeled`イベント時に非E2Eジョブをスキップし、E2Eジョブのみ実行
 7. **Frontend test artifact upload** (M-4): フロントエンドテスト結果をJUnit XML形式で出力し、artifactとしてアップロード
 8. **Design document update** (M-5): 本セクションを追加し、実装と設計ドキュメントの乖離を解消
-=======
-No commit needed.
->>>>>>> main
