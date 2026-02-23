@@ -1,7 +1,13 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
 import PasswordResetRequestPage from "@/(auth)/password-reset/request/page";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import { checkRateLimit, getMinutesUntilReset, setupStorageListener } from "@/lib/utils/rate-limit";
 import { api } from "@/services/api";
+
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
@@ -47,7 +53,7 @@ describe("PasswordResetRequestPage", () => {
 
   describe("Rendering", () => {
     test("renders form with email input, submit button, and login link", () => {
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       expect(screen.getByLabelText(/メールアドレス/)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /リセットリンクを送信/ })).toBeInTheDocument();
@@ -55,7 +61,7 @@ describe("PasswordResetRequestPage", () => {
     });
 
     test("login link points to /login", () => {
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
       const links = screen.getAllByText("ログインに戻る");
       expect(links[0].closest("a")).toHaveAttribute("href", "/login");
     });
@@ -63,7 +69,7 @@ describe("PasswordResetRequestPage", () => {
 
   describe("Email validation", () => {
     test("shows validation error when submitting empty email", async () => {
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.click(screen.getByRole("button", { name: /リセットリンクを送信/ }));
 
@@ -73,7 +79,7 @@ describe("PasswordResetRequestPage", () => {
     });
 
     test("shows validation error for invalid email format", async () => {
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "invalid-email" },
@@ -90,7 +96,7 @@ describe("PasswordResetRequestPage", () => {
     test("displays success message when API resolves", async () => {
       vi.mocked(api.auth.requestPasswordReset).mockResolvedValue({ message: "OK" });
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "user@example.com" },
@@ -105,7 +111,7 @@ describe("PasswordResetRequestPage", () => {
     test("normalizes email to lowercase before calling the API", async () => {
       vi.mocked(api.auth.requestPasswordReset).mockResolvedValue({ message: "OK" });
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "User@Example.COM" },
@@ -120,7 +126,7 @@ describe("PasswordResetRequestPage", () => {
     test("hides form after success", async () => {
       vi.mocked(api.auth.requestPasswordReset).mockResolvedValue({ message: "OK" });
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "user@example.com" },
@@ -135,7 +141,7 @@ describe("PasswordResetRequestPage", () => {
     test("shows identical success message regardless of API response (anti-enumeration)", async () => {
       vi.mocked(api.auth.requestPasswordReset).mockResolvedValue({ message: "OK" });
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "nonexistent@example.com" },
@@ -158,7 +164,7 @@ describe("PasswordResetRequestPage", () => {
           }),
       );
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "user@example.com" },
@@ -179,7 +185,7 @@ describe("PasswordResetRequestPage", () => {
     test("displays error message when API rejects with network error", async () => {
       vi.mocked(api.auth.requestPasswordReset).mockRejectedValue(new Error("Network error"));
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "user@example.com" },
@@ -194,7 +200,7 @@ describe("PasswordResetRequestPage", () => {
     test("shows retry button for retryable errors", async () => {
       vi.mocked(api.auth.requestPasswordReset).mockRejectedValue(new Error("Network error"));
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       fireEvent.change(screen.getByLabelText(/メールアドレス/), {
         target: { value: "user@example.com" },
@@ -217,7 +223,7 @@ describe("PasswordResetRequestPage", () => {
       });
       vi.mocked(getMinutesUntilReset).mockReturnValue(5);
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       expect(screen.getByRole("button", { name: /リセットリンクを送信/ })).toBeDisabled();
     });
@@ -231,7 +237,7 @@ describe("PasswordResetRequestPage", () => {
       });
       vi.mocked(getMinutesUntilReset).mockReturnValue(5);
 
-      render(<PasswordResetRequestPage />);
+      renderWithProviders(<PasswordResetRequestPage />);
 
       expect(screen.getByText(/リクエスト制限に達しました/)).toBeInTheDocument();
     });

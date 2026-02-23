@@ -19,16 +19,20 @@
 import Link from "next/link";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import type { ErrorState, RateLimitState, ValidationError } from "@/lib/types/password-reset";
 import { checkRateLimit, getMinutesUntilReset, recordAttempt, setupStorageListener } from "@/lib/utils/rate-limit";
 import { validateEmail } from "@/lib/validation/password";
 import { api } from "@/services/api";
 
 export default function PasswordResetRequestPage() {
+  const toast = useToast();
+
   // Form state
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [validationError, setValidationError] = useState<ValidationError | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Rate limiting state
   const [rateLimitState, setRateLimitState] = useState<RateLimitState>(() => checkRateLimit());
@@ -50,6 +54,19 @@ export default function PasswordResetRequestPage() {
     });
     return cleanup;
   }, []);
+
+  const validateField = (name: string, value: string) => {
+    if (name === "email" && !value.trim()) return "メールアドレスは必須です";
+    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "メールアドレスの形式が正しくありません";
+    return "";
+  };
+
+  const handleBlur = (name: string, value: string) => {
+    const fieldError = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: fieldError }));
+  };
+
+  const hasFieldErrors = Object.values(fieldErrors).some((e) => e !== "");
 
   /**
    * Handle form submission
@@ -96,6 +113,7 @@ export default function PasswordResetRequestPage() {
       // Always show success message (anti-enumeration)
       setIsSuccess(true);
       setEmail(""); // Clear email for security
+      toast.success("パスワードリセットメールを送信しました");
     } catch (err) {
       // Handle API errors
       if (err instanceof Error) {
@@ -135,6 +153,9 @@ export default function PasswordResetRequestPage() {
     // Clear validation error on input
     if (validationError) {
       setValidationError(null);
+    }
+    if (fieldErrors.email) {
+      setFieldErrors((prev) => ({ ...prev, email: "" }));
     }
   };
 
@@ -195,22 +216,28 @@ export default function PasswordResetRequestPage() {
                 type="email"
                 value={email}
                 onChange={handleEmailChange}
+                onBlur={() => handleBlur("email", email)}
                 placeholder="example@company.com"
                 required
                 aria-required="true"
-                aria-invalid={validationError ? "true" : "false"}
-                aria-describedby={validationError ? "email-error" : undefined}
+                aria-invalid={!!(validationError || fieldErrors.email)}
+                aria-describedby={validationError || fieldErrors.email ? "email-error" : undefined}
                 disabled={isLoading || !rateLimitState.isAllowed}
+                style={fieldErrors.email ? { borderColor: "#d32f2f" } : undefined}
               />
-              {validationError && (
+              {(validationError || fieldErrors.email) && (
                 <span id="email-error" className="field-error" role="alert">
-                  {validationError.message}
+                  {validationError ? validationError.message : fieldErrors.email}
                 </span>
               )}
             </div>
 
             <div className="form-actions">
-              <button type="submit" disabled={isLoading || !rateLimitState.isAllowed} aria-busy={isLoading}>
+              <button
+                type="submit"
+                disabled={isLoading || !rateLimitState.isAllowed || hasFieldErrors}
+                aria-busy={isLoading}
+              >
                 {isLoading ? "送信中..." : "リセットリンクを送信"}
               </button>
             </div>

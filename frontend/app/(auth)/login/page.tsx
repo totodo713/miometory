@@ -32,6 +32,21 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateField = (name: string, value: string) => {
+    if (name === "email" && !value.trim()) return "メールアドレスは必須です";
+    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "メールアドレスの形式が正しくありません";
+    if (name === "password" && !value.trim()) return "パスワードは必須です";
+    return "";
+  };
+
+  const handleBlur = (name: string, value: string) => {
+    const fieldError = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: fieldError }));
+  };
+
+  const hasFieldErrors = Object.values(fieldErrors).some((e) => e !== "");
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -95,11 +110,22 @@ export default function LoginPage() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: "" }));
+              }}
+              onBlur={() => handleBlur("email", email)}
+              className={`w-full px-3 py-2 border ${fieldErrors.email ? "border-red-500" : "border-gray-300"} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               placeholder="you@example.com"
               disabled={isSubmitting}
+              aria-invalid={!!fieldErrors.email}
+              aria-describedby={fieldErrors.email ? "email-error" : undefined}
             />
+            {fieldErrors.email && (
+              <p id="email-error" className="text-xs text-red-600 mt-1">
+                {fieldErrors.email}
+              </p>
+            )}
           </div>
 
           <div>
@@ -110,10 +136,21 @@ export default function LoginPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: "" }));
+              }}
+              onBlur={() => handleBlur("password", password)}
+              className={`w-full px-3 py-2 border ${fieldErrors.password ? "border-red-500" : "border-gray-300"} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
               disabled={isSubmitting}
+              aria-invalid={!!fieldErrors.password}
+              aria-describedby={fieldErrors.password ? "password-error" : undefined}
             />
+            {fieldErrors.password && (
+              <p id="password-error" className="text-xs text-red-600 mt-1">
+                {fieldErrors.password}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center">
@@ -138,7 +175,7 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || hasFieldErrors}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? "ログイン中..." : "ログイン"}

@@ -1,6 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { ReactElement } from "react";
 import PasswordResetConfirmPage from "@/(auth)/password-reset/confirm/page";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import { api } from "@/services/api";
+
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 vi.mock("next/link", () => ({
   default: ({ children, href, ...props }: any) => (
@@ -34,10 +40,10 @@ vi.mock("@/components/auth/PasswordStrengthIndicator", () => ({
 }));
 
 async function renderAndWaitForForm() {
-  render(<PasswordResetConfirmPage />);
-  await waitFor(() => {
-    expect(screen.getByLabelText(/新しいパスワード/)).toBeInTheDocument();
-  });
+	renderWithProviders(<PasswordResetConfirmPage />);
+	await waitFor(() => {
+		expect(screen.getByLabelText(/新しいパスワード/)).toBeInTheDocument();
+	});
 }
 
 async function fillAndSubmit(newPass: string, confirmPass: string) {
@@ -65,7 +71,7 @@ describe("PasswordResetConfirmPage", () => {
   describe("Missing token", () => {
     test("shows error when no token in URL or sessionStorage", async () => {
       mockGetParam.mockReturnValue(null);
-      render(<PasswordResetConfirmPage />);
+      renderWithProviders(<PasswordResetConfirmPage />);
       await waitFor(() => {
         expect(screen.getByText(/無効なリンクです/)).toBeInTheDocument();
       });
@@ -73,7 +79,7 @@ describe("PasswordResetConfirmPage", () => {
 
     test("shows link to request new reset when token is missing", async () => {
       mockGetParam.mockReturnValue(null);
-      render(<PasswordResetConfirmPage />);
+      renderWithProviders(<PasswordResetConfirmPage />);
       await waitFor(() => {
         const link = screen.getByText("パスワードリセットをリクエスト");
         expect(link.closest("a")).toHaveAttribute("href", "/password-reset/request");
@@ -105,7 +111,7 @@ describe("PasswordResetConfirmPage", () => {
       await renderAndWaitForForm();
       await fillAndSubmit("ValidPass1", "ValidPass1");
       await waitFor(() => {
-        expect(screen.getByText("パスワードを変更しました")).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "パスワードを変更しました" })).toBeInTheDocument();
       });
     });
 
@@ -125,7 +131,7 @@ describe("PasswordResetConfirmPage", () => {
       await fillAndSubmit("ValidPass1", "ValidPass1");
 
       await waitFor(() => {
-        expect(screen.getByText("パスワードを変更しました")).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "パスワードを変更しました" })).toBeInTheDocument();
       });
 
       // Advance through the countdown (3 x 1 second intervals)

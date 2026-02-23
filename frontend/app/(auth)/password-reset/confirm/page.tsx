@@ -24,6 +24,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { Suspense, useEffect, useState } from "react";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
+import { useToast } from "@/hooks/useToast";
 import type { ErrorState, ValidationError } from "@/lib/types/password-reset";
 import type { PasswordStrengthResult } from "@/lib/validation/password";
 import { validatePasswordConfirm } from "@/lib/validation/password";
@@ -39,6 +40,7 @@ const TOKEN_STORAGE_KEY = "password_reset_token";
 function PasswordResetConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
 
   // Token state
   const [token, setToken] = useState<string | null>(null);
@@ -61,6 +63,23 @@ function PasswordResetConfirmForm() {
     message: "",
     isRetryable: false,
   });
+
+  // Field-level validation
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateField = (name: string, value: string) => {
+    if (name === "newPassword" && !value.trim()) return "パスワードは必須です";
+    if (name === "confirmPassword" && !value.trim()) return "パスワードの確認は必須です";
+    if (name === "confirmPassword" && value !== newPassword) return "パスワードが一致しません";
+    return "";
+  };
+
+  const handleFieldBlur = (name: string, value: string) => {
+    const fieldError = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: fieldError }));
+  };
+
+  const hasFieldErrors = Object.values(fieldErrors).some((e) => e !== "");
 
   /**
    * Extract token from URL and store in sessionStorage
@@ -177,6 +196,7 @@ function PasswordResetConfirmForm() {
       // Show success message and start countdown
       setIsSuccess(true);
       setRedirectCountdown(3);
+      toast.success("パスワードを変更しました");
     } catch (err: unknown) {
       // Classify error and show appropriate message
       const apiError = err as {
@@ -246,6 +266,9 @@ function PasswordResetConfirmForm() {
       const { newPassword: _, ...rest } = validationErrors;
       setValidationErrors(rest);
     }
+    if (fieldErrors.newPassword) {
+      setFieldErrors((prev) => ({ ...prev, newPassword: "" }));
+    }
   };
 
   /**
@@ -257,6 +280,9 @@ function PasswordResetConfirmForm() {
     if (validationErrors.confirmPassword) {
       const { confirmPassword: _, ...rest } = validationErrors;
       setValidationErrors(rest);
+    }
+    if (fieldErrors.confirmPassword) {
+      setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
     }
   };
 
@@ -428,17 +454,21 @@ function PasswordResetConfirmForm() {
               name="new-password"
               value={newPassword}
               onChange={handleNewPasswordChange}
+              onBlur={() => handleFieldBlur("newPassword", newPassword)}
               placeholder="8文字以上で入力してください"
               disabled={isLoading || error.type === "expired_token"}
               required
-              aria-invalid={!!validationErrors.newPassword}
-              aria-describedby={validationErrors.newPassword ? "new-password-error" : undefined}
+              aria-invalid={!!(validationErrors.newPassword || fieldErrors.newPassword)}
+              aria-describedby={
+                validationErrors.newPassword || fieldErrors.newPassword ? "new-password-error" : undefined
+              }
               className="input"
               autoComplete="new-password"
+              style={fieldErrors.newPassword ? { borderColor: "#d32f2f" } : undefined}
             />
-            {validationErrors.newPassword && (
+            {(validationErrors.newPassword || fieldErrors.newPassword) && (
               <p id="new-password-error" className="field-error" role="alert" aria-live="assertive">
-                {validationErrors.newPassword.message}
+                {validationErrors.newPassword ? validationErrors.newPassword.message : fieldErrors.newPassword}
               </p>
             )}
 
@@ -458,17 +488,25 @@ function PasswordResetConfirmForm() {
               name="confirm-password"
               value={confirmPassword}
               onChange={handleConfirmPasswordChange}
+              onBlur={() => handleFieldBlur("confirmPassword", confirmPassword)}
               placeholder="もう一度入力してください"
               disabled={isLoading || error.type === "expired_token"}
               required
-              aria-invalid={!!validationErrors.confirmPassword}
-              aria-describedby={validationErrors.confirmPassword ? "confirm-password-error" : undefined}
+              aria-invalid={!!(validationErrors.confirmPassword || fieldErrors.confirmPassword)}
+              aria-describedby={
+                validationErrors.confirmPassword || fieldErrors.confirmPassword
+                  ? "confirm-password-error"
+                  : undefined
+              }
               className="input"
               autoComplete="new-password"
+              style={fieldErrors.confirmPassword ? { borderColor: "#d32f2f" } : undefined}
             />
-            {validationErrors.confirmPassword && (
+            {(validationErrors.confirmPassword || fieldErrors.confirmPassword) && (
               <p id="confirm-password-error" className="field-error" role="alert" aria-live="assertive">
-                {validationErrors.confirmPassword.message}
+                {validationErrors.confirmPassword
+                  ? validationErrors.confirmPassword.message
+                  : fieldErrors.confirmPassword}
               </p>
             )}
           </div>
@@ -476,7 +514,7 @@ function PasswordResetConfirmForm() {
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={isLoading || error.type === "expired_token"}
+            disabled={isLoading || error.type === "expired_token" || hasFieldErrors}
             className="submit-button"
             aria-busy={isLoading}
           >
