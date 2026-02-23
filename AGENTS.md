@@ -150,6 +150,15 @@ PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/reso
 - **Coverage target**: 80%+ LINE coverage per package. Run `./gradlew test jacocoTestReport` to generate reports
 - **JaCoCo reports**: `build/reports/jacoco/<package>/index.html` — tfoot cells[7]=missed lines, cells[8]=total lines
 
+### Frontend Testing Guidelines
+
+- **Vitest config**: `frontend/vitest.config.mts` — jsdom environment, `globals: true`, tests in `tests/unit/**/*.{test,spec}.{ts,tsx}`
+- **Path alias**: `@` resolves to `frontend/app/` (configured in vitest.config.mts and tsconfig.json)
+- **Fake timers + waitFor**: `vi.useFakeTimers()` breaks `waitFor()` (internally uses `setTimeout` polling). Use `act(() => vi.advanceTimersByTime(ms))` then assert synchronously
+- **Fake timers + userEvent**: `userEvent.setup({ advanceTimers })` can still timeout. Use `fireEvent` for click/input in fake timer tests
+- **afterEach cleanup**: Always call `vi.useRealTimers()` in `afterEach` when using `vi.useFakeTimers()` in any test
+- **Mock pattern**: `vi.mock("@/services/api", () => ({ api: { ... } }))` — place before imports that use the module
+
 ## Database Implementation Rules
 
 When adding new domain entities, always create both the domain model and database migration together in the same commit/PR.
