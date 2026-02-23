@@ -1,8 +1,11 @@
 package com.worklog.application.audit;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.worklog.domain.audit.AuditLog;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.persistence.AuditLogRepository;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,9 +30,11 @@ public class AuditLogService {
     private static final Logger log = LoggerFactory.getLogger(AuditLogService.class);
 
     private final AuditLogRepository auditLogRepository;
+    private final ObjectMapper objectMapper;
 
-    public AuditLogService(AuditLogRepository auditLogRepository) {
+    public AuditLogService(AuditLogRepository auditLogRepository, ObjectMapper objectMapper) {
         this.auditLogRepository = auditLogRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -53,7 +58,7 @@ public class AuditLogService {
                     eventType,
                     ipAddress,
                     auditLog.getTimestamp(),
-                    details,
+                    toJsonDetails(details),
                     auditLog.getRetentionDays());
         } catch (Exception e) {
             log.error(
@@ -62,6 +67,18 @@ public class AuditLogService {
                     userId,
                     e.getMessage(),
                     e);
+        }
+    }
+
+    private String toJsonDetails(String details) {
+        if (details == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(Map.of("message", details));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize audit details to JSON, using null", e);
+            return null;
         }
     }
 }
