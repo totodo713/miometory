@@ -702,9 +702,7 @@ class ApprovalServiceTest {
     @Nested
     @DisplayName("getMonthlyApprovalDetail")
     inner class GetMonthlyApprovalDetailTests {
-        @Test
-        fun `should return detail with project breakdown and daily summary`() {
-            // Given - test data
+        private fun createJdbcTemplateWithRouting(): ApprovalService {
             val projectRows = listOf(
                 mapOf<String, Any>(
                     "project_code" to "PROJ-001",
@@ -724,8 +722,6 @@ class ApprovalServiceTest {
                     "comment" to "Fix this",
                 ),
             )
-
-            // Use defaultAnswer to route JdbcTemplate calls by SQL content (avoids varargs matcher issues)
             val localJdbc = org.mockito.Mockito.mock(
                 JdbcTemplate::class.java,
                 org.mockito.Mockito.withSettings().defaultAnswer { invocation ->
@@ -744,10 +740,19 @@ class ApprovalServiceTest {
                     }
                 },
             )
-            val localService = ApprovalService(
-                approvalRepository, workLogRepository, absenceRepository, memberRepository, localJdbc,
+            return ApprovalService(
+                approvalRepository,
+                workLogRepository,
+                absenceRepository,
+                memberRepository,
+                localJdbc,
             )
+        }
 
+        @Test
+        fun `should return detail with project breakdown and daily summary`() {
+            // Given
+            val localService = createJdbcTemplateWithRouting()
             val approval = createSubmittedApproval()
             val approvalId = approval.id
 
