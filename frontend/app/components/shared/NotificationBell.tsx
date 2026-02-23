@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { useNotifications } from "@/hooks/useNotifications";
 
 export function NotificationBell() {
@@ -47,8 +49,8 @@ export function NotificationBell() {
           />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-red-500 rounded-full">
-            {unreadCount > 9 ? "9+" : unreadCount}
+          <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full">
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -65,7 +67,7 @@ export function NotificationBell() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-gray-500">通知はありません</p>
+              <EmptyState title="通知はありません" description="新しい通知はまだありません" />
             ) : (
               notifications.map((notification) => (
                 <button
@@ -92,6 +94,13 @@ export function NotificationBell() {
               ))
             )}
           </div>
+          <Link
+            href="/notifications"
+            className="block px-4 py-3 text-center text-xs text-blue-600 hover:text-blue-800 border-t border-gray-100"
+            onClick={() => setIsOpen(false)}
+          >
+            すべての通知を見る →
+          </Link>
         </div>
       )}
     </div>
