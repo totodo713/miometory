@@ -84,7 +84,7 @@ disable-model-invocation: true
 ```
 
 **Capabilities**:
-1. Query `domain_events` table for a specific aggregate ID (time-ordered)
+1. Query `event_store` table for a specific aggregate ID (time-ordered)
 2. Check projection consistency (event-derived state vs read model)
 3. Verify aggregate version matches latest event sequence
 4. Show recent events (when no aggregate ID specified)
@@ -93,7 +93,7 @@ disable-model-invocation: true
 
 **Workflow**:
 1. Parse arguments (aggregate ID or type name)
-2. Query domain_events via PostgreSQL MCP
+2. Query event_store via PostgreSQL MCP
 3. Format and display event timeline
 4. Query related projection tables
 5. Output consistency report
@@ -142,7 +142,7 @@ color: orange
 2. **Data loss risk**: TRUNCATE, DELETE, column removal without migration
 3. **FK constraint integrity**: Missing FKs on `*_id` columns, reference validation
 4. **Lock contention**: ALTER TABLE on large tables, CONCURRENTLY recommendation
-5. **Event Sourcing schema**: domain_events table changes, projection consistency
+5. **Event Sourcing schema**: event_store table changes, projection consistency
 6. **Project conventions**: AGENTS.md rules (tenant_id FK, UUID PK, timestamps)
 
 **Output format**: Same as security-reviewer.md (SEVERITY + Location + Description + Impact + Fix)
