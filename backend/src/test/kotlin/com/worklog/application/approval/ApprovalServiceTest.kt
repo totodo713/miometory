@@ -273,6 +273,91 @@ class ApprovalServiceTest {
         }
 
         @Test
+        fun `should throw exception when proxy submission not allowed`() {
+            // Given - submittedBy is different from memberId and not a manager
+            val proxySubmitter = MemberId.of(UUID.randomUUID())
+            val command = SubmitMonthForApprovalCommand(memberId, fiscalMonth, proxySubmitter)
+
+            `when`(memberRepository.isSubordinateOf(proxySubmitter, memberId))
+                .thenReturn(false)
+
+            // When/Then
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.submitMonth(command)
+                }
+            assertEquals("PROXY_ENTRY_NOT_ALLOWED", exception.errorCode)
+        }
+
+        @Test
+        fun `should allow proxy submission when member is subordinate`() {
+            // Given - submittedBy is a manager of memberId
+            val command = SubmitMonthForApprovalCommand(memberId, fiscalMonth, managerId)
+
+            `when`(memberRepository.isSubordinateOf(managerId, memberId))
+                .thenReturn(true)
+            `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
+                .thenReturn(Optional.empty())
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
+
+            // When
+            val result = approvalService.submitMonth(command)
+
+            // Then
+            assertNotNull(result)
+        }
+
+        @Test
+        fun `should skip already SUBMITTED work log entries`() {
+            // Given
+            val command = SubmitMonthForApprovalCommand(memberId, fiscalMonth, memberId)
+            val workLogEntryId = UUID.randomUUID()
+
+            `when`(approvalRepository.findByMemberAndFiscalMonth(memberId, fiscalMonth))
+                .thenReturn(Optional.empty())
+            `when`(
+                approvalRepository.findWorkLogEntryIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(listOf(workLogEntryId))
+            `when`(
+                approvalRepository.findAbsenceIds(
+                    memberId.value(),
+                    fiscalMonth.startDate(),
+                    fiscalMonth.endDate(),
+                ),
+            ).thenReturn(emptyList())
+
+            // Entry already SUBMITTED - should be skipped (no save)
+            val submittedEntry = createSubmittedWorkLogEntry()
+            `when`(workLogRepository.findById(WorkLogEntryId.of(workLogEntryId)))
+                .thenReturn(Optional.of(submittedEntry))
+
+            // When
+            val result = approvalService.submitMonth(command)
+
+            // Then
+            assertNotNull(result)
+            // workLogRepository.save should NOT be called for this already-submitted entry
+            verify(workLogRepository, times(0)).save(any())
+        }
+
+        @Test
         fun `should submit month with multiple work log entries`() {
             // Given
             val command = SubmitMonthForApprovalCommand(memberId, fiscalMonth, memberId)
@@ -379,6 +464,36 @@ class ApprovalServiceTest {
 
             // Then
             verify(approvalRepository).save(any())
+        }
+
+        @Test
+        fun `should throw exception when absence not found during approval`() {
+            // Given
+            val approval = createSubmittedApprovalWithEntries()
+            val approvalId = approval.id
+            val command = ApproveMonthCommand(approvalId, managerId)
+
+            `when`(approvalRepository.findById(approvalId))
+                .thenReturn(Optional.of(approval))
+
+            // All work log entries found
+            for (entryId in approval.workLogEntryIds) {
+                val entry = createSubmittedWorkLogEntry()
+                `when`(workLogRepository.findById(WorkLogEntryId.of(entryId)))
+                    .thenReturn(Optional.of(entry))
+            }
+
+            // Return empty for first absence
+            val firstAbsenceId = approval.absenceIds.first()
+            `when`(absenceRepository.findById(AbsenceId.of(firstAbsenceId)))
+                .thenReturn(Optional.empty())
+
+            // When/Then
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.approveMonth(command)
+                }
+            assertEquals("ABSENCE_NOT_FOUND", exception.errorCode)
         }
 
         @Test
