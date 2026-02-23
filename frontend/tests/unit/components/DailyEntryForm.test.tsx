@@ -1,10 +1,22 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 
 // Mock API module - must return mock functions directly in the factory
 // IMPORTANT: mock before importing components that import the API
 vi.mock("../../../app/services/api", () => ({
+  ApiError: class ApiError extends Error {
+    status: number;
+    code?: string;
+    constructor(message: string, status: number, code?: string) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+      this.code = code;
+    }
+  },
   api: {
     worklog: {
       getEntries: vi.fn(),
@@ -32,6 +44,16 @@ vi.mock("../../../app/services/api", () => ({
 
 // Also mock the aliased path used by some components (tsconfig paths '@/...')
 vi.mock("@/services/api", () => ({
+  ApiError: class ApiError extends Error {
+    status: number;
+    code?: string;
+    constructor(message: string, status: number, code?: string) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+      this.code = code;
+    }
+  },
   api: {
     worklog: {
       getEntries: vi.fn(),
@@ -61,6 +83,10 @@ import { api as apiAlias } from "@/services/api";
 import { DailyEntryForm } from "../../../app/components/worklog/DailyEntryForm";
 // Import mocked API and the component under test
 import { api } from "../../../app/services/api";
+
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 const mockGetEntries = api.worklog.getEntries as any;
 const mockCreateEntry = api.worklog.createEntry as any;
@@ -136,14 +162,14 @@ describe("DailyEntryForm", () => {
   // ===== Rendering Tests =====
   describe("Rendering", () => {
     it("should render form with date header", async () => {
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       expect(screen.getByText(/2026-01-15|January 15/i)).toBeInTheDocument();
     });
 
     it("should render empty project row on initial load", async () => {
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForProjectSelector();
       expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
@@ -152,14 +178,14 @@ describe("DailyEntryForm", () => {
     });
 
     it("should render Add Project button", async () => {
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       expect(screen.getByRole("button", { name: /add project/i })).toBeInTheDocument();
     });
 
     it("should render Save and Cancel buttons", async () => {
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
@@ -167,7 +193,7 @@ describe("DailyEntryForm", () => {
     });
 
     it("should display total hours as 0.00h initially", async () => {
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       // Check for Total Daily Hours text (split across elements)
@@ -200,7 +226,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(mockGetEntries).toHaveBeenCalledWith({
@@ -228,7 +254,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByText("Total Daily Hours:")).toBeInTheDocument();
@@ -241,9 +267,9 @@ describe("DailyEntryForm", () => {
     it("should display loading state while fetching entries", async () => {
       (mockGetEntries as any).mockImplementation(() => new Promise(() => {})); // Never resolves
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
-      expect(screen.getByText(/loading/i)).toBeInTheDocument();
+      expect(screen.getByTestId("skeleton-line")).toBeInTheDocument();
     });
   });
 
@@ -251,7 +277,7 @@ describe("DailyEntryForm", () => {
   describe("Input Validation", () => {
     it("should accept valid hours in 0.25h increments", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const hoursInput = screen.getByLabelText(/hours/i);
@@ -264,7 +290,7 @@ describe("DailyEntryForm", () => {
 
     it("should reject hours not in 0.25h increments", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const hoursInput = screen.getByLabelText(/hours/i);
@@ -278,7 +304,7 @@ describe("DailyEntryForm", () => {
     });
 
     it("should reject negative hours", async () => {
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const hoursInput = screen.getByLabelText(/hours/i) as HTMLInputElement;
@@ -292,7 +318,7 @@ describe("DailyEntryForm", () => {
 
     it("should reject hours exceeding 24 for a single entry", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const hoursInput = screen.getByLabelText(/hours/i) as HTMLInputElement;
@@ -311,7 +337,7 @@ describe("DailyEntryForm", () => {
 
     it("should show warning when total hours exceed 24", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       // Fill first row
@@ -337,7 +363,7 @@ describe("DailyEntryForm", () => {
 
     it("should enforce comment max length of 500 characters", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const commentInput = screen.getByLabelText(/comment/i);
@@ -352,7 +378,7 @@ describe("DailyEntryForm", () => {
 
     it("should require project selection before saving", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const hoursInput = screen.getByLabelText(/hours/i);
@@ -371,7 +397,7 @@ describe("DailyEntryForm", () => {
   describe("Multi-Project Entry", () => {
     it("should add a new project row when Add Project is clicked", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       await waitForProjectSelector();
@@ -386,7 +412,7 @@ describe("DailyEntryForm", () => {
 
     it("should remove a project row when Remove button is clicked", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       await waitForProjectSelector();
@@ -405,7 +431,7 @@ describe("DailyEntryForm", () => {
 
     it("should update total hours when multiple project hours are entered", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       await waitForProjectSelector();
@@ -425,7 +451,7 @@ describe("DailyEntryForm", () => {
     });
 
     it("should not allow removing the last project row", async () => {
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       // Should not show remove button when only one row exists
       expect(screen.queryByRole("button", { name: /remove/i })).not.toBeInTheDocument();
@@ -436,7 +462,7 @@ describe("DailyEntryForm", () => {
   describe("Save Functionality", () => {
     it("should create new entry when Save is clicked", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       await waitForProjectSelector();
@@ -479,7 +505,7 @@ describe("DailyEntryForm", () => {
       });
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByDisplayValue("4")).toBeInTheDocument();
@@ -502,7 +528,7 @@ describe("DailyEntryForm", () => {
 
     it("should call onSave callback after successful save", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForProjectSelector();
       // Select project from dropdown
@@ -526,7 +552,7 @@ describe("DailyEntryForm", () => {
       (mockCreateEntry as any).mockImplementation(() => new Promise(() => {})); // Never resolves
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForProjectSelector();
       // Select project from dropdown
@@ -548,7 +574,7 @@ describe("DailyEntryForm", () => {
 
     it("should disable Save button when validation errors exist", async () => {
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const hoursInput = screen.getByLabelText(/hours/i);
@@ -573,7 +599,7 @@ describe("DailyEntryForm", () => {
       //    (this is better tested with E2E tests in T063-T064)
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForProjectSelector();
 
@@ -606,7 +632,7 @@ describe("DailyEntryForm", () => {
       // This test verifies the component works with the auto-save feature enabled
       const _user = userEvent.setup();
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       // Wait for project selector to load
       await waitForProjectSelector();
@@ -623,7 +649,7 @@ describe("DailyEntryForm", () => {
       // create complexity that's better tested in E2E tests.
       // Here we'll verify the basic mechanism: changes reset the "unsaved" state
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
 
@@ -652,7 +678,7 @@ describe("DailyEntryForm", () => {
     it("should not auto-save if there are validation errors", async () => {
       vi.useFakeTimers();
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       // Wait for loading with real timers
       vi.useRealTimers();
@@ -690,7 +716,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByText(/draft/i)).toBeInTheDocument();
@@ -711,7 +737,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByText(/submitted/i)).toBeInTheDocument();
@@ -732,7 +758,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByText(/approved/i)).toBeInTheDocument();
@@ -753,7 +779,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         const hoursInput = screen.getByLabelText(/hours/i);
@@ -775,7 +801,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         const hoursInput = screen.getByLabelText(/hours/i);
@@ -790,7 +816,7 @@ describe("DailyEntryForm", () => {
       (mockCreateEntry as any).mockRejectedValue(new Error("Network error"));
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       await waitForProjectSelector();
@@ -808,17 +834,17 @@ describe("DailyEntryForm", () => {
       await user.click(screen.getByRole("button", { name: /save/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/failed to save|error|network error/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/エラーが発生しました|failed to save|network error/i).length).toBeGreaterThan(0);
       });
     });
 
     it("should display error when loading entries fails", async () => {
       (mockGetEntries as any).mockRejectedValue(new Error("Failed to load"));
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
-        expect(screen.getByText(/failed to load|error.*loading/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/failed to load|error.*loading/i).length).toBeGreaterThan(0);
       });
     });
 
@@ -842,7 +868,7 @@ describe("DailyEntryForm", () => {
       });
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByDisplayValue("4")).toBeInTheDocument();
@@ -855,7 +881,7 @@ describe("DailyEntryForm", () => {
       await user.click(screen.getByRole("button", { name: /save/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/modified by another user|conflict/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/modified by another user|conflict/i).length).toBeGreaterThan(0);
       });
     });
   });
@@ -867,7 +893,7 @@ describe("DailyEntryForm", () => {
       const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       await user.click(screen.getByRole("button", { name: /cancel/i }));
@@ -881,7 +907,7 @@ describe("DailyEntryForm", () => {
       const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       const hoursInput = screen.getByLabelText(/hours/i);
@@ -902,7 +928,7 @@ describe("DailyEntryForm", () => {
       const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitForLoading();
       await user.click(screen.getByRole("button", { name: /cancel/i }));
@@ -930,7 +956,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
@@ -951,7 +977,7 @@ describe("DailyEntryForm", () => {
         total: mockEntries.length,
       });
 
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByText(/submitted/i)).toBeInTheDocument();
@@ -975,7 +1001,7 @@ describe("DailyEntryForm", () => {
       });
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByRole("button", { name: /delete entry/i })).toBeInTheDocument();
@@ -986,14 +1012,11 @@ describe("DailyEntryForm", () => {
 
       // Confirm deletion modal appears
       await waitFor(() => {
-        expect(screen.getByText(/confirm delete/i)).toBeInTheDocument();
+        expect(screen.getByText("削除確認")).toBeInTheDocument();
       });
 
-      // Click the Delete button in the modal
-      const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-      const modalDeleteButton = deleteButtons.find((btn) => btn.textContent === "Delete");
-      expect(modalDeleteButton).toBeDefined();
-      await user.click(modalDeleteButton as HTMLElement);
+      // Click the confirm button ("削除") in the modal
+      await user.click(screen.getByRole("button", { name: "削除" }));
 
       await waitFor(() => {
         expect(mockDeleteEntry).toHaveBeenCalledWith("entry-to-delete");
@@ -1015,7 +1038,7 @@ describe("DailyEntryForm", () => {
       });
 
       const user = userEvent.setup();
-      render(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
+      renderWithProviders(<DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />);
 
       await waitFor(() => {
         expect(screen.getByRole("button", { name: /delete entry/i })).toBeInTheDocument();
@@ -1024,14 +1047,11 @@ describe("DailyEntryForm", () => {
       // Click Delete Entry button
       await user.click(screen.getByRole("button", { name: /delete entry/i }));
 
-      // Wait for modal and click Delete button
+      // Wait for modal and click confirm button
       await waitFor(() => {
-        expect(screen.getByText(/confirm delete/i)).toBeInTheDocument();
+        expect(screen.getByText("削除確認")).toBeInTheDocument();
       });
-      const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
-      const modalDeleteButton = deleteButtons.find((btn) => btn.textContent === "Delete");
-      expect(modalDeleteButton).toBeDefined();
-      await user.click(modalDeleteButton as HTMLElement);
+      await user.click(screen.getByRole("button", { name: "削除" }));
 
       await waitFor(() => {
         expect(mockOnSave).toHaveBeenCalled();

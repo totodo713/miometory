@@ -1,5 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
 
@@ -27,6 +29,10 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
+
 const existingMember: MemberRow = {
   id: "m1",
   email: "alice@test.com",
@@ -52,7 +58,7 @@ describe("MemberForm", () => {
     };
 
     test("renders create form with empty fields", () => {
-      render(<MemberForm {...defaultProps} />);
+      renderWithProviders(<MemberForm {...defaultProps} />);
 
       expect(screen.getByText("メンバー招待")).toBeInTheDocument();
       expect(screen.getByLabelText("メールアドレス")).toHaveValue("");
@@ -63,7 +69,7 @@ describe("MemberForm", () => {
     test("creates member on submit", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<MemberForm {...defaultProps} onSaved={onSaved} />);
+      renderWithProviders(<MemberForm {...defaultProps} onSaved={onSaved} />);
 
       await user.type(screen.getByLabelText("メールアドレス"), "new@test.com");
       await user.type(screen.getByLabelText("表示名"), "New User");
@@ -79,7 +85,7 @@ describe("MemberForm", () => {
     });
 
     test("has required attribute on email and name inputs", () => {
-      render(<MemberForm {...defaultProps} />);
+      renderWithProviders(<MemberForm {...defaultProps} />);
 
       expect(screen.getByLabelText("メールアドレス")).toBeRequired();
       expect(screen.getByLabelText("表示名")).toBeRequired();
@@ -87,7 +93,7 @@ describe("MemberForm", () => {
 
     test("shows validation error when only whitespace entered", async () => {
       const user = userEvent.setup();
-      render(<MemberForm {...defaultProps} />);
+      renderWithProviders(<MemberForm {...defaultProps} />);
 
       // Type valid email then whitespace-only displayName
       await user.type(screen.getByLabelText("メールアドレス"), "a@b.com");
@@ -107,7 +113,7 @@ describe("MemberForm", () => {
     };
 
     test("renders edit form with pre-filled fields", () => {
-      render(<MemberForm {...editProps} />);
+      renderWithProviders(<MemberForm {...editProps} />);
 
       expect(screen.getByText("メンバー編集")).toBeInTheDocument();
       expect(screen.getByLabelText("メールアドレス")).toHaveValue("alice@test.com");
@@ -118,7 +124,7 @@ describe("MemberForm", () => {
     test("updates member on submit", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<MemberForm {...editProps} onSaved={onSaved} />);
+      renderWithProviders(<MemberForm {...editProps} onSaved={onSaved} />);
 
       const nameInput = screen.getByLabelText("表示名");
       await user.clear(nameInput);
@@ -138,7 +144,7 @@ describe("MemberForm", () => {
   test("calls onClose when cancel button clicked", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<MemberForm member={null} onClose={onClose} onSaved={vi.fn()} />);
+    renderWithProviders(<MemberForm member={null} onClose={onClose} onSaved={vi.fn()} />);
 
     await user.click(screen.getByText("キャンセル"));
     expect(onClose).toHaveBeenCalled();
@@ -149,14 +155,14 @@ describe("MemberForm", () => {
     mockCreate.mockRejectedValue(new ApiError("Duplicate email", 409, "DUPLICATE_EMAIL"));
 
     const user = userEvent.setup();
-    render(<MemberForm member={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<MemberForm member={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("メールアドレス"), "dup@test.com");
     await user.type(screen.getByLabelText("表示名"), "Dup");
     await user.click(screen.getByText("招待"));
 
     await waitFor(() => {
-      expect(screen.getByText("Duplicate email")).toBeInTheDocument();
+      expect(screen.getAllByText("Duplicate email").length).toBeGreaterThan(0);
     });
   });
 
@@ -164,7 +170,7 @@ describe("MemberForm", () => {
     mockCreate.mockRejectedValue(new Error("Network failure"));
 
     const user = userEvent.setup();
-    render(<MemberForm member={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<MemberForm member={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("メールアドレス"), "test@test.com");
     await user.type(screen.getByLabelText("表示名"), "Test");
@@ -185,7 +191,7 @@ describe("MemberForm", () => {
     );
 
     const user = userEvent.setup();
-    render(<MemberForm member={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<MemberForm member={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("メールアドレス"), "test@test.com");
     await user.type(screen.getByLabelText("表示名"), "Test");

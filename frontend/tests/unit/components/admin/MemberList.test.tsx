@@ -1,6 +1,22 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import { MemberList } from "@/components/admin/MemberList";
+
+Object.defineProperty(window, "matchMedia", {
+	writable: true,
+	value: vi.fn().mockImplementation((query: string) => ({
+		matches: false,
+		media: query,
+		onchange: null,
+		addListener: vi.fn(),
+		removeListener: vi.fn(),
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
+	})),
+});
 
 const mockListMembers = vi.fn();
 
@@ -34,6 +50,10 @@ const inactiveMember = {
   isActive: false,
 };
 
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
+
 const defaultProps = {
   onEdit: vi.fn(),
   onDeactivate: vi.fn(),
@@ -53,8 +73,8 @@ describe("MemberList", () => {
   });
 
   test("shows loading state then renders member data", async () => {
-    render(<MemberList {...defaultProps} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    const { container } = renderWithProviders(<MemberList {...defaultProps} />);
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -72,7 +92,7 @@ describe("MemberList", () => {
       number: 0,
     });
 
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("メンバーが見つかりません")).toBeInTheDocument();
@@ -87,7 +107,7 @@ describe("MemberList", () => {
       number: 0,
     });
 
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("—")).toBeInTheDocument();
@@ -95,7 +115,7 @@ describe("MemberList", () => {
   });
 
   test("shows deactivate button for active members", async () => {
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("無効化")).toBeInTheDocument();
@@ -111,7 +131,7 @@ describe("MemberList", () => {
       number: 0,
     });
 
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("有効化")).toBeInTheDocument();
@@ -122,7 +142,7 @@ describe("MemberList", () => {
   test("calls onEdit when edit button clicked", async () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
-    render(<MemberList {...defaultProps} onEdit={onEdit} />);
+    renderWithProviders(<MemberList {...defaultProps} onEdit={onEdit} />);
 
     await waitFor(() => {
       expect(screen.getByText("編集")).toBeInTheDocument();
@@ -135,7 +155,7 @@ describe("MemberList", () => {
   test("calls onDeactivate when deactivate button clicked", async () => {
     const user = userEvent.setup();
     const onDeactivate = vi.fn();
-    render(<MemberList {...defaultProps} onDeactivate={onDeactivate} />);
+    renderWithProviders(<MemberList {...defaultProps} onDeactivate={onDeactivate} />);
 
     await waitFor(() => {
       expect(screen.getByText("無効化")).toBeInTheDocument();
@@ -155,7 +175,7 @@ describe("MemberList", () => {
       number: 0,
     });
 
-    render(<MemberList {...defaultProps} onActivate={onActivate} />);
+    renderWithProviders(<MemberList {...defaultProps} onActivate={onActivate} />);
 
     await waitFor(() => {
       expect(screen.getByText("有効化")).toBeInTheDocument();
@@ -167,7 +187,7 @@ describe("MemberList", () => {
 
   test("passes search param to API when searching", async () => {
     const user = userEvent.setup();
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -183,7 +203,7 @@ describe("MemberList", () => {
 
   test("passes isActive=undefined when showInactive checked", async () => {
     const user = userEvent.setup();
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -208,7 +228,7 @@ describe("MemberList", () => {
       number: 0,
     });
 
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("1 / 3")).toBeInTheDocument();
@@ -226,7 +246,7 @@ describe("MemberList", () => {
       number: 0,
     });
 
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("1 / 3")).toBeInTheDocument();
@@ -240,7 +260,7 @@ describe("MemberList", () => {
   });
 
   test("hides pagination when only one page", async () => {
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("Alice")).toBeInTheDocument();
@@ -250,13 +270,13 @@ describe("MemberList", () => {
   });
 
   test("reloads when refreshKey changes", async () => {
-    const { rerender } = render(<MemberList {...defaultProps} refreshKey={0} />);
+    const { rerender } = renderWithProviders(<MemberList {...defaultProps} refreshKey={0} />);
 
     await waitFor(() => {
       expect(mockListMembers).toHaveBeenCalledTimes(1);
     });
 
-    rerender(<MemberList {...defaultProps} refreshKey={1} />);
+    rerender(<ToastProvider><MemberList {...defaultProps} refreshKey={1} /></ToastProvider>);
 
     await waitFor(() => {
       expect(mockListMembers).toHaveBeenCalledTimes(2);
@@ -264,7 +284,7 @@ describe("MemberList", () => {
   });
 
   test("renders table headers correctly", async () => {
-    render(<MemberList {...defaultProps} />);
+    renderWithProviders(<MemberList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("Alice")).toBeInTheDocument();

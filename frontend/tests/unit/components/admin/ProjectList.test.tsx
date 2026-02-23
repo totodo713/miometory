@@ -1,6 +1,22 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import { ProjectList } from "@/components/admin/ProjectList";
+
+Object.defineProperty(window, "matchMedia", {
+	writable: true,
+	value: vi.fn().mockImplementation((query: string) => ({
+		matches: false,
+		media: query,
+		onchange: null,
+		addListener: vi.fn(),
+		removeListener: vi.fn(),
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
+	})),
+});
 
 const mockListProjects = vi.fn();
 
@@ -34,6 +50,10 @@ const inactiveProject = {
   assignedMemberCount: 0,
 };
 
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
+
 const defaultProps = {
   onEdit: vi.fn(),
   onDeactivate: vi.fn(),
@@ -53,8 +73,8 @@ describe("ProjectList", () => {
   });
 
   test("shows loading state then renders project data", async () => {
-    render(<ProjectList {...defaultProps} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    const { container } = renderWithProviders(<ProjectList {...defaultProps} />);
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("PRJ001")).toBeInTheDocument();
@@ -72,7 +92,7 @@ describe("ProjectList", () => {
       number: 0,
     });
 
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("プロジェクトが見つかりません")).toBeInTheDocument();
@@ -80,7 +100,7 @@ describe("ProjectList", () => {
   });
 
   test("displays valid period for project with dates", async () => {
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("PRJ001")).toBeInTheDocument();
@@ -97,7 +117,7 @@ describe("ProjectList", () => {
       number: 0,
     });
 
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("PRJ002")).toBeInTheDocument();
@@ -107,7 +127,7 @@ describe("ProjectList", () => {
   });
 
   test("shows deactivate button for active projects", async () => {
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("無効化")).toBeInTheDocument();
@@ -123,7 +143,7 @@ describe("ProjectList", () => {
       number: 0,
     });
 
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("有効化")).toBeInTheDocument();
@@ -134,7 +154,7 @@ describe("ProjectList", () => {
   test("calls onEdit when edit button clicked", async () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
-    render(<ProjectList {...defaultProps} onEdit={onEdit} />);
+    renderWithProviders(<ProjectList {...defaultProps} onEdit={onEdit} />);
 
     await waitFor(() => {
       expect(screen.getByText("編集")).toBeInTheDocument();
@@ -147,7 +167,7 @@ describe("ProjectList", () => {
   test("calls onDeactivate when deactivate button clicked", async () => {
     const user = userEvent.setup();
     const onDeactivate = vi.fn();
-    render(<ProjectList {...defaultProps} onDeactivate={onDeactivate} />);
+    renderWithProviders(<ProjectList {...defaultProps} onDeactivate={onDeactivate} />);
 
     await waitFor(() => {
       expect(screen.getByText("無効化")).toBeInTheDocument();
@@ -167,7 +187,7 @@ describe("ProjectList", () => {
       number: 0,
     });
 
-    render(<ProjectList {...defaultProps} onActivate={onActivate} />);
+    renderWithProviders(<ProjectList {...defaultProps} onActivate={onActivate} />);
 
     await waitFor(() => {
       expect(screen.getByText("有効化")).toBeInTheDocument();
@@ -179,7 +199,7 @@ describe("ProjectList", () => {
 
   test("passes search param to API when searching", async () => {
     const user = userEvent.setup();
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("PRJ001")).toBeInTheDocument();
@@ -195,7 +215,7 @@ describe("ProjectList", () => {
 
   test("passes isActive=undefined when showInactive checked", async () => {
     const user = userEvent.setup();
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("PRJ001")).toBeInTheDocument();
@@ -219,7 +239,7 @@ describe("ProjectList", () => {
       number: 0,
     });
 
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("1 / 3")).toBeInTheDocument();
@@ -237,7 +257,7 @@ describe("ProjectList", () => {
       number: 0,
     });
 
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("1 / 3")).toBeInTheDocument();
@@ -251,7 +271,7 @@ describe("ProjectList", () => {
   });
 
   test("hides pagination when only one page", async () => {
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("PRJ001")).toBeInTheDocument();
@@ -261,13 +281,13 @@ describe("ProjectList", () => {
   });
 
   test("reloads when refreshKey changes", async () => {
-    const { rerender } = render(<ProjectList {...defaultProps} refreshKey={0} />);
+    const { rerender } = renderWithProviders(<ProjectList {...defaultProps} refreshKey={0} />);
 
     await waitFor(() => {
       expect(mockListProjects).toHaveBeenCalledTimes(1);
     });
 
-    rerender(<ProjectList {...defaultProps} refreshKey={1} />);
+    rerender(<ToastProvider><ProjectList {...defaultProps} refreshKey={1} /></ToastProvider>);
 
     await waitFor(() => {
       expect(mockListProjects).toHaveBeenCalledTimes(2);
@@ -275,7 +295,7 @@ describe("ProjectList", () => {
   });
 
   test("renders table headers correctly", async () => {
-    render(<ProjectList {...defaultProps} />);
+    renderWithProviders(<ProjectList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("PRJ001")).toBeInTheDocument();

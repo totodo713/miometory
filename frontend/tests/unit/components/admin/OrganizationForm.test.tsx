@@ -1,5 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import { OrganizationForm } from "@/components/admin/OrganizationForm";
 import type { OrganizationRow } from "@/services/api";
 
@@ -28,6 +30,10 @@ vi.mock("@/services/api", () => ({
     },
   },
 }));
+
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 const parentOrg: OrganizationRow = {
   id: "parent1",
@@ -82,7 +88,7 @@ describe("OrganizationForm", () => {
     };
 
     test("renders create form with empty fields", () => {
-      render(<OrganizationForm {...defaultProps} />);
+      renderWithProviders(<OrganizationForm {...defaultProps} />);
 
       expect(screen.getByText("組織作成")).toBeInTheDocument();
       expect(screen.getByLabelText("コード")).toHaveValue("");
@@ -94,7 +100,7 @@ describe("OrganizationForm", () => {
     test("creates organization on submit", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<OrganizationForm {...defaultProps} onSaved={onSaved} />);
+      renderWithProviders(<OrganizationForm {...defaultProps} onSaved={onSaved} />);
 
       await user.type(screen.getByLabelText("コード"), "NEW_ORG");
       await user.type(screen.getByLabelText("名前"), "New Organization");
@@ -111,7 +117,7 @@ describe("OrganizationForm", () => {
     });
 
     test("code field has pattern attribute for alphanumeric and underscore validation", () => {
-      render(<OrganizationForm {...defaultProps} />);
+      renderWithProviders(<OrganizationForm {...defaultProps} />);
 
       const codeInput = screen.getByLabelText("コード");
       expect(codeInput).toHaveAttribute("pattern", "[A-Za-z0-9_]+");
@@ -120,7 +126,7 @@ describe("OrganizationForm", () => {
 
     test("name field required validation", async () => {
       const user = userEvent.setup();
-      render(<OrganizationForm {...defaultProps} />);
+      renderWithProviders(<OrganizationForm {...defaultProps} />);
 
       await user.type(screen.getByLabelText("コード"), "VALID_CODE");
       // Leave name empty - but we need to submit, so type whitespace
@@ -133,7 +139,7 @@ describe("OrganizationForm", () => {
 
     test("code field required validation - empty code shows error", async () => {
       const user = userEvent.setup();
-      render(<OrganizationForm {...defaultProps} />);
+      renderWithProviders(<OrganizationForm {...defaultProps} />);
 
       // Submit without entering a code - use form's noValidate to bypass HTML5 validation
       // Type code then clear it to simulate user clearing the field
@@ -149,7 +155,7 @@ describe("OrganizationForm", () => {
     });
 
     test("parent organization dropdown shows active orgs", async () => {
-      render(<OrganizationForm {...defaultProps} />);
+      renderWithProviders(<OrganizationForm {...defaultProps} />);
 
       await waitFor(() => {
         expect(mockList).toHaveBeenCalledWith({ isActive: true, size: 1000 });
@@ -164,7 +170,7 @@ describe("OrganizationForm", () => {
     });
 
     test("has required attribute on code and name inputs", () => {
-      render(<OrganizationForm {...defaultProps} />);
+      renderWithProviders(<OrganizationForm {...defaultProps} />);
 
       expect(screen.getByLabelText("コード")).toBeRequired();
       expect(screen.getByLabelText("名前")).toBeRequired();
@@ -179,7 +185,7 @@ describe("OrganizationForm", () => {
     };
 
     test("renders edit form with pre-filled fields and disabled code", () => {
-      render(<OrganizationForm {...editProps} />);
+      renderWithProviders(<OrganizationForm {...editProps} />);
 
       expect(screen.getByText("組織編集")).toBeInTheDocument();
       expect(screen.getByLabelText("コード")).toHaveValue("DEV_TEAM");
@@ -191,7 +197,7 @@ describe("OrganizationForm", () => {
     test("updates organization on submit", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<OrganizationForm {...editProps} onSaved={onSaved} />);
+      renderWithProviders(<OrganizationForm {...editProps} onSaved={onSaved} />);
 
       const nameInput = screen.getByLabelText("名前");
       await user.clear(nameInput);
@@ -205,7 +211,7 @@ describe("OrganizationForm", () => {
     });
 
     test("does not show parent organization dropdown in edit mode", () => {
-      render(<OrganizationForm {...editProps} />);
+      renderWithProviders(<OrganizationForm {...editProps} />);
 
       expect(screen.queryByLabelText("親組織 (任意)")).not.toBeInTheDocument();
     });
@@ -214,7 +220,7 @@ describe("OrganizationForm", () => {
   test("calls onClose when cancel button clicked", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<OrganizationForm organization={null} onClose={onClose} onSaved={vi.fn()} />);
+    renderWithProviders(<OrganizationForm organization={null} onClose={onClose} onSaved={vi.fn()} />);
 
     await user.click(screen.getByText("キャンセル"));
     expect(onClose).toHaveBeenCalled();
@@ -223,7 +229,7 @@ describe("OrganizationForm", () => {
   test("ESC key closes modal", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<OrganizationForm organization={null} onClose={onClose} onSaved={vi.fn()} />);
+    renderWithProviders(<OrganizationForm organization={null} onClose={onClose} onSaved={vi.fn()} />);
 
     await user.keyboard("{Escape}");
     expect(onClose).toHaveBeenCalled();
@@ -234,14 +240,14 @@ describe("OrganizationForm", () => {
     mockCreate.mockRejectedValue(new ApiError("Duplicate code", 409, "DUPLICATE_CODE"));
 
     const user = userEvent.setup();
-    render(<OrganizationForm organization={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<OrganizationForm organization={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "DUP");
     await user.type(screen.getByLabelText("名前"), "Duplicate");
     await user.click(screen.getByText("作成"));
 
     await waitFor(() => {
-      expect(screen.getByText("Duplicate code")).toBeInTheDocument();
+      expect(screen.getAllByText("Duplicate code").length).toBeGreaterThan(0);
     });
   });
 
@@ -249,7 +255,7 @@ describe("OrganizationForm", () => {
     mockCreate.mockRejectedValue(new Error("Network failure"));
 
     const user = userEvent.setup();
-    render(<OrganizationForm organization={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<OrganizationForm organization={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "NEW");
     await user.type(screen.getByLabelText("名前"), "Test");
@@ -269,7 +275,7 @@ describe("OrganizationForm", () => {
     );
 
     const user = userEvent.setup();
-    render(<OrganizationForm organization={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<OrganizationForm organization={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "NEW");
     await user.type(screen.getByLabelText("名前"), "Test");

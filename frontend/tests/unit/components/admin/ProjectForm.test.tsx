@@ -1,5 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import type { ProjectRow } from "@/components/admin/ProjectList";
 
@@ -27,6 +29,10 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
+function renderWithProviders(ui: ReactElement) {
+	return render(<ToastProvider>{ui}</ToastProvider>);
+}
+
 const existingProject: ProjectRow = {
   id: "p1",
   code: "PRJ001",
@@ -52,7 +58,7 @@ describe("ProjectForm", () => {
     };
 
     test("renders create form with empty fields", () => {
-      render(<ProjectForm {...defaultProps} />);
+      renderWithProviders(<ProjectForm {...defaultProps} />);
 
       expect(screen.getByText("プロジェクト作成")).toBeInTheDocument();
       expect(screen.getByLabelText("コード")).toHaveValue("");
@@ -64,7 +70,7 @@ describe("ProjectForm", () => {
     test("creates project on submit", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<ProjectForm {...defaultProps} onSaved={onSaved} />);
+      renderWithProviders(<ProjectForm {...defaultProps} onSaved={onSaved} />);
 
       await user.type(screen.getByLabelText("コード"), "NEW001");
       await user.type(screen.getByLabelText("名前"), "New Project");
@@ -83,7 +89,7 @@ describe("ProjectForm", () => {
 
     test("creates project with dates", async () => {
       const user = userEvent.setup();
-      render(<ProjectForm {...defaultProps} />);
+      renderWithProviders(<ProjectForm {...defaultProps} />);
 
       await user.type(screen.getByLabelText("コード"), "NEW001");
       await user.type(screen.getByLabelText("名前"), "New Project");
@@ -102,7 +108,7 @@ describe("ProjectForm", () => {
     });
 
     test("has required attribute on code and name inputs", () => {
-      render(<ProjectForm {...defaultProps} />);
+      renderWithProviders(<ProjectForm {...defaultProps} />);
 
       expect(screen.getByLabelText("コード")).toBeRequired();
       expect(screen.getByLabelText("名前")).toBeRequired();
@@ -110,7 +116,7 @@ describe("ProjectForm", () => {
 
     test("shows validation error when only whitespace entered", async () => {
       const user = userEvent.setup();
-      render(<ProjectForm {...defaultProps} />);
+      renderWithProviders(<ProjectForm {...defaultProps} />);
 
       await user.type(screen.getByLabelText("コード"), "   ");
       await user.type(screen.getByLabelText("名前"), "   ");
@@ -122,7 +128,7 @@ describe("ProjectForm", () => {
 
     test("shows validation error when end date before start date", async () => {
       const user = userEvent.setup();
-      render(<ProjectForm {...defaultProps} />);
+      renderWithProviders(<ProjectForm {...defaultProps} />);
 
       await user.type(screen.getByLabelText("コード"), "NEW001");
       await user.type(screen.getByLabelText("名前"), "New Project");
@@ -143,7 +149,7 @@ describe("ProjectForm", () => {
     };
 
     test("renders edit form with pre-filled fields", () => {
-      render(<ProjectForm {...editProps} />);
+      renderWithProviders(<ProjectForm {...editProps} />);
 
       expect(screen.getByText("プロジェクト編集")).toBeInTheDocument();
       expect(screen.getByLabelText("コード")).toHaveValue("PRJ001");
@@ -157,7 +163,7 @@ describe("ProjectForm", () => {
     test("updates project on submit", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<ProjectForm {...editProps} onSaved={onSaved} />);
+      renderWithProviders(<ProjectForm {...editProps} onSaved={onSaved} />);
 
       const nameInput = screen.getByLabelText("名前");
       await user.clear(nameInput);
@@ -175,7 +181,7 @@ describe("ProjectForm", () => {
     });
 
     test("code field is disabled in edit mode", () => {
-      render(<ProjectForm {...editProps} />);
+      renderWithProviders(<ProjectForm {...editProps} />);
       expect(screen.getByLabelText("コード")).toBeDisabled();
     });
   });
@@ -183,7 +189,7 @@ describe("ProjectForm", () => {
   test("calls onClose when cancel button clicked", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
-    render(<ProjectForm project={null} onClose={onClose} onSaved={vi.fn()} />);
+    renderWithProviders(<ProjectForm project={null} onClose={onClose} onSaved={vi.fn()} />);
 
     await user.click(screen.getByText("キャンセル"));
     expect(onClose).toHaveBeenCalled();
@@ -194,14 +200,14 @@ describe("ProjectForm", () => {
     mockCreate.mockRejectedValue(new ApiError("Duplicate code", 409, "DUPLICATE_CODE"));
 
     const user = userEvent.setup();
-    render(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "DUP");
     await user.type(screen.getByLabelText("名前"), "Duplicate");
     await user.click(screen.getByText("作成"));
 
     await waitFor(() => {
-      expect(screen.getByText("Duplicate code")).toBeInTheDocument();
+      expect(screen.getAllByText("Duplicate code").length).toBeGreaterThan(0);
     });
   });
 
@@ -209,7 +215,7 @@ describe("ProjectForm", () => {
     mockCreate.mockRejectedValue(new Error("Network failure"));
 
     const user = userEvent.setup();
-    render(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "NEW");
     await user.type(screen.getByLabelText("名前"), "Test");
@@ -230,7 +236,7 @@ describe("ProjectForm", () => {
     );
 
     const user = userEvent.setup();
-    render(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
+    renderWithProviders(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "NEW");
     await user.type(screen.getByLabelText("名前"), "Test");
