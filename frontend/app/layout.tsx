@@ -6,6 +6,7 @@ import "./globals.css";
 import { Header } from "./components/shared/Header";
 import { AuthProvider } from "./providers/AuthProvider";
 import { SessionProvider } from "./providers/SessionProvider";
+import { ToastProvider } from "./components/shared/ToastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,8 +37,10 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <SessionProvider>
-              <Header />
-              {children}
+              <ToastProvider>
+                <Header />
+                {children}
+              </ToastProvider>
             </SessionProvider>
           </AuthProvider>
         </NextIntlClientProvider>
