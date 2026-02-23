@@ -6,6 +6,7 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 
 class CommandContractTest {
 
@@ -22,7 +23,7 @@ class CommandContractTest {
         assertEquals(cmd1, cmd2)
         assertEquals(cmd1.hashCode(), cmd2.hashCode())
         assertNotEquals(cmd1, cmd3)
-        cmd1.toString()
+        assertNotNull(cmd1.toString())
     }
 
     @Test
@@ -34,7 +35,7 @@ class CommandContractTest {
         val cmd = RejectDailyEntriesCommand(memberId, date, rejectedBy, "reason")
 
         assertEquals(cmd, RejectDailyEntriesCommand(memberId, date, rejectedBy, "reason"))
-        cmd.toString()
+        assertNotNull(cmd.toString())
     }
 
     @Test
@@ -46,7 +47,7 @@ class CommandContractTest {
         val cmd = RecallDailyEntriesCommand(memberId, date, recalledBy)
 
         assertEquals(cmd, RecallDailyEntriesCommand(memberId, date, recalledBy))
-        cmd.toString()
+        assertNotNull(cmd.toString())
     }
 
     @Test
@@ -55,7 +56,7 @@ class CommandContractTest {
         val cmd = CopyFromPreviousMonthCommand(memberId, 2026, 2)
 
         assertEquals(cmd, CopyFromPreviousMonthCommand(memberId, 2026, 2))
-        cmd.toString()
+        assertNotNull(cmd.toString())
     }
 
     // Validation tests for uncovered branches
