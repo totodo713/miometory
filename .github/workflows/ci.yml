@@ -191,36 +191,13 @@ jobs:
               exit 1
             fi
 
-            # Start frontend in background
-            cd /workspaces/miometory/frontend
-            npm run dev &
-            FRONTEND_PID=$!
-
-            # Wait for frontend to be ready (timeout after 60s)
-            echo "Waiting for frontend..."
-            FRONTEND_READY=false
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:3000 > /dev/null 2>&1; then
-                echo "Frontend is ready"
-                FRONTEND_READY=true
-                break
-              fi
-              sleep 2
-            done
-
-            if [ "$FRONTEND_READY" != "true" ]; then
-              echo "ERROR: Frontend failed to start within 60 seconds"
-              kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
-              exit 1
-            fi
-
             # Install Playwright: OS deps (needs root, preserve PATH for npx) + browser binary
             sudo env "PATH=$PATH" npx playwright install-deps chromium
             npx playwright install chromium
             CI=true npx playwright test --project=chromium
 
             # Cleanup
-            kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
+            kill $BACKEND_PID 2>/dev/null || true
 
       - name: Upload Playwright report
         if: always()
