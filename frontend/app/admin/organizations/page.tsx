@@ -7,6 +7,9 @@ import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatter
 import { OrganizationForm } from "@/components/admin/OrganizationForm";
 import { OrganizationList } from "@/components/admin/OrganizationList";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
+import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useToast } from "@/hooks/useToast";
 import { useAdminContext } from "@/providers/AdminProvider";
 import type {
   FiscalYearPatternOption,
@@ -21,10 +24,12 @@ type ViewMode = "list" | "tree";
 
 export default function AdminOrganizationsPage() {
   const { adminContext } = useAdminContext();
+  const toast = useToast();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [editingOrg, setEditingOrg] = useState<OrganizationRow | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: "deactivate" | "activate" } | null>(null);
 
   // Member detail view state (shared between list and tree views)
   const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string } | null>(null);
@@ -151,32 +156,34 @@ export default function AdminOrganizationsPage() {
     }
   }, [selectedOrg, selectedFiscalYearPatternId, selectedMonthlyPeriodPatternId]);
 
-  const handleDeactivate = useCallback(
-    async (id: string) => {
-      if (!confirm("この組織を無効化しますか？")) return;
+  const handleDeactivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "deactivate" });
+  }, []);
+
+  const handleActivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "activate" });
+  }, []);
+
+  const executeAction = useCallback(
+    async (target: { id: string; action: "deactivate" | "activate" }) => {
       try {
-        const result = await api.admin.organizations.deactivate(id);
-        if (result.warnings && result.warnings.length > 0) {
-          alert(`無効化しました。\n\n警告:\n${result.warnings.join("\n")}`);
+        if (target.action === "deactivate") {
+          const result = await api.admin.organizations.deactivate(target.id);
+          if (result.warnings && result.warnings.length > 0) {
+            toast.warning(`無効化しました。警告: ${result.warnings.join(", ")}`);
+          } else {
+            toast.success("組織を無効化しました");
+          }
+        } else {
+          await api.admin.organizations.activate(target.id);
+          toast.success("組織を有効化しました");
         }
         refresh();
       } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
       }
     },
-    [refresh],
-  );
-
-  const handleActivate = useCallback(
-    async (id: string) => {
-      try {
-        await api.admin.organizations.activate(id);
-        refresh();
-      } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
-      }
-    },
-    [refresh],
+    [refresh, toast],
   );
 
   const handleEdit = useCallback((org: OrganizationRow) => {
@@ -301,7 +308,9 @@ export default function AdminOrganizationsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "組織管理" }]} />
+
+      <div className="flex items-center justify-between mb-6 mt-4">
         <div className="flex items-center gap-3">
           {selectedOrg && (
             <button
@@ -632,6 +641,19 @@ export default function AdminOrganizationsPage() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title="確認"
+        message={`この組織を${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`}
+        confirmLabel={confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}
+        variant={confirmTarget?.action === "deactivate" ? "danger" : "warning"}
+        onConfirm={() => {
+          if (confirmTarget) executeAction(confirmTarget);
+          setConfirmTarget(null);
+        }}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }
