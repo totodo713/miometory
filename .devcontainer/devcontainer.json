@@ -12,7 +12,9 @@
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "dockerDashComposeVersion": "none"
+    }
   },
   "forwardPorts": [8080, 3000, 5432, 6379],
   // Intentional: bash -c with set -e ensures fail-fast — if any step fails, subsequent steps are skipped.
