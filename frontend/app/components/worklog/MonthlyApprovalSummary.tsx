@@ -1,5 +1,8 @@
 "use client";
 
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Skeleton } from "@/components/shared/Skeleton";
+
 interface ProjectBreakdown {
   projectCode: string;
   projectName: string;
@@ -29,6 +32,7 @@ interface MonthlyApprovalSummaryProps {
   dailyApprovalSummary: DailyApprovalSummary;
   unresolvedEntries: UnresolvedEntry[];
   onClose: () => void;
+  isLoading?: boolean;
 }
 
 export function MonthlyApprovalSummaryView({
@@ -41,7 +45,22 @@ export function MonthlyApprovalSummaryView({
   dailyApprovalSummary,
   unresolvedEntries,
   onClose,
+  isLoading = false,
 }: MonthlyApprovalSummaryProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton.Text lines={2} />
+        <div className="grid grid-cols-3 gap-4">
+          <Skeleton.Card />
+          <Skeleton.Card />
+          <Skeleton.Card />
+        </div>
+        <Skeleton.Table rows={5} cols={4} />
+      </div>
+    );
+  }
+
   const totalDailyEntries =
     dailyApprovalSummary.approvedCount + dailyApprovalSummary.rejectedCount + dailyApprovalSummary.unapprovedCount;
   const totalHours = totalWorkHours + totalAbsenceHours;
@@ -133,7 +152,7 @@ export function MonthlyApprovalSummaryView({
       )}
 
       {/* Project breakdown */}
-      {projectBreakdown.length > 0 && (
+      {projectBreakdown.length > 0 ? (
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-2">プロジェクト内訳</h3>
           <table className="w-full text-sm">
@@ -159,6 +178,11 @@ export function MonthlyApprovalSummaryView({
             </tbody>
           </table>
         </div>
+      ) : (
+        <EmptyState
+          title="承認データがありません"
+          description="承認が必要なデータがありません"
+        />
       )}
     </div>
   );

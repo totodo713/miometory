@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Skeleton } from "@/components/shared/Skeleton";
 import { api } from "../../services/api";
 import { RejectionBanner } from "./RejectionBanner";
 import { SubmitButton } from "./SubmitButton";
@@ -66,14 +68,13 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
   if (isLoading) {
     return (
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/4 mb-4" />
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded" />
-            <div className="h-4 bg-gray-200 rounded" />
-            <div className="h-4 bg-gray-200 rounded" />
-          </div>
+        <Skeleton.Text lines={2} />
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Skeleton.Card />
+          <Skeleton.Card />
+          <Skeleton.Card />
         </div>
+        <Skeleton.Table rows={5} cols={4} />
       </div>
     );
   }
@@ -252,9 +253,10 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
 
       {/* Empty State */}
       {summary.projects.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No project hours recorded this month</p>
-        </div>
+        <EmptyState
+          title="月次サマリーがありません"
+          description="まだ勤務データが登録されていません"
+        />
       )}
     </div>
   );
