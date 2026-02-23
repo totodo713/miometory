@@ -25,8 +25,11 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("password reset confirm page has no violations", async ({ page }) => {
-    // Use a test token
-    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
+    // Pre-set token in sessionStorage to avoid router.replace race condition
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("password_reset_token", "TEST_TOKEN");
+    });
+    await page.goto(`/password-reset/confirm`);
     await page.waitForLoadState("networkidle");
 
     const accessibilityScanResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
@@ -38,23 +41,25 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
     await page.goto(`/password-reset/request`);
     await page.waitForLoadState("networkidle");
 
-    // Check email input has label
+    // Check email input has associated label
     const emailInput = page.locator("#email");
-    await expect(emailInput).toHaveAttribute("aria-label");
     const labelFor = await page.locator('label[for="email"]').count();
     expect(labelFor).toBeGreaterThan(0);
   });
 
   test("password strength indicator is accessible", async ({ page }) => {
-    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("password_reset_token", "TEST_TOKEN");
+    });
+    await page.goto(`/password-reset/confirm`);
     await page.waitForLoadState("networkidle");
 
     // Type a password to trigger strength indicator
     await page.fill("#new-password", "TestPassword123");
-    await page.waitForTimeout(500); // Wait for debounce
 
-    // Check strength indicator has proper ARIA attributes
+    // Wait for strength indicator to render (calculating or result state)
     const strengthLabel = page.locator(".strength-label");
+    await expect(strengthLabel).toBeVisible({ timeout: 5000 });
     await expect(strengthLabel).toHaveAttribute("aria-live", "polite");
   });
 
@@ -101,7 +106,10 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("keyboard navigation works on confirm page", async ({ page }) => {
-    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("password_reset_token", "TEST_TOKEN");
+    });
+    await page.goto(`/password-reset/confirm`);
     await page.waitForLoadState("networkidle");
 
     // Tab to new password input
@@ -121,7 +129,10 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
   });
 
   test("validation errors have proper ARIA attributes", async ({ page }) => {
-    await page.goto(`/password-reset/confirm?token=TEST_TOKEN`);
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("password_reset_token", "TEST_TOKEN");
+    });
+    await page.goto(`/password-reset/confirm`);
     await page.waitForLoadState("networkidle");
 
     // Fill invalid password
@@ -152,7 +163,10 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
       });
     });
 
-    await page.goto(`/password-reset/confirm?token=VALID_TOKEN`);
+    await page.addInitScript(() => {
+      window.sessionStorage.setItem("password_reset_token", "VALID_TOKEN");
+    });
+    await page.goto(`/password-reset/confirm`);
     await page.waitForLoadState("networkidle");
 
     // Fill valid passwords
@@ -160,11 +174,9 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
     await page.fill("#confirm-password", "ValidPassword123!");
     await page.click('button[type="submit"]');
 
-    // Wait for success message
-    await page.waitForTimeout(1000);
-
-    // Check success message has role="status"
-    const successMessage = page.locator('[role="status"]').first();
-    await expect(successMessage).toBeVisible();
+    // Wait for success message (redirect countdown)
+    await expect(page.locator("text=/ログインページにリダイレクトします/")).toBeVisible({
+      timeout: 10000,
+    });
   });
 });

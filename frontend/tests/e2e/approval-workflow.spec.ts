@@ -13,7 +13,7 @@
  * - Resubmit and approve workflow works correctly
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, mockProjectsApi, test } from "./fixtures/auth";
 
 test.describe("Approval Workflow", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";
@@ -157,6 +157,9 @@ test.describe("Approval Workflow", () => {
         }),
       });
     });
+
+    // Mock assigned projects API (required by ProjectSelector component)
+    await mockProjectsApi(page);
 
     // Mock create entry API
     await page.route("**/api/v1/worklog/entries", async (route) => {
@@ -381,8 +384,8 @@ test.describe("Approval Workflow", () => {
     // Wait for dialog
     await page.waitForSelector('[role="dialog"]');
 
-    // Verify inputs are enabled (editable)
-    await expect(page.locator('input[id="project-0"]')).toBeEnabled();
+    // Verify hours input is enabled (editable after rejection)
+    // Note: project input stays disabled for existing entries (FR-008)
     await expect(page.locator('input[id="hours-0"]')).toBeEnabled();
 
     console.log("✅ Rejection workflow verified: Entries editable after rejection");

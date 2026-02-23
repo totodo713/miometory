@@ -1,21 +1,25 @@
 package com.worklog.application.audit;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.worklog.domain.audit.AuditLog;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.persistence.AuditLogRepository;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service for persisting audit log entries in an independent transaction.
+ * Service for persisting audit log entries asynchronously.
  *
- * <p>Uses {@link Propagation#REQUIRES_NEW} to ensure that audit log persistence
- * failures never roll back the calling transaction (e.g., login). Any exception
- * during save is caught and logged, allowing the primary operation to complete
- * successfully regardless of audit log outcome.
+ * <p>Uses {@link Async} to run audit log persistence in a separate thread after
+ * the calling transaction commits, avoiding FK-deadlock when the audit_logs.user_id
+ * FK references a row still locked by the outer transaction (e.g., during login).
+ * Any exception during save is caught and logged, allowing the primary operation
+ * to complete successfully regardless of audit log outcome.
  *
  * <p>Uses {@link AuditLogRepository#insertAuditLog} with explicit SQL casting
  * for JSONB and INET columns, since global writing converters would affect
@@ -27,13 +31,15 @@ public class AuditLogService {
     private static final Logger log = LoggerFactory.getLogger(AuditLogService.class);
 
     private final AuditLogRepository auditLogRepository;
+    private final ObjectMapper objectMapper;
 
-    public AuditLogService(AuditLogRepository auditLogRepository) {
+    public AuditLogService(AuditLogRepository auditLogRepository, ObjectMapper objectMapper) {
         this.auditLogRepository = auditLogRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
-     * Persists an audit log event in a new, independent transaction.
+     * Persists an audit log event asynchronously in its own transaction.
      *
      * <p>If persistence fails, the exception is caught and logged via SLF4J.
      * The calling transaction is never affected by failures in this method.
@@ -43,7 +49,8 @@ public class AuditLogService {
      * @param ipAddress the client IP address (null for system events)
      * @param details   additional event details as a JSON string (nullable)
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async
+    @Transactional
     public void logEvent(UserId userId, String eventType, String ipAddress, String details) {
         try {
             AuditLog auditLog = AuditLog.createUserAction(userId, eventType, ipAddress, details);
@@ -53,7 +60,7 @@ public class AuditLogService {
                     eventType,
                     ipAddress,
                     auditLog.getTimestamp(),
-                    details,
+                    toJsonDetails(details),
                     auditLog.getRetentionDays());
         } catch (Exception e) {
             log.error(
@@ -62,6 +69,18 @@ public class AuditLogService {
                     userId,
                     e.getMessage(),
                     e);
+        }
+    }
+
+    private String toJsonDetails(String details) {
+        if (details == null) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(Map.of("message", details));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize audit details to JSON, using null", e);
+            return null;
         }
     }
 }

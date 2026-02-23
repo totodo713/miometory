@@ -104,7 +104,9 @@ export function PasswordStrengthIndicator({
         <div className="strength-bar-container">
           <div className="strength-bar strength-calculating" />
         </div>
-        <p className="strength-label calculating">{t("common.loading")}</p>
+        <p className="strength-label calculating" aria-live="polite">
+          {t("common.loading")}
+        </p>
 
         <style jsx>{`
 					.strength-indicator {

@@ -12,7 +12,7 @@
  * - Auto-save doesn't trigger for read-only entries
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, mockProjectsApi, test } from "./fixtures/auth";
 
 test.describe("Auto-Save Reliability", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";
@@ -88,6 +88,9 @@ test.describe("Auto-Save Reliability", () => {
         await route.continue();
       }
     });
+
+    // Mock assigned projects API (required by ProjectSelector component)
+    await mockProjectsApi(page);
   });
 
   test("should auto-save after 60 seconds of inactivity", async ({ page }) => {
@@ -147,18 +150,28 @@ test.describe("Auto-Save Reliability", () => {
   });
 
   test("should NOT auto-save if there are validation errors", async ({ page }) => {
+    // Override entries mock to return empty (fresh form, project input enabled)
+    await page.route("**/api/v1/worklog/entries?**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ entries: [], total: 0 }),
+      });
+    });
+
     // Install fake timers
     await page.clock.install({ time: new Date("2026-01-15T10:00:00") });
 
-    // Navigate to form
+    // Navigate to form (fresh form with no existing entries)
     await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
-    // Clear project to create a validation error (empty project)
+    // Fill project first to make it valid, then clear it to create validation error
     const projectInput = page.locator('input[id="project-0"]');
+    await projectInput.fill("project-1");
     await projectInput.clear();
 
-    // Enter some hours
+    // Fill hours (project is empty = validation error)
     const hoursInput = page.locator('input[id="hours-0"]');
     await hoursInput.fill("6");
 
@@ -169,8 +182,6 @@ test.describe("Auto-Save Reliability", () => {
     await page.waitForTimeout(100);
 
     // Auto-save indicator should NOT appear (validation blocks auto-save)
-    // Note: Currently, totalExceeds24 doesn't prevent auto-save timer from firing,
-    // but empty project will cause save to fail validation
     await expect(page.locator("text=/Auto-saved at/i")).not.toBeVisible();
   });
 

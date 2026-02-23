@@ -67,7 +67,7 @@ export function SubmitButton({
   };
 
   const getButtonStyle = () => {
-    if (isApproved) return "bg-green-600 cursor-not-allowed";
+    if (isApproved) return "bg-green-700 cursor-not-allowed";
     if (isSubmitted) return "bg-blue-600 cursor-not-allowed";
     if (!canSubmit) return "bg-gray-400 cursor-not-allowed";
     return "bg-blue-600 hover:bg-blue-700";

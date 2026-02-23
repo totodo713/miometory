@@ -1,5 +1,7 @@
 package com.worklog.application.audit
 
+import com.fasterxml.jackson.core.JsonProcessingException
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.worklog.domain.audit.AuditLog
 import com.worklog.domain.user.UserId
 import com.worklog.infrastructure.persistence.AuditLogRepository
@@ -25,13 +27,14 @@ import kotlin.test.assertNull
 class AuditLogServiceTest {
 
     private val auditLogRepository: AuditLogRepository = mockk(relaxed = true)
-    private val auditLogService = AuditLogService(auditLogRepository)
+    private val objectMapper = ObjectMapper()
+    private val auditLogService = AuditLogService(auditLogRepository, objectMapper)
 
     @Test
     fun `logEvent should call insertAuditLog with correct parameters`() {
         val userId = UserId.of(UUID.randomUUID())
 
-        auditLogService.logEvent(userId, AuditLog.LOGIN_SUCCESS, "192.168.1.1", """{"agent":"test"}""")
+        auditLogService.logEvent(userId, AuditLog.LOGIN_SUCCESS, "192.168.1.1", "User logged in")
 
         val idSlot = slot<UUID>()
         val userIdSlot = slot<UUID>()
@@ -57,7 +60,7 @@ class AuditLogServiceTest {
         assertEquals(userId.value(), userIdSlot.captured)
         assertEquals(AuditLog.LOGIN_SUCCESS, eventTypeSlot.captured)
         assertEquals("192.168.1.1", ipSlot.captured)
-        assertEquals("""{"agent":"test"}""", detailsSlot.captured)
+        assertEquals("""{"message":"User logged in"}""", detailsSlot.captured)
         assertEquals(90, retSlot.captured)
     }
 
@@ -82,7 +85,7 @@ class AuditLogServiceTest {
 
     @Test
     fun `logEvent should pass null userId for system events`() {
-        auditLogService.logEvent(null, AuditLog.AUDIT_LOG_CLEANUP, null, """{"deleted":10}""")
+        auditLogService.logEvent(null, AuditLog.AUDIT_LOG_CLEANUP, null, "Deleted 10 records")
 
         verify(exactly = 1) {
             auditLogRepository.insertAuditLog(
@@ -91,7 +94,7 @@ class AuditLogServiceTest {
                 eq(AuditLog.AUDIT_LOG_CLEANUP),
                 isNull(),
                 any(),
-                eq("""{"deleted":10}"""),
+                eq("""{"message":"Deleted 10 records"}"""),
                 any(),
             )
         }
@@ -117,6 +120,20 @@ class AuditLogServiceTest {
     }
 
     @Test
+    fun `logEvent should handle JsonProcessingException in toJsonDetails`() {
+        val failingMapper = mockk<ObjectMapper>()
+        every { failingMapper.writeValueAsString(any()) } throws object : JsonProcessingException("mock error") {}
+        val service = AuditLogService(auditLogRepository, failingMapper)
+
+        service.logEvent(UserId.of(UUID.randomUUID()), AuditLog.LOGIN_SUCCESS, "10.0.0.1", "some details")
+
+        // Should call insertAuditLog with null details (fallback)
+        verify(exactly = 1) {
+            auditLogRepository.insertAuditLog(any(), any(), any(), any(), any(), isNull(), any())
+        }
+    }
+
+    @Test
     fun `logEvent should pass null ipAddress`() {
         val userId = UserId.of(UUID.randomUUID())
 
@@ -129,7 +146,7 @@ class AuditLogServiceTest {
                 eq(AuditLog.EMAIL_VERIFICATION),
                 isNull(),
                 any(),
-                eq("verified"),
+                eq("""{"message":"verified"}"""),
                 any(),
             )
         }

@@ -12,7 +12,7 @@
  * - Calendar shows absence hours with appropriate styling (blue background, 🏖️ icon)
  */
 
-import { expect, test } from "@playwright/test";
+import { expect, mockProjectsApi, test } from "./fixtures/auth";
 
 test.describe("Absence Entry Workflow", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";
@@ -125,6 +125,9 @@ test.describe("Absence Entry Workflow", () => {
         await route.continue();
       }
     });
+
+    // Mock assigned projects API (required by ProjectSelector component)
+    await mockProjectsApi(page);
 
     // Mock create work log entry API (for mixed scenarios)
     await page.route("**/api/v1/worklog/entries", async (route) => {

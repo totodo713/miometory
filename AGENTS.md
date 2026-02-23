@@ -141,6 +141,15 @@ PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/reso
 - **Frontend**: Vitest, React Testing Library, Playwright (E2E), @axe-core/playwright (a11y)
 - **Backend**: JUnit 5, Spring Boot Test, Testcontainers 1.21.1, spring-security-test, MockK
 
+### Backend Testing Guidelines
+
+- **Integration tests**: Extend `IntegrationTestBase` (Testcontainers, `@BeforeEach` で FK 用ユーザー作成)
+- **Seeded role IDs**: USER=`00000000-...-000000000002`, ADMIN=`00000000-...-000000000001` (V18 migration)
+- **Test data uniqueness**: Use UUID-based unique values (not hardcoded strings) to prevent constraint violations with Testcontainers container reuse
+- **Mockito + Kotlin varargs**: `contains()`/`eq()` matchers don't work with Java varargs methods (e.g. `JdbcTemplate.queryForObject`). Use `defaultAnswer` with SQL routing instead
+- **Coverage target**: 80%+ LINE coverage per package. Run `./gradlew test jacocoTestReport` to generate reports
+- **JaCoCo reports**: `build/reports/jacoco/<package>/index.html` — tfoot cells[7]=missed lines, cells[8]=total lines
+
 ## Database Implementation Rules
 
 When adding new domain entities, always create both the domain model and database migration together in the same commit/PR.
