@@ -699,6 +699,116 @@ class ApprovalServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("getMonthlyApprovalDetail")
+    inner class GetMonthlyApprovalDetailTests {
+        @Test
+        fun `should return detail with project breakdown and daily summary`() {
+            // Given - test data
+            val projectRows = listOf(
+                mapOf<String, Any>(
+                    "project_code" to "PROJ-001",
+                    "project_name" to "Project One",
+                    "total_hours" to 40.0,
+                ),
+            )
+            val dailyStatusRows = listOf(
+                mapOf<String, Any>("status" to "APPROVED", "cnt" to 5),
+                mapOf<String, Any>("status" to "REJECTED", "cnt" to 2),
+            )
+            val unresolvedRows = listOf(
+                mapOf<String, Any>(
+                    "entry_id" to UUID.randomUUID(),
+                    "work_date" to java.sql.Date.valueOf(LocalDate.of(2024, 1, 25)),
+                    "project_code" to "PROJ-001",
+                    "comment" to "Fix this",
+                ),
+            )
+
+            // Use defaultAnswer to route JdbcTemplate calls by SQL content (avoids varargs matcher issues)
+            val localJdbc = org.mockito.Mockito.mock(
+                JdbcTemplate::class.java,
+                org.mockito.Mockito.withSettings().defaultAnswer { invocation ->
+                    val method = invocation.method.name
+                    if (method != "queryForList" && method != "queryForObject") {
+                        return@defaultAnswer org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation)
+                    }
+                    val sql = invocation.getArgument<String>(0)
+                    when {
+                        "SUM(wle.hours)" in sql -> projectRows
+                        "GROUP BY dea.status" in sql -> dailyStatusRows
+                        "dea.comment" in sql -> unresolvedRows
+                        "absence_projection" in sql -> 8.0
+                        "COUNT" in sql -> 10
+                        else -> org.mockito.Mockito.RETURNS_DEFAULTS.answer(invocation)
+                    }
+                },
+            )
+            val localService = ApprovalService(
+                approvalRepository, workLogRepository, absenceRepository, memberRepository, localJdbc,
+            )
+
+            val approval = createSubmittedApproval()
+            val approvalId = approval.id
+
+            `when`(approvalRepository.findById(approvalId))
+                .thenReturn(Optional.of(approval))
+
+            val member = com.worklog.domain.member.Member.create(
+                com.worklog.domain.tenant.TenantId.generate(),
+                com.worklog.domain.organization.OrganizationId.generate(),
+                "test@example.com",
+                "Test User",
+                null,
+            )
+            `when`(memberRepository.findById(memberId))
+                .thenReturn(Optional.of(member))
+
+            // When
+            val detail = localService.getMonthlyApprovalDetail(approvalId)
+
+            // Then
+            assertNotNull(detail)
+            assertEquals("Test User", detail.memberName())
+            assertEquals(40.0, detail.totalWorkHours())
+            assertEquals(8.0, detail.totalAbsenceHours())
+            assertEquals(1, detail.projectBreakdown().size)
+            assertEquals("PROJ-001", detail.projectBreakdown()[0].projectCode())
+            assertEquals(5, detail.dailyApprovalSummary().approvedCount())
+            assertEquals(2, detail.dailyApprovalSummary().rejectedCount())
+            assertEquals(3, detail.dailyApprovalSummary().unapprovedCount())
+            assertEquals(1, detail.unresolvedEntries().size)
+        }
+
+        @Test
+        fun `should throw exception when approval not found`() {
+            val approvalId = MonthlyApprovalId.generate()
+            `when`(approvalRepository.findById(approvalId))
+                .thenReturn(Optional.empty())
+
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.getMonthlyApprovalDetail(approvalId)
+                }
+            assertEquals("APPROVAL_NOT_FOUND", exception.errorCode)
+        }
+
+        @Test
+        fun `should throw exception when member not found`() {
+            val approval = createSubmittedApproval()
+            `when`(approvalRepository.findById(approval.id))
+                .thenReturn(Optional.of(approval))
+            `when`(memberRepository.findById(memberId))
+                .thenReturn(Optional.empty())
+
+            val exception =
+                assertFailsWith<DomainException> {
+                    approvalService.getMonthlyApprovalDetail(approval.id)
+                }
+            assertEquals("MEMBER_NOT_FOUND", exception.errorCode)
+        }
+    }
+
     // Helper methods to create test fixtures
 
     private fun createWorkLogEntry(): WorkLogEntry = WorkLogEntry.create(

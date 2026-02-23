@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 
 class CommandContractTest {
@@ -55,5 +56,111 @@ class CommandContractTest {
 
         assertEquals(cmd, CopyFromPreviousMonthCommand(memberId, 2026, 2))
         cmd.toString()
+    }
+
+    // Validation tests for uncovered branches
+
+    @Test
+    fun `SubmitDailyEntriesCommand should reject null memberId`() {
+        assertFailsWith<IllegalArgumentException> {
+            SubmitDailyEntriesCommand(null, LocalDate.now(), UUID.randomUUID())
+        }
+    }
+
+    @Test
+    fun `SubmitDailyEntriesCommand should reject null date`() {
+        assertFailsWith<IllegalArgumentException> {
+            SubmitDailyEntriesCommand(UUID.randomUUID(), null, UUID.randomUUID())
+        }
+    }
+
+    @Test
+    fun `SubmitDailyEntriesCommand should reject null submittedBy`() {
+        assertFailsWith<IllegalArgumentException> {
+            SubmitDailyEntriesCommand(UUID.randomUUID(), LocalDate.now(), null)
+        }
+    }
+
+    @Test
+    fun `RejectDailyEntriesCommand should reject null memberId`() {
+        assertFailsWith<IllegalArgumentException> {
+            RejectDailyEntriesCommand(null, LocalDate.now(), UUID.randomUUID(), "reason")
+        }
+    }
+
+    @Test
+    fun `RejectDailyEntriesCommand should reject null date`() {
+        assertFailsWith<IllegalArgumentException> {
+            RejectDailyEntriesCommand(UUID.randomUUID(), null, UUID.randomUUID(), "reason")
+        }
+    }
+
+    @Test
+    fun `RejectDailyEntriesCommand should reject null rejectedBy`() {
+        assertFailsWith<IllegalArgumentException> {
+            RejectDailyEntriesCommand(UUID.randomUUID(), LocalDate.now(), null, "reason")
+        }
+    }
+
+    @Test
+    fun `RejectDailyEntriesCommand should reject null reason`() {
+        assertFailsWith<IllegalArgumentException> {
+            RejectDailyEntriesCommand(UUID.randomUUID(), LocalDate.now(), UUID.randomUUID(), null)
+        }
+    }
+
+    @Test
+    fun `RejectDailyEntriesCommand should reject blank reason`() {
+        assertFailsWith<IllegalArgumentException> {
+            RejectDailyEntriesCommand(UUID.randomUUID(), LocalDate.now(), UUID.randomUUID(), "  ")
+        }
+    }
+
+    @Test
+    fun `RecallDailyEntriesCommand should reject null memberId`() {
+        assertFailsWith<IllegalArgumentException> {
+            RecallDailyEntriesCommand(null, LocalDate.now(), UUID.randomUUID())
+        }
+    }
+
+    @Test
+    fun `RecallDailyEntriesCommand should reject null date`() {
+        assertFailsWith<IllegalArgumentException> {
+            RecallDailyEntriesCommand(UUID.randomUUID(), null, UUID.randomUUID())
+        }
+    }
+
+    @Test
+    fun `RecallDailyEntriesCommand should reject null recalledBy`() {
+        assertFailsWith<IllegalArgumentException> {
+            RecallDailyEntriesCommand(UUID.randomUUID(), LocalDate.now(), null)
+        }
+    }
+
+    @Test
+    fun `CopyFromPreviousMonthCommand should reject null memberId`() {
+        assertFailsWith<IllegalArgumentException> {
+            CopyFromPreviousMonthCommand(null, 2026, 2)
+        }
+    }
+
+    @Test
+    fun `CopyFromPreviousMonthCommand should reject invalid month`() {
+        assertFailsWith<IllegalArgumentException> {
+            CopyFromPreviousMonthCommand(UUID.randomUUID(), 2026, 0)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            CopyFromPreviousMonthCommand(UUID.randomUUID(), 2026, 13)
+        }
+    }
+
+    @Test
+    fun `CopyFromPreviousMonthCommand should reject invalid year`() {
+        assertFailsWith<IllegalArgumentException> {
+            CopyFromPreviousMonthCommand(UUID.randomUUID(), 1999, 1)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            CopyFromPreviousMonthCommand(UUID.randomUUID(), 2101, 1)
+        }
     }
 }
