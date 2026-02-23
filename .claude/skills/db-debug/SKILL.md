@@ -74,7 +74,9 @@ ORDER BY event_count DESC;
 
 ### 3. Check Projection Consistency
 
-Based on the aggregate_type, query the corresponding projection table:
+Based on the aggregate_type, query the corresponding projection table.
+
+> **Note**: This mapping must be updated when new Aggregate types or projection tables are added. Cross-check with migration files in `backend/src/main/resources/db/migration/`.
 
 | Aggregate Type | Projection Table | Key Fields |
 |---------------|-----------------|------------|

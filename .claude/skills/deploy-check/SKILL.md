@@ -30,7 +30,7 @@ git status --porcelain
 
 Scan migration files for version gaps or duplicates:
 ```bash
-ls backend/src/main/resources/db/migration/V*.sql | sed 's/.*V\([0-9]*\)__.*/\1/' | sort -n
+find backend/src/main/resources/db/migration -maxdepth 1 -name 'V*.sql' -printf '%f\n' | sed 's/V\([0-9]*\)__.*/\1/' | sort -n
 ```
 - **Pass**: Version numbers are sequential with no gaps or duplicates
 - **Fail**: Report which versions are missing or duplicated
