@@ -224,10 +224,13 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     await page.waitForSelector('[role="dialog"]');
 
     // Wait for dialog auto-focus to run (useEffect)
-    await page.waitForFunction(() => {
-      const el = document.activeElement;
-      return el?.closest('[role="dialog"]') !== null;
-    }, { timeout: 3000 });
+    await page.waitForFunction(
+      () => {
+        const el = document.activeElement;
+        return el?.closest('[role="dialog"]') !== null;
+      },
+      { timeout: 3000 },
+    );
 
     // Tab should cycle within dialog (focus trap)
     await page.keyboard.press("Tab");
