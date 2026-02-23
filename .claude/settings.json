@@ -134,6 +134,11 @@
             "type": "command",
             "command": ".claude/hooks/sensitive-file-guard.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/auto-generated-file-guard.sh",
+            "timeout": 5
           }
         ]
       }
@@ -151,6 +156,11 @@
             "type": "command",
             "command": ".claude/hooks/auto-test-on-edit.sh",
             "timeout": 45
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/typecheck-on-edit.sh",
+            "timeout": 30
           }
         ]
       }
