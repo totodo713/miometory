@@ -1,11 +1,13 @@
 package com.worklog.application.audit
 
 import com.worklog.IntegrationTestBase
+import com.worklog.config.TestAsyncConfig
 import com.worklog.domain.audit.AuditLog
 import com.worklog.domain.user.UserId
 import com.worklog.infrastructure.persistence.AuditLogRepository
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Import
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 import kotlin.test.assertTrue
@@ -13,10 +15,12 @@ import kotlin.test.assertTrue
 /**
  * Integration tests for AuditLogService transaction isolation (T014).
  *
- * Verifies that AuditLogService.logEvent() operates in a separate
- * transaction (REQUIRES_NEW) so that failures in audit log persistence
- * never roll back the calling transaction.
+ * Verifies that AuditLogService.logEvent() operates asynchronously via @Async
+ * so that failures in audit log persistence never roll back the calling
+ * transaction. Uses SyncTaskExecutor (via TestAsyncConfig) to execute
+ * @Async methods synchronously in tests.
  */
+@Import(TestAsyncConfig::class)
 class AuditLogServiceIntegrationTest : IntegrationTestBase() {
 
     @Autowired
