@@ -17,6 +17,7 @@
  * @see specs/005-password-reset-frontend/spec.md
  */
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { PasswordStrengthResult } from "@/lib/types/password-reset";
 import { analyzePasswordStrength } from "@/lib/validation/password";
@@ -49,6 +50,7 @@ export function PasswordStrengthIndicator({
   showFeedback = true,
   className = "",
 }: PasswordStrengthIndicatorProps) {
+  const t = useTranslations("passwordReset");
   const [result, setResult] = useState<PasswordStrengthResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -103,7 +105,7 @@ export function PasswordStrengthIndicator({
           <div className="strength-bar strength-calculating" />
         </div>
         <p className="strength-label calculating" aria-live="polite">
-          計算中...
+          {t("common.loading")}
         </p>
 
         <style jsx>{`
@@ -157,19 +159,19 @@ export function PasswordStrengthIndicator({
   const strengthConfig = {
     weak: {
       color: "#d32f2f",
-      label: "弱い",
+      label: t("strength.weak"),
       width: "33%",
       bgColor: "#ffebee",
     },
     medium: {
       color: "#f57c00",
-      label: "普通",
+      label: t("strength.medium"),
       width: "66%",
       bgColor: "#fff3e0",
     },
     strong: {
       color: "#388e3c",
-      label: "強い",
+      label: t("strength.strong"),
       width: "100%",
       bgColor: "#e8f5e9",
     },
@@ -185,8 +187,8 @@ export function PasswordStrengthIndicator({
       </div>
 
       {/* Strength label (screen reader friendly) */}
-      <output className="strength-label" aria-live="polite" aria-label={`パスワード強度: ${config.label}`}>
-        パスワード強度: <span className="strength-value">{config.label}</span>
+      <output className="strength-label" aria-live="polite" aria-label={`${t("strength.label")}: ${config.label}`}>
+        {t("strength.label")}: <span className="strength-value">{config.label}</span>
       </output>
 
       {/* Feedback messages */}
