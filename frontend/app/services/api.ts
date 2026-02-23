@@ -736,6 +736,12 @@ export const api = {
      */
     confirmPasswordReset: (data: { token: string; newPassword: string }) =>
       apiClient.post<{ message: string }>("/api/v1/auth/password-reset/confirm", data, { skipAuth: true }),
+
+    signup: (email: string, password: string) =>
+      apiClient.post<void>("/api/v1/auth/signup", { email, password }, { skipAuth: true }),
+
+    verifyEmail: (token: string) =>
+      apiClient.post<void>("/api/v1/auth/verify-email", { token }, { skipAuth: true }),
   },
 
   /**
@@ -1016,6 +1022,13 @@ export const api = {
           fiscalYearPatternId,
           monthlyPeriodPatternId,
         }),
+      getDateInfo: (tenantId: string, orgId: string, date: string) =>
+        apiClient.post<{
+          fiscalYear: string;
+          fiscalPeriod: string;
+          monthlyPeriodStart: string;
+          monthlyPeriodEnd: string;
+        }>(`/api/v1/tenants/${tenantId}/organizations/${orgId}/date-info`, { date }),
     },
 
     /**
@@ -1026,6 +1039,10 @@ export const api = {
         apiClient.get<FiscalYearPatternOption[]>(`/api/v1/tenants/${tenantId}/fiscal-year-patterns`),
       listMonthlyPeriodPatterns: (tenantId: string) =>
         apiClient.get<MonthlyPeriodPatternOption[]>(`/api/v1/tenants/${tenantId}/monthly-period-patterns`),
+      createFiscalYearPattern: (tenantId: string, data: { name: string; startMonth: number; startDay: number }) =>
+        apiClient.post<FiscalYearPatternOption>(`/api/v1/tenants/${tenantId}/fiscal-year-patterns`, data),
+      createMonthlyPeriodPattern: (tenantId: string, data: { name: string; startDay: number }) =>
+        apiClient.post<MonthlyPeriodPatternOption>(`/api/v1/tenants/${tenantId}/monthly-period-patterns`, data),
     },
   },
 
