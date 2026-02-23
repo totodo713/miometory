@@ -28,6 +28,10 @@ vi.mock("@/components/shared/NotificationBell", () => ({
   NotificationBell: () => <div data-testid="notification-bell" />,
 }));
 
+vi.mock("@/hooks/useMediaQuery", () => ({
+  useMediaQuery: () => false,
+}));
+
 describe("Header", () => {
   beforeEach(() => {
     vi.clearAllMocks();
