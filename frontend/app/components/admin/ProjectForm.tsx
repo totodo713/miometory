@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ApiError, api } from "@/services/api";
+import { useToast } from "@/hooks/useToast";
 import type { ProjectRow } from "./ProjectList";
 
 interface ProjectFormProps {
@@ -12,6 +13,7 @@ interface ProjectFormProps {
 
 export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
   const isEdit = project !== null;
+  const toast = useToast();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,6 +60,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
           validUntil: validUntil || undefined,
         });
       }
+      toast.success(isEdit ? "プロジェクトを更新しました" : "プロジェクトを作成しました");
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -65,6 +68,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
       } else {
         setError("エラーが発生しました");
       }
+      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
     } finally {
       setIsSubmitting(false);
     }

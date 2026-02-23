@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { OrganizationRow } from "@/services/api";
 import { ApiError, api } from "@/services/api";
+import { useToast } from "@/hooks/useToast";
 
 interface OrganizationFormProps {
   organization: OrganizationRow | null;
@@ -12,6 +13,7 @@ interface OrganizationFormProps {
 
 export function OrganizationForm({ organization, onClose, onSaved }: OrganizationFormProps) {
   const isEdit = organization !== null;
+  const toast = useToast();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,6 +87,7 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
           parentId: parentId || undefined,
         });
       }
+      toast.success(isEdit ? "組織を更新しました" : "組織を作成しました");
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -92,6 +95,7 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
       } else {
         setError("エラーが発生しました");
       }
+      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
     } finally {
       setIsSubmitting(false);
     }

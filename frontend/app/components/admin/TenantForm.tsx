@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ApiError, api } from "@/services/api";
+import { useToast } from "@/hooks/useToast";
 import type { TenantRow } from "./TenantList";
 
 interface TenantFormProps {
@@ -12,6 +13,7 @@ interface TenantFormProps {
 
 export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
   const isEdit = tenant !== null;
+  const toast = useToast();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,6 +44,7 @@ export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
       } else {
         await api.admin.tenants.create({ code, name });
       }
+      toast.success(isEdit ? "テナントを更新しました" : "テナントを作成しました");
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -49,6 +52,7 @@ export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
       } else {
         setError("エラーが発生しました");
       }
+      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
     } finally {
       setIsSubmitting(false);
     }
