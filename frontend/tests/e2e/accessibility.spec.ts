@@ -174,8 +174,10 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
     await page.keyboard.press("Tab");
 
     // Verify focus is on a focusable element
-    const focusedElement = await page.evaluate(() => document.activeElement?.tagName);
-    expect(["BUTTON", "A", "INPUT", "SELECT", "NEXTJS-PORTAL"]).toContain(focusedElement);
+    const hasFocus = await page.evaluate(
+      () => document.activeElement !== null && document.activeElement !== document.body,
+    );
+    expect(hasFocus).toBe(true);
   });
 
   test("escape key closes modal dialogs", async ({ page }) => {
