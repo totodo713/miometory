@@ -19,18 +19,11 @@ Flyway migrations for the Miometry database schema.
 | `V11__user_auth.sql` | Auth tables: users, roles, permissions, sessions, password reset tokens, audit logs | 004-user-login-auth |
 | `V12__email_verification_tokens.sql` | Email verification tokens table | 004-user-login-auth |
 
-### Repeatable Migrations
-
-| Migration | Description |
-|-----------|-------------|
-| `R__dev_seed_data.sql` | Development seed data (re-applied on change) |
-
 ## Conventions
 
 - **Naming**: `V{number}__{description}.sql` (double underscore separator)
 - **Versioning**: Sequential integers (V1, V2, ..., V12)
-- **Repeatable**: Prefix with `R__` for migrations that re-run when content changes
-- **Dev profile**: `data-dev.sql` loaded automatically via Spring Boot (`spring.sql.init`)
+- **Dev seed data**: `data-dev.sql` loaded automatically via Spring Boot (`spring.sql.init`, dev profile only)
 - **Running**: Flyway runs automatically on application startup (`spring.flyway.enabled=true`)
 
 ## Running Migrations

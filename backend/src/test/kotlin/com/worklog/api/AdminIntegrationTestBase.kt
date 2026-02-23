@@ -12,7 +12,7 @@ import java.util.UUID
  * Extends IntegrationTestBase with MockMvc support and helpers
  * for creating test users with specific admin roles.
  *
- * Role IDs reference V18__admin_permissions_seed.sql and R__dev_seed_data.sql.
+ * Role IDs reference V18__admin_permissions_seed.sql and R__test_seed_data.sql.
  */
 @AutoConfigureMockMvc
 abstract class AdminIntegrationTestBase : IntegrationTestBase() {
