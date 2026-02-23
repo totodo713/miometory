@@ -4,11 +4,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.AsyncConfigurer
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import java.lang.reflect.Method
 
 @Configuration
+@Profile("!test")
 class AsyncConfig : AsyncConfigurer {
 
     private val log = LoggerFactory.getLogger(AsyncConfig::class.java)
