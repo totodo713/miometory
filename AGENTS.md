@@ -109,7 +109,7 @@ Uses `@/` path alias for imports. API client in `services/api.ts`.
 
 ### Database
 
-PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/resources/db/migration/`. Dev seed data via repeatable migration `R__dev_seed_data.sql` (auto-loaded by Flyway).
+PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/resources/db/migration/`. Dev seed data via `data-dev.sql` (Spring SQL init, dev profile only).
 
 ### Key Design Decisions
 
@@ -158,7 +158,7 @@ When adding new domain entities, always create both the domain model and databas
 - [ ] Domain model: `domain/xxx/Xxx.java`
 - [ ] ID value object: `domain/xxx/XxxId.java`
 - [ ] Migration file: `db/migration/Vxx__xxx_table.sql`
-- [ ] Seed data: Add test data to `R__dev_seed_data.sql`
+- [ ] Seed data: Add test data to `data-dev.sql` (dev profile only, `@@` separator)
 - [ ] Repository (if needed): `infrastructure/repository/XxxRepository.java`
 
 **Foreign Key Rules:**

@@ -85,7 +85,7 @@ Provide the following context in the conversation, then invoke `/create-migratio
 - **Table name**: snake_case of aggregate (e.g. `project`)
 - **Columns**: map fields using type table below + `tenant_id UUID REFERENCES tenant(id)` if scoped
 - **Indexes**: `idx_{table}_tenant` for tenant_id, plus any FK columns
-- **Seed data**: at least 2 rows using existing tenant UUIDs from `R__dev_seed_data.sql`
+- **Seed data**: at least 2 rows using existing tenant UUIDs from `data-dev.sql`
 
 **Type mapping:**
 

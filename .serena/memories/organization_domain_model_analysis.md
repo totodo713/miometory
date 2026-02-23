@@ -518,7 +518,7 @@ Tenant (top-level boundary)
 | V16__daily_entry_approval.sql | Daily entry approval/supervisor feedback |
 | V17__in_app_notifications.sql | In-app notifications |
 | V18__admin_permissions_seed.sql | Admin permissions |
-| R__dev_seed_data.sql | Development seed data (member-project assignments) |
+| (data-dev.sql) | Development seed data (Spring SQL init, dev profile only) |
 
 ---
 

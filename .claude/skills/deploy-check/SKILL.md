@@ -41,13 +41,13 @@ Also check naming convention:
 
 ### 3. Seed Data Coverage
 
-Check that `R__dev_seed_data.sql` includes INSERT statements for all domain tables:
+Check that `data-dev.sql` includes INSERT statements for all domain tables:
 ```bash
 # Extract table names from CREATE TABLE statements in migrations
 grep -h "CREATE TABLE" backend/src/main/resources/db/migration/V*.sql | sed 's/.*CREATE TABLE.*IF NOT EXISTS //' | sed 's/.*CREATE TABLE //' | sed 's/ .*//' | sort -u
 
 # Extract table names from seed data INSERT statements
-grep -h "INSERT INTO" backend/src/main/resources/db/migration/R__dev_seed_data.sql | sed 's/.*INSERT INTO //' | sed 's/ .*//' | sort -u
+grep -h "INSERT INTO" backend/src/main/resources/data-dev.sql | sed 's/.*INSERT INTO //' | sed 's/ .*//' | sort -u
 ```
 - **Pass**: All domain tables have seed data (exclude system tables: `event_store`, `snapshot_store`, `audit_log`)
 - **Warn**: Domain tables without seed data (list them)

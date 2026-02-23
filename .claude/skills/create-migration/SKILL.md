@@ -66,7 +66,7 @@ Follow existing patterns in `domain/worklog/`, `domain/member/`, `domain/absence
 
 ### 4. Add Dev Seed Data
 
-**File**: `backend/src/main/resources/db/migration/R__dev_seed_data.sql`
+**File**: `backend/src/main/resources/data-dev.sql`
 
 Use `INSERT ... ON CONFLICT (id) DO UPDATE SET ...` pattern to make seed data idempotent:
 
