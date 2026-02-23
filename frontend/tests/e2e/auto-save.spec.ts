@@ -12,7 +12,7 @@
  * - Auto-save doesn't trigger for read-only entries
  */
 
-import { expect, test } from "./fixtures/auth";
+import { expect, mockProjectsApi, test } from "./fixtures/auth";
 
 test.describe("Auto-Save Reliability", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";
@@ -90,19 +90,7 @@ test.describe("Auto-Save Reliability", () => {
     });
 
     // Mock assigned projects API (required by ProjectSelector component)
-    await page.route("**/api/v1/members/*/projects", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          projects: [
-            { id: "project-1", code: "PROJ-001", name: "Project Alpha" },
-            { id: "project-2", code: "PROJ-002", name: "Project Beta" },
-          ],
-          count: 2,
-        }),
-      });
-    });
+    await mockProjectsApi(page);
   });
 
   test("should auto-save after 60 seconds of inactivity", async ({ page }) => {

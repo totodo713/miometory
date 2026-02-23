@@ -35,3 +35,20 @@ export const test = base.extend({
 });
 
 export { expect } from "@playwright/test";
+
+/** Mock the projects API to prevent timeouts in tests */
+export async function mockProjectsApi(
+  page: import("@playwright/test").Page,
+  projects = [
+    { id: "project-1", code: "PROJ-001", name: "Project Alpha" },
+    { id: "project-2", code: "PROJ-002", name: "Project Beta" },
+  ],
+) {
+  await page.route("**/api/v1/members/*/projects", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ projects, count: projects.length }),
+    });
+  });
+}

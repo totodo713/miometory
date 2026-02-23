@@ -6,7 +6,7 @@
  * and verify the 24-hour daily limit validation.
  */
 
-import { expect, test } from "./fixtures/auth";
+import { expect, mockProjectsApi, test } from "./fixtures/auth";
 
 test.describe("Multi-project time allocation", () => {
   const projectA = "11111111-1111-1111-1111-111111111111";
@@ -120,20 +120,11 @@ test.describe("Multi-project time allocation", () => {
     });
 
     // Mock assigned projects API (required by ProjectSelector component)
-    await page.route("**/api/v1/members/*/projects", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          projects: [
-            { id: "project-1", code: "PROJ-001", name: "Project Alpha" },
-            { id: "project-2", code: "PROJ-002", name: "Project Beta" },
-            { id: "project-3", code: "PROJ-003", name: "Project Gamma" },
-          ],
-          count: 3,
-        }),
-      });
-    });
+    await mockProjectsApi(page, [
+      { id: "project-1", code: "PROJ-001", name: "Project Alpha" },
+      { id: "project-2", code: "PROJ-002", name: "Project Beta" },
+      { id: "project-3", code: "PROJ-003", name: "Project Gamma" },
+    ]);
 
     // Navigate to the work log page
     await page.goto(`/worklog`);
