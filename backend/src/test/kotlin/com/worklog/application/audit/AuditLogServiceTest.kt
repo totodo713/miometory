@@ -1,5 +1,6 @@
 package com.worklog.application.audit
 
+import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.worklog.domain.audit.AuditLog
 import com.worklog.domain.user.UserId
@@ -115,6 +116,20 @@ class AuditLogServiceTest {
                 isNull(),
                 any(),
             )
+        }
+    }
+
+    @Test
+    fun `logEvent should handle JsonProcessingException in toJsonDetails`() {
+        val failingMapper = mockk<ObjectMapper>()
+        every { failingMapper.writeValueAsString(any()) } throws object : JsonProcessingException("mock error") {}
+        val service = AuditLogService(auditLogRepository, failingMapper)
+
+        service.logEvent(UserId.of(UUID.randomUUID()), AuditLog.LOGIN_SUCCESS, "10.0.0.1", "some details")
+
+        // Should call insertAuditLog with null details (fallback)
+        verify(exactly = 1) {
+            auditLogRepository.insertAuditLog(any(), any(), any(), any(), any(), isNull(), any())
         }
     }
 
