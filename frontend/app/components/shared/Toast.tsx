@@ -25,7 +25,7 @@ export function Toast({ toast, onClose }: ToastProps) {
 				type="button"
 				onClick={onClose}
 				className="text-current opacity-60 hover:opacity-100"
-				aria-label="close"
+				aria-label="閉じる"
 			>
 				✕
 			</button>

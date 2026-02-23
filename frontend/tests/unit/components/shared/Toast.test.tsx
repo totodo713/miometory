@@ -58,7 +58,7 @@ describe("Toast", () => {
 			</ToastProvider>,
 		);
 		await user.click(screen.getByText("success"));
-		const closeButton = screen.getByRole("button", { name: /close/i });
+		const closeButton = screen.getByRole("button", { name: /閉じる/ });
 		await user.click(closeButton);
 		expect(screen.queryByText("保存しました")).not.toBeInTheDocument();
 	});

@@ -404,10 +404,10 @@ export default function AdminOrganizationsPage() {
               <div className="space-y-3">
                 <p className="text-sm text-gray-500">パターンが登録されていません</p>
                 {currentFiscalYearPatternId && (
-                  <p className="text-xs text-gray-400">現在の会計年度パターンID: {currentFiscalYearPatternId}</p>
+                  <p className="text-xs text-gray-500">現在の会計年度パターンID: {currentFiscalYearPatternId}</p>
                 )}
                 {currentMonthlyPeriodPatternId && (
-                  <p className="text-xs text-gray-400">現在の月次期間パターンID: {currentMonthlyPeriodPatternId}</p>
+                  <p className="text-xs text-gray-500">現在の月次期間パターンID: {currentMonthlyPeriodPatternId}</p>
                 )}
               </div>
             ) : (

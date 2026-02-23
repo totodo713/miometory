@@ -272,7 +272,7 @@ export default function NotificationsPage() {
                   </div>
                   <p className="text-sm text-gray-600 mt-0.5 truncate">{notification.message}</p>
                 </div>
-                <div className="flex-shrink-0 text-xs text-gray-400">{getRelativeTime(notification.createdAt)}</div>
+                <div className="flex-shrink-0 text-xs text-gray-500">{getRelativeTime(notification.createdAt)}</div>
               </div>
             </button>
           ))}
