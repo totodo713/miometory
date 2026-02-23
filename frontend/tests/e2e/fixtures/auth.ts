@@ -7,8 +7,8 @@ export const test = base.extend({
     // 1. Login API to establish backend session (JSESSIONID)
     const loginResponse = await page.request.post(`${API_BASE_URL}/api/v1/auth/login`, {
       data: {
-        email: "bob.engineer@miometry.example.com",
-        password: "Password1",
+        email: process.env.E2E_TEST_EMAIL || "bob.engineer@miometry.example.com",
+        password: process.env.E2E_TEST_PASSWORD || "Password1",
         rememberMe: false,
       },
     });
