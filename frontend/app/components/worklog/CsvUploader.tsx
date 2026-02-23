@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import type { CsvImportProgress } from "@/services/csvService";
 import { importCsv, subscribeToImportProgress } from "@/services/csvService";
 
@@ -37,7 +38,13 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [progress, setProgress] = useState<CsvImportProgress | null>(null);
+  const [result, setResult] = useState<{
+    success: number;
+    errors: number;
+    details: Array<{ row: number; errors: string[] }>;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   // Ref to store EventSource cleanup function
   const eventSourceCleanupRef = useRef<(() => void) | null>(null);
@@ -93,25 +100,33 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
     setIsImporting(true);
     setError(null);
     setProgress(null);
+    setResult(null);
 
     try {
-      const result = await importCsv(file, memberId);
+      const importResult = await importCsv(file, memberId);
 
       // Subscribe to progress updates
       const cleanup = subscribeToImportProgress(
-        result.importId,
+        importResult.importId,
         (progressData) => {
           setProgress(progressData);
         },
         (errorMsg) => {
           setError(errorMsg);
           setIsImporting(false);
+          toast.error("インポートの進捗取得に失敗しました");
         },
         () => {
           setIsImporting(false);
           // Use functional update to get latest progress state (avoids stale closure)
           setProgress((currentProgress) => {
             if (currentProgress?.status === "completed") {
+              setResult({
+                success: currentProgress.validRows,
+                errors: currentProgress.errorRows,
+                details: currentProgress.errors ?? [],
+              });
+              toast.success(`${currentProgress.validRows}件のインポートが完了しました`);
               onImportComplete?.();
             }
             return currentProgress;
@@ -125,11 +140,12 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
       setError(err instanceof Error ? err.message : "Import failed");
       setIsImporting(false);
     }
-  }, [file, memberId, onImportComplete]);
+  }, [file, memberId, onImportComplete, toast]);
 
   const handleReset = useCallback(() => {
     setFile(null);
     setProgress(null);
+    setResult(null);
     setError(null);
     setIsImporting(false);
     // Clear the file input value so selecting the same file triggers onChange
@@ -238,6 +254,23 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
           <button type="button" onClick={handleReset} className="mt-3 text-sm text-blue-600 hover:text-blue-800">
             Import another file
           </button>
+        </div>
+      )}
+
+      {/* Result Summary */}
+      {result && !isImporting && (
+        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="font-medium text-gray-800 mb-2">Import Result Summary</p>
+          <div className="flex gap-6 text-sm">
+            <div>
+              <span className="text-gray-500">Successful:</span>{" "}
+              <span className="font-medium text-green-700">{result.success}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Errors:</span>{" "}
+              <span className="font-medium text-red-700">{result.errors}</span>
+            </div>
+          </div>
         </div>
       )}
 
