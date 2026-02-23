@@ -205,7 +205,7 @@ export function SubmitDailyButton({
           type="button"
           onClick={() => setShowConfirmDialog(true)}
           disabled={isSubmitting}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           {isSubmitting ? "Submitting..." : `${isProxyMode ? "(Proxy) " : ""}${wasRejected ? "Resubmit" : "Submit"}`}
         </button>
@@ -256,7 +256,7 @@ export function SubmitDailyButton({
               <button
                 type="button"
                 onClick={handleSubmit}
-                className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700"
+                className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-md hover:bg-green-800"
               >
                 Submit
               </button>

@@ -126,6 +126,21 @@ test.describe("Absence Entry Workflow", () => {
       }
     });
 
+    // Mock assigned projects API (required by ProjectSelector component)
+    await page.route("**/api/v1/members/*/projects", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projects: [
+            { id: "project-1", code: "PROJ-001", name: "Project Alpha" },
+            { id: "project-2", code: "PROJ-002", name: "Project Beta" },
+          ],
+          count: 2,
+        }),
+      });
+    });
+
     // Mock create work log entry API (for mixed scenarios)
     await page.route("**/api/v1/worklog/entries", async (route) => {
       if (route.request().method() === "POST") {

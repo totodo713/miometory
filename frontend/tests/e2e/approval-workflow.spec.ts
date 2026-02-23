@@ -158,6 +158,21 @@ test.describe("Approval Workflow", () => {
       });
     });
 
+    // Mock assigned projects API (required by ProjectSelector component)
+    await page.route("**/api/v1/members/*/projects", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          projects: [
+            { id: "project-1", code: "PROJ-001", name: "Project Alpha" },
+            { id: "project-2", code: "PROJ-002", name: "Project Beta" },
+          ],
+          count: 2,
+        }),
+      });
+    });
+
     // Mock create entry API
     await page.route("**/api/v1/worklog/entries", async (route) => {
       if (route.request().method() === "POST") {
@@ -381,8 +396,8 @@ test.describe("Approval Workflow", () => {
     // Wait for dialog
     await page.waitForSelector('[role="dialog"]');
 
-    // Verify inputs are enabled (editable)
-    await expect(page.locator('input[id="project-0"]')).toBeEnabled();
+    // Verify hours input is enabled (editable after rejection)
+    // Note: project input stays disabled for existing entries (FR-008)
     await expect(page.locator('input[id="hours-0"]')).toBeEnabled();
 
     console.log("✅ Rejection workflow verified: Entries editable after rejection");
