@@ -4,6 +4,7 @@ import com.worklog.application.service.NotificationService;
 import com.worklog.application.service.UserContextService;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,22 +35,24 @@ public class NotificationController {
     }
 
     @PatchMapping("/{id}/read")
-    public void markRead(@PathVariable UUID id, Authentication authentication) {
+    public ResponseEntity<Void> markRead(@PathVariable UUID id, Authentication authentication) {
         UUID memberId = userContextService.resolveUserMemberIdOrNull(authentication.getName());
         // Users without a member record have no notifications — silently succeed as a no-op
         if (memberId == null) {
-            return;
+            return ResponseEntity.noContent().build();
         }
         notificationService.markRead(id, memberId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/read-all")
-    public void markAllRead(Authentication authentication) {
+    public ResponseEntity<Void> markAllRead(Authentication authentication) {
         UUID memberId = userContextService.resolveUserMemberIdOrNull(authentication.getName());
         // Users without a member record have no notifications — silently succeed as a no-op
         if (memberId == null) {
-            return;
+            return ResponseEntity.noContent().build();
         }
         notificationService.markAllRead(memberId);
+        return ResponseEntity.noContent().build();
     }
 }
