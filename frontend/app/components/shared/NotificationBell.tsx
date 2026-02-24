@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -8,6 +9,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 export function NotificationBell() {
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -76,6 +78,10 @@ export function NotificationBell() {
                   onClick={() => {
                     if (!notification.isRead) {
                       markRead(notification.id);
+                    }
+                    if (notification.referenceId) {
+                      router.push(`/worklog/approval?id=${notification.referenceId}`);
+                      setIsOpen(false);
                     }
                   }}
                   className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 ${
