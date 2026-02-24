@@ -105,6 +105,8 @@
       "Bash(git -C *)",
       "Bash(git:*)",
       "Bash(gh pr:*)",
+      "Bash(echo:*)",
+      "mcp__serena__read_memory",
       "Bash(gh api:*)"
     ],
     "deny": [

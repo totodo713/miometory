@@ -5,11 +5,13 @@ import { useEffect } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { AuthGuard } from "@/components/shared/AuthGuard";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { AdminProvider, useAdminContext } from "@/providers/AdminProvider";
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { adminContext, isLoading } = useAdminContext();
   const router = useRouter();
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
     if (!isLoading && !adminContext) {
@@ -32,7 +34,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)]">
       <AdminNav />
-      <main className="flex-1 p-6 bg-gray-50">{children}</main>
+      <main className={`flex-1 bg-gray-50 ${isMobile ? "p-4 pt-16" : "p-6"}`}>{children}</main>
     </div>
   );
 }

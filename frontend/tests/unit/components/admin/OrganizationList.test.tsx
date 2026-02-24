@@ -1,6 +1,22 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { OrganizationList } from "@/components/admin/OrganizationList";
+import { ToastProvider } from "@/components/shared/ToastProvider";
+
+Object.defineProperty(window, "matchMedia", {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+});
 
 const mockListOrganizations = vi.fn();
 
@@ -46,6 +62,10 @@ const inactiveOrg = {
   updatedAt: "2026-01-01T00:00:00Z",
 };
 
+function renderWithProviders(ui: ReactElement) {
+  return render(<ToastProvider>{ui}</ToastProvider>);
+}
+
 const defaultProps = {
   onEdit: vi.fn(),
   onDeactivate: vi.fn(),
@@ -65,8 +85,8 @@ describe("OrganizationList", () => {
   });
 
   test("shows loading state then renders organization data", async () => {
-    render(<OrganizationList {...defaultProps} />);
-    expect(screen.getByText("読み込み中...")).toBeInTheDocument();
+    const { container } = renderWithProviders(<OrganizationList {...defaultProps} />);
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("DEV_TEAM")).toBeInTheDocument();
@@ -85,7 +105,7 @@ describe("OrganizationList", () => {
       number: 0,
     });
 
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("組織が見つかりません")).toBeInTheDocument();
@@ -100,7 +120,7 @@ describe("OrganizationList", () => {
       number: 0,
     });
 
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("Development Team")).toBeInTheDocument();
@@ -108,7 +128,7 @@ describe("OrganizationList", () => {
   });
 
   test("displays dash when org has no parent", async () => {
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("DEV_TEAM")).toBeInTheDocument();
@@ -118,7 +138,7 @@ describe("OrganizationList", () => {
   });
 
   test("shows deactivate button for active organizations", async () => {
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("無効化")).toBeInTheDocument();
@@ -134,7 +154,7 @@ describe("OrganizationList", () => {
       number: 0,
     });
 
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("有効化")).toBeInTheDocument();
@@ -145,7 +165,7 @@ describe("OrganizationList", () => {
   test("calls onEdit when edit button clicked", async () => {
     const user = userEvent.setup();
     const onEdit = vi.fn();
-    render(<OrganizationList {...defaultProps} onEdit={onEdit} />);
+    renderWithProviders(<OrganizationList {...defaultProps} onEdit={onEdit} />);
 
     await waitFor(() => {
       expect(screen.getByText("編集")).toBeInTheDocument();
@@ -158,7 +178,7 @@ describe("OrganizationList", () => {
   test("calls onDeactivate when deactivate button clicked", async () => {
     const user = userEvent.setup();
     const onDeactivate = vi.fn();
-    render(<OrganizationList {...defaultProps} onDeactivate={onDeactivate} />);
+    renderWithProviders(<OrganizationList {...defaultProps} onDeactivate={onDeactivate} />);
 
     await waitFor(() => {
       expect(screen.getByText("無効化")).toBeInTheDocument();
@@ -178,7 +198,7 @@ describe("OrganizationList", () => {
       number: 0,
     });
 
-    render(<OrganizationList {...defaultProps} onActivate={onActivate} />);
+    renderWithProviders(<OrganizationList {...defaultProps} onActivate={onActivate} />);
 
     await waitFor(() => {
       expect(screen.getByText("有効化")).toBeInTheDocument();
@@ -190,7 +210,7 @@ describe("OrganizationList", () => {
 
   test("passes search param to API when searching", async () => {
     const user = userEvent.setup();
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("DEV_TEAM")).toBeInTheDocument();
@@ -206,7 +226,7 @@ describe("OrganizationList", () => {
 
   test("passes isActive=undefined when showInactive checked", async () => {
     const user = userEvent.setup();
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("DEV_TEAM")).toBeInTheDocument();
@@ -230,7 +250,7 @@ describe("OrganizationList", () => {
       number: 0,
     });
 
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("1 / 3")).toBeInTheDocument();
@@ -248,7 +268,7 @@ describe("OrganizationList", () => {
       number: 0,
     });
 
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("1 / 3")).toBeInTheDocument();
@@ -262,7 +282,7 @@ describe("OrganizationList", () => {
   });
 
   test("hides pagination when only one page", async () => {
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("DEV_TEAM")).toBeInTheDocument();
@@ -272,13 +292,17 @@ describe("OrganizationList", () => {
   });
 
   test("reloads when refreshKey changes", async () => {
-    const { rerender } = render(<OrganizationList {...defaultProps} refreshKey={0} />);
+    const { rerender } = renderWithProviders(<OrganizationList {...defaultProps} refreshKey={0} />);
 
     await waitFor(() => {
       expect(mockListOrganizations).toHaveBeenCalledTimes(1);
     });
 
-    rerender(<OrganizationList {...defaultProps} refreshKey={1} />);
+    rerender(
+      <ToastProvider>
+        <OrganizationList {...defaultProps} refreshKey={1} />
+      </ToastProvider>,
+    );
 
     await waitFor(() => {
       expect(mockListOrganizations).toHaveBeenCalledTimes(2);
@@ -286,7 +310,7 @@ describe("OrganizationList", () => {
   });
 
   test("renders table headers correctly", async () => {
-    render(<OrganizationList {...defaultProps} />);
+    renderWithProviders(<OrganizationList {...defaultProps} />);
 
     await waitFor(() => {
       expect(screen.getByText("DEV_TEAM")).toBeInTheDocument();

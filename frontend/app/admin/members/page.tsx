@@ -4,40 +4,46 @@ import { useCallback, useState } from "react";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
 import { MemberList } from "@/components/admin/MemberList";
+import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminMembersPage() {
+  const toast = useToast();
   const [editingMember, setEditingMember] = useState<MemberRow | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: "deactivate" | "activate" } | null>(null);
 
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
   }, []);
 
-  const handleDeactivate = useCallback(
-    async (id: string) => {
-      if (!confirm("このメンバーを無効化しますか？")) return;
-      try {
-        await api.admin.members.deactivate(id);
-        refresh();
-      } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
-      }
-    },
-    [refresh],
-  );
+  const handleDeactivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "deactivate" });
+  }, []);
 
-  const handleActivate = useCallback(
-    async (id: string) => {
+  const handleActivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "activate" });
+  }, []);
+
+  const executeAction = useCallback(
+    async (target: { id: string; action: "deactivate" | "activate" }) => {
       try {
-        await api.admin.members.activate(id);
+        if (target.action === "deactivate") {
+          await api.admin.members.deactivate(target.id);
+          toast.success("メンバーを無効化しました");
+        } else {
+          await api.admin.members.activate(target.id);
+          toast.success("メンバーを有効化しました");
+        }
         refresh();
       } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
       }
     },
-    [refresh],
+    [refresh, toast],
   );
 
   const handleEdit = useCallback((member: MemberRow) => {
@@ -58,7 +64,9 @@ export default function AdminMembersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "メンバー管理" }]} />
+
+      <div className="flex items-center justify-between mb-6 mt-4">
         <h1 className="text-2xl font-bold text-gray-900">メンバー管理</h1>
         <button
           type="button"
@@ -82,6 +90,19 @@ export default function AdminMembersPage() {
       </div>
 
       {showForm && <MemberForm member={editingMember} onClose={handleClose} onSaved={handleSaved} />}
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title="確認"
+        message={`このメンバーを${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`}
+        confirmLabel={confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}
+        variant={confirmTarget?.action === "deactivate" ? "danger" : "warning"}
+        onConfirm={async () => {
+          if (confirmTarget) await executeAction(confirmTarget);
+          setConfirmTarget(null);
+        }}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

@@ -1,10 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
 import { MemberManagerForm } from "@/components/admin/MemberManagerForm";
+import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
 import { OrganizationForm } from "@/components/admin/OrganizationForm";
 import { OrganizationList } from "@/components/admin/OrganizationList";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
+import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useToast } from "@/hooks/useToast";
 import { useAdminContext } from "@/providers/AdminProvider";
 import type {
   FiscalYearPatternOption,
@@ -19,10 +24,16 @@ type ViewMode = "list" | "tree";
 
 export default function AdminOrganizationsPage() {
   const { adminContext } = useAdminContext();
+  const toast = useToast();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [editingOrg, setEditingOrg] = useState<OrganizationRow | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    id: string;
+    action: "deactivate" | "activate" | "removeManager";
+    memberName?: string;
+  } | null>(null);
 
   // Member detail view state (shared between list and tree views)
   const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string } | null>(null);
@@ -30,6 +41,7 @@ export default function AdminOrganizationsPage() {
   const [memberTotalPages, setMemberTotalPages] = useState(0);
   const [memberPage, setMemberPage] = useState(0);
   const [isMembersLoading, setIsMembersLoading] = useState(false);
+  const [membersLoadError, setMembersLoadError] = useState<string | null>(null);
   const [memberRefreshKey, setMemberRefreshKey] = useState(0);
 
   // MemberManagerForm state
@@ -47,6 +59,8 @@ export default function AdminOrganizationsPage() {
   const [isPatternSaving, setIsPatternSaving] = useState(false);
   const [patternError, setPatternError] = useState<string | null>(null);
   const [patternSuccess, setPatternSuccess] = useState<string | null>(null);
+  const [showFiscalYearForm, setShowFiscalYearForm] = useState(false);
+  const [showMonthlyPeriodForm, setShowMonthlyPeriodForm] = useState(false);
 
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -60,6 +74,7 @@ export default function AdminOrganizationsPage() {
   const loadMembers = useCallback(async () => {
     if (!selectedOrg) return;
     setIsMembersLoading(true);
+    setMembersLoadError(null);
     try {
       const result = await api.admin.organizations.listMembers(selectedOrg.id, {
         page: memberPage,
@@ -67,8 +82,8 @@ export default function AdminOrganizationsPage() {
       });
       setMembers(result.content);
       setMemberTotalPages(result.totalPages);
-    } catch {
-      // Error handled by API client
+    } catch (err: unknown) {
+      setMembersLoadError(err instanceof ApiError ? err.message : "メンバーの取得に失敗しました");
     } finally {
       setIsMembersLoading(false);
     }
@@ -147,32 +162,39 @@ export default function AdminOrganizationsPage() {
     }
   }, [selectedOrg, selectedFiscalYearPatternId, selectedMonthlyPeriodPatternId]);
 
-  const handleDeactivate = useCallback(
-    async (id: string) => {
-      if (!confirm("この組織を無効化しますか？")) return;
-      try {
-        const result = await api.admin.organizations.deactivate(id);
-        if (result.warnings && result.warnings.length > 0) {
-          alert(`無効化しました。\n\n警告:\n${result.warnings.join("\n")}`);
-        }
-        refresh();
-      } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
-      }
-    },
-    [refresh],
-  );
+  const handleDeactivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "deactivate" });
+  }, []);
 
-  const handleActivate = useCallback(
-    async (id: string) => {
+  const handleActivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "activate" });
+  }, []);
+
+  const executeAction = useCallback(
+    async (target: { id: string; action: "deactivate" | "activate" | "removeManager" }) => {
       try {
-        await api.admin.organizations.activate(id);
-        refresh();
+        if (target.action === "deactivate") {
+          const result = await api.admin.organizations.deactivate(target.id);
+          if (result.warnings && result.warnings.length > 0) {
+            toast.warning(`無効化しました。警告: ${result.warnings.join(", ")}`);
+          } else {
+            toast.success("組織を無効化しました");
+          }
+          refresh();
+        } else if (target.action === "activate") {
+          await api.admin.organizations.activate(target.id);
+          toast.success("組織を有効化しました");
+          refresh();
+        } else if (target.action === "removeManager") {
+          await api.admin.members.removeManager(target.id);
+          toast.success("マネージャー割り当てを解除しました");
+          refreshMembers();
+        }
       } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
       }
     },
-    [refresh],
+    [refresh, refreshMembers, toast],
   );
 
   const handleEdit = useCallback((org: OrganizationRow) => {
@@ -243,18 +265,9 @@ export default function AdminOrganizationsPage() {
     setMemberFormMode("assignManager");
   }, []);
 
-  const handleRemoveManager = useCallback(
-    async (member: OrganizationMemberRow) => {
-      if (!confirm(`${member.displayName} のマネージャー割り当てを解除しますか？`)) return;
-      try {
-        await api.admin.members.removeManager(member.id);
-        refreshMembers();
-      } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
-      }
-    },
-    [refreshMembers],
-  );
+  const handleRemoveManager = useCallback((member: OrganizationMemberRow) => {
+    setConfirmTarget({ id: member.id, action: "removeManager", memberName: member.displayName });
+  }, []);
 
   const handleTransferOrg = useCallback((member: OrganizationMemberRow) => {
     setTargetMember(member);
@@ -297,7 +310,9 @@ export default function AdminOrganizationsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "組織管理" }]} />
+
+      <div className="flex items-center justify-between mb-6 mt-4">
         <div className="flex items-center gap-3">
           {selectedOrg && (
             <button
@@ -391,10 +406,10 @@ export default function AdminOrganizationsPage() {
               <div className="space-y-3">
                 <p className="text-sm text-gray-500">パターンが登録されていません</p>
                 {currentFiscalYearPatternId && (
-                  <p className="text-xs text-gray-400">現在の会計年度パターンID: {currentFiscalYearPatternId}</p>
+                  <p className="text-xs text-gray-500">現在の会計年度パターンID: {currentFiscalYearPatternId}</p>
                 )}
                 {currentMonthlyPeriodPatternId && (
-                  <p className="text-xs text-gray-400">現在の月次期間パターンID: {currentMonthlyPeriodPatternId}</p>
+                  <p className="text-xs text-gray-500">現在の月次期間パターンID: {currentMonthlyPeriodPatternId}</p>
                 )}
               </div>
             ) : (
@@ -404,45 +419,63 @@ export default function AdminOrganizationsPage() {
                     <label htmlFor="fiscal-year-pattern" className="block text-sm font-medium text-gray-700 mb-1">
                       会計年度パターン
                     </label>
-                    <select
-                      id="fiscal-year-pattern"
-                      value={selectedFiscalYearPatternId}
-                      onChange={(e) => {
-                        setSelectedFiscalYearPatternId(e.target.value);
-                        setPatternError(null);
-                        setPatternSuccess(null);
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">未設定</option>
-                      {fiscalYearPatterns.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.startMonth}月{p.startDay}日開始)
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select
+                        id="fiscal-year-pattern"
+                        value={selectedFiscalYearPatternId}
+                        onChange={(e) => {
+                          setSelectedFiscalYearPatternId(e.target.value);
+                          setPatternError(null);
+                          setPatternSuccess(null);
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">未設定</option>
+                        {fiscalYearPatterns.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.startMonth}月{p.startDay}日開始)
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowFiscalYearForm(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                      >
+                        + 新規作成
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label htmlFor="monthly-period-pattern" className="block text-sm font-medium text-gray-700 mb-1">
                       月次期間パターン
                     </label>
-                    <select
-                      id="monthly-period-pattern"
-                      value={selectedMonthlyPeriodPatternId}
-                      onChange={(e) => {
-                        setSelectedMonthlyPeriodPatternId(e.target.value);
-                        setPatternError(null);
-                        setPatternSuccess(null);
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">未設定</option>
-                      {monthlyPeriodPatterns.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.startDay}日開始)
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <select
+                        id="monthly-period-pattern"
+                        value={selectedMonthlyPeriodPatternId}
+                        onChange={(e) => {
+                          setSelectedMonthlyPeriodPatternId(e.target.value);
+                          setPatternError(null);
+                          setPatternSuccess(null);
+                        }}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">未設定</option>
+                        {monthlyPeriodPatterns.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.startDay}日開始)
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowMonthlyPeriodForm(true)}
+                        className="text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                      >
+                        + 新規作成
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -465,7 +498,18 @@ export default function AdminOrganizationsPage() {
 
           {/* Members table */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            {isMembersLoading ? (
+            {membersLoadError ? (
+              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+                <p className="text-sm text-red-800">{membersLoadError}</p>
+                <button
+                  type="button"
+                  onClick={loadMembers}
+                  className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+                >
+                  再試行
+                </button>
+              </div>
+            ) : isMembersLoading ? (
               <div className="text-center py-8 text-gray-500">読み込み中...</div>
             ) : members.length === 0 ? (
               <div className="text-center py-8 text-gray-500">メンバーが見つかりません</div>
@@ -584,6 +628,55 @@ export default function AdminOrganizationsPage() {
           onSaved={handleMemberFormSaved}
         />
       )}
+
+      {showFiscalYearForm && adminContext?.tenantId && (
+        <FiscalYearPatternForm
+          tenantId={adminContext.tenantId}
+          open={showFiscalYearForm}
+          onClose={() => setShowFiscalYearForm(false)}
+          onCreated={(pattern) => {
+            setFiscalYearPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId ?? "" }]);
+            setSelectedFiscalYearPatternId(pattern.id);
+            setShowFiscalYearForm(false);
+          }}
+        />
+      )}
+
+      {showMonthlyPeriodForm && adminContext?.tenantId && (
+        <MonthlyPeriodPatternForm
+          tenantId={adminContext.tenantId}
+          open={showMonthlyPeriodForm}
+          onClose={() => setShowMonthlyPeriodForm(false)}
+          onCreated={(pattern) => {
+            setMonthlyPeriodPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId ?? "" }]);
+            setSelectedMonthlyPeriodPatternId(pattern.id);
+            setShowMonthlyPeriodForm(false);
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title="確認"
+        message={
+          confirmTarget?.action === "removeManager"
+            ? `${confirmTarget.memberName} のマネージャー割り当てを解除しますか？`
+            : `この組織を${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`
+        }
+        confirmLabel={
+          confirmTarget?.action === "removeManager"
+            ? "解除"
+            : confirmTarget?.action === "deactivate"
+              ? "無効化"
+              : "有効化"
+        }
+        variant={confirmTarget?.action === "activate" ? "warning" : "danger"}
+        onConfirm={async () => {
+          if (confirmTarget) await executeAction(confirmTarget);
+          setConfirmTarget(null);
+        }}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { api } from "@/services/api";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Skeleton } from "@/components/shared/Skeleton";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { ApiError, api } from "@/services/api";
 
 interface UserRow {
   id: string;
@@ -36,6 +39,10 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [accountStatus, setAccountStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const isMobile = useMediaQuery("(max-width: 767px)");
+
+  const hasFilters = !!debouncedSearch || !!accountStatus;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -46,6 +53,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const result = await api.admin.users.list({
         page,
@@ -55,13 +63,14 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
       });
       setUsers(result.content);
       setTotalPages(result.totalPages);
-    } catch {
-      // Error handled by API client
+    } catch (err: unknown) {
+      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
     } finally {
       setIsLoading(false);
     }
   }, [page, debouncedSearch, accountStatus]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {
     loadUsers();
   }, [loadUsers, refreshKey]);
@@ -96,10 +105,76 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
         </select>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-8 text-gray-500">読み込み中...</div>
+      {loadError ? (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+          <p className="text-sm text-red-800">{loadError}</p>
+          <button type="button" onClick={loadUsers} className="mt-2 text-sm text-red-600 hover:text-red-800 underline">
+            再試行
+          </button>
+        </div>
+      ) : isLoading ? (
+        <Skeleton.Table rows={5} cols={7} />
       ) : users.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">ユーザーが見つかりません</div>
+        <EmptyState
+          title="ユーザーが見つかりません"
+          description={hasFilters ? "検索条件を変更してください" : "まだユーザーがいません"}
+        />
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {users.map((user) => {
+            const statusInfo = statusLabels[user.accountStatus] ?? {
+              label: user.accountStatus,
+              className: "bg-gray-100 text-gray-600",
+            };
+            return (
+              <div key={user.id} className="border border-gray-200 rounded-lg p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-gray-900">{user.name}</span>
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.className}`}>
+                    {statusInfo.label}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500">{user.email}</p>
+                <p className="text-xs text-gray-500">
+                  {user.roleName} / {user.tenantName ?? "—"}
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => onChangeRole(user)}
+                    className="text-blue-600 hover:text-blue-800 text-xs"
+                  >
+                    ロール変更
+                  </button>
+                  {user.accountStatus === "locked" ? (
+                    <button
+                      type="button"
+                      onClick={() => onUnlock(user)}
+                      className="text-green-600 hover:text-green-800 text-xs"
+                    >
+                      ロック解除
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onLock(user)}
+                      className="text-red-600 hover:text-red-800 text-xs"
+                    >
+                      ロック
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onResetPassword(user)}
+                    className="text-orange-600 hover:text-orange-800 text-xs"
+                  >
+                    PW初期化
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

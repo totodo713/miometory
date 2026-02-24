@@ -202,7 +202,7 @@ export function DailyApprovalDashboard({ refreshKey, onRefresh }: DailyApprovalD
       {isLoading ? (
         <div className="text-center py-12 text-gray-500">読み込み中...</div>
       ) : groups.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 text-gray-500">
           <svg
             className="mx-auto h-10 w-10 mb-3"
             fill="none"

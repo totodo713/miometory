@@ -1,25 +1,41 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import SignupPage from "../page";
 
+vi.mock("@/services/api", () => ({
+  api: { auth: { signup: vi.fn() } },
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+vi.mock("@/hooks/useToast", () => ({
+  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+}));
+
+vi.mock("next/link", () => ({
+  default: ({ children, href, ...props }: any) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 describe("Signup page", () => {
-  test("shows validation error for empty fields", () => {
+  test("renders email, password, and confirmation fields", () => {
     render(<SignupPage />);
-    fireEvent.click(screen.getByText(/sign up/i));
-    expect(screen.getByRole("alert")).toHaveTextContent(/all fields are required/i);
+    expect(screen.getByLabelText(/メールアドレス/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^パスワード$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/パスワード確認/)).toBeInTheDocument();
   });
 
-  test("shows password validation error", () => {
+  test("shows password mismatch error", async () => {
+    const user = userEvent.setup();
     render(<SignupPage />);
-    fireEvent.change(screen.getByLabelText("email"), {
-      target: { value: "a@b.com" },
-    });
-    fireEvent.change(screen.getByLabelText("name"), {
-      target: { value: "User" },
-    });
-    fireEvent.change(screen.getByLabelText("password"), {
-      target: { value: "weakpass" },
-    });
-    fireEvent.click(screen.getByText(/sign up/i));
-    expect(screen.getByRole("alert")).toHaveTextContent(/password must be/i);
+    await user.type(screen.getByLabelText(/^パスワード$/), "Password1!");
+    await user.type(screen.getByLabelText(/パスワード確認/), "Different1!");
+    await user.tab();
+    expect(screen.getByText(/パスワードが一致しません/)).toBeInTheDocument();
   });
 });

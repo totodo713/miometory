@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Skeleton } from "@/components/shared/Skeleton";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { OrganizationRow } from "@/services/api";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 interface OrganizationListProps {
   onEdit: (org: OrganizationRow) => void;
@@ -20,6 +23,8 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -30,6 +35,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
 
   const loadOrganizations = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const result = await api.admin.organizations.list({
         page,
@@ -39,8 +45,8 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
       });
       setOrganizations(result.content);
       setTotalPages(result.totalPages);
-    } catch {
-      // Error handled by API client
+    } catch (err: unknown) {
+      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
     } finally {
       setIsLoading(false);
     }
@@ -71,10 +77,97 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
         </label>
       </div>
 
-      {isLoading ? (
-        <div className="text-center py-8 text-gray-500">読み込み中...</div>
+      {loadError ? (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+          <p className="text-sm text-red-800">{loadError}</p>
+          <button
+            type="button"
+            onClick={loadOrganizations}
+            className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+          >
+            再試行
+          </button>
+        </div>
+      ) : isLoading ? (
+        <Skeleton.Table rows={5} cols={7} />
       ) : organizations.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">組織が見つかりません</div>
+        <EmptyState
+          title="組織が見つかりません"
+          description={debouncedSearch || showInactive ? "検索条件を変更してください" : "まだ組織がありません"}
+        />
+      ) : isMobile ? (
+        <div className="space-y-3">
+          {organizations.map((org) => (
+            <div
+              key={org.id}
+              className="border border-gray-200 rounded-lg p-4 space-y-2"
+              {...(onSelectOrg
+                ? {
+                    onClick: () => onSelectOrg(org),
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectOrg(org);
+                      }
+                    },
+                    role: "button" as const,
+                    tabIndex: 0,
+                    style: { cursor: "pointer" },
+                  }
+                : {})}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-900">{org.name}</span>
+                <span
+                  className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                    org.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {org.status === "ACTIVE" ? "有効" : "無効"}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 font-mono">{org.code}</p>
+              <p className="text-xs text-gray-500">
+                レベル: {org.level} / 親組織: {org.parentName || "—"} / メンバー: {org.memberCount}
+              </p>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(org);
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-xs"
+                >
+                  編集
+                </button>
+                {org.status === "ACTIVE" ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeactivate(org.id);
+                    }}
+                    className="text-red-600 hover:text-red-800 text-xs"
+                  >
+                    無効化
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onActivate(org.id);
+                    }}
+                    className="text-green-600 hover:text-green-800 text-xs"
+                  >
+                    有効化
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -94,8 +187,19 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                 <tr
                   key={org.id}
                   className="border-b border-gray-100 hover:bg-gray-50"
-                  onClick={() => onSelectOrg?.(org)}
-                  style={{ cursor: onSelectOrg ? "pointer" : "default" }}
+                  {...(onSelectOrg
+                    ? {
+                        onClick: () => onSelectOrg(org),
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onSelectOrg(org);
+                          }
+                        },
+                        tabIndex: 0,
+                        style: { cursor: "pointer" },
+                      }
+                    : {})}
                 >
                   <td className="py-3 px-4 font-mono text-xs">{org.code}</td>
                   <td className="py-3 px-4">{org.name}</td>

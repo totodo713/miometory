@@ -3,9 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import type { UserRow } from "@/components/admin/UserList";
 import { UserList } from "@/components/admin/UserList";
+import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminUsersPage() {
+  const toast = useToast();
   const [refreshKey, setRefreshKey] = useState(0);
   const [roleDialogUser, setRoleDialogUser] = useState<UserRow | null>(null);
   const [lockDialogUser, setLockDialogUser] = useState<UserRow | null>(null);
@@ -13,6 +17,11 @@ export default function AdminUsersPage() {
   const [lockDuration, setLockDuration] = useState("60");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    id: string;
+    name: string;
+    action: "unlock" | "resetPassword";
+  } | null>(null);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -39,28 +48,31 @@ export default function AdminUsersPage() {
     setError(null);
   }, []);
 
-  const handleUnlock = useCallback(
-    async (user: UserRow) => {
-      if (!confirm(`${user.name} のロックを解除しますか？`)) return;
+  const handleUnlock = useCallback((user: UserRow) => {
+    setConfirmTarget({ id: user.id, name: user.name, action: "unlock" });
+  }, []);
+
+  const handleResetPassword = useCallback((user: UserRow) => {
+    setConfirmTarget({ id: user.id, name: user.name, action: "resetPassword" });
+  }, []);
+
+  const executeAction = useCallback(
+    async (target: { id: string; name: string; action: "unlock" | "resetPassword" }) => {
       try {
-        await api.admin.users.unlock(user.id);
-        refresh();
+        if (target.action === "unlock") {
+          await api.admin.users.unlock(target.id);
+          toast.success("ロックを解除しました");
+          refresh();
+        } else {
+          await api.admin.users.resetPassword(target.id);
+          toast.success("パスワードが初期化されました");
+        }
       } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
       }
     },
-    [refresh],
+    [refresh, toast],
   );
-
-  const handleResetPassword = useCallback(async (user: UserRow) => {
-    if (!confirm(`${user.name} のパスワードを初期化しますか？`)) return;
-    try {
-      await api.admin.users.resetPassword(user.id);
-      alert("パスワードが初期化されました");
-    } catch (err: unknown) {
-      alert(err instanceof ApiError ? err.message : "エラーが発生しました");
-    }
-  }, []);
 
   const submitChangeRole = async () => {
     if (!roleDialogUser || !newRoleId.trim()) return;
@@ -99,7 +111,9 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "ユーザー管理" }]} />
+
+      <div className="flex items-center justify-between mb-6 mt-4">
         <h1 className="text-2xl font-bold text-gray-900">ユーザー管理</h1>
       </div>
 
@@ -199,6 +213,19 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title="確認"
+        message={`${confirmTarget?.name ?? ""} の${confirmTarget?.action === "unlock" ? "ロックを解除" : "パスワードを初期化"}しますか？`}
+        confirmLabel={confirmTarget?.action === "unlock" ? "ロック解除" : "PW初期化"}
+        variant={confirmTarget?.action === "unlock" ? "warning" : "danger"}
+        onConfirm={async () => {
+          if (confirmTarget) await executeAction(confirmTarget);
+          setConfirmTarget(null);
+        }}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }

@@ -18,6 +18,16 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+// Mock useDateInfo hook
+vi.mock("@/hooks/useDateInfo", () => ({
+  useDateInfo: () => ({ data: null, isLoading: false }),
+}));
+
+// Mock useMediaQuery hook (default to desktop)
+vi.mock("@/hooks/useMediaQuery", () => ({
+  useMediaQuery: () => false,
+}));
+
 describe("Calendar Component", () => {
   const mockDates: DailyCalendarEntry[] = [
     {
@@ -28,6 +38,8 @@ describe("Calendar Component", () => {
       isWeekend: false,
       isHoliday: false,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
     {
       date: "2026-01-22",
@@ -37,6 +49,8 @@ describe("Calendar Component", () => {
       isWeekend: false,
       isHoliday: false,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
     {
       date: "2026-01-23",
@@ -46,6 +60,8 @@ describe("Calendar Component", () => {
       isWeekend: false,
       isHoliday: false,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
     {
       date: "2026-01-24",
@@ -55,6 +71,8 @@ describe("Calendar Component", () => {
       isWeekend: true,
       isHoliday: false,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
     {
       date: "2026-01-25",
@@ -64,6 +82,8 @@ describe("Calendar Component", () => {
       isWeekend: true,
       isHoliday: false,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
     {
       date: "2026-01-26",
@@ -73,6 +93,8 @@ describe("Calendar Component", () => {
       isWeekend: false,
       isHoliday: false,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
     {
       date: "2026-01-27",
@@ -82,6 +104,8 @@ describe("Calendar Component", () => {
       isWeekend: false,
       isHoliday: false,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
     {
       date: "2026-01-28",
@@ -91,6 +115,8 @@ describe("Calendar Component", () => {
       isWeekend: false,
       isHoliday: true,
       hasProxyEntries: false,
+      rejectionSource: null,
+      rejectionReason: null,
     },
   ];
 
@@ -361,6 +387,8 @@ describe("Calendar Component", () => {
           isWeekend: false,
           isHoliday: false,
           hasProxyEntries: false,
+          rejectionSource: null,
+          rejectionReason: null,
         },
       ];
 
@@ -380,6 +408,8 @@ describe("Calendar Component", () => {
           isWeekend: false,
           isHoliday: false,
           hasProxyEntries: false,
+          rejectionSource: null,
+          rejectionReason: null,
         },
         {
           date: "2026-01-22",
@@ -389,6 +419,8 @@ describe("Calendar Component", () => {
           isWeekend: false,
           isHoliday: false,
           hasProxyEntries: false,
+          rejectionSource: null,
+          rejectionReason: null,
         },
       ];
 
@@ -408,6 +440,8 @@ describe("Calendar Component", () => {
           isWeekend: false,
           isHoliday: false,
           hasProxyEntries: false,
+          rejectionSource: null,
+          rejectionReason: null,
         },
       ];
 
@@ -430,6 +464,8 @@ describe("Calendar Component", () => {
           isWeekend: false,
           isHoliday: false,
           hasProxyEntries: false,
+          rejectionSource: null,
+          rejectionReason: null,
         },
       ];
 

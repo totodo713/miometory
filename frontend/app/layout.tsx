@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Header } from "./components/shared/Header";
+import { ToastProvider } from "./components/shared/ToastProvider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { SessionProvider } from "./providers/SessionProvider";
 
@@ -36,8 +37,10 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <SessionProvider>
-              <Header />
-              {children}
+              <ToastProvider>
+                <Header />
+                {children}
+              </ToastProvider>
             </SessionProvider>
           </AuthProvider>
         </NextIntlClientProvider>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 import type { MemberRow } from "./MemberList";
 
@@ -12,6 +13,7 @@ interface MemberFormProps {
 
 export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
   const isEdit = member !== null;
+  const toast = useToast();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -42,6 +44,7 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
       } else {
         await api.admin.members.create({ email, displayName });
       }
+      toast.success(isEdit ? "メンバーを更新しました" : "メンバーを作成しました");
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -49,6 +52,7 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
       } else {
         setError("エラーが発生しました");
       }
+      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
     } finally {
       setIsSubmitting(false);
     }

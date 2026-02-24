@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "../../services/api";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Skeleton } from "@/components/shared/Skeleton";
+import { useToast } from "@/hooks/useToast";
+import { ApiError, api, ConflictError } from "../../services/api";
 import { useProxyMode } from "../../services/worklogStore";
 import type { WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
@@ -82,6 +85,7 @@ export function DailyEntryForm({
   onSave,
 }: DailyEntryFormProps) {
   const { isProxyMode, targetMember } = useProxyMode();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
   const [projectRows, setProjectRows] = useState<ProjectRow[]>([{ projectId: "", hours: 0, comment: "", errors: {} }]);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +93,7 @@ export function DailyEntryForm({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<{ type: string; id?: string } | null>(null);
   const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
   const [absenceHours, setAbsenceHours] = useState<number>(0);
 
@@ -236,11 +240,13 @@ export function DailyEntryForm({
       setIsSaving(true);
       setSaveError(null);
       await api.worklog.deleteEntry(entryId);
-      setDeleteConfirmId(null);
       initialDataRef.current = "[]"; // Reset initial data
+      toast.success("削除しました");
       onSave();
     } catch (error: unknown) {
-      setSaveError(error instanceof Error ? error.message : "Failed to delete entry");
+      const message = error instanceof ApiError ? error.message : "エラーが発生しました";
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -308,19 +314,24 @@ export function DailyEntryForm({
         if (isAutoSave) {
           setAutoSavedAt(new Date());
         } else {
+          toast.success("保存しました");
           onSave();
         }
       } catch (error: unknown) {
-        if (error != null && typeof error === "object" && "status" in error && error.status === 409) {
-          setSaveError("This entry has been modified by another user. Please refresh and try again.");
+        if (error instanceof ConflictError) {
+          const message = "This entry has been modified by another user. Please refresh and try again.";
+          setSaveError(message);
+          toast.error(message);
         } else {
-          setSaveError(error instanceof Error ? error.message : "Failed to save entries");
+          const message = error instanceof ApiError ? error.message : "エラーが発生しました";
+          setSaveError(message);
+          toast.error(message);
         }
       } finally {
         setIsSaving(false);
       }
     },
-    [projectRows, memberId, date, totalExceeds24, onSave, enteredBy],
+    [projectRows, memberId, date, totalExceeds24, onSave, enteredBy, toast],
   );
 
   // Handle close with unsaved changes warning
@@ -355,8 +366,11 @@ export function DailyEntryForm({
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-8">
-          <div className="text-center">Loading...</div>
+        <div className="bg-white rounded-lg p-8 max-w-4xl w-full">
+          <Skeleton.Text lines={1} />
+          <div className="mt-4">
+            <Skeleton.Table rows={3} cols={3} />
+          </div>
         </div>
       </div>
     );
@@ -535,9 +549,15 @@ export function DailyEntryForm({
                           step="0.25"
                           min="0"
                           max="24"
-                          className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+                          aria-invalid={!!row.errors.hours}
+                          aria-describedby={row.errors.hours ? `hours-error-${index}` : undefined}
+                          className={`w-full px-3 py-2 border rounded-md disabled:bg-gray-100 ${row.errors.hours ? "border-red-500" : "border-gray-300"}`}
                         />
-                        {row.errors.hours && <div className="text-red-600 text-sm mt-1">{row.errors.hours}</div>}
+                        {row.errors.hours && (
+                          <div id={`hours-error-${index}`} className="text-red-600 text-sm mt-1">
+                            {row.errors.hours}
+                          </div>
+                        )}
                       </div>
 
                       {/* Remove Button */}
@@ -566,10 +586,16 @@ export function DailyEntryForm({
                         onChange={(e) => updateProjectRow(index, "comment", e.target.value)}
                         disabled={!isEditableStatus(row.status)}
                         rows={2}
-                        className="w-full px-3 py-2 border rounded-md disabled:bg-gray-100"
+                        aria-invalid={!!row.errors.comment}
+                        aria-describedby={row.errors.comment ? `comment-error-${index}` : undefined}
+                        className={`w-full px-3 py-2 border rounded-md disabled:bg-gray-100 ${row.errors.comment ? "border-red-500" : "border-gray-300"}`}
                         placeholder="Optional comment..."
                       />
-                      {row.errors.comment && <div className="text-red-600 text-sm mt-1">{row.errors.comment}</div>}
+                      {row.errors.comment && (
+                        <div id={`comment-error-${index}`} className="text-red-600 text-sm mt-1">
+                          {row.errors.comment}
+                        </div>
+                      )}
                     </div>
 
                     {/* Delete Button (for existing entries) */}
@@ -577,7 +603,7 @@ export function DailyEntryForm({
                       <div className="mt-4">
                         <button
                           type="button"
-                          onClick={() => row.id && setDeleteConfirmId(row.id)}
+                          onClick={() => row.id && setConfirmAction({ type: "delete", id: row.id })}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >
                           Delete Entry
@@ -631,6 +657,7 @@ export function DailyEntryForm({
                   wasRejected={!!rejectionSource}
                   onSaveFirst={() => handleSave(false)}
                   onSubmitSuccess={() => {
+                    toast.success("提出しました");
                     onSave();
                   }}
                 />
@@ -645,41 +672,25 @@ export function DailyEntryForm({
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          role="alertdialog"
-          aria-modal="true"
-          aria-labelledby="delete-confirm-title"
-          aria-describedby="delete-confirm-description"
-        >
-          <div className="bg-white rounded-lg p-6 max-w-md">
-            <h3 id="delete-confirm-title" className="text-lg font-bold mb-4">
-              Confirm Delete
-            </h3>
-            <p id="delete-confirm-description" className="mb-6">
-              Are you sure you want to delete this entry? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-4">
-              <button
-                type="button"
-                onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(deleteConfirmId)}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Confirm Dialog for delete/submit */}
+      <ConfirmDialog
+        open={confirmAction !== null}
+        title={confirmAction?.type === "delete" ? "削除確認" : "提出確認"}
+        message={
+          confirmAction?.type === "delete"
+            ? "このエントリを削除しますか？"
+            : "本日分のエントリを提出しますか？提出後は編集できません。"
+        }
+        confirmLabel={confirmAction?.type === "delete" ? "削除" : "提出"}
+        variant="danger"
+        onConfirm={() => {
+          if (confirmAction?.type === "delete" && confirmAction.id) {
+            handleDelete(confirmAction.id);
+          }
+          setConfirmAction(null);
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

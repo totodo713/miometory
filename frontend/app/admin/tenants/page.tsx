@@ -4,38 +4,44 @@ import { useCallback, useState } from "react";
 import { TenantForm } from "@/components/admin/TenantForm";
 import type { TenantRow } from "@/components/admin/TenantList";
 import { TenantList } from "@/components/admin/TenantList";
+import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminTenantsPage() {
+  const toast = useToast();
   const [editingTenant, setEditingTenant] = useState<TenantRow | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: "deactivate" | "activate" } | null>(null);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  const handleDeactivate = useCallback(
-    async (id: string) => {
-      if (!confirm("このテナントを無効化しますか？")) return;
-      try {
-        await api.admin.tenants.deactivate(id);
-        refresh();
-      } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
-      }
-    },
-    [refresh],
-  );
+  const handleDeactivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "deactivate" });
+  }, []);
 
-  const handleActivate = useCallback(
-    async (id: string) => {
+  const handleActivate = useCallback((id: string) => {
+    setConfirmTarget({ id, action: "activate" });
+  }, []);
+
+  const executeAction = useCallback(
+    async (target: { id: string; action: "deactivate" | "activate" }) => {
       try {
-        await api.admin.tenants.activate(id);
+        if (target.action === "deactivate") {
+          await api.admin.tenants.deactivate(target.id);
+          toast.success("テナントを無効化しました");
+        } else {
+          await api.admin.tenants.activate(target.id);
+          toast.success("テナントを有効化しました");
+        }
         refresh();
       } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
       }
     },
-    [refresh],
+    [refresh, toast],
   );
 
   const handleEdit = useCallback((tenant: TenantRow) => {
@@ -56,7 +62,9 @@ export default function AdminTenantsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "テナント管理" }]} />
+
+      <div className="flex items-center justify-between mb-6 mt-4">
         <h1 className="text-2xl font-bold text-gray-900">テナント管理</h1>
         <button
           type="button"
@@ -80,6 +88,19 @@ export default function AdminTenantsPage() {
       </div>
 
       {showForm && <TenantForm tenant={editingTenant} onClose={handleClose} onSaved={handleSaved} />}
+
+      <ConfirmDialog
+        open={confirmTarget !== null}
+        title="確認"
+        message={`このテナントを${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`}
+        confirmLabel={confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}
+        variant={confirmTarget?.action === "deactivate" ? "danger" : "warning"}
+        onConfirm={async () => {
+          if (confirmTarget) await executeAction(confirmTarget);
+          setConfirmTarget(null);
+        }}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   );
 }
