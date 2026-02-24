@@ -304,17 +304,15 @@ public class JdbcMemberRepository {
 
         String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
         String sql = "SELECT id, display_name FROM members WHERE id IN (" + placeholders + ")";
-        Object[] params = ids.stream().map(id -> id.value()).toArray();
-
-        List<Map.Entry<MemberId, String>> rows = jdbcTemplate.query(
-                sql,
-                (rs, rowNum) -> Map.entry(MemberId.of(rs.getObject("id", UUID.class)), rs.getString("display_name")),
-                params);
+        Object[] params = ids.stream().map(MemberId::value).toArray();
 
         Map<MemberId, String> result = new HashMap<>();
-        for (var entry : rows) {
-            result.put(entry.getKey(), entry.getValue());
-        }
+        jdbcTemplate.query(
+                sql,
+                rs -> {
+                    result.put(MemberId.of(rs.getObject("id", UUID.class)), rs.getString("display_name"));
+                },
+                params);
         return result;
     }
 
