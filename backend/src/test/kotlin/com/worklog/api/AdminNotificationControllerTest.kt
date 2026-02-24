@@ -88,21 +88,21 @@ class AdminNotificationControllerTest : AdminIntegrationTestBase() {
     }
 
     @Test
-    fun `mark read returns 200`() {
+    fun `mark read returns 204`() {
         mockMvc.perform(
             patch("/api/v1/notifications/$notificationId/read")
                 .with(user(userEmail)),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
     }
 
     @Test
-    fun `mark all read returns 200`() {
+    fun `mark all read returns 204`() {
         mockMvc.perform(
             patch("/api/v1/notifications/read-all")
                 .with(user(userEmail)),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
     }
 
     @Test
@@ -141,7 +141,7 @@ class AdminNotificationControllerTest : AdminIntegrationTestBase() {
             patch("/api/v1/notifications/${UUID.randomUUID()}/read")
                 .with(user(noMemberEmail)),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
     }
 
     @Test
@@ -153,6 +153,6 @@ class AdminNotificationControllerTest : AdminIntegrationTestBase() {
             patch("/api/v1/notifications/read-all")
                 .with(user(noMemberEmail)),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
     }
 }
