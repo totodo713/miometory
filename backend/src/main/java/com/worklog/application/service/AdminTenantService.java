@@ -1,10 +1,21 @@
 package com.worklog.application.service;
 
+import com.worklog.api.AdminTenantController.BootstrapMember;
+import com.worklog.api.AdminTenantController.BootstrapOrganization;
+import com.worklog.api.AdminTenantController.BootstrapResult;
+import com.worklog.api.AdminTenantController.BootstrapTenantRequest;
+import com.worklog.api.AdminTenantController.CreatedMember;
+import com.worklog.api.AdminTenantController.CreatedOrganization;
+import com.worklog.application.command.CreateOrganizationCommand;
+import com.worklog.application.command.InviteMemberCommand;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.tenant.Tenant;
 import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.repository.TenantRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -16,10 +27,18 @@ public class AdminTenantService {
 
     private final TenantRepository tenantRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final AdminOrganizationService adminOrganizationService;
+    private final AdminMemberService adminMemberService;
 
-    public AdminTenantService(TenantRepository tenantRepository, JdbcTemplate jdbcTemplate) {
+    public AdminTenantService(
+            TenantRepository tenantRepository,
+            JdbcTemplate jdbcTemplate,
+            AdminOrganizationService adminOrganizationService,
+            AdminMemberService adminMemberService) {
         this.tenantRepository = tenantRepository;
         this.jdbcTemplate = jdbcTemplate;
+        this.adminOrganizationService = adminOrganizationService;
+        this.adminMemberService = adminMemberService;
     }
 
     @Transactional(readOnly = true)
@@ -115,6 +134,74 @@ public class AdminTenantService {
         // Update projection
         jdbcTemplate.update("UPDATE tenant SET status = 'ACTIVE', updated_at = NOW() WHERE id = ?", id);
     }
+
+    public BootstrapResult bootstrapTenant(UUID tenantId, BootstrapTenantRequest request) {
+        // Verify tenant exists and is ACTIVE
+        List<String> statuses =
+                jdbcTemplate.queryForList("SELECT status FROM tenant WHERE id = ?", String.class, tenantId);
+        if (statuses.isEmpty()) {
+            throw new DomainException("TENANT_NOT_FOUND", "Tenant not found");
+        }
+        if (!"ACTIVE".equals(statuses.get(0))) {
+            throw new DomainException("TENANT_INACTIVE", "Tenant is not active");
+        }
+
+        // Prevent double bootstrap: check no organizations exist yet
+        Long orgCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM organization WHERE tenant_id = ?", Long.class, tenantId);
+        if (orgCount != null && orgCount > 0) {
+            throw new DomainException(
+                    "ALREADY_BOOTSTRAPPED", "Tenant already has organizations; bootstrap can only run once");
+        }
+
+        // Create organizations
+        Map<String, UUID> orgCodeToId = new HashMap<>();
+        List<CreatedOrganization> createdOrgs = new ArrayList<>();
+
+        for (BootstrapOrganization org : request.organizations()) {
+            UUID orgId = adminOrganizationService.createOrganization(new CreateOrganizationCommand(
+                    tenantId,
+                    org.parentId(),
+                    org.code(),
+                    org.name(),
+                    org.fiscalYearPatternId(),
+                    org.monthlyPeriodPatternId()));
+            orgCodeToId.put(org.code(), orgId);
+            createdOrgs.add(new CreatedOrganization(orgId, org.code()));
+        }
+
+        // Invite members
+        List<CreatedMember> createdMembers = new ArrayList<>();
+        List<MemberToPromote> toPromote = new ArrayList<>();
+
+        for (BootstrapMember member : request.members()) {
+            UUID orgId = orgCodeToId.get(member.organizationCode());
+            if (orgId == null) {
+                throw new DomainException(
+                        "INVALID_ORG_CODE",
+                        "Organization code '" + member.organizationCode() + "' not found in bootstrap request");
+            }
+
+            var result = adminMemberService.inviteMember(
+                    new InviteMemberCommand(member.email(), member.displayName(), orgId, null, null), tenantId);
+
+            createdMembers.add(
+                    new CreatedMember(result.memberId().toString(), member.email(), result.temporaryPassword()));
+
+            if (member.tenantAdmin()) {
+                toPromote.add(new MemberToPromote(result.memberId(), tenantId));
+            }
+        }
+
+        // Assign TENANT_ADMIN role
+        for (MemberToPromote promote : toPromote) {
+            adminMemberService.assignTenantAdmin(promote.memberId, promote.tenantId);
+        }
+
+        return new BootstrapResult(createdOrgs, createdMembers);
+    }
+
+    private record MemberToPromote(UUID memberId, UUID tenantId) {}
 
     public record TenantRow(String id, String code, String name, String status, String createdAt) {}
 

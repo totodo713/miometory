@@ -29,6 +29,8 @@ export interface MonthlySummaryProps {
   year: number;
   month: number;
   memberId: string;
+  fiscalMonthStart?: string;
+  fiscalMonthEnd?: string;
 }
 
 /**
@@ -36,7 +38,7 @@ export interface MonthlySummaryProps {
  *
  * Displays project breakdown table with hours and percentage for the month.
  */
-export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
+export function MonthlySummary({ year, month, memberId, fiscalMonthStart, fiscalMonthEnd }: MonthlySummaryProps) {
   const [summary, setSummary] = useState<MonthlySummaryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,8 +141,8 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       <div className="mb-6">
         <SubmitButton
           memberId={memberId}
-          fiscalMonthStart={`${year}-${String(month).padStart(2, "0")}-01`}
-          fiscalMonthEnd={new Date(year, month, 0).toISOString().split("T")[0]}
+          fiscalMonthStart={fiscalMonthStart ?? `${year}-${String(month).padStart(2, "0")}-01`}
+          fiscalMonthEnd={fiscalMonthEnd ?? new Date(year, month, 0).toISOString().split("T")[0]}
           approvalStatus={summary.approvalStatus}
           onSubmitSuccess={() => {
             // Reload summary to get updated approval status

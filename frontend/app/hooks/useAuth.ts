@@ -11,6 +11,7 @@ export interface AuthUser {
   id: string;
   email?: string;
   displayName?: string;
+  memberId?: string;
 }
 
 export interface UseAuthResult {
@@ -22,6 +23,8 @@ export interface UseAuthResult {
   isAuthenticated: boolean;
   /** Current user's ID (convenience accessor) */
   userId: string | null;
+  /** Current user's member ID (falls back to userId for backward compatibility) */
+  memberId: string | null;
 }
 
 /**
@@ -43,5 +46,6 @@ export function useAuth(): UseAuthResult {
     isLoading,
     isAuthenticated: user !== null,
     userId: user?.id ?? null,
+    memberId: user?.memberId ?? user?.id ?? null,
   };
 }

@@ -10,6 +10,7 @@ export interface AuthUser {
   id: string;
   email: string;
   displayName: string;
+  memberId?: string;
 }
 
 interface AuthContextValue {
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       id: response.user.id,
       email: response.user.email,
       displayName: response.user.name,
+      memberId: response.user.memberId ?? undefined,
     };
     setUser(authUser);
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));

@@ -7,8 +7,10 @@ import com.worklog.application.auth.RegistrationRequest;
 import com.worklog.application.password.PasswordResetConfirmCommand;
 import com.worklog.application.password.PasswordResetRequestCommand;
 import com.worklog.application.password.PasswordResetService;
+import com.worklog.application.service.UserContextService;
 import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
+import java.util.UUID;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -33,10 +35,15 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final UserContextService userContextService;
 
-    public AuthController(AuthService authService, PasswordResetService passwordResetService) {
+    public AuthController(
+            AuthService authService,
+            PasswordResetService passwordResetService,
+            UserContextService userContextService) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
+        this.userContextService = userContextService;
     }
 
     /**
@@ -104,12 +111,16 @@ public class AuthController {
         // Calculate session expiration (30 minutes from now)
         Instant sessionExpiresAt = Instant.now().plusSeconds(session.getMaxInactiveInterval());
 
+        // Resolve member ID (null if user has no member record)
+        UUID memberId = userContextService.resolveUserMemberIdOrNull(response.user().getEmail());
+
         return new LoginResponseDto(
                 new UserDto(
                         response.user().getId().value(),
                         response.user().getEmail(),
                         response.user().getName(),
-                        response.user().getAccountStatus().name()),
+                        response.user().getAccountStatus().name(),
+                        memberId),
                 sessionExpiresAt,
                 response.rememberMeToken(),
                 null // No warning for now

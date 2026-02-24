@@ -25,7 +25,7 @@ export default function DailyEntryPage({ params }: PageProps) {
   const { date } = use(params);
 
   // Authentication state
-  const { userId } = useAuth();
+  const { memberId: authMemberId } = useAuth();
 
   // Proxy mode state - get effective member ID
   const { isProxyMode, targetMember } = useProxyMode();
@@ -39,8 +39,8 @@ export default function DailyEntryPage({ params }: PageProps) {
     return Number.isNaN(d.getTime()) ? null : d;
   }, [date]);
 
-  // Use target member ID if in proxy mode, otherwise use current user
-  const memberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
+  // Use target member ID if in proxy mode, otherwise use current user's member
+  const memberId = isProxyMode && targetMember ? targetMember.id : (authMemberId ?? "");
 
   // Compute fiscal month period from date (21st–20th pattern)
   const { fiscalMonthStart, fiscalMonthEnd } = useMemo(() => {
@@ -94,7 +94,7 @@ export default function DailyEntryPage({ params }: PageProps) {
       <DailyEntryForm
         date={parsedDate}
         memberId={memberId}
-        enteredBy={userId ?? undefined}
+        enteredBy={authMemberId ?? undefined}
         rejectionSource={rejectionInfo.rejectionSource}
         rejectionReason={rejectionInfo.rejectionReason}
         onClose={handleClose}

@@ -10,5 +10,6 @@ import java.util.UUID;
  * @param email User's email address
  * @param name User's display name
  * @param accountStatus Current account status (e.g., "ACTIVE", "LOCKED")
+ * @param memberId Associated member ID (null if user has no member record)
  */
-public record UserDto(UUID id, String email, String name, String accountStatus) {}
+public record UserDto(UUID id, String email, String name, String accountStatus, UUID memberId) {}

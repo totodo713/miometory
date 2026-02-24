@@ -193,7 +193,7 @@ class AdminOrganizationControllerTest : AdminIntegrationTestBase() {
     }
 
     @Test
-    fun `update non-existent organization returns 400`() {
+    fun `update non-existent organization returns 404`() {
         val nonExistentId = UUID.randomUUID()
         mockMvc.perform(
             put("/api/v1/admin/organizations/$nonExistentId")
@@ -201,7 +201,7 @@ class AdminOrganizationControllerTest : AdminIntegrationTestBase() {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Updated Name"}"""),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.errorCode").value("ORGANIZATION_NOT_FOUND"))
     }
 

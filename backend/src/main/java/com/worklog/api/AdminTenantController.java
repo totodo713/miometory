@@ -2,8 +2,11 @@ package com.worklog.api;
 
 import com.worklog.application.service.AdminTenantService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +67,15 @@ public class AdminTenantController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{tenantId}/bootstrap")
+    @PreAuthorize("hasPermission(null, 'tenant.create')")
+    @ResponseStatus(HttpStatus.CREATED)
+    public BootstrapTenantResponse bootstrapTenant(
+            @PathVariable UUID tenantId, @RequestBody @Valid BootstrapTenantRequest request) {
+        var result = adminTenantService.bootstrapTenant(tenantId, request);
+        return new BootstrapTenantResponse(result);
+    }
+
     // Request/Response DTOs
 
     public record CreateTenantRequest(
@@ -74,4 +86,31 @@ public class AdminTenantController {
             @NotBlank @Size(max = 100) String name) {}
 
     public record CreateTenantResponse(String id) {}
+
+    // Bootstrap DTOs
+
+    public record BootstrapTenantRequest(
+            @Valid @NotEmpty List<BootstrapOrganization> organizations,
+            @Valid @NotEmpty List<BootstrapMember> members) {}
+
+    public record BootstrapOrganization(
+            @NotBlank String code,
+            @NotBlank String name,
+            UUID parentId,
+            UUID fiscalYearPatternId,
+            UUID monthlyPeriodPatternId) {}
+
+    public record BootstrapMember(
+            @Email String email,
+            @NotBlank String displayName,
+            @NotBlank String organizationCode,
+            boolean tenantAdmin) {}
+
+    public record BootstrapTenantResponse(BootstrapResult result) {}
+
+    public record BootstrapResult(List<CreatedOrganization> organizations, List<CreatedMember> members) {}
+
+    public record CreatedOrganization(UUID id, String code) {}
+
+    public record CreatedMember(String id, String email, String temporaryPassword) {}
 }
