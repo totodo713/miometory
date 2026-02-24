@@ -101,7 +101,7 @@ public class AdminTenantController {
             UUID monthlyPeriodPatternId) {}
 
     public record BootstrapMember(
-            @Email String email,
+            @NotBlank @Email String email,
             @NotBlank String displayName,
             @NotBlank String organizationCode,
             boolean tenantAdmin) {}

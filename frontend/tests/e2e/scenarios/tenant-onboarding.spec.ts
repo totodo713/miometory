@@ -158,10 +158,8 @@ async function assignManagerViaOrgPage(
   const memberRow = page.locator(`tr:has-text("${memberEmail}")`);
   await memberRow.locator('button:has-text("マネージャー割当")').click();
 
-  // Select the manager from the dropdown (find option containing the name)
-  const managerOption = page.locator("#manager-select option").filter({ hasText: managerDisplayName });
-  const optionValue = await managerOption.getAttribute("value");
-  await page.selectOption("#manager-select", optionValue!);
+  // Select the manager from the dropdown by label (display name)
+  await page.selectOption("#manager-select", { label: managerDisplayName });
 
   // Click assign button
   await page.click('button:has-text("割り当て")');
@@ -630,9 +628,7 @@ test.describe
       await page.waitForLoadState("networkidle");
 
       // Verify proxy mode banner is shown on worklog page (includes member name)
-      await expect(
-        page.getByText(`Entering time for ${orgBMembers[0].displayName}`),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(`Entering time for ${orgBMembers[0].displayName}`)).toBeVisible({ timeout: 10_000 });
 
       // Enter work log for 3 days (same pattern as Step 10)
       await fillWorkLogEntries(page, "7.5", 3);

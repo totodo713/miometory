@@ -1,6 +1,8 @@
 package com.worklog.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -101,9 +103,7 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
             UUID::class.java,
             owner1Email,
         )
-        assert(roleId.toString() == TENANT_ADMIN_ROLE_ID) {
-            "Expected TENANT_ADMIN role for $owner1Email but got $roleId"
-        }
+        assertEquals(TENANT_ADMIN_ROLE_ID, roleId.toString(), "Expected TENANT_ADMIN role for $owner1Email")
 
         // Verify owner2 was NOT promoted (tenantAdmin=false)
         val owner2Email = body.at("/result/members/1/email").asText()
@@ -112,9 +112,7 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
             UUID::class.java,
             owner2Email,
         )
-        assert(roleId2.toString() != TENANT_ADMIN_ROLE_ID) {
-            "Expected USER role for $owner2Email but got TENANT_ADMIN"
-        }
+        assertNotEquals(TENANT_ADMIN_ROLE_ID, roleId2.toString(), "Expected USER role for $owner2Email")
     }
 
     @Test

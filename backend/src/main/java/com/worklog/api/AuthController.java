@@ -10,13 +10,13 @@ import com.worklog.application.password.PasswordResetService;
 import com.worklog.application.service.UserContextService;
 import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
-import java.util.UUID;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,9 +38,7 @@ public class AuthController {
     private final UserContextService userContextService;
 
     public AuthController(
-            AuthService authService,
-            PasswordResetService passwordResetService,
-            UserContextService userContextService) {
+            AuthService authService, PasswordResetService passwordResetService, UserContextService userContextService) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
         this.userContextService = userContextService;
@@ -112,7 +110,8 @@ public class AuthController {
         Instant sessionExpiresAt = Instant.now().plusSeconds(session.getMaxInactiveInterval());
 
         // Resolve member ID (null if user has no member record)
-        UUID memberId = userContextService.resolveUserMemberIdOrNull(response.user().getEmail());
+        UUID memberId =
+                userContextService.resolveUserMemberIdOrNull(response.user().getEmail());
 
         return new LoginResponseDto(
                 new UserDto(
