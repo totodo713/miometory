@@ -16,3 +16,9 @@
 Permissions in `settings.local.json` use granular git command patterns (not `Bash(git *)`).
 Intentionally excluded (require user confirmation): `git reset`, `git clean`, `git restore`, `git config`
 PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `checkout .`, `stash drop/clear`, `rebase -i` within allowed commands
+
+## Frontend Lint/Format
+
+- Run `npm ci` in `frontend/` before using `npx biome` — without it, `npx` may resolve a wrong global version
+- CI uses `biome ci` (= `biome check` + format check); locally use `npx biome check` or `npx biome ci` to match
+- Biome version is pinned in `frontend/package.json` (`@biomejs/biome`); always use the project-local binary
