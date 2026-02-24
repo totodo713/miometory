@@ -15,6 +15,11 @@ async function loginAs(
 	email: string,
 	password: string,
 ): Promise<AuthUser> {
+	// Navigate to app origin first — sessionStorage requires a real origin (not about:blank)
+	if (page.url() === "about:blank") {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+	}
 	// Clear previous session
 	await page.evaluate(() => window.sessionStorage.clear());
 
@@ -187,6 +192,15 @@ async function assignManagerViaOrgPage(
 
 test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 	test.describe.configure({ timeout: 60_000 });
+
+	// Skip non-Chromium browsers locally (WSL2 lacks webkit system deps)
+	// CI environments have all browser deps installed via `npx playwright install-deps`
+	test.beforeEach(({ browserName }) => {
+		test.skip(
+			browserName !== "chromium" && !process.env.CI,
+			"Skipping non-Chromium browsers locally",
+		);
+	});
 
 	let tenantId: string;
 	let tenantCode: string;
