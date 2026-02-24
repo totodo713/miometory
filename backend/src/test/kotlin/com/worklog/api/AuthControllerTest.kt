@@ -6,6 +6,7 @@ import com.worklog.application.auth.LoginRequest
 import com.worklog.application.auth.LoginResponse
 import com.worklog.application.auth.RegistrationRequest
 import com.worklog.application.password.PasswordResetService
+import com.worklog.application.service.UserContextService
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.config.LoggingProperties
 import com.worklog.infrastructure.config.RateLimitProperties
@@ -81,6 +82,10 @@ class AuthControllerTest {
         @Bean
         @Primary
         fun passwordResetService(): PasswordResetService = mockk(relaxed = true)
+
+        @Bean
+        @Primary
+        fun userContextService(): UserContextService = mockk(relaxed = true)
 
         @Bean
         fun loggingProperties(): LoggingProperties {

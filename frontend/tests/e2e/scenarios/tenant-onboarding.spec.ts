@@ -158,8 +158,12 @@ async function assignManagerViaOrgPage(
   const memberRow = page.locator(`tr:has-text("${memberEmail}")`);
   await memberRow.locator('button:has-text("マネージャー割当")').click();
 
-  // Select the manager from the dropdown by label (display name)
-  await page.selectOption("#manager-select", { label: managerDisplayName });
+  // Select the manager from the dropdown (label format: "DisplayName (email)")
+  const managerOption = page.locator("#manager-select option").filter({ hasText: managerDisplayName });
+  await expect(managerOption).toBeAttached({ timeout: 10_000 });
+  const optionValue = await managerOption.getAttribute("value");
+  expect(optionValue).toBeTruthy();
+  await page.selectOption("#manager-select", optionValue!);
 
   // Click assign button
   await page.click('button:has-text("割り当て")');

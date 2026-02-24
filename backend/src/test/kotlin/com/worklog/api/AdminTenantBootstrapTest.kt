@@ -118,14 +118,15 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
     @Test
     fun `bootstrap tenant returns 403 for non-system-admin`() {
         val tenantId = createTenant()
+        val minimalBody =
+            """{"organizations":[{"code":"ORG","name":"Org"}],"members":[""" +
+                """{"email":"a@b.com","displayName":"A","organizationCode":"ORG","tenantAdmin":false}]}"""
 
         mockMvc.perform(
             post("/api/v1/admin/tenants/$tenantId/bootstrap")
                 .with(user(regularEmail))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """{"organizations":[{"code":"ORG","name":"Org"}],"members":[{"email":"a@b.com","displayName":"A","organizationCode":"ORG","tenantAdmin":false}]}""",
-                ),
+                .content(minimalBody),
         )
             .andExpect(status().isForbidden)
     }
@@ -133,14 +134,15 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
     @Test
     fun `bootstrap tenant returns 404 for non-existent tenant`() {
         val fakeTenantId = UUID.randomUUID()
+        val minimalBody =
+            """{"organizations":[{"code":"ORG","name":"Org"}],"members":[""" +
+                """{"email":"a@b.com","displayName":"A","organizationCode":"ORG","tenantAdmin":false}]}"""
 
         mockMvc.perform(
             post("/api/v1/admin/tenants/$fakeTenantId/bootstrap")
                 .with(user(adminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """{"organizations":[{"code":"ORG","name":"Org"}],"members":[{"email":"a@b.com","displayName":"A","organizationCode":"ORG","tenantAdmin":false}]}""",
-                ),
+                .content(minimalBody),
         )
             .andExpect(status().isNotFound)
     }
@@ -152,7 +154,8 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
         val email2 = "second-${UUID.randomUUID().toString().take(6)}@test.com"
 
         val body =
-            """{"organizations":[{"code":"ORG","name":"Org"}],"members":[{"email":"$email1","displayName":"A","organizationCode":"ORG","tenantAdmin":false}]}"""
+            """{"organizations":[{"code":"ORG","name":"Org"}],"members":[""" +
+                """{"email":"$email1","displayName":"A","organizationCode":"ORG","tenantAdmin":false}]}"""
 
         // First bootstrap succeeds
         mockMvc.perform(
@@ -165,7 +168,8 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
 
         // Second bootstrap fails
         val body2 =
-            """{"organizations":[{"code":"ORG2","name":"Org2"}],"members":[{"email":"$email2","displayName":"B","organizationCode":"ORG2","tenantAdmin":false}]}"""
+            """{"organizations":[{"code":"ORG2","name":"Org2"}],"members":[""" +
+                """{"email":"$email2","displayName":"B","organizationCode":"ORG2","tenantAdmin":false}]}"""
 
         mockMvc.perform(
             post("/api/v1/admin/tenants/$tenantId/bootstrap")

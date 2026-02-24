@@ -713,6 +713,7 @@ export const api = {
           email: string;
           name: string;
           accountStatus: string;
+          memberId: string | null;
         };
         sessionExpiresAt: string;
         rememberMeToken: string | null;
