@@ -50,7 +50,7 @@ interface PersonaCredentials {
 	email: string;
 	password: string;
 	id?: string;
-	displayName?: string;
+	displayName: string;
 }
 
 async function inviteMemberViaOrgPage(
@@ -71,7 +71,7 @@ async function inviteMemberViaOrgPage(
 
 	// Fill in the form
 	await page.fill("#new-member-email", member.email);
-	await page.fill("#new-member-name", member.displayName!);
+	await page.fill("#new-member-name", member.displayName);
 
 	// Submit and capture the response with temporary password
 	const responsePromise = page.waitForResponse(
@@ -87,6 +87,71 @@ async function inviteMemberViaOrgPage(
 	const body = await response.json();
 	member.id = body.id;
 	member.password = body.temporaryPassword;
+}
+
+// --- GUI Helper: Fill work log entries for multiple days ---
+
+const MONTH_NAMES = [
+	"January",
+	"February",
+	"March",
+	"April",
+	"May",
+	"June",
+	"July",
+	"August",
+	"September",
+	"October",
+	"November",
+	"December",
+];
+
+async function fillWorkLogEntries(
+	page: Page,
+	hours: string,
+	dayCount: number,
+): Promise<void> {
+	const today = new Date();
+	const year = today.getFullYear();
+	const month = today.getMonth(); // 0-indexed
+
+	for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
+		const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
+		const monthName = MONTH_NAMES[month];
+
+		// Click the calendar date
+		await page.click(
+			`button[aria-label="${monthName} ${dayNum}, ${year}"]`,
+		);
+		await page.waitForLoadState("networkidle");
+
+		// Wait for daily entry form to appear
+		await expect(page.locator('[role="dialog"]')).toBeVisible({
+			timeout: 10_000,
+		});
+
+		// Select project (first available in dropdown)
+		const projectSelect = page.locator("#project-0");
+		if (await projectSelect.isVisible()) {
+			const options = await projectSelect
+				.locator("option")
+				.allTextContents();
+			if (options.length > 1) {
+				await projectSelect.selectOption({ index: 1 });
+			}
+		}
+
+		// Enter hours
+		const hoursInput = page.locator("#hours-0");
+		await hoursInput.clear();
+		await hoursInput.fill(hours);
+
+		// Save
+		await page.click('button:has-text("Save")');
+
+		// Wait for dialog to close or success indication
+		await page.waitForLoadState("networkidle");
+	}
 }
 
 // --- GUI Helper: Assign manager via organization page ---
@@ -121,6 +186,8 @@ async function assignManagerViaOrgPage(
 // --- Shared state across serial tests ---
 
 test.describe.serial("Tenant Onboarding: Full Cycle", () => {
+	test.describe.configure({ timeout: 60_000 });
+
 	let tenantId: string;
 	let tenantCode: string;
 	let tenantName: string;
@@ -479,7 +546,7 @@ test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 				page,
 				"Organization Alpha",
 				member.email,
-				orgAAdmin1.displayName!,
+				orgAAdmin1.displayName,
 			);
 		}
 
@@ -514,7 +581,7 @@ test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 				page,
 				"Organization Beta",
 				member.email,
-				orgBAdmin1.displayName!,
+				orgBAdmin1.displayName,
 			);
 		}
 
@@ -540,55 +607,33 @@ test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 	test("Step 10: Org A member enters work log", async ({ page }) => {
 		await loginAs(page, orgAMembers[0].email, orgAMembers[0].password);
 
+		// Ensure at least one project exists for this tenant (bootstrap via API)
+		const projectsResponse = await page.request.get(
+			`${API_BASE_URL}/api/v1/organizations/${orgAId}/projects`,
+		);
+		if (
+			!projectsResponse.ok() ||
+			(await projectsResponse.json()).length === 0
+		) {
+			const createResponse = await page.request.post(
+				`${API_BASE_URL}/api/v1/admin/projects`,
+				{
+					data: {
+						code: "PROJ-SCENARIO",
+						name: "Scenario Test Project",
+						organizationId: orgAId,
+					},
+				},
+			);
+			expect(createResponse.ok()).toBe(true);
+		}
+
 		// Navigate to worklog calendar
 		await page.goto("/worklog");
 		await page.waitForLoadState("networkidle");
 
-		// Enter work log for 3 days in the current month
-		const today = new Date();
-		const year = today.getFullYear();
-		const month = today.getMonth(); // 0-indexed
-
-		for (let dayOffset = 1; dayOffset <= 3; dayOffset++) {
-			const targetDate = new Date(year, month, dayOffset + 1); // 2nd, 3rd, 4th of the month
-			const monthName = targetDate.toLocaleString("en-US", {
-				month: "long",
-			});
-			const dayNum = targetDate.getDate();
-
-			// Click the calendar date
-			await page.click(
-				`button[aria-label="${monthName} ${dayNum}, ${year}"]`,
-			);
-			await page.waitForLoadState("networkidle");
-
-			// Wait for daily entry form to appear
-			await expect(page.locator('[role="dialog"]')).toBeVisible({
-				timeout: 10_000,
-			});
-
-			// Select project (first available in dropdown)
-			const projectSelect = page.locator("#project-0");
-			if (await projectSelect.isVisible()) {
-				const options = await projectSelect
-					.locator("option")
-					.allTextContents();
-				if (options.length > 1) {
-					await projectSelect.selectOption({ index: 1 });
-				}
-			}
-
-			// Enter hours
-			const hoursInput = page.locator("#hours-0");
-			await hoursInput.clear();
-			await hoursInput.fill("8");
-
-			// Save
-			await page.click('button:has-text("Save")');
-
-			// Wait for dialog to close or success indication
-			await page.waitForLoadState("networkidle");
-		}
+		// Enter work log for 3 days in the current month (2nd, 3rd, 4th)
+		await fillWorkLogEntries(page, "8", 3);
 
 		// Verify: calendar shows entries for those days
 		await page.goto("/worklog");
@@ -613,7 +658,7 @@ test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 
 		// Select by member display name
 		await memberSelector.selectOption({
-			label: new RegExp(orgBMembers[0].displayName!),
+			label: new RegExp(orgBMembers[0].displayName),
 		});
 
 		// Click "Enter Time for..." button
@@ -628,43 +673,7 @@ test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 		).toBeVisible();
 
 		// Enter work log for 3 days (same pattern as Step 10)
-		const today = new Date();
-		const year = today.getFullYear();
-		const month = today.getMonth();
-
-		for (let dayOffset = 1; dayOffset <= 3; dayOffset++) {
-			const targetDate = new Date(year, month, dayOffset + 1);
-			const monthName = targetDate.toLocaleString("en-US", {
-				month: "long",
-			});
-			const dayNum = targetDate.getDate();
-
-			await page.click(
-				`button[aria-label="${monthName} ${dayNum}, ${year}"]`,
-			);
-			await page.waitForLoadState("networkidle");
-
-			await expect(page.locator('[role="dialog"]')).toBeVisible({
-				timeout: 10_000,
-			});
-
-			const projectSelect = page.locator("#project-0");
-			if (await projectSelect.isVisible()) {
-				const options = await projectSelect
-					.locator("option")
-					.allTextContents();
-				if (options.length > 1) {
-					await projectSelect.selectOption({ index: 1 });
-				}
-			}
-
-			const hoursInput = page.locator("#hours-0");
-			await hoursInput.clear();
-			await hoursInput.fill("7.5");
-
-			await page.click('button:has-text("Save")');
-			await page.waitForLoadState("networkidle");
-		}
+		await fillWorkLogEntries(page, "7.5", 3);
 
 		// Verify entries are saved
 		await expect(page.locator("text=7.50")).toBeVisible({ timeout: 10_000 });
@@ -710,8 +719,7 @@ test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 		const today = new Date();
 		const year = today.getFullYear();
 		const month = today.getMonth();
-		const targetDate = new Date(year, month, 2); // 2nd day (where we entered data)
-		const monthName = targetDate.toLocaleString("en-US", { month: "long" });
+		const monthName = MONTH_NAMES[month];
 
 		await page.click(`button[aria-label="${monthName} 2, ${year}"]`);
 		await expect(page.locator('[role="dialog"]')).toBeVisible({
@@ -766,7 +774,7 @@ test.describe.serial("Tenant Onboarding: Full Cycle", () => {
 			'select[aria-label="Select Team Member"]',
 		);
 		await memberSelector.selectOption({
-			label: new RegExp(orgBMembers[0].displayName!),
+			label: new RegExp(orgBMembers[0].displayName),
 		});
 		await page.click('button:has-text("Enter Time for")');
 
