@@ -28,7 +28,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addToast = useCallback((message: string, variant: ToastVariant) => {
-    const id = crypto.randomUUID();
+    const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setToasts((prev) => {
       const next = [...prev, { id, message, variant }];
       if (next.length > MAX_TOASTS) {

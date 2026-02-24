@@ -98,13 +98,23 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
       ) : isMobile ? (
         <div className="space-y-3">
           {organizations.map((org) => (
-            // biome-ignore lint/a11y/useKeyWithClickEvents: click handler for org selection
-            // biome-ignore lint/a11y/noStaticElementInteractions: interactive card for org selection
             <div
               key={org.id}
               className="border border-gray-200 rounded-lg p-4 space-y-2"
-              onClick={() => onSelectOrg?.(org)}
-              style={{ cursor: onSelectOrg ? "pointer" : "default" }}
+              {...(onSelectOrg
+                ? {
+                    onClick: () => onSelectOrg(org),
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectOrg(org);
+                      }
+                    },
+                    role: "button" as const,
+                    tabIndex: 0,
+                    style: { cursor: "pointer" },
+                  }
+                : {})}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-gray-900">{org.name}</span>
@@ -177,8 +187,19 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                 <tr
                   key={org.id}
                   className="border-b border-gray-100 hover:bg-gray-50"
-                  onClick={() => onSelectOrg?.(org)}
-                  style={{ cursor: onSelectOrg ? "pointer" : "default" }}
+                  {...(onSelectOrg
+                    ? {
+                        onClick: () => onSelectOrg(org),
+                        onKeyDown: (e: React.KeyboardEvent) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            onSelectOrg(org);
+                          }
+                        },
+                        tabIndex: 0,
+                        style: { cursor: "pointer" },
+                      }
+                    : {})}
                 >
                   <td className="py-3 px-4 font-mono text-xs">{org.code}</td>
                   <td className="py-3 px-4">{org.name}</td>

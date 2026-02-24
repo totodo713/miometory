@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { api } from "@/services/api";
@@ -14,6 +14,42 @@ export function Header() {
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    closeButtonRef.current?.focus();
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeDrawer();
+        return;
+      }
+      if (e.key === "Tab" && drawerRef.current) {
+        const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [drawerOpen, closeDrawer]);
 
   useEffect(() => {
     if (!user) {
@@ -43,6 +79,7 @@ export function Header() {
             <NotificationBell />
             <button
               type="button"
+              ref={triggerRef}
               onClick={() => setDrawerOpen(true)}
               className="p-2 text-gray-600 hover:text-gray-800"
               aria-label="メニューを開く"
@@ -57,17 +94,20 @@ export function Header() {
           <>
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: backdrop click to close */}
             {/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop click to close */}
-            <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setDrawerOpen(false)} />
+            <div className="fixed inset-0 bg-black/50 z-50" onClick={closeDrawer} />
             <div
+              ref={drawerRef}
               className="fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-50 flex flex-col"
               role="dialog"
               aria-modal="true"
+              aria-label="ナビゲーションメニュー"
             >
               <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200">
                 <span className="text-sm font-medium text-gray-900">メニュー</span>
                 <button
                   type="button"
-                  onClick={() => setDrawerOpen(false)}
+                  ref={closeButtonRef}
+                  onClick={closeDrawer}
                   className="p-2 text-gray-500 hover:text-gray-700"
                   aria-label="メニューを閉じる"
                 >
@@ -79,7 +119,7 @@ export function Header() {
               <nav className="flex-1 px-4 py-4 space-y-1">
                 <Link
                   href="/worklog"
-                  onClick={() => setDrawerOpen(false)}
+                  onClick={closeDrawer}
                   className={`block px-3 py-2 text-sm rounded-md ${
                     !isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
                   }`}
@@ -89,7 +129,7 @@ export function Header() {
                 {hasAdminAccess && (
                   <Link
                     href="/admin"
-                    onClick={() => setDrawerOpen(false)}
+                    onClick={closeDrawer}
                     className={`block px-3 py-2 text-sm rounded-md ${
                       isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
                     }`}
@@ -103,7 +143,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={() => {
-                    setDrawerOpen(false);
+                    closeDrawer();
                     logout();
                   }}
                   className="w-full text-left text-sm text-gray-500 hover:text-gray-700"

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useAdminContext } from "@/providers/AdminProvider";
 
@@ -30,6 +30,42 @@ export function AdminNav() {
   const isTablet = useMediaQuery("(min-width: 768px) and (max-width: 1023px)");
   const [isOpen, setIsOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const closeDrawer = useCallback(() => {
+    setIsOpen(false);
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    closeButtonRef.current?.focus();
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeDrawer();
+        return;
+      }
+      if (e.key === "Tab" && drawerRef.current) {
+        const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isOpen, closeDrawer]);
 
   const visibleItems = NAV_ITEMS.filter((item) => !item.permission || hasPermission(item.permission));
 
@@ -81,6 +117,7 @@ export function AdminNav() {
       <>
         <button
           type="button"
+          ref={triggerRef}
           onClick={() => setIsOpen(true)}
           className="fixed top-16 left-3 z-30 p-2 bg-white border border-gray-200 rounded-md shadow-sm"
           aria-label="メニューを開く"
@@ -100,17 +137,20 @@ export function AdminNav() {
           <>
             {/* biome-ignore lint/a11y/useKeyWithClickEvents: backdrop click to close */}
             {/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop click to close */}
-            <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsOpen(false)} />
+            <div className="fixed inset-0 bg-black/50 z-40" onClick={closeDrawer} />
             <nav
+              ref={drawerRef}
               className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-50 transform transition-transform"
               role="dialog"
               aria-modal="true"
+              aria-label="管理メニュー"
             >
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
                 <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">管理メニュー</p>
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  ref={closeButtonRef}
+                  onClick={closeDrawer}
                   className="p-1 text-gray-400 hover:text-gray-600"
                   aria-label="メニューを閉じる"
                 >
