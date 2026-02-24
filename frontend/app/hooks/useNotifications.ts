@@ -32,16 +32,34 @@ export function useNotifications() {
   }, []);
 
   const markRead = useCallback(async (id: string) => {
-    await api.notification.markRead(id);
+    // Optimistic update
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
     setUnreadCount((prev) => Math.max(0, prev - 1));
+    try {
+      await api.notification.markRead(id);
+    } catch (e) {
+      // Rollback on failure
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)));
+      setUnreadCount((prev) => prev + 1);
+      throw e;
+    }
   }, []);
 
   const markAllRead = useCallback(async () => {
-    await api.notification.markAllRead();
+    const prevNotifications = notifications;
+    const prevUnreadCount = unreadCount;
+    // Optimistic update
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
-  }, []);
+    try {
+      await api.notification.markAllRead();
+    } catch (e) {
+      // Rollback on failure
+      setNotifications(prevNotifications);
+      setUnreadCount(prevUnreadCount);
+      throw e;
+    }
+  }, [notifications, unreadCount]);
 
   useEffect(() => {
     fetchNotifications();
