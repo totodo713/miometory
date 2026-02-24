@@ -18,6 +18,10 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const notificationsRef = useRef(notifications);
+  notificationsRef.current = notifications;
+  const unreadCountRef = useRef(unreadCount);
+  unreadCountRef.current = unreadCount;
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -32,15 +36,33 @@ export function useNotifications() {
   }, []);
 
   const markRead = useCallback(async (id: string) => {
-    await api.notification.markRead(id);
+    // Optimistic update
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
     setUnreadCount((prev) => Math.max(0, prev - 1));
+    try {
+      await api.notification.markRead(id);
+    } catch (e) {
+      // Rollback on failure
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)));
+      setUnreadCount((prev) => prev + 1);
+      throw e;
+    }
   }, []);
 
   const markAllRead = useCallback(async () => {
-    await api.notification.markAllRead();
+    const prevNotifications = notificationsRef.current;
+    const prevUnreadCount = unreadCountRef.current;
+    // Optimistic update
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
+    try {
+      await api.notification.markAllRead();
+    } catch (e) {
+      // Rollback on failure
+      setNotifications(prevNotifications);
+      setUnreadCount(prevUnreadCount);
+      throw e;
+    }
   }, []);
 
   useEffect(() => {

@@ -171,11 +171,10 @@ export default function NotificationsPage() {
 
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.isRead) {
-      try {
-        await api.notification.markRead(notification.id);
-      } catch {
-        toast.error("既読処理に失敗しました");
-      }
+      // Fire-and-forget: don't block navigation for mark-read
+      api.notification.markRead(notification.id).catch(() => {
+        // Silent — next poll will re-sync
+      });
     }
     if (notification.referenceId) {
       router.push(`/worklog/approval?id=${notification.referenceId}`);
