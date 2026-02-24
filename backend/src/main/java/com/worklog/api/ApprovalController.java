@@ -11,12 +11,14 @@ import com.worklog.application.approval.RejectMonthCommand;
 import com.worklog.application.approval.SubmitMonthForApprovalCommand;
 import com.worklog.domain.approval.MonthlyApproval;
 import com.worklog.domain.approval.MonthlyApprovalId;
+import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.shared.FiscalMonthPeriod;
 import com.worklog.infrastructure.projection.ApprovalQueueData;
 import com.worklog.infrastructure.projection.ApprovalQueueProjection;
 import com.worklog.infrastructure.repository.JdbcApprovalRepository;
+import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,14 +43,17 @@ public class ApprovalController {
     private final ApprovalService approvalService;
     private final ApprovalQueueProjection approvalQueueProjection;
     private final JdbcApprovalRepository approvalRepository;
+    private final JdbcMemberRepository memberRepository;
 
     public ApprovalController(
             ApprovalService approvalService,
             ApprovalQueueProjection approvalQueueProjection,
-            JdbcApprovalRepository approvalRepository) {
+            JdbcApprovalRepository approvalRepository,
+            JdbcMemberRepository memberRepository) {
         this.approvalService = approvalService;
         this.approvalQueueProjection = approvalQueueProjection;
         this.approvalRepository = approvalRepository;
+        this.memberRepository = memberRepository;
     }
 
     /**
@@ -234,7 +239,12 @@ public class ApprovalController {
                 a.getSubmittedAt(),
                 a.getReviewedAt(),
                 a.getReviewedBy() != null ? a.getReviewedBy().value() : null,
-                null, // TODO: Fetch reviewer name from member repository
+                a.getReviewedBy() != null
+                        ? memberRepository
+                                .findById(a.getReviewedBy())
+                                .map(Member::getDisplayName)
+                                .orElse(null)
+                        : null,
                 a.getRejectionReason());
 
         return ResponseEntity.ok(response);

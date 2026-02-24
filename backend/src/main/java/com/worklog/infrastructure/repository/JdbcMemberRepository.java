@@ -8,9 +8,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -283,6 +287,33 @@ public class JdbcMemberRepository {
             """;
 
         return jdbcTemplate.query(sql, new MemberRowMapper(), organizationId.value());
+    }
+
+    /**
+     * Batch lookup of display names by member IDs.
+     * Returns a map from MemberId to display name.
+     * IDs not found in the database are omitted from the result.
+     *
+     * @param ids Set of member IDs to look up
+     * @return Map from MemberId to display name (missing IDs are omitted)
+     */
+    public Map<MemberId, String> findDisplayNamesByIds(Set<MemberId> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+
+        String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String sql = "SELECT id, display_name FROM members WHERE id IN (" + placeholders + ")";
+        Object[] params = ids.stream().map(MemberId::value).toArray();
+
+        Map<MemberId, String> result = new HashMap<>();
+        jdbcTemplate.query(
+                sql,
+                rs -> {
+                    result.put(MemberId.of(rs.getObject("id", UUID.class)), rs.getString("display_name"));
+                },
+                params);
+        return result;
     }
 
     /**

@@ -3,6 +3,7 @@ package com.worklog.api;
 import com.worklog.api.dto.DailyCalendarEntry;
 import com.worklog.api.dto.MonthlyCalendarResponse;
 import com.worklog.domain.approval.MonthlyApproval;
+import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.shared.FiscalMonthPeriod;
@@ -12,6 +13,7 @@ import com.worklog.infrastructure.projection.MonthlySummaryData;
 import com.worklog.infrastructure.projection.MonthlySummaryProjection;
 import com.worklog.infrastructure.repository.JdbcApprovalRepository;
 import com.worklog.infrastructure.repository.JdbcDailyRejectionLogRepository;
+import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
@@ -36,16 +38,19 @@ public class CalendarController {
     private final MonthlySummaryProjection summaryProjection;
     private final JdbcApprovalRepository approvalRepository;
     private final JdbcDailyRejectionLogRepository dailyRejectionLogRepository;
+    private final JdbcMemberRepository memberRepository;
 
     public CalendarController(
             MonthlyCalendarProjection calendarProjection,
             MonthlySummaryProjection summaryProjection,
             JdbcApprovalRepository approvalRepository,
-            JdbcDailyRejectionLogRepository dailyRejectionLogRepository) {
+            JdbcDailyRejectionLogRepository dailyRejectionLogRepository,
+            JdbcMemberRepository memberRepository) {
         this.calendarProjection = calendarProjection;
         this.summaryProjection = summaryProjection;
         this.approvalRepository = approvalRepository;
         this.dailyRejectionLogRepository = dailyRejectionLogRepository;
+        this.memberRepository = memberRepository;
     }
 
     /**
@@ -98,7 +103,12 @@ public class CalendarController {
                                 a.getStatus().toString(),
                                 a.getRejectionReason(),
                                 a.getReviewedBy() != null ? a.getReviewedBy().value() : null,
-                                null, // TODO: Fetch reviewer name from member repository
+                                a.getReviewedBy() != null
+                                        ? memberRepository
+                                                .findById(a.getReviewedBy())
+                                                .map(Member::getDisplayName)
+                                                .orElse(null)
+                                        : null,
                                 a.getReviewedAt()))
                 .orElse(null);
 
@@ -142,7 +152,10 @@ public class CalendarController {
 
         MonthlyCalendarResponse response = new MonthlyCalendarResponse(
                 memberId,
-                "Member Name", // TODO: Fetch from member repository
+                memberRepository
+                        .findById(MemberId.of(memberId))
+                        .map(Member::getDisplayName)
+                        .orElse(null),
                 periodStart,
                 periodEnd,
                 entries,

@@ -1,9 +1,14 @@
 package com.worklog.api;
 
 import com.worklog.api.dto.DailyRejectionResponse;
+import com.worklog.domain.member.MemberId;
 import com.worklog.infrastructure.repository.JdbcDailyRejectionLogRepository;
+import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +22,12 @@ import org.springframework.web.bind.annotation.*;
 public class RejectionController {
 
     private final JdbcDailyRejectionLogRepository dailyRejectionLogRepository;
+    private final JdbcMemberRepository memberRepository;
 
-    public RejectionController(JdbcDailyRejectionLogRepository dailyRejectionLogRepository) {
+    public RejectionController(
+            JdbcDailyRejectionLogRepository dailyRejectionLogRepository, JdbcMemberRepository memberRepository) {
         this.dailyRejectionLogRepository = dailyRejectionLogRepository;
+        this.memberRepository = memberRepository;
     }
 
     /**
@@ -35,12 +43,20 @@ public class RejectionController {
         List<JdbcDailyRejectionLogRepository.DailyRejectionRecord> records =
                 dailyRejectionLogRepository.findByMemberIdAndDateRange(memberId, startDate, endDate);
 
+        // Batch resolve rejector display names
+        Set<MemberId> rejectorIds = records.stream()
+                .map(JdbcDailyRejectionLogRepository.DailyRejectionRecord::rejectedBy)
+                .filter(Objects::nonNull)
+                .map(MemberId::of)
+                .collect(Collectors.toSet());
+        Map<MemberId, String> rejectorNames = memberRepository.findDisplayNamesByIds(rejectorIds);
+
         List<DailyRejectionResponse.DailyRejectionItem> items = records.stream()
                 .map(r -> new DailyRejectionResponse.DailyRejectionItem(
                         r.workDate(),
                         r.rejectionReason(),
                         r.rejectedBy(),
-                        null, // TODO: Fetch rejectedByName from member repository
+                        r.rejectedBy() != null ? rejectorNames.get(MemberId.of(r.rejectedBy())) : null,
                         r.createdAt()))
                 .collect(Collectors.toList());
 
