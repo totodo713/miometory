@@ -4,7 +4,7 @@
  * Calendar Component
  *
  * Displays a monthly calendar view with:
- * - Fiscal month period (21st to 20th)
+ * - Fiscal month period (configurable per organization)
  * - Date info (fiscal year, fiscal period, monthly period)
  * - Daily work hour totals
  * - Status indicators (DRAFT/SUBMITTED/APPROVED/REJECTED/MIXED)
@@ -50,8 +50,8 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
   };
 
   // Group dates by week for rendering
-  const weeks: DailyCalendarEntry[][] = [];
-  let currentWeek: DailyCalendarEntry[] = [];
+  const weeks: (DailyCalendarEntry | null)[][] = [];
+  let currentWeek: (DailyCalendarEntry | null)[] = [];
 
   for (const dateEntry of dates) {
     const date = new Date(dateEntry.date);
@@ -66,7 +66,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
     // Add padding at the start of first week
     if (weeks.length === 0 && currentWeek.length === 0 && dayOfWeek > 0) {
       for (let i = 0; i < dayOfWeek; i++) {
-        currentWeek.push(null as unknown as DailyCalendarEntry); // Padding
+        currentWeek.push(null);
       }
     }
 

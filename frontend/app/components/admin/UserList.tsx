@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 interface UserRow {
   id: string;
@@ -39,6 +39,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [accountStatus, setAccountStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   const hasFilters = !!debouncedSearch || !!accountStatus;
@@ -52,6 +53,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const result = await api.admin.users.list({
         page,
@@ -61,13 +63,14 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
       });
       setUsers(result.content);
       setTotalPages(result.totalPages);
-    } catch {
-      // Error handled by API client
+    } catch (err: unknown) {
+      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
     } finally {
       setIsLoading(false);
     }
   }, [page, debouncedSearch, accountStatus]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {
     loadUsers();
   }, [loadUsers, refreshKey]);
@@ -102,7 +105,14 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
         </select>
       </div>
 
-      {isLoading ? (
+      {loadError ? (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+          <p className="text-sm text-red-800">{loadError}</p>
+          <button type="button" onClick={loadUsers} className="mt-2 text-sm text-red-600 hover:text-red-800 underline">
+            再試行
+          </button>
+        </div>
+      ) : isLoading ? (
         <Skeleton.Table rows={5} cols={7} />
       ) : users.length === 0 ? (
         <EmptyState
@@ -120,14 +130,14 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
               <div key={user.id} className="border border-gray-200 rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-900">{user.name}</span>
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.className}`}
-                  >
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.className}`}>
                     {statusInfo.label}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500">{user.email}</p>
-                <p className="text-xs text-gray-500">{user.roleName} / {user.tenantName ?? "—"}</p>
+                <p className="text-xs text-gray-500">
+                  {user.roleName} / {user.tenantName ?? "—"}
+                </p>
                 <div className="flex gap-2 pt-1">
                   <button
                     type="button"

@@ -5,7 +5,7 @@ import { ToastProvider } from "@/components/shared/ToastProvider";
 import { api } from "@/services/api";
 
 function renderWithProviders(ui: ReactElement) {
-	return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(<ToastProvider>{ui}</ToastProvider>);
 }
 
 vi.mock("next/link", () => ({
@@ -29,7 +29,20 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => mockSearchParams,
 }));
 
+const { MockApiError } = vi.hoisted(() => {
+  class MockApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+    }
+  }
+  return { MockApiError };
+});
+
 vi.mock("@/services/api", () => ({
+  ApiError: MockApiError,
   api: { auth: { confirmPasswordReset: vi.fn() } },
 }));
 
@@ -40,10 +53,10 @@ vi.mock("@/components/auth/PasswordStrengthIndicator", () => ({
 }));
 
 async function renderAndWaitForForm() {
-	renderWithProviders(<PasswordResetConfirmPage />);
-	await waitFor(() => {
-		expect(screen.getByLabelText(/新しいパスワード/)).toBeInTheDocument();
-	});
+  renderWithProviders(<PasswordResetConfirmPage />);
+  await waitFor(() => {
+    expect(screen.getByLabelText(/新しいパスワード/)).toBeInTheDocument();
+  });
 }
 
 async function fillAndSubmit(newPass: string, confirmPass: string) {
@@ -149,7 +162,7 @@ describe("PasswordResetConfirmPage", () => {
 
   describe("Error handling", () => {
     test("shows expired token error for 404 response", async () => {
-      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue({ status: 404, message: "Token expired" });
+      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue(new MockApiError("Token expired", 404));
       await renderAndWaitForForm();
       await fillAndSubmit("ValidPass1", "ValidPass1");
       await waitFor(() => {
@@ -158,7 +171,7 @@ describe("PasswordResetConfirmPage", () => {
     });
 
     test("shows link to /password-reset/request for expired token", async () => {
-      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue({ status: 404, message: "Token expired" });
+      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue(new MockApiError("Token expired", 404));
       await renderAndWaitForForm();
       await fillAndSubmit("ValidPass1", "ValidPass1");
       await waitFor(() => {
@@ -168,10 +181,9 @@ describe("PasswordResetConfirmPage", () => {
     });
 
     test("shows validation error for 400 response", async () => {
-      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue({
-        status: 400,
-        message: "パスワードが要件を満たしていません。",
-      });
+      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue(
+        new MockApiError("パスワードが要件を満たしていません。", 400),
+      );
       await renderAndWaitForForm();
       await fillAndSubmit("ValidPass1", "ValidPass1");
       await waitFor(() => {
@@ -180,7 +192,7 @@ describe("PasswordResetConfirmPage", () => {
     });
 
     test("shows network error with retry option", async () => {
-      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue({ status: undefined });
+      vi.mocked(api.auth.confirmPasswordReset).mockRejectedValue(new TypeError("Failed to fetch"));
       await renderAndWaitForForm();
       await fillAndSubmit("ValidPass1", "ValidPass1");
       await waitFor(() => {

@@ -179,10 +179,7 @@ export function MonthlyApprovalSummaryView({
           </table>
         </div>
       ) : (
-        <EmptyState
-          title="承認データがありません"
-          description="承認が必要なデータがありません"
-        />
+        <EmptyState title="承認データがありません" description="承認が必要なデータがありません" />
       )}
     </div>
   );

@@ -4,9 +4,9 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Header } from "./components/shared/Header";
+import { ToastProvider } from "./components/shared/ToastProvider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { SessionProvider } from "./providers/SessionProvider";
-import { ToastProvider } from "./components/shared/ToastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

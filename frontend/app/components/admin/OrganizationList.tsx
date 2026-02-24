@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import type { OrganizationRow } from "@/services/api";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 interface OrganizationListProps {
   onEdit: (org: OrganizationRow) => void;
@@ -23,6 +23,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
 
   const loadOrganizations = useCallback(async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const result = await api.admin.organizations.list({
         page,
@@ -43,8 +45,8 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
       });
       setOrganizations(result.content);
       setTotalPages(result.totalPages);
-    } catch {
-      // Error handled by API client
+    } catch (err: unknown) {
+      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
     } finally {
       setIsLoading(false);
     }
@@ -75,7 +77,18 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
         </label>
       </div>
 
-      {isLoading ? (
+      {loadError ? (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+          <p className="text-sm text-red-800">{loadError}</p>
+          <button
+            type="button"
+            onClick={loadOrganizations}
+            className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+          >
+            再試行
+          </button>
+        </div>
+      ) : isLoading ? (
         <Skeleton.Table rows={5} cols={7} />
       ) : organizations.length === 0 ? (
         <EmptyState
@@ -85,6 +98,8 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
       ) : isMobile ? (
         <div className="space-y-3">
           {organizations.map((org) => (
+            // biome-ignore lint/a11y/useKeyWithClickEvents: click handler for org selection
+            // biome-ignore lint/a11y/noStaticElementInteractions: interactive card for org selection
             <div
               key={org.id}
               className="border border-gray-200 rounded-lg p-4 space-y-2"
@@ -102,7 +117,9 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                 </span>
               </div>
               <p className="text-xs text-gray-500 font-mono">{org.code}</p>
-              <p className="text-xs text-gray-500">レベル: {org.level} / 親組織: {org.parentName || "—"} / メンバー: {org.memberCount}</p>
+              <p className="text-xs text-gray-500">
+                レベル: {org.level} / 親組織: {org.parentName || "—"} / メンバー: {org.memberCount}
+              </p>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"

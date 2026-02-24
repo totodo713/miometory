@@ -1,8 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { ToastProvider } from "@/components/shared/ToastProvider";
 import { OrganizationForm } from "@/components/admin/OrganizationForm";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 import type { OrganizationRow } from "@/services/api";
 
 const mockCreate = vi.fn();
@@ -32,7 +32,7 @@ vi.mock("@/services/api", () => ({
 }));
 
 function renderWithProviders(ui: ReactElement) {
-	return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(<ToastProvider>{ui}</ToastProvider>);
 }
 
 const parentOrg: OrganizationRow = {

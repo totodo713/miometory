@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
 import { useToast } from "@/hooks/useToast";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -38,8 +38,13 @@ export default function SignupPage() {
       toast.success("登録が完了しました");
       router.push("/signup/confirm");
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "登録に失敗しました";
-      toast.error(message);
+      if (err instanceof ApiError && err.status === 409) {
+        toast.error("このメールアドレスは既に登録されています");
+      } else if (err instanceof ApiError) {
+        toast.error(err.message);
+      } else {
+        toast.error("ネットワークエラーが発生しました");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -99,9 +104,7 @@ export default function SignupPage() {
               disabled={isSubmitting}
               required
             />
-            {passwordMismatch && (
-              <p className="mt-1 text-sm text-red-600">パスワードが一致しません</p>
-            )}
+            {passwordMismatch && <p className="mt-1 text-sm text-red-600">パスワードが一致しません</p>}
           </div>
 
           <button

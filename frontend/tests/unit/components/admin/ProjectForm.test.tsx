@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { ToastProvider } from "@/components/shared/ToastProvider";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import type { ProjectRow } from "@/components/admin/ProjectList";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 
 const mockCreate = vi.fn();
 const mockUpdate = vi.fn();
@@ -30,7 +30,7 @@ vi.mock("@/services/api", () => ({
 }));
 
 function renderWithProviders(ui: ReactElement) {
-	return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(<ToastProvider>{ui}</ToastProvider>);
 }
 
 const existingProject: ProjectRow = {
@@ -227,7 +227,6 @@ describe("ProjectForm", () => {
   });
 
   test("disables submit button while submitting", async () => {
-    // biome-ignore lint/style/useConst: reassigned in promise callback
     let resolveCreate: ((value: unknown) => void) | undefined;
     mockCreate.mockReturnValue(
       new Promise((resolve) => {

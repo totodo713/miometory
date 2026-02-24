@@ -740,8 +740,7 @@ export const api = {
     signup: (email: string, password: string) =>
       apiClient.post<void>("/api/v1/auth/signup", { email, password }, { skipAuth: true }),
 
-    verifyEmail: (token: string) =>
-      apiClient.post<void>("/api/v1/auth/verify-email", { token }, { skipAuth: true }),
+    verifyEmail: (token: string) => apiClient.post<void>("/api/v1/auth/verify-email", { token }, { skipAuth: true }),
   },
 
   /**
@@ -1125,6 +1124,8 @@ export async function checkAuth(): Promise<boolean> {
       return false;
     }
     // Other errors (network, etc.) - assume authenticated
+    // biome-ignore lint/suspicious/noConsole: intentional warning for auth diagnostics
+    console.warn("checkAuth: non-auth error occurred, assuming authenticated:", error);
     return true;
   }
 }

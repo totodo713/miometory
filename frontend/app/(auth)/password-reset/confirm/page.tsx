@@ -28,7 +28,7 @@ import { useToast } from "@/hooks/useToast";
 import type { ErrorState, ValidationError } from "@/lib/types/password-reset";
 import type { PasswordStrengthResult } from "@/lib/validation/password";
 import { validatePasswordConfirm } from "@/lib/validation/password";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
 // sessionStorage key for token backup
 const TOKEN_STORAGE_KEY = "password_reset_token";
@@ -189,8 +189,9 @@ function PasswordResetConfirmForm() {
       // Clear token from sessionStorage on success
       try {
         sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-      } catch (_e) {
-        // Ignore errors
+      } catch (e) {
+        // biome-ignore lint/suspicious/noConsole: intentional warning for storage diagnostics
+        console.warn("Failed to clear token from sessionStorage:", e);
       }
 
       // Show success message and start countdown
@@ -198,48 +199,38 @@ function PasswordResetConfirmForm() {
       setRedirectCountdown(3);
       toast.success("パスワードを変更しました");
     } catch (err: unknown) {
-      // Classify error and show appropriate message
-      const apiError = err as {
-        status?: number;
-        message?: string;
-        errorCode?: string;
-      };
+      if (err instanceof ApiError) {
+        if (err.status === 404) {
+          setError({
+            type: "expired_token",
+            message: "リンクの有効期限が切れています。パスワードリセットを再度リクエストしてください。",
+            isRetryable: false,
+          });
 
-      if (apiError.status === 404) {
-        // Invalid or expired token
-        setError({
-          type: "expired_token",
-          message: "リンクの有効期限が切れています。パスワードリセットを再度リクエストしてください。",
-          isRetryable: false,
-          errorCode: apiError.errorCode,
-        });
-
-        // Clear invalid token from sessionStorage
-        try {
-          sessionStorage.removeItem(TOKEN_STORAGE_KEY);
-        } catch (_e) {
-          // Ignore errors
+          // Clear invalid token from sessionStorage
+          try {
+            sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+          } catch {
+            // Ignore sessionStorage errors
+          }
+        } else if (err.status === 400) {
+          setError({
+            type: "validation",
+            message: err.message || "パスワードが要件を満たしていません。",
+            isRetryable: false,
+          });
+        } else {
+          setError({
+            type: "server",
+            message: "サーバーエラーが発生しました。しばらくしてから再試行してください。",
+            isRetryable: true,
+          });
         }
-      } else if (apiError.status === 400) {
-        // Validation error from backend
-        setError({
-          type: "validation",
-          message: apiError.message || "パスワードが要件を満たしていません。",
-          isRetryable: false,
-          errorCode: apiError.errorCode,
-        });
-      } else if (apiError.status === 0 || apiError.status === undefined) {
-        // Network error
+      } else {
+        // Network error or unknown
         setError({
           type: "network",
           message: "ネットワークエラーが発生しました。接続を確認して再試行してください。",
-          isRetryable: true,
-        });
-      } else {
-        // Server error (500, etc.)
-        setError({
-          type: "server",
-          message: "サーバーエラーが発生しました。しばらくしてから再試行してください。",
           isRetryable: true,
         });
       }
@@ -494,9 +485,7 @@ function PasswordResetConfirmForm() {
               required
               aria-invalid={!!(validationErrors.confirmPassword || fieldErrors.confirmPassword)}
               aria-describedby={
-                validationErrors.confirmPassword || fieldErrors.confirmPassword
-                  ? "confirm-password-error"
-                  : undefined
+                validationErrors.confirmPassword || fieldErrors.confirmPassword ? "confirm-password-error" : undefined
               }
               className="input"
               autoComplete="new-password"

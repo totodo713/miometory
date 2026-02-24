@@ -1,21 +1,21 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { ToastProvider } from "@/components/shared/ToastProvider";
 import { ProjectList } from "@/components/admin/ProjectList";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 
 Object.defineProperty(window, "matchMedia", {
-	writable: true,
-	value: vi.fn().mockImplementation((query: string) => ({
-		matches: false,
-		media: query,
-		onchange: null,
-		addListener: vi.fn(),
-		removeListener: vi.fn(),
-		addEventListener: vi.fn(),
-		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn(),
-	})),
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
 });
 
 const mockListProjects = vi.fn();
@@ -51,7 +51,7 @@ const inactiveProject = {
 };
 
 function renderWithProviders(ui: ReactElement) {
-	return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(<ToastProvider>{ui}</ToastProvider>);
 }
 
 const defaultProps = {
@@ -287,7 +287,11 @@ describe("ProjectList", () => {
       expect(mockListProjects).toHaveBeenCalledTimes(1);
     });
 
-    rerender(<ToastProvider><ProjectList {...defaultProps} refreshKey={1} /></ToastProvider>);
+    rerender(
+      <ToastProvider>
+        <ProjectList {...defaultProps} refreshKey={1} />
+      </ToastProvider>,
+    );
 
     await waitFor(() => {
       expect(mockListProjects).toHaveBeenCalledTimes(2);

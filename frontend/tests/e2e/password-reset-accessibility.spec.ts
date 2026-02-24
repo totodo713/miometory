@@ -42,7 +42,7 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
     await page.waitForLoadState("networkidle");
 
     // Check email input has associated label
-    const emailInput = page.locator("#email");
+    const _emailInput = page.locator("#email");
     const labelFor = await page.locator('label[for="email"]').count();
     expect(labelFor).toBeGreaterThan(0);
   });

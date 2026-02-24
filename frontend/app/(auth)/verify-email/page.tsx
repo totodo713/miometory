@@ -4,34 +4,45 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
-import { api } from "@/services/api";
+import { ApiError, api } from "@/services/api";
 
-type VerifyStatus = "loading" | "success" | "error";
+type VerifyStatus = "loading" | "success" | "error" | "network_error";
 
 function VerifyEmailContent() {
   const params = useSearchParams();
   const token = params?.get("token") || "";
   const [status, setStatus] = useState<VerifyStatus>("loading");
 
-  useEffect(() => {
+  const verify = () => {
     if (!token) {
       setStatus("error");
       return;
     }
 
+    setStatus("loading");
     let cancelled = false;
     api.auth
       .verifyEmail(token)
       .then(() => {
         if (!cancelled) setStatus("success");
       })
-      .catch(() => {
-        if (!cancelled) setStatus("error");
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        if (err instanceof ApiError) {
+          setStatus("error");
+        } else {
+          setStatus("network_error");
+        }
       });
 
     return () => {
       cancelled = true;
     };
+  };
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: verify depends on token
+  useEffect(() => {
+    return verify();
   }, [token]);
 
   if (status === "loading") {
@@ -64,6 +75,40 @@ function VerifyEmailContent() {
         >
           ログインページへ
         </Link>
+      </div>
+    );
+  }
+
+  if (status === "network_error") {
+    return (
+      <div className="text-center space-y-4">
+        <div className="flex justify-center">
+          <svg
+            className="h-16 w-16 text-yellow-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900">接続エラー</h1>
+        <p className="text-gray-600" role="alert">
+          サーバーに接続できませんでした。ネットワーク接続を確認してください。
+        </p>
+        <button
+          type="button"
+          onClick={verify}
+          className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          再試行
+        </button>
       </div>
     );
   }

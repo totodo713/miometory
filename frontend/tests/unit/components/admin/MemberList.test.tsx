@@ -1,21 +1,21 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { ToastProvider } from "@/components/shared/ToastProvider";
 import { MemberList } from "@/components/admin/MemberList";
+import { ToastProvider } from "@/components/shared/ToastProvider";
 
 Object.defineProperty(window, "matchMedia", {
-	writable: true,
-	value: vi.fn().mockImplementation((query: string) => ({
-		matches: false,
-		media: query,
-		onchange: null,
-		addListener: vi.fn(),
-		removeListener: vi.fn(),
-		addEventListener: vi.fn(),
-		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn(),
-	})),
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
 });
 
 const mockListMembers = vi.fn();
@@ -51,7 +51,7 @@ const inactiveMember = {
 };
 
 function renderWithProviders(ui: ReactElement) {
-	return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(<ToastProvider>{ui}</ToastProvider>);
 }
 
 const defaultProps = {
@@ -276,7 +276,11 @@ describe("MemberList", () => {
       expect(mockListMembers).toHaveBeenCalledTimes(1);
     });
 
-    rerender(<ToastProvider><MemberList {...defaultProps} refreshKey={1} /></ToastProvider>);
+    rerender(
+      <ToastProvider>
+        <MemberList {...defaultProps} refreshKey={1} />
+      </ToastProvider>,
+    );
 
     await waitFor(() => {
       expect(mockListMembers).toHaveBeenCalledTimes(2);

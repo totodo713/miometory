@@ -53,7 +53,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
   const [addProjectId, setAddProjectId] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  // Load members list
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {
     api.admin.members
       .list({ size: 1000, isActive: true })
@@ -63,7 +63,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
       .catch(() => {});
   }, [refreshKey]);
 
-  // Load projects list
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {
     api.admin.projects
       .list({ size: 1000, isActive: true })
@@ -101,6 +101,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
     }
   }, [viewMode, selectedMemberId, selectedProjectId]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {
     loadAssignments();
   }, [loadAssignments, refreshKey]);

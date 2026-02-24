@@ -29,7 +29,11 @@ export default function AdminOrganizationsPage() {
   const [editingOrg, setEditingOrg] = useState<OrganizationRow | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: "deactivate" | "activate" } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    id: string;
+    action: "deactivate" | "activate" | "removeManager";
+    memberName?: string;
+  } | null>(null);
 
   // Member detail view state (shared between list and tree views)
   const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string } | null>(null);
@@ -37,6 +41,7 @@ export default function AdminOrganizationsPage() {
   const [memberTotalPages, setMemberTotalPages] = useState(0);
   const [memberPage, setMemberPage] = useState(0);
   const [isMembersLoading, setIsMembersLoading] = useState(false);
+  const [membersLoadError, setMembersLoadError] = useState<string | null>(null);
   const [memberRefreshKey, setMemberRefreshKey] = useState(0);
 
   // MemberManagerForm state
@@ -69,6 +74,7 @@ export default function AdminOrganizationsPage() {
   const loadMembers = useCallback(async () => {
     if (!selectedOrg) return;
     setIsMembersLoading(true);
+    setMembersLoadError(null);
     try {
       const result = await api.admin.organizations.listMembers(selectedOrg.id, {
         page: memberPage,
@@ -76,8 +82,8 @@ export default function AdminOrganizationsPage() {
       });
       setMembers(result.content);
       setMemberTotalPages(result.totalPages);
-    } catch {
-      // Error handled by API client
+    } catch (err: unknown) {
+      setMembersLoadError(err instanceof ApiError ? err.message : "メンバーの取得に失敗しました");
     } finally {
       setIsMembersLoading(false);
     }
@@ -165,7 +171,7 @@ export default function AdminOrganizationsPage() {
   }, []);
 
   const executeAction = useCallback(
-    async (target: { id: string; action: "deactivate" | "activate" }) => {
+    async (target: { id: string; action: "deactivate" | "activate" | "removeManager" }) => {
       try {
         if (target.action === "deactivate") {
           const result = await api.admin.organizations.deactivate(target.id);
@@ -174,16 +180,21 @@ export default function AdminOrganizationsPage() {
           } else {
             toast.success("組織を無効化しました");
           }
-        } else {
+          refresh();
+        } else if (target.action === "activate") {
           await api.admin.organizations.activate(target.id);
           toast.success("組織を有効化しました");
+          refresh();
+        } else if (target.action === "removeManager") {
+          await api.admin.members.removeManager(target.id);
+          toast.success("マネージャー割り当てを解除しました");
+          refreshMembers();
         }
-        refresh();
       } catch (err: unknown) {
         toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
       }
     },
-    [refresh, toast],
+    [refresh, refreshMembers, toast],
   );
 
   const handleEdit = useCallback((org: OrganizationRow) => {
@@ -254,18 +265,9 @@ export default function AdminOrganizationsPage() {
     setMemberFormMode("assignManager");
   }, []);
 
-  const handleRemoveManager = useCallback(
-    async (member: OrganizationMemberRow) => {
-      if (!confirm(`${member.displayName} のマネージャー割り当てを解除しますか？`)) return;
-      try {
-        await api.admin.members.removeManager(member.id);
-        refreshMembers();
-      } catch (err: unknown) {
-        alert(err instanceof ApiError ? err.message : "エラーが発生しました");
-      }
-    },
-    [refreshMembers],
-  );
+  const handleRemoveManager = useCallback((member: OrganizationMemberRow) => {
+    setConfirmTarget({ id: member.id, action: "removeManager", memberName: member.displayName });
+  }, []);
 
   const handleTransferOrg = useCallback((member: OrganizationMemberRow) => {
     setTargetMember(member);
@@ -496,7 +498,18 @@ export default function AdminOrganizationsPage() {
 
           {/* Members table */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            {isMembersLoading ? (
+            {membersLoadError ? (
+              <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+                <p className="text-sm text-red-800">{membersLoadError}</p>
+                <button
+                  type="button"
+                  onClick={loadMembers}
+                  className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+                >
+                  再試行
+                </button>
+              </div>
+            ) : isMembersLoading ? (
               <div className="text-center py-8 text-gray-500">読み込み中...</div>
             ) : members.length === 0 ? (
               <div className="text-center py-8 text-gray-500">メンバーが見つかりません</div>
@@ -622,7 +635,7 @@ export default function AdminOrganizationsPage() {
           open={showFiscalYearForm}
           onClose={() => setShowFiscalYearForm(false)}
           onCreated={(pattern) => {
-            setFiscalYearPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId! }]);
+            setFiscalYearPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId ?? "" }]);
             setSelectedFiscalYearPatternId(pattern.id);
             setShowFiscalYearForm(false);
           }}
@@ -635,7 +648,7 @@ export default function AdminOrganizationsPage() {
           open={showMonthlyPeriodForm}
           onClose={() => setShowMonthlyPeriodForm(false)}
           onCreated={(pattern) => {
-            setMonthlyPeriodPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId! }]);
+            setMonthlyPeriodPatterns((prev) => [...prev, { ...pattern, tenantId: adminContext.tenantId ?? "" }]);
             setSelectedMonthlyPeriodPatternId(pattern.id);
             setShowMonthlyPeriodForm(false);
           }}
@@ -645,11 +658,21 @@ export default function AdminOrganizationsPage() {
       <ConfirmDialog
         open={confirmTarget !== null}
         title="確認"
-        message={`この組織を${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`}
-        confirmLabel={confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}
-        variant={confirmTarget?.action === "deactivate" ? "danger" : "warning"}
-        onConfirm={() => {
-          if (confirmTarget) executeAction(confirmTarget);
+        message={
+          confirmTarget?.action === "removeManager"
+            ? `${confirmTarget.memberName} のマネージャー割り当てを解除しますか？`
+            : `この組織を${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`
+        }
+        confirmLabel={
+          confirmTarget?.action === "removeManager"
+            ? "解除"
+            : confirmTarget?.action === "deactivate"
+              ? "無効化"
+              : "有効化"
+        }
+        variant={confirmTarget?.action === "activate" ? "warning" : "danger"}
+        onConfirm={async () => {
+          if (confirmTarget) await executeAction(confirmTarget);
           setConfirmTarget(null);
         }}
         onCancel={() => setConfirmTarget(null)}

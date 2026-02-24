@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import type { OrganizationRow } from "@/services/api";
 import { ApiError, api } from "@/services/api";
-import { useToast } from "@/hooks/useToast";
 
 interface OrganizationFormProps {
   organization: OrganizationRow | null;

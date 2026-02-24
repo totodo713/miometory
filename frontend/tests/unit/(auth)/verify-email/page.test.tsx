@@ -1,12 +1,25 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { MockApiError } = vi.hoisted(() => {
+  class MockApiError extends Error {
+    status: number;
+    constructor(message: string, status: number) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+    }
+  }
+  return { MockApiError };
+});
 
 vi.mock("@/services/api", () => ({
+  ApiError: MockApiError,
   api: { auth: { verifyEmail: vi.fn() } },
 }));
 
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams("token=valid-token"),
+  useSearchParams: vi.fn(() => new URLSearchParams("token=valid-token")),
 }));
 
 vi.mock("next/link", () => ({
@@ -17,12 +30,14 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+import { useSearchParams } from "next/navigation";
 import VerifyEmailPage from "@/(auth)/verify-email/page";
 import { api } from "@/services/api";
 
 describe("VerifyEmailPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (useSearchParams as any).mockReturnValue(new URLSearchParams("token=valid-token"));
   });
 
   it("shows loading state initially", () => {
@@ -51,12 +66,30 @@ describe("VerifyEmailPage", () => {
     expect(loginLink).toHaveAttribute("href", "/login");
   });
 
-  it("shows error state when verification fails", async () => {
-    (api.auth.verifyEmail as any).mockRejectedValue(new Error("invalid"));
+  it("shows error state when verification fails with ApiError", async () => {
+    (api.auth.verifyEmail as any).mockRejectedValue(new MockApiError("invalid", 400));
     render(<VerifyEmailPage />);
     await waitFor(() => {
       expect(screen.getByText(/トークンが無効/)).toBeInTheDocument();
     });
+  });
+
+  it("shows network error state when verification fails with non-ApiError", async () => {
+    (api.auth.verifyEmail as any).mockRejectedValue(new TypeError("Failed to fetch"));
+    render(<VerifyEmailPage />);
+    await waitFor(() => {
+      expect(screen.getByText(/接続エラー/)).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: /再試行/ })).toBeInTheDocument();
+  });
+
+  it("shows error when token is missing", async () => {
+    (useSearchParams as any).mockReturnValue(new URLSearchParams(""));
+    render(<VerifyEmailPage />);
+    await waitFor(() => {
+      expect(screen.getByText(/トークンが無効/)).toBeInTheDocument();
+    });
+    expect(api.auth.verifyEmail).not.toHaveBeenCalled();
   });
 
   it("calls verifyEmail with token from search params", async () => {

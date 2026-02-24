@@ -1,9 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
+import { useToast } from "@/hooks/useToast";
 import { api } from "@/services/api";
 
 interface Notification {
@@ -128,6 +130,8 @@ function TypeIcon({ type }: { type: string }) {
 const PAGE_SIZE = 20;
 
 export default function NotificationsPage() {
+  const router = useRouter();
+  const toast = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<FilterValue>("all");
@@ -145,13 +149,12 @@ export default function NotificationsPage() {
       setTotalPages(data.totalPages ?? 0);
       setTotalElements(data.totalElements);
       setUnreadCount(data.unreadCount);
-    } catch (error: unknown) {
-      // biome-ignore lint/suspicious/noConsole: log API failure for debugging
-      console.error("Failed to load notifications:", error);
+    } catch {
+      toast.error("通知の取得に失敗しました");
     } finally {
       setIsLoading(false);
     }
-  }, [filter, page]);
+  }, [filter, page, toast.error]);
 
   useEffect(() => {
     loadNotifications();
@@ -161,9 +164,8 @@ export default function NotificationsPage() {
     try {
       await api.notification.markAllRead();
       await loadNotifications();
-    } catch (error: unknown) {
-      // biome-ignore lint/suspicious/noConsole: log API failure for debugging
-      console.error("Failed to mark all as read:", error);
+    } catch {
+      toast.error("既読処理に失敗しました");
     }
   };
 
@@ -171,13 +173,12 @@ export default function NotificationsPage() {
     if (!notification.isRead) {
       try {
         await api.notification.markRead(notification.id);
-      } catch (error: unknown) {
-        // biome-ignore lint/suspicious/noConsole: log API failure for debugging
-        console.error("Failed to mark notification as read:", error);
+      } catch {
+        toast.error("既読処理に失敗しました");
       }
     }
     if (notification.referenceId) {
-      window.location.assign(`/worklog/approval?id=${notification.referenceId}`);
+      router.push(`/worklog/approval?id=${notification.referenceId}`);
     } else {
       await loadNotifications();
     }

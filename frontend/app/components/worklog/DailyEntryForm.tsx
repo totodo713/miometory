@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useToast } from "@/hooks/useToast";
-import { ApiError, api } from "../../services/api";
+import { ApiError, api, ConflictError } from "../../services/api";
 import { useProxyMode } from "../../services/worklogStore";
 import type { WorkLogStatus } from "../../types/worklog";
 import { AbsenceForm } from "./AbsenceForm";
@@ -318,7 +318,7 @@ export function DailyEntryForm({
           onSave();
         }
       } catch (error: unknown) {
-        if (error != null && typeof error === "object" && "status" in error && error.status === 409) {
+        if (error instanceof ConflictError) {
           const message = "This entry has been modified by another user. Please refresh and try again.";
           setSaveError(message);
           toast.error(message);

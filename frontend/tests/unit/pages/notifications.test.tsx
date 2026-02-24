@@ -1,6 +1,14 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "@/components/shared/ToastProvider";
+
+const mockPush = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -14,6 +22,10 @@ vi.mock("@/services/api", () => ({
 
 import { api } from "@/services/api";
 import NotificationsPage from "../../../app/notifications/page";
+
+function renderWithProviders(ui: ReactElement) {
+  return render(<ToastProvider>{ui}</ToastProvider>);
+}
 
 describe("NotificationsPage", () => {
   beforeEach(() => {
@@ -43,7 +55,7 @@ describe("NotificationsPage", () => {
   });
 
   it("renders notification list", async () => {
-    render(<NotificationsPage />);
+    renderWithProviders(<NotificationsPage />);
     await waitFor(() => {
       expect(screen.getByText("承認依頼")).toBeInTheDocument();
       expect(screen.getByText("却下通知")).toBeInTheDocument();
@@ -53,7 +65,7 @@ describe("NotificationsPage", () => {
   it("marks all as read", async () => {
     const user = userEvent.setup();
     (api.notification.markAllRead as any).mockResolvedValue(undefined);
-    render(<NotificationsPage />);
+    renderWithProviders(<NotificationsPage />);
     await waitFor(() => {
       expect(screen.getByText("承認依頼")).toBeInTheDocument();
     });

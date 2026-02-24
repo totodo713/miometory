@@ -6,7 +6,7 @@ import { checkRateLimit, getMinutesUntilReset, setupStorageListener } from "@/li
 import { api } from "@/services/api";
 
 function renderWithProviders(ui: ReactElement) {
-	return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(<ToastProvider>{ui}</ToastProvider>);
 }
 
 vi.mock("next/link", () => ({

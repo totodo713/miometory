@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
-import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import type { UserRow } from "@/components/admin/UserList";
 import { UserList } from "@/components/admin/UserList";
+import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
@@ -17,7 +17,11 @@ export default function AdminUsersPage() {
   const [lockDuration, setLockDuration] = useState("60");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [confirmTarget, setConfirmTarget] = useState<{ id: string; name: string; action: "unlock" | "resetPassword" } | null>(null);
+  const [confirmTarget, setConfirmTarget] = useState<{
+    id: string;
+    name: string;
+    action: "unlock" | "resetPassword";
+  } | null>(null);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -216,8 +220,8 @@ export default function AdminUsersPage() {
         message={`${confirmTarget?.name ?? ""} の${confirmTarget?.action === "unlock" ? "ロックを解除" : "パスワードを初期化"}しますか？`}
         confirmLabel={confirmTarget?.action === "unlock" ? "ロック解除" : "PW初期化"}
         variant={confirmTarget?.action === "unlock" ? "warning" : "danger"}
-        onConfirm={() => {
-          if (confirmTarget) executeAction(confirmTarget);
+        onConfirm={async () => {
+          if (confirmTarget) await executeAction(confirmTarget);
           setConfirmTarget(null);
         }}
         onCancel={() => setConfirmTarget(null)}

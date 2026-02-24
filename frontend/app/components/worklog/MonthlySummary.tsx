@@ -253,10 +253,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
 
       {/* Empty State */}
       {summary.projects.length === 0 && (
-        <EmptyState
-          title="月次サマリーがありません"
-          description="まだ勤務データが登録されていません"
-        />
+        <EmptyState title="月次サマリーがありません" description="まだ勤務データが登録されていません" />
       )}
     </div>
   );
