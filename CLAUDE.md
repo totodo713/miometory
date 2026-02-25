@@ -39,9 +39,14 @@ Before creating a PR (`gh pr create` or MCP `create_pull_request`):
    - Run frontend tests: `cd frontend && npm test -- --run` (if frontend files changed)
    - Check coverage: 80%+ LINE coverage per changed package (JaCoCo for backend)
    - Report results to user with lint/format + test pass/fail summary and coverage metrics
-3. After all checks pass, invoke `e2e-test-engineer` agent to review E2E test coverage
+3. After all checks pass, invoke three review agents **in parallel**:
+   - `build-integrity-verifier` — build configuration, dependency changes, structural impacts
+   - `qa-ux-guardian` — UI quality, UX consistency, information architecture, accessibility
+   - `security-reviewer` — authentication, authorization, tenant isolation, injection, data exposure
+   - ALL three must APPROVE. If ANY rejects, fix issues and re-run only the rejected reviewers
+4. After step 3 passes, invoke `e2e-test-engineer` to review E2E test coverage
    - If APPROVED → proceed. If REJECTED → implement recommended E2E tests, then proceed
-4. After all checks pass and e2e-test-engineer approves: `touch .claude/.pr-tests-verified` then retry PR creation
+5. After all checks and reviews pass: `touch .claude/.pr-tests-verified` then retry PR creation
 4. The verification flag expires after 30 minutes and is single-use (removed after PR creation)
 
 ## Git Safety

@@ -105,16 +105,31 @@ Before creating a PR, you MUST complete ALL of the following steps:
    - Coverage metrics for changed packages
    - Any warnings (missing tests, low coverage areas, lint warnings)
 
-7. If steps 1-6 ALL pass, invoke the e2e-test-engineer agent for E2E test review:
+7. If steps 1-6 ALL pass, invoke the following three review agents IN PARALLEL:
+   - Task(subagent_type="build-integrity-verifier"): Verify that the changes do not break the build.
+     Check build configuration, dependency changes, and structural impacts.
+     Output APPROVED or REJECTED with reasons.
+   - Task(subagent_type="qa-ux-guardian"): Review changed UI components and user-facing features
+     for quality, UX consistency, information architecture, and accessibility.
+     Output APPROVED or REJECTED with reasons.
+   - Task(subagent_type="security-reviewer"): Review changed code for security vulnerabilities —
+     authentication, authorization, tenant isolation, injection, and data exposure.
+     Output APPROVED or REJECTED with reasons.
+
+   After all three return:
+   - If ALL APPROVED → proceed to step 8
+   - If ANY REJECTED → address the issues, then re-run only the rejected reviewers
+
+8. After step 7 passes, invoke the e2e-test-engineer agent for E2E test review:
    Task(subagent_type="e2e-test-engineer"): Review the changed files and existing E2E tests.
    Assess whether the changes require new or updated E2E tests, identify gaps in E2E coverage,
    and output APPROVED (E2E coverage is adequate) or REJECTED (specific E2E tests needed).
-   - If APPROVED → proceed to step 8
-   - If REJECTED → implement the recommended E2E tests, re-run them, then proceed to step 8
+   - If APPROVED → proceed to step 9
+   - If REJECTED → implement the recommended E2E tests, re-run them, then proceed to step 9
 
-8. If ALL checks pass and e2e-test-engineer approves, create the verification flag:
+9. If ALL checks and reviews pass, create the verification flag:
    touch .claude/.pr-tests-verified
 
-9. Then RETRY the PR creation command.
+10. Then RETRY the PR creation command.
 BLOCK_MSG
 exit 2
