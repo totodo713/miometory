@@ -8,8 +8,46 @@
 - `auto-test-on-edit.sh` (PostToolUse): Runs relevant tests when source/test files are edited
 - `git-safety-check.sh` (PreToolUse): Blocks dangerous git patterns (force push, --no-verify, branch -D, checkout ., reset --hard, clean, config)
 - `sensitive-file-guard.sh` (PreToolUse): Blocks Write/Edit to sensitive files (.env, credentials, secrets)
+- `require-plan-review.sh` (PostToolUse): Detects plan file writes and mandates multi-agent review (CPO + security + UX)
+- `pre-pr-test-gate.sh` (PreToolUse): Blocks PR creation until lint, format, tests, and coverage pass
 - Hook pattern: read JSON from stdin → parse with `python3` → exit 0 (allow) or exit 2 (block)
 - New hooks should follow fail-open principle (exit 0 on parse errors)
+
+## Plan Review Workflow (MANDATORY)
+
+After creating any plan file (`plan.md`, `tasks.md`):
+1. The `require-plan-review.sh` PostToolUse hook will automatically detect the write and inject a review directive
+2. You MUST invoke three review agents **in parallel** using the Task tool:
+   - `chief-product-officer` — product feasibility, spec alignment, feature completeness
+   - `security-reviewer` — security risks, auth/authz, tenant isolation, injection
+   - `ux-design-advisor` — UX quality, accessibility, user flow, responsive design
+3. After all three return, synthesize: ALL must APPROVE before implementation proceeds
+4. If ANY reviewer returns REJECTED, revise the plan and re-run only the rejected reviewers
+5. Do NOT use Write/Edit on source files until all three approve
+
+This workflow cannot be skipped even if the user asks to proceed without review.
+
+## Pre-PR Verification (MANDATORY)
+
+Before creating a PR (`gh pr create` or MCP `create_pull_request`):
+1. The `pre-pr-test-gate.sh` PreToolUse hook will **block** PR creation until all checks pass
+2. You MUST complete these steps before retrying:
+   - Identify changed files with `git diff main...HEAD --name-only`
+   - Run lint/format: backend `./gradlew checkFormat && ./gradlew detekt`, frontend `npx biome ci`
+   - Verify corresponding test files exist for each changed source file
+   - Run backend tests: `cd backend && ./gradlew test jacocoTestReport` (if backend files changed)
+   - Run frontend tests: `cd frontend && npm test -- --run` (if frontend files changed)
+   - Check coverage: 80%+ LINE coverage per changed package (JaCoCo for backend)
+   - Report results to user with lint/format + test pass/fail summary and coverage metrics
+3. After all checks pass, invoke three review agents **in parallel**:
+   - `build-integrity-verifier` — build configuration, dependency changes, structural impacts
+   - `qa-ux-guardian` — UI quality, UX consistency, information architecture, accessibility
+   - `security-reviewer` — authentication, authorization, tenant isolation, injection, data exposure
+   - ALL three must APPROVE. If ANY rejects, fix issues and re-run only the rejected reviewers
+4. After step 3 passes, invoke `e2e-test-engineer` to review E2E test coverage
+   - If APPROVED → proceed. If REJECTED → implement recommended E2E tests, then proceed
+5. After all checks and reviews pass: `touch .claude/.pr-tests-verified` then retry PR creation
+4. The verification flag expires after 30 minutes and is single-use (removed after PR creation)
 
 ## Git Safety
 

@@ -143,6 +143,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash|mcp__plugin_github_github__create_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-pr-test-gate.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -163,6 +173,11 @@
             "type": "command",
             "command": ".claude/hooks/typecheck-on-edit.sh",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/require-plan-review.sh",
+            "timeout": 5
           }
         ]
       }
