@@ -8,8 +8,19 @@
 - `auto-test-on-edit.sh` (PostToolUse): Runs relevant tests when source/test files are edited
 - `git-safety-check.sh` (PreToolUse): Blocks dangerous git patterns (force push, --no-verify, branch -D, checkout ., reset --hard, clean, config)
 - `sensitive-file-guard.sh` (PreToolUse): Blocks Write/Edit to sensitive files (.env, credentials, secrets)
+- `require-plan-review.sh` (PostToolUse): Detects plan file writes and mandates plan-reviewer agent invocation
 - Hook pattern: read JSON from stdin → parse with `python3` → exit 0 (allow) or exit 2 (block)
 - New hooks should follow fail-open principle (exit 0 on parse errors)
+
+## Plan Review Workflow (MANDATORY)
+
+After creating any plan file (`plan.md`, `tasks.md`):
+1. The `require-plan-review.sh` PostToolUse hook will automatically detect the write and inject a review directive
+2. You MUST invoke the `plan-reviewer` subagent (`Task` tool with `subagent_type="plan-reviewer"`) before writing any implementation code
+3. Do NOT use Write/Edit on source files until plan-reviewer returns `PLAN APPROVED`
+4. If the reviewer returns `PLAN REJECTED`, revise the plan and re-invoke the reviewer
+
+This workflow cannot be skipped even if the user asks to proceed without review.
 
 ## Git Safety
 
