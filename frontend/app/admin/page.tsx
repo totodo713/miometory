@@ -4,6 +4,53 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useAdminContext } from "@/providers/AdminProvider";
 
+interface CardDef {
+  permission: string;
+  titleKey: string;
+  descriptionKey: string;
+  href: string;
+}
+
+const CARDS: CardDef[] = [
+  {
+    permission: "member.view",
+    titleKey: "members",
+    descriptionKey: "cards.membersDescription",
+    href: "/admin/members",
+  },
+  {
+    permission: "project.view",
+    titleKey: "projects",
+    descriptionKey: "cards.projectsDescription",
+    href: "/admin/projects",
+  },
+  {
+    permission: "assignment.view",
+    titleKey: "assignments",
+    descriptionKey: "cards.assignmentsDescription",
+    href: "/admin/assignments",
+  },
+  {
+    permission: "daily_approval.view",
+    titleKey: "dailyApproval",
+    descriptionKey: "cards.dailyApprovalDescription",
+    href: "/worklog/daily-approval",
+  },
+  {
+    permission: "organization.view",
+    titleKey: "organizations",
+    descriptionKey: "cards.organizationsDescription",
+    href: "/admin/organizations",
+  },
+  {
+    permission: "tenant.view",
+    titleKey: "tenants",
+    descriptionKey: "cards.tenantsDescription",
+    href: "/admin/tenants",
+  },
+  { permission: "user.view", titleKey: "users", descriptionKey: "cards.usersDescription", href: "/admin/users" },
+];
+
 export default function AdminDashboard() {
   const t = useTranslations("admin.dashboard");
   const tn = useTranslations("admin.nav");
@@ -11,44 +58,24 @@ export default function AdminDashboard() {
 
   if (!adminContext) return null;
 
+  const visibleCards = CARDS.filter((c) => hasPermission(c.permission));
+  const gridClass =
+    visibleCards.length <= 2
+      ? "grid grid-cols-1 md:grid-cols-2 gap-4"
+      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("title")}</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {hasPermission("member.view") && (
-          <DashboardCard title={tn("members")} description={t("cards.membersDescription")} href="/admin/members" />
-        )}
-        {hasPermission("project.view") && (
-          <DashboardCard title={tn("projects")} description={t("cards.projectsDescription")} href="/admin/projects" />
-        )}
-        {hasPermission("assignment.view") && (
+      <div className={gridClass}>
+        {visibleCards.map((card) => (
           <DashboardCard
-            title={tn("assignments")}
-            description={t("cards.assignmentsDescription")}
-            href="/admin/assignments"
+            key={card.href}
+            title={tn(card.titleKey)}
+            description={t(card.descriptionKey)}
+            href={card.href}
           />
-        )}
-        {hasPermission("daily_approval.view") && (
-          <DashboardCard
-            title={tn("dailyApproval")}
-            description={t("cards.dailyApprovalDescription")}
-            href="/worklog/daily-approval"
-          />
-        )}
-        {hasPermission("organization.view") && (
-          <DashboardCard
-            title={tn("organizations")}
-            description={t("cards.organizationsDescription")}
-            href="/admin/organizations"
-          />
-        )}
-        {hasPermission("tenant.view") && (
-          <DashboardCard title={tn("tenants")} description={t("cards.tenantsDescription")} href="/admin/tenants" />
-        )}
-        {hasPermission("user.view") && (
-          <DashboardCard title={tn("users")} description={t("cards.usersDescription")} href="/admin/users" />
-        )}
+        ))}
       </div>
     </div>
   );
