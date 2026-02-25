@@ -469,6 +469,127 @@ class UserTest {
     }
 
     @Nested
+    @DisplayName("Locale Preferences")
+    inner class LocalePreferences {
+        @Test
+        fun `new user has default locale ja`() {
+            // Arrange & Act
+            val user =
+                User.create(
+                    UserFixtures.validEmail(),
+                    UserFixtures.validName(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
+                    RoleId.generate(),
+                )
+
+            // Assert
+            assertEquals("ja", user.preferredLocale)
+        }
+
+        @Test
+        fun `changeLocale to en updates locale and updatedAt`() {
+            // Arrange
+            val user = UserFixtures.createActiveUser()
+            val beforeUpdate = user.updatedAt
+
+            // Small delay to ensure Instant.now() advances
+            Thread.sleep(10)
+
+            // Act
+            user.changeLocale("en")
+
+            // Assert
+            assertEquals("en", user.preferredLocale)
+            assertTrue(user.updatedAt.isAfter(beforeUpdate))
+        }
+
+        @Test
+        fun `changeLocale to ja updates locale`() {
+            // Arrange
+            val user = UserFixtures.createActiveUser()
+            user.changeLocale("en") // First change to en
+
+            // Act
+            user.changeLocale("ja")
+
+            // Assert
+            assertEquals("ja", user.preferredLocale)
+        }
+
+        @Test
+        fun `changeLocale with null throws IllegalArgumentException`() {
+            // Arrange
+            val user = UserFixtures.createActiveUser()
+
+            // Act & Assert
+            assertThrows<IllegalArgumentException> {
+                user.changeLocale(null)
+            }
+        }
+
+        @Test
+        fun `changeLocale with unsupported locale throws IllegalArgumentException`() {
+            // Arrange
+            val user = UserFixtures.createActiveUser()
+
+            // Act & Assert
+            val exception =
+                assertThrows<IllegalArgumentException> {
+                    user.changeLocale("fr")
+                }
+            assertTrue(exception.message!!.contains("Unsupported locale"))
+        }
+
+        @Test
+        fun `constructor defaults to ja when locale is null`() {
+            // Arrange & Act
+            val user =
+                User(
+                    UserId.generate(),
+                    UserFixtures.validEmail(),
+                    UserFixtures.validName(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
+                    RoleId.generate(),
+                    User.AccountStatus.ACTIVE,
+                    0,
+                    null,
+                    Instant.now(),
+                    Instant.now(),
+                    null,
+                    null,
+                    null, // preferredLocale = null
+                )
+
+            // Assert
+            assertEquals("ja", user.preferredLocale)
+        }
+
+        @Test
+        fun `constructor defaults to ja when locale is unsupported`() {
+            // Arrange & Act
+            val user =
+                User(
+                    UserId.generate(),
+                    UserFixtures.validEmail(),
+                    UserFixtures.validName(),
+                    UserFixtures.VALID_HASHED_PASSWORD,
+                    RoleId.generate(),
+                    User.AccountStatus.ACTIVE,
+                    0,
+                    null,
+                    Instant.now(),
+                    Instant.now(),
+                    null,
+                    null,
+                    "zh", // unsupported locale
+                )
+
+            // Assert
+            assertEquals("ja", user.preferredLocale)
+        }
+    }
+
+    @Nested
     @DisplayName("Edge Cases and Boundary Conditions")
     inner class EdgeCasesAndBoundaryConditions {
         @Test

@@ -379,6 +379,54 @@ class JdbcUserRepositoryTest {
     }
 
     // ============================================================
+    // Locale Tests
+    // ============================================================
+
+    @Test
+    fun `updateLocale should update preferred locale`() {
+        // Given
+        val user = User.create("locale@example.com", "Locale User", "hashed_pass", testRoleId)
+        repository.save(user)
+
+        // When
+        repository.updateLocale(user.id, "en")
+
+        // Then
+        val retrieved = repository.findById(user.id)
+        Assertions.assertTrue(retrieved.isPresent)
+        Assertions.assertEquals("en", retrieved.get().preferredLocale)
+    }
+
+    @Test
+    fun `save should persist preferredLocale`() {
+        // Given - create user with full constructor specifying locale="en"
+        val user =
+            User(
+                UserId.generate(),
+                "locale-save@example.com",
+                "Locale Save User",
+                "hashed_pass",
+                testRoleId,
+                User.AccountStatus.ACTIVE,
+                0,
+                null,
+                Instant.now(),
+                Instant.now(),
+                null,
+                Instant.now().minusSeconds(3600),
+                "en",
+            )
+
+        // When
+        repository.save(user)
+
+        // Then
+        val retrieved = repository.findById(user.id)
+        Assertions.assertTrue(retrieved.isPresent)
+        Assertions.assertEquals("en", retrieved.get().preferredLocale)
+    }
+
+    // ============================================================
     // Count Tests
     // ============================================================
 
