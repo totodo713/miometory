@@ -1,4 +1,4 @@
-import { type Page, test as base } from "@playwright/test";
+import { test as base, type Page } from "@playwright/test";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 

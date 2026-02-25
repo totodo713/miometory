@@ -166,7 +166,7 @@ async function assignManagerViaOrgPage(
   await expect(managerOption).toBeAttached({ timeout: 10_000 });
   const optionValue = await managerOption.getAttribute("value");
   expect(optionValue).toBeTruthy();
-  await page.selectOption("#manager-select", optionValue!);
+  await page.selectOption("#manager-select", optionValue as string);
 
   // Click assign button
   await page.click('button:has-text("割り当て")');
@@ -627,7 +627,7 @@ test.describe
       await expect(memberSelector.locator(`option:has-text("${orgBMembers[0].displayName}")`)).toBeAttached({
         timeout: 10_000,
       });
-      await memberSelector.selectOption(orgBMembers[0].id!);
+      await memberSelector.selectOption(orgBMembers[0].id as string);
 
       // Click "Enter Time for..." button and wait for navigation to /worklog
       await page.click('button:has-text("Enter Time for")');
@@ -686,7 +686,7 @@ test.describe
       await page.waitForLoadState("networkidle");
 
       // Find the submission card for org-a-member-1 (approval page shows member ID, not display name)
-      const memberId = orgAMembers[0].id!;
+      const memberId = orgAMembers[0].id as string;
       const submissionCard = page.locator(`text=${memberId}`).first();
       await expect(submissionCard).toBeVisible({ timeout: 10_000 });
 
@@ -719,7 +719,7 @@ test.describe
       await expect(memberSelector.locator(`option:has-text("${orgBMembers[0].displayName}")`)).toBeAttached({
         timeout: 10_000,
       });
-      await memberSelector.selectOption(orgBMembers[0].id!);
+      await memberSelector.selectOption(orgBMembers[0].id as string);
       await page.click('button:has-text("Enter Time for")');
       await page.waitForURL(/\/worklog$/, { timeout: 10_000 });
       await page.waitForLoadState("networkidle");
@@ -746,7 +746,7 @@ test.describe
       await page.waitForLoadState("networkidle");
 
       // Find the submission from org-b-member-1 (approval page shows member ID, not display name)
-      const memberId = orgBMembers[0].id!;
+      const memberId = orgBMembers[0].id as string;
       const submissionCard = page.locator(`text=${memberId}`).first();
       await expect(submissionCard).toBeVisible({ timeout: 10_000 });
 
