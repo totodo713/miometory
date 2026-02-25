@@ -3,6 +3,7 @@ package com.worklog.domain.user;
 import com.worklog.domain.role.RoleId;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -16,6 +17,9 @@ public class User {
     // Email validation pattern (RFC 5322 simplified)
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
 
+    private static final Set<String> SUPPORTED_LOCALES = Set.of("en", "ja");
+    private static final String DEFAULT_LOCALE = "ja";
+
     private final UserId id;
     private String email;
     private String name;
@@ -28,6 +32,7 @@ public class User {
     private Instant updatedAt;
     private Instant lastLoginAt;
     private Instant emailVerifiedAt;
+    private String preferredLocale;
 
     /**
      * Account status enum.
@@ -63,7 +68,8 @@ public class User {
                 createdAt,
                 createdAt,
                 null,
-                null);
+                null,
+                DEFAULT_LOCALE);
     }
 
     /**
@@ -81,7 +87,8 @@ public class User {
             Instant createdAt,
             Instant updatedAt,
             Instant lastLoginAt,
-            Instant emailVerifiedAt) {
+            Instant emailVerifiedAt,
+            String preferredLocale) {
         this.id = Objects.requireNonNull(id, "User ID cannot be null");
         this.roleId = Objects.requireNonNull(roleId, "Role ID cannot be null");
         this.accountStatus = Objects.requireNonNull(accountStatus, "Account status cannot be null");
@@ -96,6 +103,9 @@ public class User {
         this.lockedUntil = lockedUntil;
         this.lastLoginAt = lastLoginAt;
         this.emailVerifiedAt = emailVerifiedAt;
+        this.preferredLocale = preferredLocale != null && SUPPORTED_LOCALES.contains(preferredLocale)
+                ? preferredLocale
+                : DEFAULT_LOCALE;
     }
 
     /**
@@ -360,6 +370,24 @@ public class User {
 
     public Instant getEmailVerifiedAt() {
         return emailVerifiedAt;
+    }
+
+    public String getPreferredLocale() {
+        return preferredLocale;
+    }
+
+    /**
+     * Changes the user's preferred locale.
+     *
+     * @param locale Locale code ("en" or "ja")
+     * @throws IllegalArgumentException if locale is not supported
+     */
+    public void changeLocale(String locale) {
+        if (locale == null || !SUPPORTED_LOCALES.contains(locale)) {
+            throw new IllegalArgumentException("Unsupported locale: " + locale + ". Supported: " + SUPPORTED_LOCALES);
+        }
+        this.preferredLocale = locale;
+        this.updatedAt = Instant.now();
     }
 
     @Override

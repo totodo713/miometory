@@ -1,66 +1,53 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useAdminContext } from "@/providers/AdminProvider";
 
 export default function AdminDashboard() {
+  const t = useTranslations("admin.dashboard");
+  const tn = useTranslations("admin.nav");
   const { adminContext, hasPermission } = useAdminContext();
 
   if (!adminContext) return null;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">管理ダッシュボード</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("title")}</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {hasPermission("member.view") && (
-          <DashboardCard
-            title="メンバー管理"
-            description="メンバーの招待・編集・無効化を行います"
-            href="/admin/members"
-          />
+          <DashboardCard title={tn("members")} description={t("cards.membersDescription")} href="/admin/members" />
         )}
         {hasPermission("project.view") && (
-          <DashboardCard
-            title="プロジェクト管理"
-            description="プロジェクトの作成・編集・無効化を行います"
-            href="/admin/projects"
-          />
+          <DashboardCard title={tn("projects")} description={t("cards.projectsDescription")} href="/admin/projects" />
         )}
         {hasPermission("assignment.view") && (
           <DashboardCard
-            title="アサイン管理"
-            description="メンバーとプロジェクトの割り当てを管理します"
+            title={tn("assignments")}
+            description={t("cards.assignmentsDescription")}
             href="/admin/assignments"
           />
         )}
         {hasPermission("daily_approval.view") && (
           <DashboardCard
-            title="日次承認"
-            description="チームメンバーの日次記録を承認・却下します"
+            title={tn("dailyApproval")}
+            description={t("cards.dailyApprovalDescription")}
             href="/worklog/daily-approval"
           />
         )}
         {hasPermission("organization.view") && (
           <DashboardCard
-            title="組織管理"
-            description="組織の階層構造・マネージャー割当・パターン設定を管理します"
+            title={tn("organizations")}
+            description={t("cards.organizationsDescription")}
             href="/admin/organizations"
           />
         )}
         {hasPermission("tenant.view") && (
-          <DashboardCard
-            title="テナント管理"
-            description="テナントの作成・編集・無効化を行います"
-            href="/admin/tenants"
-          />
+          <DashboardCard title={tn("tenants")} description={t("cards.tenantsDescription")} href="/admin/tenants" />
         )}
         {hasPermission("user.view") && (
-          <DashboardCard
-            title="ユーザー管理"
-            description="ユーザーアカウントのロール変更・ロック管理を行います"
-            href="/admin/users"
-          />
+          <DashboardCard title={tn("users")} description={t("cards.usersDescription")} href="/admin/users" />
         )}
       </div>
     </div>

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { CsvUploader } from "@/components/worklog/CsvUploader";
 import { downloadTemplate } from "@/services/csvService";
 
 export default function CsvImportPage() {
+  const t = useTranslations("worklog.csvUploader");
+  const tc = useTranslations("common");
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
@@ -36,8 +39,8 @@ export default function CsvImportPage() {
           <Link href="/worklog" className="text-blue-600 hover:text-blue-800 mb-4 inline-block">
             ← Back to Miometry
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Import Miometry CSV</h1>
-          <p className="text-gray-600 mt-2">Upload a CSV file to bulk import time entries</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t("title")}</h1>
+          <p className="text-gray-600 mt-2">{t("dropzone")}</p>
         </div>
 
         {/* Instructions */}
@@ -57,7 +60,7 @@ export default function CsvImportPage() {
               disabled={isDownloading}
               className="bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 disabled:opacity-50"
             >
-              {isDownloading ? "Downloading..." : "Download CSV Template"}
+              {isDownloading ? tc("loading") : t("template")}
             </button>
             {downloadError && <p className="text-sm text-red-600 mt-2">{downloadError}</p>}
           </div>
@@ -84,7 +87,7 @@ export default function CsvImportPage() {
 
         {/* Upload Form */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Upload CSV File</h2>
+          <h2 className="text-xl font-semibold mb-4">{t("title")}</h2>
           <CsvUploader memberId={memberId} onImportComplete={handleImportComplete} />
         </div>
       </div>

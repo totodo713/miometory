@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { OrganizationList } from "@/components/admin/OrganizationList";
 import { ToastProvider } from "@/components/shared/ToastProvider";
+import { IntlWrapper } from "../../../helpers/intl";
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -63,7 +64,11 @@ const inactiveOrg = {
 };
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 const defaultProps = {
@@ -299,9 +304,11 @@ describe("OrganizationList", () => {
     });
 
     rerender(
-      <ToastProvider>
-        <OrganizationList {...defaultProps} refreshKey={1} />
-      </ToastProvider>,
+      <IntlWrapper>
+        <ToastProvider>
+          <OrganizationList {...defaultProps} refreshKey={1} />
+        </ToastProvider>
+      </IntlWrapper>,
     );
 
     await waitFor(() => {
@@ -316,11 +323,11 @@ describe("OrganizationList", () => {
       expect(screen.getByText("DEV_TEAM")).toBeInTheDocument();
     });
     expect(screen.getByText("コード")).toBeInTheDocument();
-    expect(screen.getByText("名前")).toBeInTheDocument();
+    expect(screen.getByText("組織名")).toBeInTheDocument();
     expect(screen.getByText("レベル")).toBeInTheDocument();
     expect(screen.getByText("親組織")).toBeInTheDocument();
     expect(screen.getByText("メンバー数")).toBeInTheDocument();
     expect(screen.getByText("ステータス")).toBeInTheDocument();
-    expect(screen.getByText("アクション")).toBeInTheDocument();
+    expect(screen.getByText("操作")).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { IntlWrapper } from "../../../helpers/intl";
 
 // Mock API module — factory is hoisted, so ApiError must be defined inline
 vi.mock("../../../../app/services/api", () => {
@@ -61,40 +62,60 @@ describe("SubmitDailyButton", () => {
   });
 
   it("renders submit button when hasDraftEntries is true", () => {
-    render(<SubmitDailyButton {...defaultProps} />);
-    expect(screen.getByRole("button", { name: "Submit" })).toBeInTheDocument();
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} />
+      </IntlWrapper>,
+    );
+    expect(screen.getByRole("button", { name: "日次提出" })).toBeInTheDocument();
   });
 
   it("does not render when hasDraftEntries is false", () => {
-    render(<SubmitDailyButton {...defaultProps} hasDraftEntries={false} />);
-    expect(screen.queryByRole("button", { name: "Submit" })).not.toBeInTheDocument();
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} hasDraftEntries={false} />
+      </IntlWrapper>,
+    );
+    expect(screen.queryByRole("button", { name: "日次提出" })).not.toBeInTheDocument();
   });
 
   it("shows confirmation dialog on submit click", () => {
-    render(<SubmitDailyButton {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} />
+      </IntlWrapper>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
 
-    expect(screen.getByText("Confirm Submission")).toBeInTheDocument();
+    expect(screen.getByText("日次勤怠を提出しますか？")).toBeInTheDocument();
     expect(screen.getByText(/3/)).toBeInTheDocument(); // entry count
     expect(screen.getByText(/8/)).toBeInTheDocument(); // total hours
   });
 
   it("closes confirmation dialog on Cancel", () => {
-    render(<SubmitDailyButton {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
-    expect(screen.getByText("Confirm Submission")).toBeInTheDocument();
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} />
+      </IntlWrapper>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
+    expect(screen.getByText("日次勤怠を提出しますか？")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    expect(screen.queryByText("Confirm Submission")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
+    expect(screen.queryByText("日次勤怠を提出しますか？")).not.toBeInTheDocument();
   });
 
   it("closes confirmation dialog on Escape key", () => {
-    render(<SubmitDailyButton {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
-    expect(screen.getByText("Confirm Submission")).toBeInTheDocument();
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} />
+      </IntlWrapper>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
+    expect(screen.getByText("日次勤怠を提出しますか？")).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByText("Confirm Submission")).not.toBeInTheDocument();
+    expect(screen.queryByText("日次勤怠を提出しますか？")).not.toBeInTheDocument();
   });
 
   it("calls API on confirm and shows success notification", async () => {
@@ -104,11 +125,15 @@ describe("SubmitDailyButton", () => {
       entries: [],
     });
 
-    render(<SubmitDailyButton {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} />
+      </IntlWrapper>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
 
     // Click Submit in the dialog
-    const submitButtons = screen.getAllByRole("button", { name: "Submit" });
+    const submitButtons = screen.getAllByRole("button", { name: "日次提出" });
     fireEvent.click(submitButtons[submitButtons.length - 1]);
 
     await waitFor(() => {
@@ -129,10 +154,14 @@ describe("SubmitDailyButton", () => {
   it("shows error notification on API failure", async () => {
     mockSubmitDailyEntries.mockRejectedValue(new Error("Network error"));
 
-    render(<SubmitDailyButton {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} />
+      </IntlWrapper>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
 
-    const submitButtons = screen.getAllByRole("button", { name: "Submit" });
+    const submitButtons = screen.getAllByRole("button", { name: "日次提出" });
     fireEvent.click(submitButtons[submitButtons.length - 1]);
 
     await waitFor(() => {
@@ -143,10 +172,14 @@ describe("SubmitDailyButton", () => {
   it("shows conflict-specific message on 409 error", async () => {
     mockSubmitDailyEntries.mockRejectedValue(new ApiError("Conflict", 409, "OPTIMISTIC_LOCK_FAILURE"));
 
-    render(<SubmitDailyButton {...defaultProps} />);
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} />
+      </IntlWrapper>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
 
-    const submitButtons = screen.getAllByRole("button", { name: "Submit" });
+    const submitButtons = screen.getAllByRole("button", { name: "日次提出" });
     fireEvent.click(submitButtons[submitButtons.length - 1]);
 
     await waitFor(() => {
@@ -161,10 +194,14 @@ describe("SubmitDailyButton", () => {
       entries: [],
     });
 
-    render(<SubmitDailyButton {...defaultProps} hasUnsavedChanges={true} />);
-    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    render(
+      <IntlWrapper>
+        <SubmitDailyButton {...defaultProps} hasUnsavedChanges={true} />
+      </IntlWrapper>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
 
-    const submitButtons = screen.getAllByRole("button", { name: "Submit" });
+    const submitButtons = screen.getAllByRole("button", { name: "日次提出" });
     fireEvent.click(submitButtons[submitButtons.length - 1]);
 
     await waitFor(() => {
@@ -178,12 +215,20 @@ describe("SubmitDailyButton", () => {
 
   describe("Recall mode", () => {
     it("renders recall button when hasSubmittedEntries is true and hasDraftEntries is false", () => {
-      render(<SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />);
-      expect(screen.getByRole("button", { name: "Recall" })).toBeInTheDocument();
+      render(
+        <IntlWrapper>
+          <SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />
+        </IntlWrapper>,
+      );
+      expect(screen.getByRole("button", { name: "日次提出" })).toBeInTheDocument();
     });
 
     it("does not render when both hasDraftEntries and hasSubmittedEntries are false", () => {
-      render(<SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={false} />);
+      render(
+        <IntlWrapper>
+          <SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={false} />
+        </IntlWrapper>,
+      );
       expect(screen.queryByRole("button")).not.toBeInTheDocument();
     });
 
@@ -194,8 +239,12 @@ describe("SubmitDailyButton", () => {
         entries: [],
       });
 
-      render(<SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />);
-      fireEvent.click(screen.getByRole("button", { name: "Recall" }));
+      render(
+        <IntlWrapper>
+          <SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />
+        </IntlWrapper>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
 
       await waitFor(() => {
         expect(mockRecallDailyEntries).toHaveBeenCalledWith({
@@ -213,8 +262,12 @@ describe("SubmitDailyButton", () => {
     it("shows error when recall is blocked by approval", async () => {
       mockRecallDailyEntries.mockRejectedValue(new ApiError("Blocked", 422, "RECALL_BLOCKED_BY_APPROVAL"));
 
-      render(<SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />);
-      fireEvent.click(screen.getByRole("button", { name: "Recall" }));
+      render(
+        <IntlWrapper>
+          <SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />
+        </IntlWrapper>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
 
       await waitFor(() => {
         expect(screen.getByText(/Manager has already acted/)).toBeInTheDocument();

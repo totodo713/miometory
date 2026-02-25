@@ -13,6 +13,7 @@
  */
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { MemberSelector } from "@/components/worklog/MemberSelector";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +22,8 @@ import { type SubordinateMember, useProxyMode } from "@/services/worklogStore";
 export default function ProxyEntryPage() {
   const router = useRouter();
   const { userId } = useAuth();
+  const t = useTranslations("worklog.proxyMode");
+  const tc = useTranslations("common");
   const { enableProxyMode, isProxyMode, targetMember, disableProxyMode } = useProxyMode();
   const [selectedMember, setSelectedMember] = useState<SubordinateMember | null>(targetMember);
 
@@ -54,7 +57,7 @@ export default function ProxyEntryPage() {
       <div className="max-w-2xl mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Enter Time for Team Member</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
           <p className="mt-2 text-gray-600">
             As a manager, you can enter time on behalf of your direct reports. The system will record that you entered
             the time while attributing the hours to the selected team member.
@@ -66,17 +69,15 @@ export default function ProxyEntryPage() {
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium text-yellow-800">Currently in Proxy Mode</h3>
-                <p className="text-sm text-yellow-700">
-                  Entering time for: <span className="font-semibold">{targetMember.displayName}</span>
-                </p>
+                <h3 className="font-medium text-yellow-800">{t("title")}</h3>
+                <p className="text-sm text-yellow-700">{t("active", { name: targetMember.displayName })}</p>
               </div>
               <button
                 type="button"
                 onClick={handleExitProxyMode}
                 className="px-3 py-1.5 text-sm text-yellow-800 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 rounded-md transition-colors"
               >
-                Exit Proxy Mode
+                {t("exit")}
               </button>
             </div>
           </div>
@@ -89,8 +90,8 @@ export default function ProxyEntryPage() {
             selectedMember={selectedMember}
             onSelectMember={setSelectedMember}
             includeIndirect={false}
-            label="Select Team Member"
-            placeholder="Choose a team member to enter time for..."
+            label={t("selectMember")}
+            placeholder={t("selectMember")}
           />
 
           {/* Action Buttons */}
@@ -101,14 +102,14 @@ export default function ProxyEntryPage() {
               disabled={!selectedMember}
               className="flex-1 px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-md font-medium transition-colors"
             >
-              Enter Time for {selectedMember?.displayName || "Selected Member"}
+              {t("title")} - {selectedMember?.displayName || t("selectMember")}
             </button>
             <button
               type="button"
               onClick={handleBackToWorklog}
               className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md font-medium transition-colors"
             >
-              Cancel
+              {tc("cancel")}
             </button>
           </div>
         </div>

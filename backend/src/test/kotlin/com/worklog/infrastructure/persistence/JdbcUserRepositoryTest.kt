@@ -280,6 +280,7 @@ class JdbcUserRepositoryTest {
                 user.updatedAt,
                 null,
                 user.emailVerifiedAt,
+                user.preferredLocale,
             )
         repository.save(lockedUser)
 
@@ -326,6 +327,7 @@ class JdbcUserRepositoryTest {
                 oldCreationTime, // updatedAt
                 null, // lastLoginAt
                 null, // emailVerifiedAt
+                "ja", // preferredLocale
             )
 
         val recentUser = User.create("recent@example.com", "Recent User", "pass", testRoleId)

@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemberManagerForm } from "@/components/admin/MemberManagerForm";
+import { IntlWrapper } from "../../../helpers/intl";
 
 const mockListMembers = vi.fn();
 const mockListOrganizations = vi.fn();
@@ -116,7 +117,11 @@ describe("MemberManagerForm", () => {
     };
 
     test("renders in assignManager mode with manager dropdown", async () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("マネージャー割り当て")).toBeInTheDocument();
       expect(screen.getByLabelText("マネージャー")).toBeInTheDocument();
@@ -127,14 +132,22 @@ describe("MemberManagerForm", () => {
     });
 
     test("shows target member info", () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("Alice")).toBeInTheDocument();
       expect(screen.getByText("alice@test.com")).toBeInTheDocument();
     });
 
     test("shows current manager info", async () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       await waitFor(() => {
         expect(screen.getByText(/現在のマネージャー: Bob/)).toBeInTheDocument();
@@ -142,7 +155,11 @@ describe("MemberManagerForm", () => {
     });
 
     test("manager selector dropdown renders available members (excluding self)", async () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       await waitFor(() => {
         expect(mockListMembers).toHaveBeenCalledWith({ isActive: true, size: 1000 });
@@ -155,14 +172,22 @@ describe("MemberManagerForm", () => {
     });
 
     test("submit button shows correct label", () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
       expect(screen.getByText("割り当て")).toBeInTheDocument();
     });
 
     test("submits manager assignment", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<MemberManagerForm {...defaultProps} onSaved={onSaved} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} onSaved={onSaved} />
+        </IntlWrapper>,
+      );
 
       await waitFor(() => {
         expect(screen.getByText(/Charlie \(charlie@test.com\)/)).toBeInTheDocument();
@@ -179,7 +204,11 @@ describe("MemberManagerForm", () => {
 
     test("shows error when no manager selected and submit clicked", async () => {
       const user = userEvent.setup();
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       await user.click(screen.getByText("割り当て"));
 
@@ -197,7 +226,11 @@ describe("MemberManagerForm", () => {
     };
 
     test("renders in transferOrg mode with organization dropdown", async () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("組織異動")).toBeInTheDocument();
       expect(screen.getByLabelText("移動先組織")).toBeInTheDocument();
@@ -208,7 +241,11 @@ describe("MemberManagerForm", () => {
     });
 
     test("transfer org selector renders available orgs excluding current", async () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       await waitFor(() => {
         expect(mockListOrganizations).toHaveBeenCalledWith({ isActive: true, size: 1000 });
@@ -222,14 +259,22 @@ describe("MemberManagerForm", () => {
     });
 
     test("submit button shows correct label", () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
       expect(screen.getByText("異動")).toBeInTheDocument();
     });
 
     test("submits org transfer", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<MemberManagerForm {...defaultProps} onSaved={onSaved} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} onSaved={onSaved} />
+        </IntlWrapper>,
+      );
 
       await waitFor(() => {
         expect(screen.getByText(/OTHER - Other Org/)).toBeInTheDocument();
@@ -246,7 +291,11 @@ describe("MemberManagerForm", () => {
 
     test("shows error when no org selected and submit clicked", async () => {
       const user = userEvent.setup();
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       await user.click(screen.getByText("異動"));
 
@@ -263,7 +312,11 @@ describe("MemberManagerForm", () => {
     };
 
     test("renders in createMember mode with email, name, manager fields", async () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("メンバー作成")).toBeInTheDocument();
       expect(screen.getByLabelText("メールアドレス")).toBeInTheDocument();
@@ -272,14 +325,22 @@ describe("MemberManagerForm", () => {
     });
 
     test("submit button shows correct label", () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
       expect(screen.getByText("作成")).toBeInTheDocument();
     });
 
     test("submits new member creation", async () => {
       const user = userEvent.setup();
       const onSaved = vi.fn();
-      render(<MemberManagerForm {...defaultProps} onSaved={onSaved} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} onSaved={onSaved} />
+        </IntlWrapper>,
+      );
 
       await user.type(screen.getByLabelText("メールアドレス"), "new@test.com");
       await user.type(screen.getByLabelText("表示名"), "New User");
@@ -298,7 +359,11 @@ describe("MemberManagerForm", () => {
 
     test("shows error when required fields are empty", async () => {
       const user = userEvent.setup();
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       await user.type(screen.getByLabelText("メールアドレス"), "new@test.com");
       await user.type(screen.getByLabelText("表示名"), "   ");
@@ -309,7 +374,11 @@ describe("MemberManagerForm", () => {
     });
 
     test("manager dropdown loads available members", async () => {
-      render(<MemberManagerForm {...defaultProps} />);
+      render(
+        <IntlWrapper>
+          <MemberManagerForm {...defaultProps} />
+        </IntlWrapper>,
+      );
 
       await waitFor(() => {
         expect(mockListMembers).toHaveBeenCalledWith({ isActive: true, size: 1000 });
@@ -325,13 +394,15 @@ describe("MemberManagerForm", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(
-      <MemberManagerForm
-        mode="assignManager"
-        organizationId="org1"
-        member={targetMember}
-        onClose={onClose}
-        onSaved={vi.fn()}
-      />,
+      <IntlWrapper>
+        <MemberManagerForm
+          mode="assignManager"
+          organizationId="org1"
+          member={targetMember}
+          onClose={onClose}
+          onSaved={vi.fn()}
+        />
+      </IntlWrapper>,
     );
 
     await user.keyboard("{Escape}");
@@ -342,13 +413,15 @@ describe("MemberManagerForm", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(
-      <MemberManagerForm
-        mode="assignManager"
-        organizationId="org1"
-        member={targetMember}
-        onClose={onClose}
-        onSaved={vi.fn()}
-      />,
+      <IntlWrapper>
+        <MemberManagerForm
+          mode="assignManager"
+          organizationId="org1"
+          member={targetMember}
+          onClose={onClose}
+          onSaved={vi.fn()}
+        />
+      </IntlWrapper>,
     );
 
     await user.click(screen.getByText("キャンセル"));
@@ -361,13 +434,15 @@ describe("MemberManagerForm", () => {
 
     const user = userEvent.setup();
     render(
-      <MemberManagerForm
-        mode="assignManager"
-        organizationId="org1"
-        member={targetMember}
-        onClose={vi.fn()}
-        onSaved={vi.fn()}
-      />,
+      <IntlWrapper>
+        <MemberManagerForm
+          mode="assignManager"
+          organizationId="org1"
+          member={targetMember}
+          onClose={vi.fn()}
+          onSaved={vi.fn()}
+        />
+      </IntlWrapper>,
     );
 
     await waitFor(() => {
@@ -387,13 +462,15 @@ describe("MemberManagerForm", () => {
 
     const user = userEvent.setup();
     render(
-      <MemberManagerForm
-        mode="assignManager"
-        organizationId="org1"
-        member={targetMember}
-        onClose={vi.fn()}
-        onSaved={vi.fn()}
-      />,
+      <IntlWrapper>
+        <MemberManagerForm
+          mode="assignManager"
+          organizationId="org1"
+          member={targetMember}
+          onClose={vi.fn()}
+          onSaved={vi.fn()}
+        />
+      </IntlWrapper>,
     );
 
     await waitFor(() => {
@@ -418,13 +495,15 @@ describe("MemberManagerForm", () => {
 
     const user = userEvent.setup();
     render(
-      <MemberManagerForm
-        mode="assignManager"
-        organizationId="org1"
-        member={targetMember}
-        onClose={vi.fn()}
-        onSaved={vi.fn()}
-      />,
+      <IntlWrapper>
+        <MemberManagerForm
+          mode="assignManager"
+          organizationId="org1"
+          member={targetMember}
+          onClose={vi.fn()}
+          onSaved={vi.fn()}
+        />
+      </IntlWrapper>,
     );
 
     await waitFor(() => {

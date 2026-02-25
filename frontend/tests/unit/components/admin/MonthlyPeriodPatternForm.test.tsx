@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { IntlWrapper } from "../../../helpers/intl";
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -34,14 +35,22 @@ describe("MonthlyPeriodPatternForm", () => {
   });
 
   it("renders form fields", () => {
-    render(<MonthlyPeriodPatternForm {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <MonthlyPeriodPatternForm {...defaultProps} />
+      </IntlWrapper>,
+    );
     expect(screen.getByLabelText(/名前/)).toBeInTheDocument();
     expect(screen.getByLabelText(/開始日/)).toBeInTheDocument();
   });
 
   it("submits form and calls onCreated", async () => {
     const user = userEvent.setup();
-    render(<MonthlyPeriodPatternForm {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <MonthlyPeriodPatternForm {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await user.clear(screen.getByLabelText(/名前/));
     await user.type(screen.getByLabelText(/名前/), "21日開始");

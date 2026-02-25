@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/shared/ToastProvider";
+import { IntlWrapper } from "../../helpers/intl";
 
 const mockPush = vi.fn();
 
@@ -24,7 +25,11 @@ import { api } from "@/services/api";
 import NotificationsPage from "../../../app/notifications/page";
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 describe("NotificationsPage", () => {

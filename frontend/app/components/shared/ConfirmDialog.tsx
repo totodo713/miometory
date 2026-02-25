@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef } from "react";
 
 interface ConfirmDialogProps {
@@ -26,6 +27,7 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const t = useTranslations("common");
   const cancelRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const uniqueId = useId();
@@ -92,7 +94,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            キャンセル
+            {t("cancel")}
           </button>
           <button
             type="button"

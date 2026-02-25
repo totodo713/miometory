@@ -713,6 +713,7 @@ export const api = {
           email: string;
           name: string;
           accountStatus: string;
+          preferredLocale: string;
         };
         sessionExpiresAt: string;
         rememberMeToken: string | null;
@@ -1108,6 +1109,10 @@ export const api = {
     },
     markRead: (id: string) => apiClient.patch<void>(`/api/v1/notifications/${id}/read`, {}),
     markAllRead: () => apiClient.patch<void>("/api/v1/notifications/read-all", {}),
+  },
+
+  user: {
+    updateLocale: (locale: string) => apiClient.patch<void>("/api/v1/user/locale", { locale }),
   },
 };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import type { UserRow } from "@/components/admin/UserList";
 import { UserList } from "@/components/admin/UserList";
@@ -9,6 +10,9 @@ import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminUsersPage() {
+  const t = useTranslations("admin.users");
+  const tc = useTranslations("common");
+  const tb = useTranslations("breadcrumbs");
   const toast = useToast();
   const [refreshKey, setRefreshKey] = useState(0);
   const [roleDialogUser, setRoleDialogUser] = useState<UserRow | null>(null);
@@ -56,19 +60,20 @@ export default function AdminUsersPage() {
     setConfirmTarget({ id: user.id, name: user.name, action: "resetPassword" });
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t/tc from useTranslations are stable
   const executeAction = useCallback(
     async (target: { id: string; name: string; action: "unlock" | "resetPassword" }) => {
       try {
         if (target.action === "unlock") {
           await api.admin.users.unlock(target.id);
-          toast.success("ロックを解除しました");
+          toast.success(t("unlocked"));
           refresh();
         } else {
           await api.admin.users.resetPassword(target.id);
-          toast.success("パスワードが初期化されました");
+          toast.success(t("passwordReset"));
         }
       } catch (err: unknown) {
-        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : tc("error"));
       }
     },
     [refresh, toast],
@@ -83,7 +88,7 @@ export default function AdminUsersPage() {
       setRoleDialogUser(null);
       refresh();
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : "エラーが発生しました");
+      setError(err instanceof ApiError ? err.message : tc("error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -93,7 +98,7 @@ export default function AdminUsersPage() {
     if (!lockDialogUser) return;
     const minutes = Number.parseInt(lockDuration, 10);
     if (Number.isNaN(minutes) || minutes <= 0) {
-      setError("有効な時間（分）を入力してください");
+      setError(t("lockDialog.invalidDuration"));
       return;
     }
     setIsSubmitting(true);
@@ -103,7 +108,7 @@ export default function AdminUsersPage() {
       setLockDialogUser(null);
       refresh();
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : "エラーが発生しました");
+      setError(err instanceof ApiError ? err.message : tc("error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -111,10 +116,10 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "ユーザー管理" }]} />
+      <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("users") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
-        <h1 className="text-2xl font-bold text-gray-900">ユーザー管理</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -131,21 +136,23 @@ export default function AdminUsersPage() {
       {roleDialogUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">ロール変更</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("changeRoleDialog.title")}</h2>
             <p className="text-sm text-gray-600 mb-4">
               {roleDialogUser.name} ({roleDialogUser.email})
             </p>
-            <p className="text-sm text-gray-600 mb-2">現在のロール: {roleDialogUser.roleName}</p>
+            <p className="text-sm text-gray-600 mb-2">
+              {t("changeRoleDialog.currentRole", { role: roleDialogUser.roleName })}
+            </p>
             <div className="mb-4">
               <label htmlFor="new-role-id" className="block text-sm font-medium text-gray-700 mb-1">
-                新しいロールID
+                {t("changeRoleDialog.newRoleId")}
               </label>
               <input
                 id="new-role-id"
                 type="text"
                 value={newRoleId}
                 onChange={(e) => setNewRoleId(e.target.value)}
-                placeholder="ロールのUUIDを入力..."
+                placeholder={t("changeRoleDialog.newRoleIdPlaceholder")}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -156,7 +163,7 @@ export default function AdminUsersPage() {
                 onClick={() => setRoleDialogUser(null)}
                 className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                キャンセル
+                {tc("cancel")}
               </button>
               <button
                 type="button"
@@ -164,7 +171,7 @@ export default function AdminUsersPage() {
                 disabled={isSubmitting || !newRoleId.trim()}
                 className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
               >
-                {isSubmitting ? "変更中..." : "変更"}
+                {isSubmitting ? t("changeRoleDialog.changing") : t("changeRoleDialog.change")}
               </button>
             </div>
           </div>
@@ -175,13 +182,13 @@ export default function AdminUsersPage() {
       {lockDialogUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">アカウントロック</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("lockDialog.title")}</h2>
             <p className="text-sm text-gray-600 mb-4">
               {lockDialogUser.name} ({lockDialogUser.email})
             </p>
             <div className="mb-4">
               <label htmlFor="lock-duration" className="block text-sm font-medium text-gray-700 mb-1">
-                ロック期間（分）
+                {t("lockDialog.durationLabel")}
               </label>
               <input
                 id="lock-duration"
@@ -199,7 +206,7 @@ export default function AdminUsersPage() {
                 onClick={() => setLockDialogUser(null)}
                 className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                キャンセル
+                {tc("cancel")}
               </button>
               <button
                 type="button"
@@ -207,7 +214,7 @@ export default function AdminUsersPage() {
                 disabled={isSubmitting}
                 className="px-4 py-2 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50"
               >
-                {isSubmitting ? "ロック中..." : "ロック"}
+                {isSubmitting ? t("lockDialog.locking") : t("lockDialog.lock")}
               </button>
             </div>
           </div>
@@ -216,9 +223,13 @@ export default function AdminUsersPage() {
 
       <ConfirmDialog
         open={confirmTarget !== null}
-        title="確認"
-        message={`${confirmTarget?.name ?? ""} の${confirmTarget?.action === "unlock" ? "ロックを解除" : "パスワードを初期化"}しますか？`}
-        confirmLabel={confirmTarget?.action === "unlock" ? "ロック解除" : "PW初期化"}
+        title={tc("confirm")}
+        message={
+          confirmTarget?.action === "unlock"
+            ? t("confirmUnlock", { name: confirmTarget?.name ?? "" })
+            : t("confirmResetPassword", { name: confirmTarget?.name ?? "" })
+        }
+        confirmLabel={confirmTarget?.action === "unlock" ? t("unlock") : t("resetPassword")}
         variant={confirmTarget?.action === "unlock" ? "warning" : "danger"}
         onConfirm={async () => {
           if (confirmTarget) await executeAction(confirmTarget);

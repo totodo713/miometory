@@ -9,6 +9,7 @@
  */
 
 import Link from "next/link";
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { Calendar } from "@/components/worklog/Calendar";
 import { CopyPreviousMonthDialog } from "@/components/worklog/CopyPreviousMonthDialog";
@@ -20,6 +21,8 @@ import { useCalendarRefresh, useProxyMode } from "@/services/worklogStore";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 
 export default function WorkLogPage() {
+  const format = useFormatter();
+  const t = useTranslations("worklog.page");
   const [calendarData, setCalendarData] = useState<MonthlyCalendarResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +137,7 @@ export default function WorkLogPage() {
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-yellow-900 font-medium">
-                Proxy Mode: Entering time for <span className="font-bold">{targetMember.displayName}</span>
+                {t("proxyModeActive", { name: targetMember.displayName })}
               </span>
             </div>
             <button
@@ -142,7 +145,7 @@ export default function WorkLogPage() {
               onClick={disableProxyMode}
               className="px-3 py-1 text-sm text-yellow-900 bg-yellow-200 hover:bg-yellow-100 border border-yellow-600 rounded-md transition-colors"
             >
-              Exit Proxy Mode
+              {t("exitProxy")}
             </button>
           </div>
         </div>
@@ -153,12 +156,10 @@ export default function WorkLogPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {isProxyMode && targetMember ? `Miometry - ${targetMember.displayName}` : "Miometry"}
+              {isProxyMode && targetMember ? `${t("title")} - ${targetMember.displayName}` : t("title")}
             </h1>
             <p className="mt-1 text-sm text-gray-600">
-              {isProxyMode && targetMember
-                ? `Entering time on behalf of ${targetMember.email}`
-                : "Track and manage your daily work hours"}
+              {isProxyMode && targetMember ? t("proxyModeActive", { name: targetMember.email }) : t("title")}
             </p>
           </div>
           <div className="flex gap-2">
@@ -167,20 +168,20 @@ export default function WorkLogPage() {
               href="/worklog/proxy"
               className="px-4 py-2 bg-amber-700 text-white rounded-md shadow-sm text-sm font-medium hover:bg-amber-800"
             >
-              Enter Time for Team
+              {t("proxyMode")}
             </Link>
             <button
               type="button"
               onClick={() => setIsCopyDialogOpen(true)}
               className="px-4 py-2 bg-purple-600 text-white rounded-md shadow-sm text-sm font-medium hover:bg-purple-700"
             >
-              Copy Previous Month
+              {t("copyPrevMonth")}
             </button>
             <Link
               href="/worklog/import"
               className="px-4 py-2 bg-green-700 text-white rounded-md shadow-sm text-sm font-medium hover:bg-green-800"
             >
-              Import CSV
+              {t("csvImport")}
             </Link>
             <button
               type="button"
@@ -201,29 +202,35 @@ export default function WorkLogPage() {
               onClick={handlePreviousMonth}
               className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Previous
+              {t("prevMonth")}
             </button>
             <button
               type="button"
               onClick={handleToday}
               className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Today
+              {t("goToToday")}
             </button>
             <button
               type="button"
               onClick={handleNextMonth}
               className="px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              Next
+              {t("nextMonth")}
             </button>
           </div>
 
           <div className="text-sm text-gray-600">
             {calendarData && (
               <span>
-                Period: {new Date(calendarData.periodStart).toLocaleDateString()} -{" "}
-                {new Date(calendarData.periodEnd).toLocaleDateString()}
+                Period:{" "}
+                {format.dateTime(new Date(calendarData.periodStart), {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}{" "}
+                -{" "}
+                {format.dateTime(new Date(calendarData.periodEnd), { year: "numeric", month: "short", day: "numeric" })}
               </span>
             )}
           </div>
@@ -233,7 +240,7 @@ export default function WorkLogPage() {
         {isLoading && (
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading calendar...</p>
+            <p className="mt-4 text-gray-600">{t("title")}...</p>
           </div>
         )}
 
@@ -255,7 +262,7 @@ export default function WorkLogPage() {
         )}
 
         {!isLoading && !error && !calendarData && (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-600">No data available</div>
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-600">{t("title")}</div>
         )}
 
         {/* Copy Previous Month Dialog */}

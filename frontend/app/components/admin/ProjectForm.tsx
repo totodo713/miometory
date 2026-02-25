@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
@@ -12,6 +13,8 @@ interface ProjectFormProps {
 }
 
 export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
+  const t = useTranslations("admin.projects");
+  const tc = useTranslations("common");
   const isEdit = project !== null;
   const toast = useToast();
 
@@ -35,12 +38,12 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
     setError(null);
 
     if (!code.trim() || !name.trim()) {
-      setError("コードと名前は必須です");
+      setError(t("form.codeAndNameRequired"));
       return;
     }
 
     if (validFrom && validUntil && validFrom > validUntil) {
-      setError("終了日は開始日以降にしてください");
+      setError(t("form.endAfterStart"));
       return;
     }
 
@@ -60,15 +63,15 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
           validUntil: validUntil || undefined,
         });
       }
-      toast.success(isEdit ? "プロジェクトを更新しました" : "プロジェクトを作成しました");
+      toast.success(isEdit ? t("updated") : t("created"));
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
-      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
+      toast.error(err instanceof ApiError ? err.message : t("saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -77,12 +80,12 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? "プロジェクト編集" : "プロジェクト作成"}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? t("editProject") : t("createProject")}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="project-code" className="block text-sm font-medium text-gray-700 mb-1">
-              コード
+              {t("table.code")}
             </label>
             <input
               id="project-code"
@@ -97,7 +100,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
 
           <div>
             <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 mb-1">
-              名前
+              {t("form.name")}
             </label>
             <input
               id="project-name"
@@ -112,7 +115,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="project-valid-from" className="block text-sm font-medium text-gray-700 mb-1">
-                開始日
+                {t("form.validFrom")}
               </label>
               <input
                 id="project-valid-from"
@@ -124,7 +127,7 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
             </div>
             <div>
               <label htmlFor="project-valid-until" className="block text-sm font-medium text-gray-700 mb-1">
-                終了日
+                {t("form.validUntil")}
               </label>
               <input
                 id="project-valid-until"
@@ -144,14 +147,14 @@ export function ProjectForm({ project, onClose, onSaved }: ProjectFormProps) {
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              キャンセル
+              {tc("cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isSubmitting ? "保存中..." : isEdit ? "更新" : "作成"}
+              {isSubmitting ? tc("saving") : isEdit ? tc("update") : tc("create")}
             </button>
           </div>
         </form>

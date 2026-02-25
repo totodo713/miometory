@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import type { CsvImportProgress } from "@/services/csvService";
@@ -44,6 +45,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
     details: Array<{ row: number; errors: string[] }>;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("worklog.csvUploader");
   const toast = useToast();
 
   // Ref to store EventSource cleanup function
@@ -114,7 +116,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
         (errorMsg) => {
           setError(errorMsg);
           setIsImporting(false);
-          toast.error("インポートの進捗取得に失敗しました");
+          toast.error(t("error"));
         },
         () => {
           setIsImporting(false);
@@ -126,7 +128,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
                 errors: currentProgress.errorRows,
                 details: currentProgress.errors ?? [],
               });
-              toast.success(`${currentProgress.validRows}件のインポートが完了しました`);
+              toast.success(t("success", { count: currentProgress.validRows }));
               onImportComplete?.();
             }
             return currentProgress;
@@ -140,7 +142,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
       setError(err instanceof Error ? err.message : "Import failed");
       setIsImporting(false);
     }
-  }, [file, memberId, onImportComplete, toast]);
+  }, [file, memberId, onImportComplete, toast, t]);
 
   const handleReset = useCallback(() => {
     setFile(null);
@@ -185,8 +187,8 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
             aria-label="Select CSV file to import"
           />
           <div className="text-gray-600">
-            <p className="text-lg font-medium mb-2">Drop CSV file here or click to browse</p>
-            <p className="text-sm text-gray-500">Supported format: CSV (Date, Project Code, Hours, Notes)</p>
+            <p className="text-lg font-medium mb-2">{t("dropzone")}</p>
+            <p className="text-sm text-gray-500">{t("title")}</p>
           </div>
         </button>
       )}
@@ -213,7 +215,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
             onClick={handleImport}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
           >
-            Import CSV
+            {t("title")}
           </button>
         </div>
       )}
@@ -223,7 +225,7 @@ export function CsvUploader({ memberId, onImportComplete }: CsvUploaderProps) {
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-medium">Importing...</span>
+              <span className="font-medium">{t("uploading")}</span>
               <span className="text-sm text-gray-600">{getProgressPercentage()}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">

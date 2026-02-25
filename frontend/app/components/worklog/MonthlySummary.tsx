@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -37,6 +38,9 @@ export interface MonthlySummaryProps {
  * Displays project breakdown table with hours and percentage for the month.
  */
 export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
+  const format = useFormatter();
+  const t = useTranslations("worklog.monthlySummary");
+  const tc = useTranslations("common");
   const [summary, setSummary] = useState<MonthlySummaryData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,9 +103,9 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       {/* Header with Approval Status */}
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Monthly Summary</h2>
+          <h2 className="text-xl font-semibold text-gray-900">{t("title")}</h2>
           <p className="text-sm text-gray-600 mt-1">
-            {new Date(year, month - 1).toLocaleString("en-US", {
+            {format.dateTime(new Date(year, month - 1), {
               month: "long",
               year: "numeric",
             })}
@@ -152,7 +156,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       {/* Overall Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-          <div className="text-sm text-blue-600 font-medium">Total Work Hours</div>
+          <div className="text-sm text-blue-600 font-medium">{t("totalHours")}</div>
           <div className="text-2xl font-bold text-blue-900 mt-1">{summary.totalWorkHours}h</div>
           <div className="text-xs text-blue-600 mt-1">
             {summary.projects.length} project
@@ -162,13 +166,13 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
         <div className="bg-sky-50 rounded-lg p-4 border border-sky-200">
           <div className="flex items-center gap-1 text-sm text-sky-700 font-medium">
             <span>🏖️</span>
-            <span>Absence Hours</span>
+            <span>{t("absenceDays")}</span>
           </div>
           <div className="text-2xl font-bold text-sky-900 mt-1">{summary.totalAbsenceHours}h</div>
           <div className="text-xs text-sky-700 mt-1">Time away from work</div>
         </div>
         <div className="bg-green-50 rounded-lg p-4 border border-green-100">
-          <div className="text-sm text-green-700 font-medium">Business Days</div>
+          <div className="text-sm text-green-700 font-medium">{t("workingDays")}</div>
           <div className="text-2xl font-bold text-green-900 mt-1">{summary.totalBusinessDays}</div>
           <div className="text-xs text-green-700 mt-1">In this period</div>
         </div>
@@ -216,10 +220,10 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Project</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Hours</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Percentage</th>
-              <th className="py-3 px-4 text-sm font-semibold text-gray-700">Distribution</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">{tc("name")}</th>
+              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">{t("totalHours")}</th>
+              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">%</th>
+              <th className="py-3 px-4 text-sm font-semibold text-gray-700">&nbsp;</th>
             </tr>
           </thead>
           <tbody>
@@ -240,7 +244,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-gray-300">
-              <td className="py-3 px-4 text-sm font-semibold text-gray-900">Total</td>
+              <td className="py-3 px-4 text-sm font-semibold text-gray-900">{tc("total")}</td>
               <td className="py-3 px-4 text-sm text-right font-bold text-gray-900">
                 {summary.totalWorkHours.toFixed(2)}h
               </td>
@@ -252,9 +256,7 @@ export function MonthlySummary({ year, month, memberId }: MonthlySummaryProps) {
       </div>
 
       {/* Empty State */}
-      {summary.projects.length === 0 && (
-        <EmptyState title="月次サマリーがありません" description="まだ勤務データが登録されていません" />
-      )}
+      {summary.projects.length === 0 && <EmptyState title={t("noData")} description={t("noData")} />}
     </div>
   );
 }

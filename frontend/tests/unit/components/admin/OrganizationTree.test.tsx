@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
 import type { OrganizationTreeNode } from "@/services/api";
+import { IntlWrapper } from "../../../helpers/intl";
 
 const mockGetOrganizationTree = vi.fn();
 
@@ -67,7 +68,11 @@ describe("OrganizationTree", () => {
   });
 
   test("shows loading state then renders tree data", async () => {
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
 
     await waitFor(() => {
@@ -77,7 +82,11 @@ describe("OrganizationTree", () => {
   });
 
   test("renders nested hierarchy with 3+ levels", async () => {
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Headquarters")).toBeInTheDocument();
@@ -92,7 +101,11 @@ describe("OrganizationTree", () => {
 
   test("collapse toggle hides children when clicked", async () => {
     const user = userEvent.setup();
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Headquarters")).toBeInTheDocument();
@@ -113,7 +126,11 @@ describe("OrganizationTree", () => {
 
   test("expand toggle shows children when clicked after collapse", async () => {
     const user = userEvent.setup();
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Headquarters")).toBeInTheDocument();
@@ -135,7 +152,11 @@ describe("OrganizationTree", () => {
   test("calls onSelectOrg callback when node name is clicked", async () => {
     const user = userEvent.setup();
     const onSelectOrg = vi.fn();
-    render(<OrganizationTree {...defaultProps} onSelectOrg={onSelectOrg} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} onSelectOrg={onSelectOrg} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Headquarters")).toBeInTheDocument();
@@ -148,7 +169,11 @@ describe("OrganizationTree", () => {
   });
 
   test("displays status badge for active organization", async () => {
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Headquarters")).toBeInTheDocument();
@@ -162,7 +187,11 @@ describe("OrganizationTree", () => {
   test("displays status badge for inactive organization", async () => {
     mockGetOrganizationTree.mockResolvedValue([inactiveNode]);
 
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Legacy Department")).toBeInTheDocument();
@@ -172,7 +201,11 @@ describe("OrganizationTree", () => {
   });
 
   test("displays member count indicator", async () => {
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Headquarters")).toBeInTheDocument();
@@ -185,7 +218,11 @@ describe("OrganizationTree", () => {
 
   test("include inactive toggle checkbox triggers API reload", async () => {
     const user = userEvent.setup();
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Headquarters")).toBeInTheDocument();
@@ -206,7 +243,11 @@ describe("OrganizationTree", () => {
   test("shows empty tree state when no organizations", async () => {
     mockGetOrganizationTree.mockResolvedValue([]);
 
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("組織が見つかりません")).toBeInTheDocument();
@@ -217,19 +258,31 @@ describe("OrganizationTree", () => {
     // Make the mock never resolve to keep loading state visible
     mockGetOrganizationTree.mockReturnValue(new Promise(() => {}));
 
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     expect(screen.getByText("読み込み中...")).toBeInTheDocument();
   });
 
   test("reloads when refreshKey changes", async () => {
-    const { rerender } = render(<OrganizationTree {...defaultProps} refreshKey={0} />);
+    const { rerender } = render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} refreshKey={0} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(mockGetOrganizationTree).toHaveBeenCalledTimes(1);
     });
 
-    rerender(<OrganizationTree {...defaultProps} refreshKey={1} />);
+    rerender(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} refreshKey={1} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(mockGetOrganizationTree).toHaveBeenCalledTimes(2);
@@ -239,7 +292,11 @@ describe("OrganizationTree", () => {
   test("leaf nodes do not show expand/collapse button", async () => {
     mockGetOrganizationTree.mockResolvedValue([leafNode]);
 
-    render(<OrganizationTree {...defaultProps} />);
+    render(
+      <IntlWrapper>
+        <OrganizationTree {...defaultProps} />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Team C")).toBeInTheDocument();

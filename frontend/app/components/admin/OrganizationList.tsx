@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -16,6 +17,8 @@ interface OrganizationListProps {
 }
 
 export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey, onSelectOrg }: OrganizationListProps) {
+  const t = useTranslations("admin.organizations");
+  const tc = useTranslations("common");
   const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
@@ -33,6 +36,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
     return () => clearTimeout(timer);
   }, [search]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tc from useTranslations is stable
   const loadOrganizations = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -46,7 +50,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
       setOrganizations(result.content);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
-      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
+      setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -62,18 +66,18 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
       <div className="flex items-center gap-4 mb-4">
         <input
           type="text"
-          placeholder="組織名またはコードで検索..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(0);
           }}
-          aria-label="組織名またはコードで検索"
+          aria-label={t("searchLabel")}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
-          無効も表示
+          {t("showInactive")}
         </label>
       </div>
 
@@ -85,15 +89,15 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
             onClick={loadOrganizations}
             className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
           >
-            再試行
+            {tc("retry")}
           </button>
         </div>
       ) : isLoading ? (
         <Skeleton.Table rows={5} cols={7} />
       ) : organizations.length === 0 ? (
         <EmptyState
-          title="組織が見つかりません"
-          description={debouncedSearch || showInactive ? "検索条件を変更してください" : "まだ組織がありません"}
+          title={t("notFound")}
+          description={debouncedSearch || showInactive ? t("changeFilter") : t("noOrgsYet")}
         />
       ) : isMobile ? (
         <div className="space-y-3">
@@ -123,12 +127,13 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                     org.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {org.status === "ACTIVE" ? "有効" : "無効"}
+                  {org.status === "ACTIVE" ? tc("active") : tc("inactive")}
                 </span>
               </div>
               <p className="text-xs text-gray-500 font-mono">{org.code}</p>
               <p className="text-xs text-gray-500">
-                レベル: {org.level} / 親組織: {org.parentName || "—"} / メンバー: {org.memberCount}
+                {t("table.level")}: {org.level} / {t("table.parent")}: {org.parentName || "—"} /{" "}
+                {t("table.memberCount")}: {org.memberCount}
               </p>
               <div className="flex gap-2 pt-1">
                 <button
@@ -139,7 +144,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                   }}
                   className="text-blue-600 hover:text-blue-800 text-xs"
                 >
-                  編集
+                  {tc("edit")}
                 </button>
                 {org.status === "ACTIVE" ? (
                   <button
@@ -150,7 +155,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                     }}
                     className="text-red-600 hover:text-red-800 text-xs"
                   >
-                    無効化
+                    {tc("disable")}
                   </button>
                 ) : (
                   <button
@@ -161,7 +166,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                     }}
                     className="text-green-600 hover:text-green-800 text-xs"
                   >
-                    有効化
+                    {tc("enable")}
                   </button>
                 )}
               </div>
@@ -173,13 +178,13 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">コード</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">名前</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">レベル</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">親組織</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">メンバー数</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">ステータス</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-700">アクション</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.code")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.name")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.level")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.parent")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.memberCount")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.status")}</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-700">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -212,7 +217,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                         org.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {org.status === "ACTIVE" ? "有効" : "無効"}
+                      {org.status === "ACTIVE" ? tc("active") : tc("inactive")}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -225,7 +230,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                         }}
                         className="text-blue-600 hover:text-blue-800 text-xs"
                       >
-                        編集
+                        {tc("edit")}
                       </button>
                       {org.status === "ACTIVE" ? (
                         <button
@@ -236,7 +241,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                           }}
                           className="text-red-600 hover:text-red-800 text-xs"
                         >
-                          無効化
+                          {tc("disable")}
                         </button>
                       ) : (
                         <button
@@ -247,7 +252,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
                           }}
                           className="text-green-600 hover:text-green-800 text-xs"
                         >
-                          有効化
+                          {tc("enable")}
                         </button>
                       )}
                     </div>
@@ -267,7 +272,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
             disabled={page === 0}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            前へ
+            {tc("previous")}
           </button>
           <span className="px-3 py-1 text-sm text-gray-600">
             {page + 1} / {totalPages}
@@ -278,7 +283,7 @@ export function OrganizationList({ onEdit, onDeactivate, onActivate, refreshKey,
             disabled={page >= totalPages - 1}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            次へ
+            {tc("next")}
           </button>
         </div>
       )}

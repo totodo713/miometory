@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { ProjectList } from "@/components/admin/ProjectList";
 import { ToastProvider } from "@/components/shared/ToastProvider";
+import { IntlWrapper } from "../../../helpers/intl";
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -51,7 +52,11 @@ const inactiveProject = {
 };
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 const defaultProps = {
@@ -288,9 +293,11 @@ describe("ProjectList", () => {
     });
 
     rerender(
-      <ToastProvider>
-        <ProjectList {...defaultProps} refreshKey={1} />
-      </ToastProvider>,
+      <IntlWrapper>
+        <ToastProvider>
+          <ProjectList {...defaultProps} refreshKey={1} />
+        </ToastProvider>
+      </IntlWrapper>,
     );
 
     await waitFor(() => {
@@ -305,10 +312,10 @@ describe("ProjectList", () => {
       expect(screen.getByText("PRJ001")).toBeInTheDocument();
     });
     expect(screen.getByText("コード")).toBeInTheDocument();
-    expect(screen.getByText("名前")).toBeInTheDocument();
+    expect(screen.getByText("プロジェクト名")).toBeInTheDocument();
     expect(screen.getByText("有効期間")).toBeInTheDocument();
     expect(screen.getByText("メンバー数")).toBeInTheDocument();
-    expect(screen.getByText("状態")).toBeInTheDocument();
+    expect(screen.getByText("ステータス")).toBeInTheDocument();
     expect(screen.getByText("操作")).toBeInTheDocument();
   });
 });

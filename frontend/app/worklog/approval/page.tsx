@@ -1,18 +1,22 @@
 "use client";
 
 /**
- * Manager Approval Queue Page
+ * Manager {t("title")} Page
  *
  * Displays pending monthly submissions awaiting manager review.
  * Allows managers to approve or reject submissions with feedback.
  */
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { MonthlyApprovalSummaryView } from "@/components/worklog/MonthlyApprovalSummary";
 import { api } from "@/services/api";
 import type { PendingApproval } from "@/types/approval";
 
 export default function ApprovalPage() {
+  const format = useFormatter();
+  const t = useTranslations("worklog.monthlyApproval");
+  const tc = useTranslations("common");
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -116,10 +120,10 @@ export default function ApprovalPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Approval Queue</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">{t("title")}</h1>
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading pending approvals...</p>
+            <p className="mt-4 text-gray-600">{tc("loading")}</p>
           </div>
         </div>
       </div>
@@ -130,7 +134,7 @@ export default function ApprovalPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Approval Queue</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-6">{t("title")}</h1>
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">Error: {error}</p>
             <button
@@ -138,7 +142,7 @@ export default function ApprovalPage() {
               onClick={loadApprovalQueue}
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
             >
-              Retry
+              {tc("retry")}
             </button>
           </div>
         </div>
@@ -152,22 +156,22 @@ export default function ApprovalPage() {
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Approval Queue</h1>
-            <p className="mt-1 text-sm text-gray-600">Review and approve submitted monthly work logs</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t("title")}</h1>
+            <p className="mt-1 text-sm text-gray-600">{t("title")}</p>
           </div>
           <button
             type="button"
             onClick={loadApprovalQueue}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Refresh
+            {tc("retry")}
           </button>
         </div>
 
         {/* Queue List */}
         {pendingApprovals.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <p className="text-gray-600">No pending approvals at this time.</p>
+            <p className="text-gray-600">{tc("noData")}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -178,8 +182,18 @@ export default function ApprovalPage() {
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-gray-900">{approval.memberName}</h3>
                     <p className="text-sm text-gray-600 mt-1">
-                      Period: {new Date(approval.fiscalMonthStart).toLocaleDateString()} -{" "}
-                      {new Date(approval.fiscalMonthEnd).toLocaleDateString()}
+                      Period:{" "}
+                      {format.dateTime(new Date(approval.fiscalMonthStart), {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}{" "}
+                      -{" "}
+                      {format.dateTime(new Date(approval.fiscalMonthEnd), {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </p>
                     <div className="mt-3 flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
@@ -198,7 +212,14 @@ export default function ApprovalPage() {
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Submitted by {approval.submittedByName} on {new Date(approval.submittedAt).toLocaleString()}
+                      Submitted by {approval.submittedByName} on{" "}
+                      {format.dateTime(new Date(approval.submittedAt), {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
                   </div>
 
@@ -210,7 +231,7 @@ export default function ApprovalPage() {
                       disabled={detailLoading}
                       className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                      詳細
+                      {t("title")}
                     </button>
                     <button
                       type="button"
@@ -218,7 +239,7 @@ export default function ApprovalPage() {
                       disabled={actionInProgress === approval.approvalId}
                       className="px-4 py-2 bg-green-700 text-white rounded hover:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                      {actionInProgress === approval.approvalId ? "Approving..." : "Approve"}
+                      {actionInProgress === approval.approvalId ? `${t("approve")}...` : t("approve")}
                     </button>
                     <button
                       type="button"
@@ -226,7 +247,7 @@ export default function ApprovalPage() {
                       disabled={actionInProgress === approval.approvalId}
                       className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                      Reject
+                      {t("reject")}
                     </button>
                   </div>
                 </div>
@@ -259,14 +280,14 @@ export default function ApprovalPage() {
       {rejectingApprovalId && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Reject Submission</h2>
-            <p className="text-sm text-gray-600 mb-4">Please provide a reason for rejection (required):</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">{t("reject")}</h2>
+            <p className="text-sm text-gray-600 mb-4">{t("rejectReason")}</p>
             <textarea
               value={rejectionReason}
               onChange={(e) => setRejectionReason(e.target.value)}
               rows={4}
               className="w-full px-3 py-2 border rounded-md"
-              placeholder="Explain why this submission is being rejected..."
+              placeholder={t("rejectReasonPlaceholder")}
               maxLength={1000}
             />
             <p className="text-xs text-gray-500 mt-1">{rejectionReason.length}/1000 characters</p>
@@ -279,7 +300,7 @@ export default function ApprovalPage() {
                 }}
                 className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
               >
-                Cancel
+                {tc("cancel")}
               </button>
               <button
                 type="button"
@@ -287,7 +308,7 @@ export default function ApprovalPage() {
                 disabled={!rejectionReason.trim()}
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                Confirm Rejection
+                {t("rejectConfirm")}
               </button>
             </div>
           </div>

@@ -232,6 +232,7 @@ class UserTest {
                     Instant.now(),
                     null,
                     null,
+                    "ja",
                 )
 
             // Act & Assert
@@ -406,6 +407,7 @@ class UserTest {
                     Instant.now(),
                     null,
                     Instant.now().minus(1, ChronoUnit.DAYS), // Verified
+                    "ja",
                 )
 
             // Act & Assert

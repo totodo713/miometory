@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { ApiError, api } from "@/services/api";
 
@@ -11,6 +12,8 @@ interface FiscalYearPatternFormProps {
 }
 
 export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: FiscalYearPatternFormProps) {
+  const t = useTranslations("admin.fiscalYearPattern");
+  const tc = useTranslations("common");
   const [name, setName] = useState("");
   const [startMonth, setStartMonth] = useState(4);
   const [startDay, setStartDay] = useState(1);
@@ -33,7 +36,7 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
     setError(null);
 
     if (!name.trim()) {
-      setError("名前は必須です");
+      setError(t("form.nameRequired"));
       return;
     }
 
@@ -45,7 +48,7 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
     } finally {
       setIsSubmitting(false);
@@ -55,12 +58,12 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">会計年度パターン作成</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("title")}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="fy-pattern-name" className="block text-sm font-medium text-gray-700 mb-1">
-              名前
+              {t("form.name")}
             </label>
             <input
               id="fy-pattern-name"
@@ -74,7 +77,7 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
 
           <div>
             <label htmlFor="fy-pattern-start-month" className="block text-sm font-medium text-gray-700 mb-1">
-              開始月
+              {t("form.startMonth")}
             </label>
             <select
               id="fy-pattern-start-month"
@@ -84,7 +87,7 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                 <option key={m} value={m}>
-                  {m}月
+                  {t("form.monthSuffix", { month: m })}
                 </option>
               ))}
             </select>
@@ -92,7 +95,7 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
 
           <div>
             <label htmlFor="fy-pattern-start-day" className="block text-sm font-medium text-gray-700 mb-1">
-              開始日
+              {t("form.startDay")}
             </label>
             <select
               id="fy-pattern-start-day"
@@ -102,7 +105,7 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
             >
               {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                 <option key={d} value={d}>
-                  {d}日
+                  {t("form.daySuffix", { day: d })}
                 </option>
               ))}
             </select>
@@ -116,14 +119,14 @@ export function FiscalYearPatternForm({ tenantId, open, onClose, onCreated }: Fi
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              キャンセル
+              {tc("cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isSubmitting ? "作成中..." : "作成"}
+              {isSubmitting ? t("form.creating") : t("form.create")}
             </button>
           </div>
         </form>

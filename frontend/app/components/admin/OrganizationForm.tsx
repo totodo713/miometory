@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import type { OrganizationRow } from "@/services/api";
@@ -12,6 +13,8 @@ interface OrganizationFormProps {
 }
 
 export function OrganizationForm({ organization, onClose, onSaved }: OrganizationFormProps) {
+  const t = useTranslations("admin.organizations");
+  const tc = useTranslations("common");
   const isEdit = organization !== null;
   const toast = useToast();
 
@@ -49,12 +52,12 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
     setError(null);
 
     if (!isEdit && !code.trim()) {
-      setError("コードは必須です");
+      setError(t("codeRequired"));
       return;
     }
 
     if (!name.trim()) {
-      setError("名前は必須です");
+      setError(t("nameRequired"));
       return;
     }
 
@@ -62,17 +65,17 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
     if (!isEdit) {
       const codePattern = /^[A-Za-z0-9_]+$/;
       if (!codePattern.test(code)) {
-        setError("コードは英数字とアンダースコアのみ使用できます");
+        setError(t("codeAlphanumeric"));
         return;
       }
       if (code.length > 32) {
-        setError("コードは32文字以内で入力してください");
+        setError(t("codeMaxLength"));
         return;
       }
     }
 
     if (name.length > 256) {
-      setError("名前は256文字以内で入力してください");
+      setError(t("nameMaxLength"));
       return;
     }
 
@@ -87,15 +90,15 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
           parentId: parentId || undefined,
         });
       }
-      toast.success(isEdit ? "組織を更新しました" : "組織を作成しました");
+      toast.success(isEdit ? t("updated") : t("created"));
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
-      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
+      toast.error(err instanceof ApiError ? err.message : t("saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -104,12 +107,14 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? "組織編集" : "組織作成"}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {isEdit ? t("editOrganization") : t("addOrganization")}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="org-code" className="block text-sm font-medium text-gray-700 mb-1">
-              コード
+              {t("form.code")}
             </label>
             <input
               id="org-code"
@@ -121,14 +126,14 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
               maxLength={32}
               pattern="[A-Za-z0-9_]+"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
-              placeholder="例: DEV_TEAM_001"
+              placeholder={t("codePlaceholder")}
             />
-            <p className="mt-1 text-xs text-gray-500">英数字とアンダースコアのみ、最大32文字</p>
+            <p className="mt-1 text-xs text-gray-500">{t("codeHint")}</p>
           </div>
 
           <div>
             <label htmlFor="org-name" className="block text-sm font-medium text-gray-700 mb-1">
-              名前
+              {t("form.name")}
             </label>
             <input
               id="org-name"
@@ -138,15 +143,15 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
               required
               maxLength={256}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="例: 開発チーム"
+              placeholder={t("namePlaceholder")}
             />
-            <p className="mt-1 text-xs text-gray-500">最大256文字</p>
+            <p className="mt-1 text-xs text-gray-500">{t("nameHint")}</p>
           </div>
 
           {!isEdit && (
             <div>
               <label htmlFor="org-parent" className="block text-sm font-medium text-gray-700 mb-1">
-                親組織 (任意)
+                {t("form.parent")}
               </label>
               <select
                 id="org-parent"
@@ -154,10 +159,10 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
                 onChange={(e) => setParentId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">なし (トップレベル組織)</option>
+                <option value="">{t("form.noParent")}</option>
                 {parentOrganizations.map((org) => (
                   <option key={org.id} value={org.id}>
-                    {org.code} - {org.name} (レベル {org.level})
+                    {t("form.parentOption", { code: org.code, name: org.name, level: org.level })}
                   </option>
                 ))}
               </select>
@@ -172,14 +177,14 @@ export function OrganizationForm({ organization, onClose, onSaved }: Organizatio
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              キャンセル
+              {tc("cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isSubmitting ? "保存中..." : isEdit ? "更新" : "作成"}
+              {isSubmitting ? tc("saving") : isEdit ? tc("update") : tc("create")}
             </button>
           </div>
         </form>

@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { IntlWrapper } from "../../../helpers/intl";
 
 // Mock the API module
 const mockGetEntries = vi.fn();
@@ -100,7 +101,11 @@ async function waitForDataLoad() {
 }
 
 function renderDashboard() {
-  return render(<DailyApprovalDashboard refreshKey={0} onRefresh={vi.fn()} />);
+  return render(
+    <IntlWrapper>
+      <DailyApprovalDashboard refreshKey={0} onRefresh={vi.fn()} />
+    </IntlWrapper>,
+  );
 }
 
 describe("DailyApprovalDashboard", () => {

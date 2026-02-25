@@ -1,4 +1,160 @@
 {
+  "common": {
+    "loading": "読み込み中...",
+    "saving": "保存中...",
+    "cancel": "キャンセル",
+    "close": "閉じる",
+    "retry": "再試行",
+    "edit": "編集",
+    "create": "作成",
+    "update": "更新",
+    "save": "保存",
+    "delete": "削除",
+    "enable": "有効化",
+    "disable": "無効化",
+    "enabled": "有効",
+    "disabled": "無効",
+    "active": "有効",
+    "inactive": "無効",
+    "previous": "前へ",
+    "next": "次へ",
+    "confirm": "確認",
+    "error": "エラーが発生しました",
+    "fetchError": "データの取得に失敗しました",
+    "name": "名前",
+    "email": "メールアドレス",
+    "code": "コード",
+    "status": "ステータス",
+    "actions": "操作",
+    "total": "合計",
+    "today": "今日",
+    "search": "検索",
+    "filter": "フィルター",
+    "noData": "データがありません",
+    "backToTop": "トップに戻る",
+    "description": "説明",
+    "required": "必須",
+    "optional": "任意",
+    "yes": "はい",
+    "no": "いいえ",
+    "all": "すべて",
+    "none": "なし",
+    "pagination": {
+      "page": "{current} / {total} ページ",
+      "showing": "{total}件中 {from}-{to}件を表示",
+      "first": "最初のページ",
+      "last": "最後のページ"
+    }
+  },
+  "locale": {
+    "en": "EN",
+    "ja": "JA",
+    "toggle": "言語切替",
+    "switchTo": "{locale}に切替"
+  },
+  "header": {
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "navigationMenu": "ナビゲーションメニュー",
+    "menu": "メニュー",
+    "worklog": "勤怠",
+    "admin": "管理",
+    "logout": "ログアウト"
+  },
+  "breadcrumbs": {
+    "home": "ホーム",
+    "admin": "管理パネル",
+    "members": "メンバー管理",
+    "organizations": "組織管理",
+    "tenants": "テナント管理",
+    "users": "ユーザー管理",
+    "projects": "プロジェクト管理",
+    "assignments": "アサイン管理",
+    "notifications": "通知"
+  },
+  "auth": {
+    "login": {
+      "title": "ログイン",
+      "emailLabel": "メールアドレス",
+      "emailPlaceholder": "example@company.com",
+      "passwordLabel": "パスワード",
+      "passwordPlaceholder": "パスワードを入力",
+      "rememberMe": "ログイン状態を保持する",
+      "submitButton": "ログイン",
+      "submitting": "ログイン中...",
+      "forgotPassword": "パスワードを忘れた方",
+      "noAccount": "アカウントをお持ちでない方",
+      "signupLink": "新規登録",
+      "errors": {
+        "emailRequired": "メールアドレスを入力してください",
+        "passwordRequired": "パスワードを入力してください",
+        "validationError": "入力内容を確認してください",
+        "invalidCredentials": "メールアドレスまたはパスワードが正しくありません",
+        "accountLocked": "アカウントがロックされています。しばらくしてから再試行してください。",
+        "networkError": "ネットワークエラーが発生しました。接続を確認してください。",
+        "unknownError": "ログインに失敗しました。もう一度お試しください。"
+      }
+    },
+    "signup": {
+      "title": "新規登録",
+      "nameLabel": "名前",
+      "namePlaceholder": "山田 太郎",
+      "emailLabel": "メールアドレス",
+      "emailPlaceholder": "example@company.com",
+      "passwordLabel": "パスワード",
+      "passwordPlaceholder": "8文字以上で入力してください",
+      "confirmPasswordLabel": "パスワードの確認",
+      "confirmPasswordPlaceholder": "もう一度入力してください",
+      "submitButton": "登録",
+      "submitting": "登録中...",
+      "hasAccount": "すでにアカウントをお持ちの方",
+      "loginLink": "ログイン",
+      "errors": {
+        "nameRequired": "名前を入力してください",
+        "emailRequired": "メールアドレスを入力してください",
+        "emailInvalid": "有効なメールアドレスを入力してください",
+        "passwordRequired": "パスワードを入力してください",
+        "passwordTooShort": "パスワードは8文字以上で入力してください",
+        "confirmRequired": "確認用パスワードを入力してください",
+        "passwordMismatch": "パスワードが一致しません",
+        "emailExists": "このメールアドレスは既に登録されています",
+        "networkError": "ネットワークエラーが発生しました。接続を確認してください。",
+        "unknownError": "登録に失敗しました。もう一度お試しください。"
+      },
+      "confirm": {
+        "title": "登録完了",
+        "message": "確認メールを送信しました。メールに記載されたリンクをクリックして、アカウントを有効化してください。",
+        "backToLogin": "ログインに戻る"
+      }
+    },
+    "verifyEmail": {
+      "verifying": "メールアドレスを確認中...",
+      "success": "メールアドレスが確認されました。ログインしてください。",
+      "error": "認証エラー",
+      "errorMessage": "トークンが無効です。リンクの有効期限が切れている可能性があります。",
+      "networkError": "接続エラー",
+      "networkErrorMessage": "サーバーに接続できませんでした。ネットワーク接続を確認してください。",
+      "retry": "再試行",
+      "loginLink": "ログインページへ"
+    },
+    "sessionTimeout": {
+      "title": "セッションタイムアウト警告",
+      "subtitle": "セッションの有効期限が近づいています",
+      "message": "操作がないため、セッションの有効期限が切れます。",
+      "timeRemaining": "残り時間:",
+      "continueSession": "セッションを延長",
+      "logout": "ログアウト",
+      "hint": "「セッションを延長」をクリックしてセッションを継続するか、「ログアウト」をクリックしてサインアウトしてください。"
+    },
+    "unverifiedBanner": {
+      "message": "メールアドレスが未確認です。確認メールのリンクをクリックしてアカウントを有効化してください。",
+      "resend": "確認メールを再送信",
+      "sending": "送信中...",
+      "sent": "送信しました",
+      "successToast": "確認メールを再送信しました",
+      "errorToast": "確認メールの送信に失敗しました"
+    }
+  },
   "passwordReset": {
     "request": {
       "title": "パスワードリセット",
@@ -60,5 +216,667 @@
       "loading": "処理中...",
       "retry": "再試行"
     }
+  },
+  "worklog": {
+    "page": {
+      "title": "勤怠管理",
+      "monthLabel": "{year}年{month}月",
+      "prevMonth": "前月",
+      "nextMonth": "翌月",
+      "goToToday": "今日へ",
+      "csvImport": "CSV取込",
+      "copyPrevMonth": "前月コピー",
+      "proxyMode": "代理入力モード",
+      "proxyModeActive": "代理入力中: {name}",
+      "exitProxy": "代理入力を終了"
+    },
+    "dailyEntry": {
+      "title": "{date}の勤怠",
+      "startTime": "開始時間",
+      "endTime": "終了時間",
+      "breakTime": "休憩時間",
+      "workingHours": "勤務時間",
+      "project": "プロジェクト",
+      "selectProject": "プロジェクトを選択",
+      "hours": "時間",
+      "description": "業務内容",
+      "descriptionPlaceholder": "業務内容を入力してください",
+      "addEntry": "エントリを追加",
+      "removeEntry": "エントリを削除",
+      "totalHours": "合計時間",
+      "requiredHours": "所定時間",
+      "remainingHours": "残り時間",
+      "overtime": "残業時間",
+      "saved": "保存しました",
+      "saveError": "保存に失敗しました",
+      "autoSaving": "自動保存中...",
+      "lastSaved": "最終保存: {time}",
+      "unsavedChanges": "未保存の変更があります",
+      "noEntries": "エントリがありません",
+      "validation": {
+        "startTimeRequired": "開始時間を入力してください",
+        "endTimeRequired": "終了時間を入力してください",
+        "endAfterStart": "終了時間は開始時間より後にしてください",
+        "projectRequired": "プロジェクトを選択してください",
+        "hoursRequired": "時間を入力してください",
+        "hoursRange": "時間は0.25〜24の範囲で入力してください",
+        "descriptionRequired": "業務内容を入力してください"
+      }
+    },
+    "absence": {
+      "title": "休暇申請",
+      "type": "休暇種別",
+      "selectType": "休暇種別を選択",
+      "reason": "理由",
+      "reasonPlaceholder": "理由を入力してください",
+      "submit": "申請",
+      "types": {
+        "PAID_LEAVE": "有給休暇",
+        "HALF_DAY_AM": "午前半休",
+        "HALF_DAY_PM": "午後半休",
+        "SICK_LEAVE": "病欠",
+        "SPECIAL_LEAVE": "特別休暇",
+        "UNPAID_LEAVE": "無給休暇",
+        "COMPENSATORY_LEAVE": "代休",
+        "PUBLIC_HOLIDAY": "祝日"
+      },
+      "saved": "休暇を保存しました",
+      "deleted": "休暇を削除しました",
+      "saveError": "休暇の保存に失敗しました",
+      "deleteError": "休暇の削除に失敗しました"
+    },
+    "calendar": {
+      "dayNames": {
+        "sun": "日",
+        "mon": "月",
+        "tue": "火",
+        "wed": "水",
+        "thu": "木",
+        "fri": "金",
+        "sat": "土"
+      },
+      "dayNamesShort": {
+        "sun": "日",
+        "mon": "月",
+        "tue": "火",
+        "wed": "水",
+        "thu": "木",
+        "fri": "金",
+        "sat": "土"
+      },
+      "status": {
+        "entered": "入力済",
+        "approved": "承認済",
+        "rejected": "差戻",
+        "holiday": "祝日",
+        "absence": "休暇"
+      }
+    },
+    "monthlySummary": {
+      "title": "月次サマリー",
+      "workingDays": "稼働日数",
+      "totalHours": "合計時間",
+      "requiredHours": "所定時間",
+      "overtimeHours": "残業時間",
+      "absenceDays": "休暇日数",
+      "enteredDays": "入力済日数",
+      "remainingDays": "未入力日数",
+      "approvedDays": "承認済日数",
+      "rejectedDays": "差戻日数",
+      "noData": "この月のデータはありません"
+    },
+    "submitButton": {
+      "submit": "月次提出",
+      "submitted": "提出済",
+      "resubmit": "再提出",
+      "confirmTitle": "月次勤怠を提出しますか？",
+      "confirmMessage": "提出後は修正できなくなります。承認者による確認が行われます。",
+      "success": "月次勤怠を提出しました",
+      "error": "提出に失敗しました"
+    },
+    "submitDaily": {
+      "submit": "日次提出",
+      "submitted": "提出済",
+      "confirmTitle": "日次勤怠を提出しますか？",
+      "confirmMessage": "この日の勤怠を提出します。",
+      "success": "日次勤怠を提出しました",
+      "error": "提出に失敗しました"
+    },
+    "copyDialog": {
+      "title": "前月データのコピー",
+      "message": "前月の勤怠データをコピーします。既存のデータは上書きされません。",
+      "confirm": "コピー",
+      "success": "前月データをコピーしました",
+      "error": "コピーに失敗しました",
+      "noData": "コピーできる前月データがありません"
+    },
+    "rejection": {
+      "title": "差戻",
+      "reason": "差戻理由",
+      "date": "差戻日",
+      "by": "差戻者"
+    },
+    "monthlyApproval": {
+      "title": "月次承認",
+      "status": "承認状態",
+      "statusLabels": {
+        "PENDING": "未提出",
+        "SUBMITTED": "提出済",
+        "APPROVED": "承認済",
+        "REJECTED": "差戻"
+      },
+      "approve": "承認",
+      "reject": "差戻",
+      "rejectReason": "差戻理由",
+      "rejectReasonPlaceholder": "差戻理由を入力してください",
+      "approveConfirm": "承認しますか？",
+      "rejectConfirm": "差戻しますか？",
+      "approveSuccess": "承認しました",
+      "rejectSuccess": "差戻しました",
+      "approveError": "承認に失敗しました",
+      "rejectError": "差戻に失敗しました"
+    },
+    "csvUploader": {
+      "title": "CSV取込",
+      "dropzone": "CSVファイルをドロップ、またはクリックして選択",
+      "uploading": "アップロード中...",
+      "success": "{count}件のデータを取り込みました",
+      "error": "CSV取込に失敗しました",
+      "formatError": "CSVの形式が正しくありません",
+      "template": "テンプレートをダウンロード"
+    },
+    "proxyMode": {
+      "title": "代理入力",
+      "selectMember": "メンバーを選択",
+      "active": "代理入力中: {name}",
+      "exit": "代理入力を終了"
+    },
+    "confirmDialog": {
+      "deleteTitle": "エントリの削除",
+      "deleteMessage": "このエントリを削除しますか？この操作は取り消せません。",
+      "deleteConfirm": "削除"
+    }
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "ダッシュボード",
+      "members": "メンバー管理",
+      "organizations": "組織管理",
+      "tenants": "テナント管理",
+      "users": "ユーザー管理",
+      "projects": "プロジェクト管理",
+      "assignments": "アサイン管理",
+      "dailyApproval": "日次承認",
+      "monthlyApproval": "月次承認",
+      "sectionLabels": {
+        "management": "管理",
+        "approval": "承認"
+      }
+    },
+    "dashboard": {
+      "title": "管理ダッシュボード",
+      "memberCount": "メンバー数",
+      "activeMembers": "有効メンバー",
+      "pendingApprovals": "承認待ち",
+      "todayEntries": "本日の入力",
+      "cards": {
+        "membersDescription": "メンバーの招待・編集・無効化を行います",
+        "projectsDescription": "プロジェクトの作成・編集・無効化を行います",
+        "assignmentsDescription": "メンバーとプロジェクトの割り当てを管理します",
+        "dailyApprovalDescription": "チームメンバーの日次記録を承認・却下します",
+        "organizationsDescription": "組織の階層構造・マネージャー割当・パターン設定を管理します",
+        "tenantsDescription": "テナントの作成・編集・無効化を行います",
+        "usersDescription": "ユーザーアカウントのロール変更・ロック管理を行います"
+      }
+    },
+    "members": {
+      "title": "メンバー管理",
+      "search": "メンバーを検索",
+      "searchPlaceholder": "名前またはメールで検索",
+      "addMember": "メンバーを追加",
+      "editMember": "メンバーを編集",
+      "table": {
+        "name": "名前",
+        "email": "メールアドレス",
+        "organization": "組織",
+        "manager": "管理者",
+        "status": "ステータス",
+        "actions": "操作"
+      },
+      "form": {
+        "displayName": "表示名",
+        "displayNamePlaceholder": "表示名を入力",
+        "email": "メールアドレス",
+        "emailPlaceholder": "メールアドレスを入力",
+        "organization": "組織",
+        "selectOrganization": "組織を選択",
+        "manager": "管理者",
+        "selectManager": "管理者を選択",
+        "noManager": "管理者なし",
+        "isActive": "有効"
+      },
+      "activate": "有効化",
+      "deactivate": "無効化",
+      "confirmDeactivate": "このメンバーを無効化しますか？",
+      "confirmActivate": "このメンバーを有効化しますか？",
+      "invite": "メンバー招待",
+      "showInactive": "無効も表示",
+      "notFound": "メンバーが見つかりません",
+      "changeFilter": "検索条件を変更してください",
+      "noMembersYet": "まだメンバーがいません",
+      "managerLabel": "上司",
+      "emailAndNameRequired": "メールと表示名は必須です",
+      "saveFailed": "保存に失敗しました",
+      "created": "メンバーを作成しました",
+      "updated": "メンバーを更新しました",
+      "activated": "メンバーを有効化しました",
+      "deactivated": "メンバーを無効化しました",
+      "createError": "メンバーの作成に失敗しました",
+      "updateError": "メンバーの更新に失敗しました",
+      "noMembers": "メンバーが登録されていません"
+    },
+    "tenants": {
+      "title": "テナント管理",
+      "addTenant": "テナントを追加",
+      "editTenant": "テナントを編集",
+      "table": {
+        "name": "テナント名",
+        "code": "コード",
+        "status": "ステータス",
+        "memberCount": "メンバー数",
+        "actions": "操作"
+      },
+      "form": {
+        "name": "テナント名",
+        "namePlaceholder": "テナント名を入力",
+        "code": "テナントコード",
+        "codePlaceholder": "テナントコードを入力",
+        "fiscalYearPattern": "年度パターン",
+        "monthlyPeriodPattern": "月度パターン",
+        "selectPattern": "パターンを選択"
+      },
+      "filterByStatus": "ステータスで絞り込み",
+      "allStatuses": "すべてのステータス",
+      "notFound": "テナントが見つかりません",
+      "changeFilter": "検索条件を変更してください",
+      "noTenantsYet": "まだテナントがありません",
+      "createdDate": "作成日",
+      "codeAndNameRequired": "コードと名前は必須です",
+      "saveFailed": "保存に失敗しました",
+      "confirmDeactivate": "このテナントを無効化しますか？",
+      "confirmActivate": "このテナントを有効化しますか？",
+      "created": "テナントを作成しました",
+      "updated": "テナントを更新しました",
+      "createError": "テナントの作成に失敗しました",
+      "updateError": "テナントの更新に失敗しました",
+      "activated": "テナントを有効化しました",
+      "deactivated": "テナントを無効化しました",
+      "noTenants": "テナントが登録されていません"
+    },
+    "organizations": {
+      "title": "組織管理",
+      "addOrganization": "組織を追加",
+      "editOrganization": "組織を編集",
+      "table": {
+        "name": "組織名",
+        "code": "コード",
+        "parent": "親組織",
+        "level": "レベル",
+        "status": "ステータス",
+        "memberCount": "メンバー数",
+        "actions": "操作"
+      },
+      "form": {
+        "name": "組織名",
+        "namePlaceholder": "組織名を入力",
+        "code": "組織コード",
+        "codePlaceholder": "組織コードを入力",
+        "parent": "親組織",
+        "selectParent": "親組織を選択",
+        "noParent": "なし（トップレベル）",
+        "parentOption": "{code} - {name} (レベル {level})"
+      },
+      "tree": {
+        "title": "組織ツリー",
+        "expand": "展開する",
+        "collapse": "折りたたむ",
+        "memberCount": "{count}人"
+      },
+      "showInactive": "無効も表示",
+      "notFound": "組織が見つかりません",
+      "changeFilter": "検索条件を変更してください",
+      "noOrgsYet": "まだ組織がありません",
+      "searchPlaceholder": "組織名またはコードで検索...",
+      "searchLabel": "組織名またはコードで検索",
+      "codeRequired": "コードは必須です",
+      "nameRequired": "名前は必須です",
+      "codeAlphanumeric": "コードは英数字とアンダースコアのみ使用できます",
+      "codeMaxLength": "コードは32文字以内で入力してください",
+      "nameMaxLength": "名前は256文字以内で入力してください",
+      "codeHint": "英数字とアンダースコアのみ、最大32文字",
+      "nameHint": "最大256文字",
+      "codePlaceholder": "例: DEV_TEAM_001",
+      "namePlaceholder": "例: 開発チーム",
+      "saveFailed": "保存に失敗しました",
+      "confirmDeactivate": "この組織を無効化しますか？",
+      "confirmActivate": "この組織を有効化しますか？",
+      "activated": "組織を有効化しました",
+      "deactivated": "組織を無効化しました",
+      "deactivateWarning": "無効化しました。警告: {warnings}",
+      "back": "戻る",
+      "orgMembers": "{name} - メンバー",
+      "createMember": "メンバー作成",
+      "listView": "リスト表示",
+      "treeView": "ツリー表示",
+      "patternSettings": "パターン設定",
+      "noPatternsRegistered": "パターンが登録されていません",
+      "currentFiscalYearPatternId": "現在の会計年度パターンID: {id}",
+      "currentMonthlyPeriodPatternId": "現在の月次期間パターンID: {id}",
+      "fiscalYearPattern": "会計年度パターン",
+      "monthlyPeriodPattern": "月次期間パターン",
+      "unset": "未設定",
+      "createNew": "+ 新規作成",
+      "patternSaved": "パターンを保存しました",
+      "membersFetchError": "メンバーの取得に失敗しました",
+      "memberTable": {
+        "name": "名前",
+        "email": "メール",
+        "manager": "マネージャー",
+        "status": "ステータス",
+        "actions": "アクション"
+      },
+      "managerInactive": "マネージャーが無効です",
+      "changeManager": "マネージャー変更",
+      "assignManager": "マネージャー割当",
+      "removeManager": "マネージャー解除",
+      "transferOrg": "組織異動",
+      "confirmRemoveManager": "{name} のマネージャー割り当てを解除しますか？",
+      "removeManagerLabel": "解除",
+      "managerRemoved": "マネージャー割り当てを解除しました",
+      "created": "組織を作成しました",
+      "updated": "組織を更新しました",
+      "createError": "組織の作成に失敗しました",
+      "updateError": "組織の更新に失敗しました",
+      "noOrganizations": "組織が登録されていません"
+    },
+    "users": {
+      "title": "ユーザー管理",
+      "table": {
+        "name": "名前",
+        "email": "メールアドレス",
+        "role": "ロール",
+        "tenant": "テナント",
+        "status": "状態",
+        "lastLogin": "最終ログイン",
+        "actions": "操作"
+      },
+      "roles": {
+        "USER": "ユーザー",
+        "SUPERVISOR": "スーパーバイザー",
+        "TENANT_ADMIN": "テナント管理者",
+        "SYSTEM_ADMIN": "システム管理者"
+      },
+      "searchPlaceholder": "メールまたは名前で検索...",
+      "searchLabel": "メールまたは名前で検索",
+      "filterByStatus": "アカウントステータスで絞り込み",
+      "allStatuses": "すべてのステータス",
+      "statusLabels": {
+        "active": "有効",
+        "unverified": "未確認",
+        "locked": "ロック",
+        "deleted": "削除済"
+      },
+      "changeRole": "ロール変更",
+      "lock": "ロック",
+      "unlock": "ロック解除",
+      "resetPassword": "PW初期化",
+      "notFound": "ユーザーが見つかりません",
+      "changeFilter": "検索条件を変更してください",
+      "noUsersYet": "まだユーザーがいません",
+      "changeRoleDialog": {
+        "title": "ロール変更",
+        "currentRole": "現在のロール: {role}",
+        "newRoleId": "新しいロールID",
+        "newRoleIdPlaceholder": "ロールのUUIDを入力...",
+        "changing": "変更中...",
+        "change": "変更"
+      },
+      "lockDialog": {
+        "title": "アカウントロック",
+        "durationLabel": "ロック期間（分）",
+        "invalidDuration": "有効な時間（分）を入力してください",
+        "locking": "ロック中...",
+        "lock": "ロック"
+      },
+      "unlocked": "ロックを解除しました",
+      "passwordReset": "パスワードが初期化されました",
+      "confirmUnlock": "{name} のロックを解除しますか？",
+      "confirmResetPassword": "{name} のパスワードを初期化しますか？",
+      "noUsers": "ユーザーが登録されていません"
+    },
+    "projects": {
+      "title": "プロジェクト管理",
+      "addProject": "プロジェクトを追加",
+      "editProject": "プロジェクトを編集",
+      "createProject": "プロジェクト作成",
+      "table": {
+        "name": "プロジェクト名",
+        "code": "コード",
+        "validPeriod": "有効期間",
+        "memberCount": "メンバー数",
+        "status": "ステータス",
+        "actions": "操作"
+      },
+      "form": {
+        "name": "プロジェクト名",
+        "namePlaceholder": "プロジェクト名を入力",
+        "code": "プロジェクトコード",
+        "codePlaceholder": "プロジェクトコードを入力",
+        "description": "説明",
+        "descriptionPlaceholder": "説明を入力",
+        "isActive": "有効",
+        "validFrom": "開始日",
+        "validUntil": "終了日",
+        "codeAndNameRequired": "コードと名前は必須です",
+        "endAfterStart": "終了日は開始日以降にしてください"
+      },
+      "showInactive": "無効も表示",
+      "searchPlaceholder": "コードまたは名前で検索...",
+      "searchLabel": "コードまたは名前で検索",
+      "notFound": "プロジェクトが見つかりません",
+      "changeFilter": "検索条件を変更してください",
+      "noProjectsYet": "まだプロジェクトがありません",
+      "memberLabel": "メンバー: {count}名",
+      "saveFailed": "保存に失敗しました",
+      "confirmDeactivate": "このプロジェクトを無効化しますか？",
+      "confirmActivate": "このプロジェクトを有効化しますか？",
+      "created": "プロジェクトを作成しました",
+      "updated": "プロジェクトを更新しました",
+      "activated": "プロジェクトを有効化しました",
+      "deactivated": "プロジェクトを無効化しました",
+      "createError": "プロジェクトの作成に失敗しました",
+      "updateError": "プロジェクトの更新に失敗しました",
+      "noProjects": "プロジェクトが登録されていません"
+    },
+    "assignments": {
+      "title": "アサイン管理",
+      "addAssignment": "アサインを追加",
+      "editAssignment": "アサインを編集",
+      "removeAssignment": "アサインを削除",
+      "table": {
+        "member": "メンバー",
+        "project": "プロジェクト",
+        "startDate": "開始日",
+        "endDate": "終了日",
+        "actions": "操作"
+      },
+      "form": {
+        "member": "メンバー",
+        "selectMember": "メンバーを選択",
+        "project": "プロジェクト",
+        "selectProject": "プロジェクトを選択",
+        "startDate": "開始日",
+        "endDate": "終了日"
+      },
+      "description": "メンバーとプロジェクトのアサインを管理します",
+      "byMember": "メンバー別",
+      "byProject": "プロジェクト別",
+      "selectLabel": "選択してください",
+      "addProject": "プロジェクトを追加",
+      "addMember": "メンバーを追加",
+      "adding": "追加中...",
+      "add": "追加",
+      "created": "アサインを作成しました",
+      "updated": "アサインを更新しました",
+      "deleted": "アサインを削除しました",
+      "createError": "アサインの作成に失敗しました",
+      "updateError": "アサインの更新に失敗しました",
+      "deleteError": "アサインの削除に失敗しました",
+      "noAssignments": "アサインが登録されていません"
+    },
+    "dailyApproval": {
+      "title": "日次承認",
+      "startDate": "開始日",
+      "endDate": "終了日",
+      "filterDate": "日付フィルター",
+      "filterStatus": "ステータスフィルター",
+      "filterMember": "メンバーフィルター",
+      "allStatuses": "すべて",
+      "allMembers": "すべてのメンバー",
+      "table": {
+        "date": "日付",
+        "member": "メンバー",
+        "code": "コード",
+        "project": "プロジェクト",
+        "hours": "時間",
+        "comment": "コメント",
+        "status": "ステータス",
+        "actions": "操作"
+      },
+      "summary": {
+        "pending": "未承認",
+        "approved": "承認済",
+        "rejected": "差戻"
+      },
+      "selectApproval": "{project}の承認を選択",
+      "subtotal": "合計: {hours}h",
+      "approve": "承認",
+      "reject": "差戻",
+      "recall": "取消",
+      "approveAll": "一括承認",
+      "detail": "詳細",
+      "noEntries": "承認対象のエントリがありません",
+      "noEntriesDescription": "承認待ちの記録はありません",
+      "noData": "データなし",
+      "selectedCount": "{count}件選択中",
+      "approveSelected": "選択した{count}件を承認",
+      "closeError": "エラーを閉じる",
+      "close": "閉じる",
+      "rejectComment": "差戻コメント",
+      "rejectReasonPlaceholder": "差戻理由を入力してください（必須）",
+      "rejectCommentLabel": "差戻コメント",
+      "approveSuccess": "承認しました",
+      "rejectSuccess": "差戻しました",
+      "approveError": "承認に失敗しました",
+      "rejectError": "差戻に失敗しました"
+    },
+    "monthlyApproval": {
+      "title": "月次承認",
+      "table": {
+        "member": "メンバー",
+        "month": "月",
+        "totalHours": "合計時間",
+        "status": "ステータス",
+        "actions": "操作"
+      }
+    },
+    "fiscalYearPattern": {
+      "title": "会計年度パターン作成",
+      "form": {
+        "name": "名前",
+        "nameRequired": "名前は必須です",
+        "startMonth": "開始月",
+        "startDay": "開始日",
+        "monthSuffix": "{month}月",
+        "daySuffix": "{day}日",
+        "creating": "作成中...",
+        "create": "作成"
+      }
+    },
+    "monthlyPeriodPattern": {
+      "title": "月次期間パターン作成",
+      "form": {
+        "name": "名前",
+        "nameRequired": "名前は必須です",
+        "startDay": "開始日",
+        "daySuffix": "{day}日",
+        "creating": "作成中...",
+        "create": "作成"
+      }
+    },
+    "memberManagerForm": {
+      "assignManager": "マネージャー割り当て",
+      "transferOrg": "組織異動",
+      "createMember": "メンバー作成",
+      "targetMember": "対象メンバー: ",
+      "managerLabel": "マネージャー",
+      "selectManager": "マネージャーを選択...",
+      "currentManager": "現在のマネージャー: {name}",
+      "targetOrg": "移動先組織",
+      "selectOrg": "組織を選択...",
+      "selectManagerRequired": "マネージャーを選択してください",
+      "selectOrgRequired": "移動先の組織を選択してください",
+      "emailAndNameRequired": "メールアドレスと表示名は必須です",
+      "emailLabel": "メールアドレス",
+      "displayNameLabel": "表示名",
+      "namePlaceholder": "山田 太郎",
+      "managerOptional": "マネージャー (任意)",
+      "noManager": "なし",
+      "processing": "処理中...",
+      "assign": "割り当て",
+      "transfer": "異動"
+    }
+  },
+  "notifications": {
+    "title": "通知",
+    "bell": {
+      "label": "通知",
+      "unread": "未読通知が{count}件あります",
+      "noNotifications": "通知はありません",
+      "viewAll": "すべて見る",
+      "markAllRead": "すべて既読にする"
+    },
+    "page": {
+      "title": "通知一覧",
+      "titleLabel": "通知",
+      "filterAll": "すべて",
+      "filterUnread": "未読",
+      "filterRead": "既読",
+      "markRead": "既読にする",
+      "markAllRead": "すべて既読にする",
+      "noNotifications": "通知はありません",
+      "noNotificationsDescription": "新しい通知はまだありません",
+      "noUnread": "未読の通知はありません",
+      "loadError": "通知の読み込みに失敗しました",
+      "markReadError": "既読処理に失敗しました",
+      "totalCount": "全{total}件中 {from}-{to}件"
+    },
+    "types": {
+      "APPROVAL_REQUESTED": "承認依頼",
+      "APPROVAL_COMPLETED": "承認完了",
+      "ENTRY_REJECTED": "差戻",
+      "SYSTEM": "システム"
+    },
+    "time": {
+      "justNow": "たった今",
+      "minutesAgo": "{count}分前",
+      "hoursAgo": "{count}時間前",
+      "daysAgo": "{count}日前"
+    }
+  },
+  "errorBoundary": {
+    "title": "エラーが発生しました",
+    "message": "予期しないエラーが発生しました。ページを再読み込みしてください。",
+    "retry": "再試行"
   }
 }

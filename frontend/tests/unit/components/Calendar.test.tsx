@@ -10,6 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Calendar } from "@/components/worklog/Calendar";
 import type { DailyCalendarEntry } from "@/types/worklog";
+import { IntlWrapper } from "../../helpers/intl";
 
 // Mock Next.js router
 vi.mock("next/navigation", () => ({
@@ -122,29 +123,45 @@ describe("Calendar Component", () => {
 
   describe("Rendering", () => {
     it("should render calendar header with month and year", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
-      expect(screen.getByText(/January 2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/2026年1月/)).toBeInTheDocument();
     });
 
     it("should display fiscal period dates", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText(/Fiscal Period:/i)).toBeInTheDocument();
       expect(screen.getByText(/2026-01-21 to 2026-01-28/i)).toBeInTheDocument();
     });
 
     it("should render day of week headers", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
-      const headers = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      const headers = ["日", "月", "火", "水", "木", "金", "土"];
       for (const day of headers) {
         expect(screen.getByText(day)).toBeInTheDocument();
       }
     });
 
     it("should render all date cells", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Check each date is rendered (by day number)
       for (const dateEntry of mockDates) {
@@ -158,7 +175,11 @@ describe("Calendar Component", () => {
     it("should render empty cells for padding", () => {
       // First date (2026-01-21) is a Wednesday (day 3)
       // Should have 3 empty cells before it
-      const { container } = render(<Calendar year={2026} month={1} dates={mockDates} />);
+      const { container } = render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Empty cells have "bg-gray-50 min-h-24" and no button
       const emptyCells = container.querySelectorAll(".bg-gray-50.min-h-24:not(button)");
@@ -170,7 +191,11 @@ describe("Calendar Component", () => {
 
   describe("Hour Display", () => {
     it("should display total work hours when present", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Use getAllByText since "8h" appears multiple times in mockDates
       // 21st (work: 8h), 25th (absence: 8h), 26th (work: 8h) = 3 total
@@ -183,7 +208,11 @@ describe("Calendar Component", () => {
     });
 
     it("should not display hours when zero", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Dates with 0 hours should not show "0h"
       const zeroHourText = screen.queryByText("0h");
@@ -191,7 +220,11 @@ describe("Calendar Component", () => {
     });
 
     it("should display absence hours when present", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Absence hours are now displayed with emoji and hours, check for the emoji
       expect(screen.getByText("🏖️")).toBeInTheDocument();
@@ -201,7 +234,11 @@ describe("Calendar Component", () => {
     });
 
     it("should not display absence hours when zero", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Only one entry has absence hours (25th), so emoji should appear once
       const absenceEmojis = screen.queryAllByText("🏖️");
@@ -211,31 +248,51 @@ describe("Calendar Component", () => {
 
   describe("Status Display", () => {
     it("should display APPROVED status badge", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("APPROVED")).toBeInTheDocument();
     });
 
     it("should display SUBMITTED status badge", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("SUBMITTED")).toBeInTheDocument();
     });
 
     it("should display REJECTED status badge", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("REJECTED")).toBeInTheDocument();
     });
 
     it("should display MIXED status badge", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("MIXED")).toBeInTheDocument();
     });
 
     it("should display DRAFT badge only for days with hours", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // DRAFT badge should be shown for days with hours (22nd: 7.5h work, 25th: 8h absence)
       // but NOT for days without hours (23rd: 0h, 28th: 0h holiday)
@@ -244,28 +301,44 @@ describe("Calendar Component", () => {
     });
 
     it("should apply correct color classes for APPROVED status", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const approvedBadge = screen.getByText("APPROVED");
       expect(approvedBadge).toHaveClass("bg-green-100", "text-green-800");
     });
 
     it("should apply correct color classes for SUBMITTED status", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const submittedBadge = screen.getByText("SUBMITTED");
       expect(submittedBadge).toHaveClass("bg-blue-100", "text-blue-800");
     });
 
     it("should apply correct color classes for REJECTED status", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const rejectedBadge = screen.getByText("REJECTED");
       expect(rejectedBadge).toHaveClass("bg-red-100", "text-red-800");
     });
 
     it("should apply correct color classes for MIXED status", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const mixedBadge = screen.getByText("MIXED");
       expect(mixedBadge).toHaveClass("bg-yellow-100", "text-yellow-800");
@@ -274,7 +347,11 @@ describe("Calendar Component", () => {
 
   describe("Weekend and Holiday Indicators", () => {
     it("should highlight weekend dates", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Find the button for date 2026-01-24 (Saturday, weekend)
       const buttons = screen.getAllByRole("button");
@@ -284,13 +361,21 @@ describe("Calendar Component", () => {
     });
 
     it("should display holiday indicator", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("H")).toBeInTheDocument();
     });
 
     it("should highlight holiday dates", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       // Find the button for date 2026-01-28 (holiday)
       const buttons = screen.getAllByRole("button");
@@ -305,7 +390,11 @@ describe("Calendar Component", () => {
       const user = userEvent.setup();
       const onDateSelect = vi.fn();
 
-      render(<Calendar year={2026} month={1} dates={mockDates} onDateSelect={onDateSelect} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} onDateSelect={onDateSelect} />
+        </IntlWrapper>,
+      );
 
       // Click on the first date (21st)
       const buttons = screen.getAllByRole("button");
@@ -332,7 +421,11 @@ describe("Calendar Component", () => {
       // Need to re-import to get the new mock
       const { Calendar: CalendarWithMock } = await import("@/components/worklog/Calendar");
 
-      render(<CalendarWithMock year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <CalendarWithMock year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const buttons = screen.getAllByRole("button");
       const firstDateButton = buttons.find((btn) => btn.textContent?.includes("21"));
@@ -345,7 +438,11 @@ describe("Calendar Component", () => {
     });
 
     it("should make date cells keyboard accessible", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const buttons = screen.getAllByRole("button");
       expect(buttons.length).toBeGreaterThan(0);
@@ -358,7 +455,11 @@ describe("Calendar Component", () => {
     });
 
     it("should have proper focus styling", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const buttons = screen.getAllByRole("button");
       const firstButton = buttons[0];
@@ -370,9 +471,13 @@ describe("Calendar Component", () => {
 
   describe("Edge Cases", () => {
     it("should handle empty dates array", () => {
-      render(<Calendar year={2026} month={1} dates={[]} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={[]} />
+        </IntlWrapper>,
+      );
 
-      expect(screen.getByText(/January 2026/i)).toBeInTheDocument();
+      expect(screen.getByText(/2026年1月/)).toBeInTheDocument();
       // Should show "Fiscal Period: to" with no dates
       expect(screen.getByText(/Fiscal Period:/i)).toBeInTheDocument();
     });
@@ -392,7 +497,11 @@ describe("Calendar Component", () => {
         },
       ];
 
-      render(<Calendar year={2026} month={1} dates={singleDate} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={singleDate} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("21")).toBeInTheDocument();
       expect(screen.getByText("8h")).toBeInTheDocument();
@@ -424,7 +533,11 @@ describe("Calendar Component", () => {
         },
       ];
 
-      render(<Calendar year={2026} month={1} dates={datesWithDecimals} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={datesWithDecimals} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("7.25h")).toBeInTheDocument();
       expect(screen.getByText("6.75h")).toBeInTheDocument();
@@ -446,7 +559,11 @@ describe("Calendar Component", () => {
       ];
 
       // Should not crash
-      render(<Calendar year={2026} month={1} dates={datesWithUnknownStatus} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={datesWithUnknownStatus} />
+        </IntlWrapper>,
+      );
 
       expect(screen.getByText("21")).toBeInTheDocument();
       expect(screen.getByText("8h")).toBeInTheDocument();
@@ -469,7 +586,11 @@ describe("Calendar Component", () => {
         },
       ];
 
-      render(<Calendar year={2026} month={1} dates={januaryDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={januaryDates} />
+        </IntlWrapper>,
+      );
 
       // Should render the date
       expect(screen.getByText("1")).toBeInTheDocument();
@@ -478,7 +599,11 @@ describe("Calendar Component", () => {
 
   describe("Visual Feedback", () => {
     it("should have hover state on date cells", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const buttons = screen.getAllByRole("button");
       const firstButton = buttons[0];
@@ -487,7 +612,11 @@ describe("Calendar Component", () => {
     });
 
     it("should have transition effects", () => {
-      render(<Calendar year={2026} month={1} dates={mockDates} />);
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
 
       const buttons = screen.getAllByRole("button");
       const firstButton = buttons[0];

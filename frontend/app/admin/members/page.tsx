@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
@@ -10,6 +11,9 @@ import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminMembersPage() {
+  const t = useTranslations("admin.members");
+  const tc = useTranslations("common");
+  const tb = useTranslations("breadcrumbs");
   const toast = useToast();
   const [editingMember, setEditingMember] = useState<MemberRow | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -28,19 +32,20 @@ export default function AdminMembersPage() {
     setConfirmTarget({ id, action: "activate" });
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t/tc from useTranslations are stable
   const executeAction = useCallback(
     async (target: { id: string; action: "deactivate" | "activate" }) => {
       try {
         if (target.action === "deactivate") {
           await api.admin.members.deactivate(target.id);
-          toast.success("メンバーを無効化しました");
+          toast.success(t("deactivated"));
         } else {
           await api.admin.members.activate(target.id);
-          toast.success("メンバーを有効化しました");
+          toast.success(t("activated"));
         }
         refresh();
       } catch (err: unknown) {
-        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : tc("error"));
       }
     },
     [refresh, toast],
@@ -64,10 +69,10 @@ export default function AdminMembersPage() {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "メンバー管理" }]} />
+      <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("members") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
-        <h1 className="text-2xl font-bold text-gray-900">メンバー管理</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         <button
           type="button"
           onClick={() => {
@@ -76,7 +81,7 @@ export default function AdminMembersPage() {
           }}
           className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
         >
-          メンバー招待
+          {t("invite")}
         </button>
       </div>
 
@@ -93,9 +98,9 @@ export default function AdminMembersPage() {
 
       <ConfirmDialog
         open={confirmTarget !== null}
-        title="確認"
-        message={`このメンバーを${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`}
-        confirmLabel={confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}
+        title={tc("confirm")}
+        message={confirmTarget?.action === "deactivate" ? t("confirmDeactivate") : t("confirmActivate")}
+        confirmLabel={confirmTarget?.action === "deactivate" ? tc("disable") : tc("enable")}
         variant={confirmTarget?.action === "deactivate" ? "danger" : "warning"}
         onConfirm={async () => {
           if (confirmTarget) await executeAction(confirmTarget);

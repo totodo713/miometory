@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { vi } from "vitest";
+import { IntlWrapper } from "../../../../tests/helpers/intl";
 import LoginPage from "../page";
 
 const mockLogin = vi.fn();
@@ -27,13 +28,21 @@ describe("Login page", () => {
   });
 
   test("shows error when fields missing", () => {
-    render(<LoginPage />);
+    render(
+      <IntlWrapper>
+        <LoginPage />
+      </IntlWrapper>,
+    );
     fireEvent.click(screen.getByRole("button", { name: /ログイン/i }));
     expect(screen.getByRole("alert")).toHaveTextContent(/入力内容を確認してください/);
   });
 
   test("remember me checkbox toggles", () => {
-    render(<LoginPage />);
+    render(
+      <IntlWrapper>
+        <LoginPage />
+      </IntlWrapper>,
+    );
     const cb = screen.getByLabelText("ログイン状態を保持する") as HTMLInputElement;
     expect(cb.checked).toBe(false);
     fireEvent.click(cb);
@@ -42,7 +51,11 @@ describe("Login page", () => {
 
   test("calls login API on submit with valid credentials", async () => {
     mockLogin.mockResolvedValue(undefined);
-    render(<LoginPage />);
+    render(
+      <IntlWrapper>
+        <LoginPage />
+      </IntlWrapper>,
+    );
 
     fireEvent.change(screen.getByLabelText("メールアドレス"), {
       target: { value: "bob@example.com" },
