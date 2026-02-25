@@ -122,6 +122,13 @@ export class UnauthorizedError extends ApiError {
   }
 }
 
+export class ForbiddenError extends ApiError {
+  constructor(message = "Access denied") {
+    super(message, 403, "FORBIDDEN");
+    this.name = "ForbiddenError";
+  }
+}
+
 export class ValidationError extends ApiError {
   constructor(message: string, details?: unknown) {
     super(message, 400, "VALIDATION_ERROR", details);
@@ -193,6 +200,10 @@ class ApiClient {
           window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT));
         }
         throw new UnauthorizedError();
+      }
+
+      if (response.status === 403) {
+        throw new ForbiddenError();
       }
 
       if (response.status === 412) {
