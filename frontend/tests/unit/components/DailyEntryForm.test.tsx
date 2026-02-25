@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "@/components/shared/ToastProvider";
+import { IntlWrapper } from "../../helpers/intl";
 
 // Mock API module - must return mock functions directly in the factory
 // IMPORTANT: mock before importing components that import the API
@@ -89,7 +90,11 @@ import { DailyEntryForm } from "../../../app/components/worklog/DailyEntryForm";
 import { api } from "../../../app/services/api";
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 const mockGetEntries = api.worklog.getEntries as any;
@@ -113,14 +118,14 @@ describe("DailyEntryForm", () => {
   // Helper function to wait for loading to complete
   const waitForLoading = async () => {
     await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/読み込み中/i)).not.toBeInTheDocument();
     });
   };
 
   // Helper function to wait for project selector to be ready (combobox visible)
   const waitForProjectSelector = async () => {
     await waitFor(() => {
-      expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: /プロジェクト/i })).toBeInTheDocument();
     });
   };
 
@@ -171,7 +176,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      expect(screen.getByText(/2026-01-15|January 15/i)).toBeInTheDocument();
+      expect(screen.getByText(/2026年1月15日/)).toBeInTheDocument();
     });
 
     it("should render empty project row on initial load", async () => {
@@ -180,9 +185,9 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForProjectSelector();
-      expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
-      expect(screen.getByLabelText(/hours/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/comment/i)).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: /プロジェクト/i })).toBeInTheDocument();
+      expect(screen.getByLabelText(/時間/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/業務内容/i)).toBeInTheDocument();
     });
 
     it("should render Add Project button", async () => {
@@ -191,7 +196,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      expect(screen.getByRole("button", { name: /add project/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /エントリを追加/i })).toBeInTheDocument();
     });
 
     it("should render Save and Cancel buttons", async () => {
@@ -200,8 +205,8 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      expect(screen.getByRole("button", { name: /save/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /cancel/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /保存/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /キャンセル/i })).toBeInTheDocument();
     });
 
     it("should display total hours as 0.00h initially", async () => {
@@ -211,7 +216,7 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       // Check for Total Daily Hours text (split across elements)
-      expect(screen.getByText("Total Daily Hours:")).toBeInTheDocument();
+      expect(screen.getByText("合計時間:")).toBeInTheDocument();
       expect(screen.getByText("0.00h")).toBeInTheDocument();
     });
   });
@@ -275,7 +280,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Total Daily Hours:")).toBeInTheDocument();
+        expect(screen.getByText("合計時間:")).toBeInTheDocument();
         // Multiple "8.00h" elements exist (total and breakdown), so use getAllByText
         const hourDisplays = screen.getAllByText("8.00h");
         expect(hourDisplays.length).toBeGreaterThan(0);
@@ -302,7 +307,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.clear(hoursInput);
       await user.type(hoursInput, "4.25");
 
@@ -317,7 +322,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.clear(hoursInput);
       await user.type(hoursInput, "4.33");
       await user.tab(); // Trigger blur event
@@ -333,7 +338,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const hoursInput = screen.getByLabelText(/hours/i) as HTMLInputElement;
+      const hoursInput = screen.getByLabelText(/時間/i) as HTMLInputElement;
       // Directly set value to bypass HTML5 min="0" validation for testing
       fireEvent.change(hoursInput, { target: { value: "-2" } });
 
@@ -349,7 +354,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const hoursInput = screen.getByLabelText(/hours/i) as HTMLInputElement;
+      const hoursInput = screen.getByLabelText(/時間/i) as HTMLInputElement;
       // Remove max attribute temporarily to allow typing > 24
       hoursInput.removeAttribute("max");
       await user.clear(hoursInput);
@@ -371,18 +376,18 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       // Fill first row
-      const hoursInputs = screen.getAllByLabelText(/hours/i);
+      const hoursInputs = screen.getAllByLabelText(/時間/i);
       await user.clear(hoursInputs[0]);
       await user.type(hoursInputs[0], "16");
 
       // Add second row
-      await user.click(screen.getByRole("button", { name: /add project/i }));
+      await user.click(screen.getByRole("button", { name: /エントリを追加/i }));
 
       // Fill second row
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/hours/i)).toHaveLength(2);
+        expect(screen.getAllByLabelText(/時間/i)).toHaveLength(2);
       });
-      const updatedInputs = screen.getAllByLabelText(/hours/i);
+      const updatedInputs = screen.getAllByLabelText(/時間/i);
       await user.clear(updatedInputs[1]);
       await user.type(updatedInputs[1], "10");
 
@@ -398,7 +403,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const commentInput = screen.getByLabelText(/comment/i);
+      const commentInput = screen.getByLabelText(/業務内容/i);
       const longComment = "x".repeat(501);
       await user.type(commentInput, longComment);
       await user.tab();
@@ -415,10 +420,10 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.type(hoursInput, "8");
 
-      await user.click(screen.getByRole("button", { name: /save/i }));
+      await user.click(screen.getByRole("button", { name: /保存/i }));
 
       await waitFor(() => {
         expect(screen.getByText(/project.*required/i)).toBeInTheDocument();
@@ -437,12 +442,12 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       await waitForProjectSelector();
-      expect(screen.getAllByRole("combobox", { name: /project/i })).toHaveLength(1);
+      expect(screen.getAllByRole("combobox", { name: /プロジェクト/i })).toHaveLength(1);
 
-      await user.click(screen.getByRole("button", { name: /add project/i }));
+      await user.click(screen.getByRole("button", { name: /エントリを追加/i }));
 
       await waitFor(() => {
-        expect(screen.getAllByRole("combobox", { name: /project/i })).toHaveLength(2);
+        expect(screen.getAllByRole("combobox", { name: /プロジェクト/i })).toHaveLength(2);
       });
     });
 
@@ -454,16 +459,16 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
       await waitForProjectSelector();
-      await user.click(screen.getByRole("button", { name: /add project/i }));
+      await user.click(screen.getByRole("button", { name: /エントリを追加/i }));
       await waitFor(() => {
-        expect(screen.getAllByRole("combobox", { name: /project/i })).toHaveLength(2);
+        expect(screen.getAllByRole("combobox", { name: /プロジェクト/i })).toHaveLength(2);
       });
 
-      const removeButtons = screen.getAllByRole("button", { name: /remove/i });
+      const removeButtons = screen.getAllByRole("button", { name: /Remove project entry/i });
       await user.click(removeButtons[0]);
 
       await waitFor(() => {
-        expect(screen.getAllByRole("combobox", { name: /project/i })).toHaveLength(1);
+        expect(screen.getAllByRole("combobox", { name: /プロジェクト/i })).toHaveLength(1);
       });
     });
 
@@ -476,14 +481,14 @@ describe("DailyEntryForm", () => {
       await waitForLoading();
       await waitForProjectSelector();
       // Add second project
-      await user.click(screen.getByRole("button", { name: /add project/i }));
+      await user.click(screen.getByRole("button", { name: /エントリを追加/i }));
 
-      const hoursInputs = screen.getAllByLabelText(/hours/i);
+      const hoursInputs = screen.getAllByLabelText(/時間/i);
       await user.type(hoursInputs[0], "4.5");
       await user.type(hoursInputs[1], "3.5");
 
       await waitFor(() => {
-        expect(screen.getByText("Total Daily Hours:")).toBeInTheDocument();
+        expect(screen.getByText("合計時間:")).toBeInTheDocument();
         // Multiple "8.00h" elements exist (total and breakdown), so use getAllByText
         const hourDisplays = screen.getAllByText("8.00h");
         expect(hourDisplays.length).toBeGreaterThan(0);
@@ -496,7 +501,7 @@ describe("DailyEntryForm", () => {
       );
 
       // Should not show remove button when only one row exists
-      expect(screen.queryByRole("button", { name: /remove/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Remove project entry/i })).not.toBeInTheDocument();
     });
   });
 
@@ -512,20 +517,20 @@ describe("DailyEntryForm", () => {
       await waitForProjectSelector();
       // Select project from dropdown
       const projectCombobox = screen.getByRole("combobox", {
-        name: /project/i,
+        name: /プロジェクト/i,
       });
       await user.click(projectCombobox);
       // Wait for dropdown to open and select first option
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
 
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.type(hoursInput, "8");
 
-      const commentInput = screen.getByLabelText(/comment/i);
+      const commentInput = screen.getByLabelText(/業務内容/i);
       await user.type(commentInput, "Daily work");
 
-      await user.click(screen.getByRole("button", { name: /save/i }));
+      await user.click(screen.getByRole("button", { name: /保存/i }));
 
       await waitFor(() => {
         expect(mockCreateEntry).toHaveBeenCalled();
@@ -561,7 +566,7 @@ describe("DailyEntryForm", () => {
       await user.clear(hoursInput);
       await user.type(hoursInput, "6");
 
-      await user.click(screen.getByRole("button", { name: /save/i }));
+      await user.click(screen.getByRole("button", { name: /保存/i }));
 
       await waitFor(() => {
         expect(mockUpdateEntry).toHaveBeenCalledWith(
@@ -581,15 +586,15 @@ describe("DailyEntryForm", () => {
       await waitForProjectSelector();
       // Select project from dropdown
       const projectCombobox = screen.getByRole("combobox", {
-        name: /project/i,
+        name: /プロジェクト/i,
       });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.type(hoursInput, "8");
 
-      await user.click(screen.getByRole("button", { name: /save/i }));
+      await user.click(screen.getByRole("button", { name: /保存/i }));
 
       await waitFor(() => {
         expect(mockOnSave).toHaveBeenCalled();
@@ -607,18 +612,18 @@ describe("DailyEntryForm", () => {
       await waitForProjectSelector();
       // Select project from dropdown
       const projectCombobox = screen.getByRole("combobox", {
-        name: /project/i,
+        name: /プロジェクト/i,
       });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.type(hoursInput, "8");
 
-      await user.click(screen.getByRole("button", { name: /save/i }));
+      await user.click(screen.getByRole("button", { name: /保存/i }));
 
       await waitFor(() => {
-        expect(screen.getByText(/saving/i)).toBeInTheDocument();
+        expect(screen.getByText(/保存中/i)).toBeInTheDocument();
       });
     });
 
@@ -629,12 +634,12 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.type(hoursInput, "4.33"); // Invalid increment
       await user.tab();
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /save/i })).toBeDisabled();
+        expect(screen.getByRole("button", { name: /保存/i })).toBeDisabled();
       });
     });
   });
@@ -659,17 +664,17 @@ describe("DailyEntryForm", () => {
 
       // Select project from dropdown
       const projectCombobox = screen.getByRole("combobox", {
-        name: /project/i,
+        name: /プロジェクト/i,
       });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       fireEvent.change(hoursInput, { target: { value: "8" } });
 
       // Verify the form recognizes unsaved changes
       await waitFor(() => {
-        const saveButton = screen.getByRole("button", { name: /save/i });
+        const saveButton = screen.getByRole("button", { name: /保存/i });
         expect(saveButton).toBeEnabled();
       });
 
@@ -695,7 +700,7 @@ describe("DailyEntryForm", () => {
 
       // Verify form is interactive (auto-save wouldn't work if form wasn't working)
       const projectCombobox = screen.getByRole("combobox", {
-        name: /project/i,
+        name: /プロジェクト/i,
       });
       expect(projectCombobox).toBeInTheDocument();
     });
@@ -711,13 +716,13 @@ describe("DailyEntryForm", () => {
 
       await waitForLoading();
 
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
 
       // Make first change
       fireEvent.change(hoursInput, { target: { value: "4" } });
 
       await waitFor(() => {
-        const saveButton = screen.getByRole("button", { name: /save/i });
+        const saveButton = screen.getByRole("button", { name: /保存/i });
         expect(saveButton).toBeEnabled();
       });
 
@@ -726,7 +731,7 @@ describe("DailyEntryForm", () => {
 
       // Verify still has unsaved changes
       await waitFor(() => {
-        const saveButton = screen.getByRole("button", { name: /save/i });
+        const saveButton = screen.getByRole("button", { name: /保存/i });
         expect(saveButton).toBeEnabled();
       });
 
@@ -743,11 +748,11 @@ describe("DailyEntryForm", () => {
       // Wait for loading with real timers
       vi.useRealTimers();
       await waitFor(() => {
-        expect(screen.getByRole("combobox", { name: /project/i })).toBeInTheDocument();
+        expect(screen.getByRole("combobox", { name: /プロジェクト/i })).toBeInTheDocument();
       });
       vi.useFakeTimers();
 
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       fireEvent.change(hoursInput, { target: { value: "4.33" } }); // Invalid
 
       // Advance time by 60 seconds
@@ -850,7 +855,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitFor(() => {
-        const hoursInput = screen.getByLabelText(/hours/i);
+        const hoursInput = screen.getByLabelText(/時間/i);
         expect(hoursInput).toBeDisabled();
       });
     });
@@ -874,7 +879,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitFor(() => {
-        const hoursInput = screen.getByLabelText(/hours/i);
+        const hoursInput = screen.getByLabelText(/時間/i);
         expect(hoursInput).toBeDisabled();
       });
     });
@@ -894,16 +899,16 @@ describe("DailyEntryForm", () => {
       await waitForProjectSelector();
       // Select project from dropdown
       const projectCombobox = screen.getByRole("combobox", {
-        name: /project/i,
+        name: /プロジェクト/i,
       });
       await user.click(projectCombobox);
       const option = await screen.findByRole("option", { name: /PROJ1/i });
       await user.click(option);
 
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.type(hoursInput, "8");
 
-      await user.click(screen.getByRole("button", { name: /save/i }));
+      await user.click(screen.getByRole("button", { name: /保存/i }));
 
       await waitFor(() => {
         expect(screen.getAllByText(/エラーが発生しました|failed to save|network error/i).length).toBeGreaterThan(0);
@@ -952,7 +957,7 @@ describe("DailyEntryForm", () => {
       await user.clear(hoursInput);
       await user.type(hoursInput, "6");
 
-      await user.click(screen.getByRole("button", { name: /save/i }));
+      await user.click(screen.getByRole("button", { name: /保存/i }));
 
       await waitFor(() => {
         expect(screen.getAllByText(/modified by another user|conflict/i).length).toBeGreaterThan(0);
@@ -972,7 +977,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      await user.click(screen.getByRole("button", { name: /cancel/i }));
+      await user.click(screen.getByRole("button", { name: /キャンセル/i }));
 
       expect(mockOnClose).toHaveBeenCalled();
       confirmSpy.mockRestore();
@@ -988,10 +993,10 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      const hoursInput = screen.getByLabelText(/hours/i);
+      const hoursInput = screen.getByLabelText(/時間/i);
       await user.type(hoursInput, "8");
 
-      await user.click(screen.getByRole("button", { name: /cancel/i }));
+      await user.click(screen.getByRole("button", { name: /キャンセル/i }));
 
       // Should have prompted for confirmation
       expect(confirmSpy).toHaveBeenCalled();
@@ -1011,7 +1016,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitForLoading();
-      await user.click(screen.getByRole("button", { name: /cancel/i }));
+      await user.click(screen.getByRole("button", { name: /キャンセル/i }));
 
       expect(mockOnClose).toHaveBeenCalled();
       expect(confirmSpy).not.toHaveBeenCalled();
@@ -1041,7 +1046,7 @@ describe("DailyEntryForm", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /削除/i })).toBeInTheDocument();
       });
     });
 
@@ -1067,7 +1072,7 @@ describe("DailyEntryForm", () => {
         expect(screen.getByText(/submitted/i)).toBeInTheDocument();
       });
 
-      expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /削除/i })).not.toBeInTheDocument();
     });
 
     it("should delete entry when Delete button is clicked and confirmed", async () => {
@@ -1090,19 +1095,22 @@ describe("DailyEntryForm", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /delete entry/i })).toBeInTheDocument();
+        const deleteButtons = screen.getAllByRole("button", { name: /削除/i });
+        expect(deleteButtons.length).toBeGreaterThan(0);
       });
 
-      // Click Delete Entry button
-      await user.click(screen.getByRole("button", { name: /delete entry/i }));
+      // Click the first Delete button (entry row)
+      const deleteButtons = screen.getAllByRole("button", { name: /削除/i });
+      await user.click(deleteButtons[0]);
 
       // Confirm deletion modal appears
       await waitFor(() => {
-        expect(screen.getByText("削除確認")).toBeInTheDocument();
+        expect(screen.getByText("エントリの削除")).toBeInTheDocument();
       });
 
-      // Click the confirm button ("削除") in the modal
-      await user.click(screen.getByRole("button", { name: "削除" }));
+      // Click the confirm button ("削除") in the modal (last button with that name)
+      const allDeleteButtons = screen.getAllByRole("button", { name: /削除/i });
+      await user.click(allDeleteButtons[allDeleteButtons.length - 1]);
 
       await waitFor(() => {
         expect(mockDeleteEntry).toHaveBeenCalledWith("entry-to-delete");
@@ -1129,17 +1137,20 @@ describe("DailyEntryForm", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /delete entry/i })).toBeInTheDocument();
+        const deleteButtons = screen.getAllByRole("button", { name: /削除/i });
+        expect(deleteButtons.length).toBeGreaterThan(0);
       });
 
-      // Click Delete Entry button
-      await user.click(screen.getByRole("button", { name: /delete entry/i }));
+      // Click the first Delete button (entry row)
+      const deleteButtons = screen.getAllByRole("button", { name: /削除/i });
+      await user.click(deleteButtons[0]);
 
-      // Wait for modal and click confirm button
+      // Wait for modal and click confirm button (last button with that name)
       await waitFor(() => {
-        expect(screen.getByText("削除確認")).toBeInTheDocument();
+        expect(screen.getByText("エントリの削除")).toBeInTheDocument();
       });
-      await user.click(screen.getByRole("button", { name: "削除" }));
+      const allDeleteButtons = screen.getAllByRole("button", { name: /削除/i });
+      await user.click(allDeleteButtons[allDeleteButtons.length - 1]);
 
       await waitFor(() => {
         expect(mockOnSave).toHaveBeenCalled();

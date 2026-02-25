@@ -14,6 +14,7 @@
  */
 
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useDateInfo } from "@/hooks/useDateInfo";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -38,6 +39,8 @@ const STATUS_COLORS = {
 
 export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: CalendarProps) {
   const router = useRouter();
+  const format = useFormatter();
+  const t = useTranslations("worklog.calendar");
   const { data: dateInfo, isLoading: dateInfoLoading } = useDateInfo(tenantId, orgId, year, month);
   const isMobile = useMediaQuery("(max-width: 767px)");
 
@@ -78,14 +81,22 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
     weeks.push(currentWeek);
   }
 
-  const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+  const DAY_NAMES = [
+    t("dayNames.sun"),
+    t("dayNames.mon"),
+    t("dayNames.tue"),
+    t("dayNames.wed"),
+    t("dayNames.thu"),
+    t("dayNames.fri"),
+    t("dayNames.sat"),
+  ] as const;
 
   return (
     <div className="bg-white rounded-lg shadow">
       {/* Calendar Header */}
       <div className="px-4 py-3 border-b">
         <h2 className="text-lg font-semibold">
-          {new Date(year, month - 1).toLocaleDateString("en-US", {
+          {format.dateTime(new Date(year, month - 1), {
             year: "numeric",
             month: "long",
           })}
@@ -115,7 +126,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
             const hasAbsenceHours = dateEntry.totalAbsenceHours > 0;
             const hasAnyHours = hasWorkHours || hasAbsenceHours;
             const statusColor = STATUS_COLORS[dateEntry.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.DRAFT;
-            const monthName = date.toLocaleDateString("en-US", { month: "long" });
+            const monthName = format.dateTime(date, { month: "long" });
             const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;
 
             const backgroundClass = dateEntry.isHoliday
@@ -215,7 +226,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                 const hasAnyHours = hasWorkHours || hasAbsenceHours;
                 const statusColor =
                   STATUS_COLORS[dateEntry.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.DRAFT;
-                const monthName = date.toLocaleDateString("en-US", {
+                const monthName = format.dateTime(date, {
                   month: "long",
                 });
                 const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;

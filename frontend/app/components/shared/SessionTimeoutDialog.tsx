@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 export interface SessionTimeoutDialogProps {
@@ -26,6 +27,7 @@ export interface SessionTimeoutDialogProps {
  * - Auto-logout when countdown reaches 0
  */
 export function SessionTimeoutDialog({ isOpen, remainingTime, onContinue, onLogout }: SessionTimeoutDialogProps) {
+  const t = useTranslations("auth.sessionTimeout");
   const [displayTime, setDisplayTime] = useState("");
 
   // Format remaining time as MM:SS
@@ -75,19 +77,19 @@ export function SessionTimeoutDialog({ isOpen, remainingTime, onContinue, onLogo
           </div>
           <div>
             <h2 id="session-timeout-title" className="text-xl font-semibold text-gray-900">
-              Session Timeout Warning
+              {t("title")}
             </h2>
             <p id="session-timeout-description" className="text-sm text-gray-500">
-              Your session is about to expire
+              {t("subtitle")}
             </p>
           </div>
         </div>
 
         {/* Countdown */}
         <div className="mb-6 text-center">
-          <p className="text-gray-700 mb-2">Your session will expire due to inactivity.</p>
+          <p className="text-gray-700 mb-2">{t("message")}</p>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <p className="text-sm text-gray-600 mb-1">Time remaining:</p>
+            <p className="text-sm text-gray-600 mb-1">{t("timeRemaining")}</p>
             <p className="text-4xl font-bold text-gray-900 tabular-nums">{displayTime}</p>
           </div>
         </div>
@@ -99,21 +101,19 @@ export function SessionTimeoutDialog({ isOpen, remainingTime, onContinue, onLogo
             onClick={onLogout}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
           >
-            Logout
+            {t("logout")}
           </button>
           <button
             type="button"
             onClick={onContinue}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors font-medium"
           >
-            Continue Session
+            {t("continueSession")}
           </button>
         </div>
 
         {/* Additional info */}
-        <p className="mt-4 text-xs text-gray-500 text-center">
-          Click "Continue Session" to extend your session, or "Logout" to sign out now.
-        </p>
+        <p className="mt-4 text-xs text-gray-500 text-center">{t("hint")}</p>
       </div>
     </div>
   );

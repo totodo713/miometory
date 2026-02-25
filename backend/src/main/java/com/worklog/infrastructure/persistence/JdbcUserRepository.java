@@ -39,7 +39,7 @@ public class JdbcUserRepository {
         String sql = """
             SELECT id, email, name, hashed_password, role_id, account_status,
                    failed_login_attempts, locked_until, created_at, updated_at,
-                   last_login_at, email_verified_at
+                   last_login_at, email_verified_at, preferred_locale
             FROM users
             WHERE id = ?
             """;
@@ -58,7 +58,7 @@ public class JdbcUserRepository {
         String sql = """
             SELECT id, email, name, hashed_password, role_id, account_status,
                    failed_login_attempts, locked_until, created_at, updated_at,
-                   last_login_at, email_verified_at
+                   last_login_at, email_verified_at, preferred_locale
             FROM users
             WHERE LOWER(email) = LOWER(?)
             """;
@@ -89,7 +89,7 @@ public class JdbcUserRepository {
         String sql = """
             SELECT id, email, name, hashed_password, role_id, account_status,
                    failed_login_attempts, locked_until, created_at, updated_at,
-                   last_login_at, email_verified_at
+                   last_login_at, email_verified_at, preferred_locale
             FROM users
             WHERE account_status = ?
             """;
@@ -107,7 +107,7 @@ public class JdbcUserRepository {
         String sql = """
             SELECT id, email, name, hashed_password, role_id, account_status,
                    failed_login_attempts, locked_until, created_at, updated_at,
-                   last_login_at, email_verified_at
+                   last_login_at, email_verified_at, preferred_locale
             FROM users
             WHERE account_status = 'locked' AND locked_until < ?
             """;
@@ -125,7 +125,7 @@ public class JdbcUserRepository {
         String sql = """
             SELECT id, email, name, hashed_password, role_id, account_status,
                    failed_login_attempts, locked_until, created_at, updated_at,
-                   last_login_at, email_verified_at
+                   last_login_at, email_verified_at, preferred_locale
             FROM users
             WHERE account_status = 'unverified' AND created_at < ?
             """;
@@ -143,8 +143,8 @@ public class JdbcUserRepository {
         String upsertSql = """
             INSERT INTO users (id, email, name, hashed_password, role_id, account_status,
                              failed_login_attempts, locked_until, created_at, updated_at,
-                             last_login_at, email_verified_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                             last_login_at, email_verified_at, preferred_locale)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
                 email = EXCLUDED.email,
                 name = EXCLUDED.name,
@@ -155,7 +155,8 @@ public class JdbcUserRepository {
                 locked_until = EXCLUDED.locked_until,
                 updated_at = EXCLUDED.updated_at,
                 last_login_at = EXCLUDED.last_login_at,
-                email_verified_at = EXCLUDED.email_verified_at
+                email_verified_at = EXCLUDED.email_verified_at,
+                preferred_locale = EXCLUDED.preferred_locale
             """;
 
         jdbcTemplate.update(
@@ -171,9 +172,21 @@ public class JdbcUserRepository {
                 Timestamp.from(user.getCreatedAt()),
                 Timestamp.from(user.getUpdatedAt()),
                 user.getLastLoginAt() != null ? Timestamp.from(user.getLastLoginAt()) : null,
-                user.getEmailVerifiedAt() != null ? Timestamp.from(user.getEmailVerifiedAt()) : null);
+                user.getEmailVerifiedAt() != null ? Timestamp.from(user.getEmailVerifiedAt()) : null,
+                user.getPreferredLocale());
 
         return user;
+    }
+
+    /**
+     * Updates only the preferred locale for a user.
+     *
+     * @param id User ID
+     * @param locale Locale code ("en" or "ja")
+     */
+    public void updateLocale(UserId id, String locale) {
+        String sql = "UPDATE users SET preferred_locale = ?, updated_at = ? WHERE id = ?";
+        jdbcTemplate.update(sql, locale, Timestamp.from(Instant.now()), id.value());
     }
 
     /**
@@ -238,7 +251,8 @@ public class JdbcUserRepository {
                     rs.getTimestamp("created_at").toInstant(),
                     rs.getTimestamp("updated_at").toInstant(),
                     lastLoginAt,
-                    emailVerifiedAt);
+                    emailVerifiedAt,
+                    rs.getString("preferred_locale"));
         }
     }
 }

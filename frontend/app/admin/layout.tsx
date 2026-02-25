@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { AuthGuard } from "@/components/shared/AuthGuard";
@@ -9,6 +10,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { AdminProvider, useAdminContext } from "@/providers/AdminProvider";
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
+  const tc = useTranslations("common");
   const { adminContext, isLoading } = useAdminContext();
   const router = useRouter();
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -22,7 +24,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" label="読み込み中..." />
+        <LoadingSpinner size="lg" label={tc("loading")} />
       </div>
     );
   }

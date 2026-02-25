@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useAdminContext } from "@/providers/AdminProvider";
 import { ApiError, api } from "@/services/api";
@@ -36,6 +37,8 @@ interface AssignmentManagerProps {
 }
 
 export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerProps) {
+  const t = useTranslations("admin.assignments");
+  const tc = useTranslations("common");
   const { adminContext } = useAdminContext();
   const isSupervisor = adminContext?.role === "SUPERVISOR";
 
@@ -123,7 +126,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
     } finally {
       setIsAdding(false);
@@ -143,7 +146,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
     }
   };
@@ -161,7 +164,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
               : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
           }`}
         >
-          メンバー別
+          {t("byMember")}
         </button>
         {!isSupervisor && (
           <button
@@ -173,7 +176,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                 : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
             }`}
           >
-            プロジェクト別
+            {t("byProject")}
           </button>
         )}
       </div>
@@ -183,7 +186,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
         {viewMode === "by-member" ? (
           <div className="flex-1">
             <label htmlFor="select-member" className="block text-sm font-medium text-gray-700 mb-1">
-              メンバーを選択
+              {t("form.selectMember")}
             </label>
             <select
               id="select-member"
@@ -191,7 +194,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
               onChange={(e) => setSelectedMemberId(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">選択してください</option>
+              <option value="">{t("selectLabel")}</option>
               {members.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.displayName} ({m.email})
@@ -202,7 +205,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
         ) : (
           <div className="flex-1">
             <label htmlFor="select-project" className="block text-sm font-medium text-gray-700 mb-1">
-              プロジェクトを選択
+              {t("form.selectProject")}
             </label>
             <select
               id="select-project"
@@ -210,7 +213,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
               onChange={(e) => setSelectedProjectId(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">選択してください</option>
+              <option value="">{t("selectLabel")}</option>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.code} - {p.name}
@@ -227,7 +230,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
           {viewMode === "by-member" ? (
             <div className="flex-1">
               <label htmlFor="add-project" className="block text-sm font-medium text-gray-700 mb-1">
-                プロジェクトを追加
+                {t("addProject")}
               </label>
               <select
                 id="add-project"
@@ -235,7 +238,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                 onChange={(e) => setAddProjectId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">プロジェクトを選択</option>
+                <option value="">{t("form.selectProject")}</option>
                 {projects.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.code} - {p.name}
@@ -246,7 +249,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
           ) : (
             <div className="flex-1">
               <label htmlFor="add-member" className="block text-sm font-medium text-gray-700 mb-1">
-                メンバーを追加
+                {t("addMember")}
               </label>
               <select
                 id="add-member"
@@ -254,7 +257,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                 onChange={(e) => setAddMemberId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">メンバーを選択</option>
+                <option value="">{t("form.selectMember")}</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.displayName} ({m.email})
@@ -269,7 +272,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
             disabled={isAdding}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            {isAdding ? "追加中..." : "追加"}
+            {isAdding ? t("adding") : t("add")}
           </button>
         </div>
       )}
@@ -278,10 +281,10 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
 
       {/* Assignments table */}
       {isLoading ? (
-        <div className="text-center py-8 text-gray-500">読み込み中...</div>
+        <div className="text-center py-8 text-gray-500">{tc("loading")}</div>
       ) : assignments.length === 0 ? (
         (selectedMemberId || selectedProjectId) && (
-          <div className="text-center py-8 text-gray-500">アサインがありません</div>
+          <div className="text-center py-8 text-gray-500">{t("noAssignments")}</div>
         )
       ) : (
         <div className="overflow-x-auto">
@@ -289,13 +292,13 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
             <thead>
               <tr className="border-b border-gray-200">
                 {viewMode === "by-project" && (
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">メンバー</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.member")}</th>
                 )}
                 {viewMode === "by-member" && (
-                  <th className="text-left py-3 px-4 font-medium text-gray-700">プロジェクト</th>
+                  <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.project")}</th>
                 )}
-                <th className="text-left py-3 px-4 font-medium text-gray-700">状態</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-700">操作</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{tc("status")}</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-700">{tc("actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -317,7 +320,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                         a.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {a.isActive ? "有効" : "無効"}
+                      {a.isActive ? tc("active") : tc("inactive")}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -327,7 +330,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                         onClick={() => handleToggle(a)}
                         className="text-red-600 hover:text-red-800 text-xs"
                       >
-                        無効化
+                        {tc("disable")}
                       </button>
                     ) : (
                       <button
@@ -335,7 +338,7 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                         onClick={() => handleToggle(a)}
                         className="text-green-600 hover:text-green-800 text-xs"
                       >
-                        有効化
+                        {tc("enable")}
                       </button>
                     )}
                   </td>

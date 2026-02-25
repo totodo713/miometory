@@ -2,31 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { AuthLocaleToggle } from "@/components/auth/AuthLocaleToggle";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { ApiError } from "@/services/api";
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) {
-    switch (error.status) {
-      case 401:
-        return "メールアドレスまたはパスワードが正しくありません。";
-      case 400:
-        return "入力内容を確認してください。";
-      case 503:
-        return "サーバーエラーが発生しました。しばらくしてから再試行してください。";
-      default:
-        return "サーバーエラーが発生しました。しばらくしてから再試行してください。";
-    }
-  }
-  return "ネットワークエラーが発生しました。接続を確認してください。";
-}
-
 export default function LoginPage() {
   const router = useRouter();
   const { user, isLoading, login } = useAuthContext();
+  const t = useTranslations("auth.login");
+  const tc = useTranslations("common");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -34,10 +22,26 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  function getErrorMessage(err: unknown): string {
+    if (err instanceof ApiError) {
+      switch (err.status) {
+        case 401:
+          return t("errors.invalidCredentials");
+        case 400:
+          return t("errors.validationError");
+        case 503:
+          return t("errors.unknownError");
+        default:
+          return t("errors.unknownError");
+      }
+    }
+    return t("errors.networkError");
+  }
+
   const validateField = (name: string, value: string) => {
-    if (name === "email" && !value.trim()) return "メールアドレスは必須です";
-    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "メールアドレスの形式が正しくありません";
-    if (name === "password" && !value.trim()) return "パスワードは必須です";
+    if (name === "email" && !value.trim()) return t("errors.emailRequired");
+    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return t("errors.emailRequired");
+    if (name === "password" && !value.trim()) return t("errors.passwordRequired");
     return "";
   };
 
@@ -60,7 +64,7 @@ export default function LoginPage() {
     setError(null);
 
     if (!email || !password) {
-      setError("入力内容を確認してください。");
+      setError(t("errors.validationError"));
       return;
     }
 
@@ -79,7 +83,7 @@ export default function LoginPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" label="読み込み中..." />
+        <LoadingSpinner size="lg" label={tc("loading")} />
       </div>
     );
   }
@@ -88,7 +92,7 @@ export default function LoginPage() {
   if (user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" label="リダイレクト中..." />
+        <LoadingSpinner size="lg" label={tc("loading")} />
       </div>
     );
   }
@@ -96,6 +100,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
+        <div className="flex justify-end mb-4">
+          <AuthLocaleToggle />
+        </div>
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Miometry</h1>
           <p className="text-sm text-gray-500 mt-1">Time Entry System</p>
@@ -104,7 +111,7 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              メールアドレス
+              {t("emailLabel")}
             </label>
             <input
               id="email"
@@ -116,7 +123,7 @@ export default function LoginPage() {
               }}
               onBlur={() => handleBlur("email", email)}
               className={`w-full px-3 py-2 border ${fieldErrors.email ? "border-red-500" : "border-gray-300"} rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               disabled={isSubmitting}
               aria-invalid={!!fieldErrors.email}
               aria-describedby={fieldErrors.email ? "email-error" : undefined}
@@ -130,7 +137,7 @@ export default function LoginPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              パスワード
+              {t("passwordLabel")}
             </label>
             <input
               id="password"
@@ -163,7 +170,7 @@ export default function LoginPage() {
               disabled={isSubmitting}
             />
             <label htmlFor="remember" className="ml-2 block text-sm text-gray-700">
-              ログイン状態を保持する
+              {t("rememberMe")}
             </label>
           </div>
 
@@ -178,12 +185,12 @@ export default function LoginPage() {
             disabled={isSubmitting || hasFieldErrors}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "ログイン中..." : "ログイン"}
+            {isSubmitting ? t("submitting") : t("submitButton")}
           </button>
 
           <div className="text-center">
             <Link href="/password-reset/request" className="text-sm text-blue-600 hover:underline">
-              パスワードをお忘れですか？
+              {t("forgotPassword")}
             </Link>
           </div>
         </form>

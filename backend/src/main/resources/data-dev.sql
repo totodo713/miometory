@@ -1435,7 +1435,7 @@ ON CONFLICT DO NOTHING;
 -- All users share password: Password1
 -- BCrypt hash: $2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u
 
-INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at)
+INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at, preferred_locale)
 VALUES
     -- Bob Engineer (USER)
     ('00000000-0000-0000-0000-000000000001',
@@ -1443,33 +1443,34 @@ VALUES
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Bob Engineer',
      '00000000-0000-0000-0000-000000000002',
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Alice Manager (ADMIN)
     ('00000000-0000-0000-0000-000000000002',
      'alice.manager@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Alice Manager',
      '00000000-0000-0000-0000-000000000001',
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Charlie Engineer (USER)
     ('00000000-0000-0000-0000-000000000003',
      'charlie.engineer@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Charlie Engineer',
      '00000000-0000-0000-0000-000000000002',
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- David Independent (USER)
     ('00000000-0000-0000-0000-000000000004',
      'david.independent@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'David Independent',
      '00000000-0000-0000-0000-000000000002',
-     'active', 0, NOW())
+     'active', 0, NOW(), 'en')
 ON CONFLICT (email) DO UPDATE SET
     hashed_password = EXCLUDED.hashed_password,
     name = EXCLUDED.name,
     account_status = EXCLUDED.account_status,
-    email_verified_at = EXCLUDED.email_verified_at;
+    email_verified_at = EXCLUDED.email_verified_at,
+    preferred_locale = EXCLUDED.preferred_locale;
 @@
 
 -- System Admin member + user (global admin operations)
@@ -1494,21 +1495,22 @@ ON CONFLICT (id) DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP;
 @@
 
-INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at)
+INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at, preferred_locale)
 VALUES (
     '00000000-0000-0000-0000-000000000005',
     'sysadmin@miometry.example.com',
     '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
     'System Admin',
     (SELECT id FROM roles WHERE name = 'SYSTEM_ADMIN'),
-    'active', 0, NOW()
+    'active', 0, NOW(), 'ja'
 )
 ON CONFLICT (email) DO UPDATE SET
     hashed_password = EXCLUDED.hashed_password,
     name = EXCLUDED.name,
     role_id = EXCLUDED.role_id,
     account_status = EXCLUDED.account_status,
-    email_verified_at = EXCLUDED.email_verified_at;
+    email_verified_at = EXCLUDED.email_verified_at,
+    preferred_locale = EXCLUDED.preferred_locale;
 @@
 
 -- ============================================================================
@@ -1877,7 +1879,7 @@ ON CONFLICT (id) DO UPDATE SET
 -- All share password: Password1
 -- BCrypt: $2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u
 
-INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at)
+INSERT INTO users (id, email, hashed_password, name, role_id, account_status, failed_login_attempts, email_verified_at, preferred_locale)
 VALUES
     -- Eve (USER)
     ('00000000-0000-0000-0000-000000000006',
@@ -1885,62 +1887,63 @@ VALUES
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Eve Frontend',
      (SELECT id FROM roles WHERE name = 'USER'),
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Frank (USER)
     ('00000000-0000-0000-0000-000000000007',
      'frank.backend@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Frank Backend',
      (SELECT id FROM roles WHERE name = 'USER'),
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Grace (USER, inactive member but user account still active for testing)
     ('00000000-0000-0000-0000-000000000008',
      'grace.designer@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Grace Designer',
      (SELECT id FROM roles WHERE name = 'USER'),
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Hank (SUPERVISOR)
     ('00000000-0000-0000-0000-000000000009',
      'hank.qalead@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Hank QA Lead',
      (SELECT id FROM roles WHERE name = 'SUPERVISOR'),
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'en'),
     -- Ivy (USER)
     ('00000000-0000-0000-0000-00000000000a',
      'ivy.support@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Ivy Support',
      (SELECT id FROM roles WHERE name = 'USER'),
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Kevin (USER)
     ('00000000-0000-0000-0000-00000000000b',
      'kevin.intern@miometry.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Kevin Intern',
      (SELECT id FROM roles WHERE name = 'USER'),
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Jack (ACME TENANT_ADMIN)
     ('00000000-0000-0000-0000-00000000000c',
      'jack.admin@acme.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Jack ACME Admin',
      (SELECT id FROM roles WHERE name = 'TENANT_ADMIN'),
-     'active', 0, NOW()),
+     'active', 0, NOW(), 'ja'),
     -- Kim (ACME USER)
     ('00000000-0000-0000-0000-00000000000d',
      'kim.staff@acme.example.com',
      '$2b$12$gu2gIbw9xeZOjbqdlXLjo.uAofiuh/z.dFMOP1ARC0BE/88piI06u',
      'Kim ACME Staff',
      (SELECT id FROM roles WHERE name = 'USER'),
-     'active', 0, NOW())
+     'active', 0, NOW(), 'ja')
 ON CONFLICT (email) DO UPDATE SET
     hashed_password = EXCLUDED.hashed_password,
     name = EXCLUDED.name,
     role_id = EXCLUDED.role_id,
     account_status = EXCLUDED.account_status,
-    email_verified_at = EXCLUDED.email_verified_at;
+    email_verified_at = EXCLUDED.email_verified_at,
+    preferred_locale = EXCLUDED.preferred_locale;
 @@
 
 -- ============================================================================

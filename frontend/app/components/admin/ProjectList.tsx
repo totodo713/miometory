@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -24,6 +25,8 @@ interface ProjectListProps {
 }
 
 export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: ProjectListProps) {
+  const t = useTranslations("admin.projects");
+  const tc = useTranslations("common");
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
@@ -41,6 +44,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
     return () => clearTimeout(timer);
   }, [search]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tc from useTranslations is stable
   const loadProjects = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -54,7 +58,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
       setProjects(result.content);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
-      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
+      setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -72,18 +76,18 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
       <div className="flex items-center gap-4 mb-4">
         <input
           type="text"
-          placeholder="コードまたは名前で検索..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(0);
           }}
-          aria-label="コードまたは名前で検索"
+          aria-label={t("searchLabel")}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
-          無効も表示
+          {t("showInactive")}
         </label>
       </div>
 
@@ -95,16 +99,13 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
             onClick={loadProjects}
             className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
           >
-            再試行
+            {tc("retry")}
           </button>
         </div>
       ) : isLoading ? (
         <Skeleton.Table rows={5} cols={6} />
       ) : projects.length === 0 ? (
-        <EmptyState
-          title="プロジェクトが見つかりません"
-          description={hasFilters ? "検索条件を変更してください" : "まだプロジェクトがありません"}
-        />
+        <EmptyState title={t("notFound")} description={hasFilters ? t("changeFilter") : t("noProjectsYet")} />
       ) : isMobile ? (
         <div className="space-y-3">
           {projects.map((project) => (
@@ -116,21 +117,21 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
                     project.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {project.isActive ? "有効" : "無効"}
+                  {project.isActive ? tc("active") : tc("inactive")}
                 </span>
               </div>
               <p className="text-xs text-gray-500 font-mono">{project.code}</p>
               <p className="text-xs text-gray-500">
                 {project.validFrom || "—"} ~ {project.validUntil || "—"}
               </p>
-              <p className="text-xs text-gray-500">メンバー: {project.assignedMemberCount}名</p>
+              <p className="text-xs text-gray-500">{t("memberLabel", { count: project.assignedMemberCount })}</p>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => onEdit(project)}
                   className="text-blue-600 hover:text-blue-800 text-xs"
                 >
-                  編集
+                  {tc("edit")}
                 </button>
                 {project.isActive ? (
                   <button
@@ -138,7 +139,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
                     onClick={() => onDeactivate(project.id)}
                     className="text-red-600 hover:text-red-800 text-xs"
                   >
-                    無効化
+                    {tc("disable")}
                   </button>
                 ) : (
                   <button
@@ -146,7 +147,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
                     onClick={() => onActivate(project.id)}
                     className="text-green-600 hover:text-green-800 text-xs"
                   >
-                    有効化
+                    {tc("enable")}
                   </button>
                 )}
               </div>
@@ -158,12 +159,12 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">コード</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">名前</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">有効期間</th>
-                <th className="text-center py-3 px-4 font-medium text-gray-700">メンバー数</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">状態</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-700">操作</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.code")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.name")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.validPeriod")}</th>
+                <th className="text-center py-3 px-4 font-medium text-gray-700">{t("table.memberCount")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.status")}</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-700">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -181,7 +182,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
                         project.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {project.isActive ? "有効" : "無効"}
+                      {project.isActive ? tc("active") : tc("inactive")}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -191,7 +192,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
                         onClick={() => onEdit(project)}
                         className="text-blue-600 hover:text-blue-800 text-xs"
                       >
-                        編集
+                        {tc("edit")}
                       </button>
                       {project.isActive ? (
                         <button
@@ -199,7 +200,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
                           onClick={() => onDeactivate(project.id)}
                           className="text-red-600 hover:text-red-800 text-xs"
                         >
-                          無効化
+                          {tc("disable")}
                         </button>
                       ) : (
                         <button
@@ -207,7 +208,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
                           onClick={() => onActivate(project.id)}
                           className="text-green-600 hover:text-green-800 text-xs"
                         >
-                          有効化
+                          {tc("enable")}
                         </button>
                       )}
                     </div>
@@ -227,7 +228,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
             disabled={page === 0}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            前へ
+            {tc("previous")}
           </button>
           <span className="px-3 py-1 text-sm text-gray-600">
             {page + 1} / {totalPages}
@@ -238,7 +239,7 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
             disabled={page >= totalPages - 1}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            次へ
+            {tc("next")}
           </button>
         </div>
       )}

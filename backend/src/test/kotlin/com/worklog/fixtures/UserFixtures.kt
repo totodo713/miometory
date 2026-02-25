@@ -61,6 +61,7 @@ object UserFixtures {
         Instant.now().minusSeconds(3600),
         Instant.now().minusSeconds(600),
         emailVerifiedAt,
+        "ja",
     )
 
     /**
@@ -85,6 +86,7 @@ object UserFixtures {
         Instant.now(),
         null,
         null,
+        "ja",
     )
 
     /**
@@ -110,6 +112,7 @@ object UserFixtures {
         Instant.now(),
         Instant.now().minusSeconds(7200),
         Instant.now().minusSeconds(82800),
+        "ja",
     )
 
     /**
@@ -134,6 +137,7 @@ object UserFixtures {
         Instant.now(),
         Instant.now().minusSeconds(3600),
         Instant.now().minusSeconds(82800),
+        "ja",
     )
 
     /**

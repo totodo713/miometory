@@ -9,6 +9,7 @@
  * Task: T150 - Implement confirmation dialog with project preview
  */
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/services/api";
 
@@ -36,6 +37,9 @@ export function CopyPreviousMonthDialog({
   month,
   memberId,
 }: CopyPreviousMonthDialogProps) {
+  const format = useFormatter();
+  const t = useTranslations("worklog.copyDialog");
+  const tc = useTranslations("common");
   const [data, setData] = useState<PreviousMonthData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,7 +151,7 @@ export function CopyPreviousMonthDialog({
   }
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    return format.dateTime(new Date(dateStr), {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -166,9 +170,9 @@ export function CopyPreviousMonthDialog({
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 id="copy-month-dialog-title" className="text-lg font-semibold text-gray-900">
-            Copy from Previous Month
+            {t("title")}
           </h2>
-          <p className="mt-1 text-sm text-gray-600">Select projects to copy as templates for this month</p>
+          <p className="mt-1 text-sm text-gray-600">{t("message")}</p>
         </div>
 
         {/* Content */}
@@ -176,7 +180,7 @@ export function CopyPreviousMonthDialog({
           {isLoading && (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto" />
-              <p className="mt-2 text-sm text-gray-600">Loading projects...</p>
+              <p className="mt-2 text-sm text-gray-600">{tc("loading")}</p>
             </div>
           )}
 
@@ -188,7 +192,7 @@ export function CopyPreviousMonthDialog({
                 onClick={loadPreviousMonthProjects}
                 className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
               >
-                Try again
+                {tc("retry")}
               </button>
             </div>
           )}
@@ -202,8 +206,8 @@ export function CopyPreviousMonthDialog({
 
               {data.count === 0 ? (
                 <div className="text-center py-8 text-gray-600">
-                  <p className="text-lg mb-2">No projects found</p>
-                  <p className="text-sm">You don't have any work log entries from the previous month.</p>
+                  <p className="text-lg mb-2">{t("noData")}</p>
+                  <p className="text-sm">{t("noData")}</p>
                 </div>
               ) : (
                 <>
@@ -214,7 +218,7 @@ export function CopyPreviousMonthDialog({
                       onClick={handleSelectAll}
                       className="text-sm text-blue-600 hover:text-blue-800"
                     >
-                      Select all
+                      {tc("all")}
                     </button>
                     <span className="text-gray-400">|</span>
                     <button
@@ -222,7 +226,7 @@ export function CopyPreviousMonthDialog({
                       onClick={handleDeselectAll}
                       className="text-sm text-blue-600 hover:text-blue-800"
                     >
-                      Deselect all
+                      {tc("none")}
                     </button>
                   </div>
 
@@ -261,7 +265,7 @@ export function CopyPreviousMonthDialog({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
           >
-            Cancel
+            {tc("cancel")}
           </button>
           <button
             type="button"
@@ -269,7 +273,7 @@ export function CopyPreviousMonthDialog({
             disabled={isLoading || selectedProjectIds.size === 0}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Copy {selectedProjectIds.size > 0 ? `(${selectedProjectIds.size})` : ""}
+            {t("confirm")} {selectedProjectIds.size > 0 ? `(${selectedProjectIds.size})` : ""}
           </button>
         </div>
       </div>

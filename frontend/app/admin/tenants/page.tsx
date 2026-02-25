@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { TenantForm } from "@/components/admin/TenantForm";
 import type { TenantRow } from "@/components/admin/TenantList";
@@ -10,6 +11,9 @@ import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminTenantsPage() {
+  const t = useTranslations("admin.tenants");
+  const tc = useTranslations("common");
+  const tb = useTranslations("breadcrumbs");
   const toast = useToast();
   const [editingTenant, setEditingTenant] = useState<TenantRow | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -26,19 +30,20 @@ export default function AdminTenantsPage() {
     setConfirmTarget({ id, action: "activate" });
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t/tc from useTranslations are stable
   const executeAction = useCallback(
     async (target: { id: string; action: "deactivate" | "activate" }) => {
       try {
         if (target.action === "deactivate") {
           await api.admin.tenants.deactivate(target.id);
-          toast.success("テナントを無効化しました");
+          toast.success(t("deactivated"));
         } else {
           await api.admin.tenants.activate(target.id);
-          toast.success("テナントを有効化しました");
+          toast.success(t("activated"));
         }
         refresh();
       } catch (err: unknown) {
-        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : tc("error"));
       }
     },
     [refresh, toast],
@@ -62,10 +67,10 @@ export default function AdminTenantsPage() {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "テナント管理" }]} />
+      <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("tenants") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
-        <h1 className="text-2xl font-bold text-gray-900">テナント管理</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         <button
           type="button"
           onClick={() => {
@@ -74,7 +79,7 @@ export default function AdminTenantsPage() {
           }}
           className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
         >
-          テナント作成
+          {t("addTenant")}
         </button>
       </div>
 
@@ -91,9 +96,9 @@ export default function AdminTenantsPage() {
 
       <ConfirmDialog
         open={confirmTarget !== null}
-        title="確認"
-        message={`このテナントを${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`}
-        confirmLabel={confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}
+        title={tc("confirm")}
+        message={confirmTarget?.action === "deactivate" ? t("confirmDeactivate") : t("confirmActivate")}
+        confirmLabel={confirmTarget?.action === "deactivate" ? tc("disable") : tc("enable")}
         variant={confirmTarget?.action === "deactivate" ? "danger" : "warning"}
         onConfirm={async () => {
           if (confirmTarget) await executeAction(confirmTarget);

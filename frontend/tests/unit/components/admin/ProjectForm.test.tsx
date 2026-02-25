@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import type { ProjectRow } from "@/components/admin/ProjectList";
 import { ToastProvider } from "@/components/shared/ToastProvider";
+import { IntlWrapper } from "../../../helpers/intl";
 
 const mockCreate = vi.fn();
 const mockUpdate = vi.fn();
@@ -30,7 +31,11 @@ vi.mock("@/services/api", () => ({
 }));
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 const existingProject: ProjectRow = {
@@ -63,7 +68,7 @@ describe("ProjectForm", () => {
       expect(screen.getByText("プロジェクト作成")).toBeInTheDocument();
       expect(screen.getByLabelText("コード")).toHaveValue("");
       expect(screen.getByLabelText("コード")).not.toBeDisabled();
-      expect(screen.getByLabelText("名前")).toHaveValue("");
+      expect(screen.getByLabelText("プロジェクト名")).toHaveValue("");
       expect(screen.getByText("作成")).toBeInTheDocument();
     });
 
@@ -73,7 +78,7 @@ describe("ProjectForm", () => {
       renderWithProviders(<ProjectForm {...defaultProps} onSaved={onSaved} />);
 
       await user.type(screen.getByLabelText("コード"), "NEW001");
-      await user.type(screen.getByLabelText("名前"), "New Project");
+      await user.type(screen.getByLabelText("プロジェクト名"), "New Project");
       await user.click(screen.getByText("作成"));
 
       await waitFor(() => {
@@ -92,7 +97,7 @@ describe("ProjectForm", () => {
       renderWithProviders(<ProjectForm {...defaultProps} />);
 
       await user.type(screen.getByLabelText("コード"), "NEW001");
-      await user.type(screen.getByLabelText("名前"), "New Project");
+      await user.type(screen.getByLabelText("プロジェクト名"), "New Project");
       await user.type(screen.getByLabelText("開始日"), "2026-04-01");
       await user.type(screen.getByLabelText("終了日"), "2026-09-30");
       await user.click(screen.getByText("作成"));
@@ -111,7 +116,7 @@ describe("ProjectForm", () => {
       renderWithProviders(<ProjectForm {...defaultProps} />);
 
       expect(screen.getByLabelText("コード")).toBeRequired();
-      expect(screen.getByLabelText("名前")).toBeRequired();
+      expect(screen.getByLabelText("プロジェクト名")).toBeRequired();
     });
 
     test("shows validation error when only whitespace entered", async () => {
@@ -119,7 +124,7 @@ describe("ProjectForm", () => {
       renderWithProviders(<ProjectForm {...defaultProps} />);
 
       await user.type(screen.getByLabelText("コード"), "   ");
-      await user.type(screen.getByLabelText("名前"), "   ");
+      await user.type(screen.getByLabelText("プロジェクト名"), "   ");
       await user.click(screen.getByText("作成"));
 
       expect(screen.getByText("コードと名前は必須です")).toBeInTheDocument();
@@ -131,7 +136,7 @@ describe("ProjectForm", () => {
       renderWithProviders(<ProjectForm {...defaultProps} />);
 
       await user.type(screen.getByLabelText("コード"), "NEW001");
-      await user.type(screen.getByLabelText("名前"), "New Project");
+      await user.type(screen.getByLabelText("プロジェクト名"), "New Project");
       await user.type(screen.getByLabelText("開始日"), "2026-12-01");
       await user.type(screen.getByLabelText("終了日"), "2026-01-01");
       await user.click(screen.getByText("作成"));
@@ -151,10 +156,10 @@ describe("ProjectForm", () => {
     test("renders edit form with pre-filled fields", () => {
       renderWithProviders(<ProjectForm {...editProps} />);
 
-      expect(screen.getByText("プロジェクト編集")).toBeInTheDocument();
+      expect(screen.getByText("プロジェクトを編集")).toBeInTheDocument();
       expect(screen.getByLabelText("コード")).toHaveValue("PRJ001");
       expect(screen.getByLabelText("コード")).toBeDisabled();
-      expect(screen.getByLabelText("名前")).toHaveValue("Project Alpha");
+      expect(screen.getByLabelText("プロジェクト名")).toHaveValue("Project Alpha");
       expect(screen.getByLabelText("開始日")).toHaveValue("2026-01-01");
       expect(screen.getByLabelText("終了日")).toHaveValue("2026-12-31");
       expect(screen.getByText("更新")).toBeInTheDocument();
@@ -165,7 +170,7 @@ describe("ProjectForm", () => {
       const onSaved = vi.fn();
       renderWithProviders(<ProjectForm {...editProps} onSaved={onSaved} />);
 
-      const nameInput = screen.getByLabelText("名前");
+      const nameInput = screen.getByLabelText("プロジェクト名");
       await user.clear(nameInput);
       await user.type(nameInput, "Alpha Updated");
       await user.click(screen.getByText("更新"));
@@ -203,7 +208,7 @@ describe("ProjectForm", () => {
     renderWithProviders(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "DUP");
-    await user.type(screen.getByLabelText("名前"), "Duplicate");
+    await user.type(screen.getByLabelText("プロジェクト名"), "Duplicate");
     await user.click(screen.getByText("作成"));
 
     await waitFor(() => {
@@ -218,7 +223,7 @@ describe("ProjectForm", () => {
     renderWithProviders(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "NEW");
-    await user.type(screen.getByLabelText("名前"), "Test");
+    await user.type(screen.getByLabelText("プロジェクト名"), "Test");
     await user.click(screen.getByText("作成"));
 
     await waitFor(() => {
@@ -238,7 +243,7 @@ describe("ProjectForm", () => {
     renderWithProviders(<ProjectForm project={null} onClose={vi.fn()} onSaved={vi.fn()} />);
 
     await user.type(screen.getByLabelText("コード"), "NEW");
-    await user.type(screen.getByLabelText("名前"), "Test");
+    await user.type(screen.getByLabelText("プロジェクト名"), "Test");
     await user.click(screen.getByText("作成"));
 
     expect(screen.getByText("保存中...")).toBeInTheDocument();

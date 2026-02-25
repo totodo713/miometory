@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -24,6 +25,8 @@ interface MemberListProps {
 }
 
 export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: MemberListProps) {
+  const t = useTranslations("admin.members");
+  const tc = useTranslations("common");
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
@@ -41,6 +44,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
     return () => clearTimeout(timer);
   }, [search]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tc from useTranslations is stable
   const loadMembers = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -54,7 +58,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
       setMembers(result.content);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
-      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
+      setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -72,18 +76,18 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
       <div className="flex items-center gap-4 mb-4">
         <input
           type="text"
-          placeholder="名前またはメールで検索..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(0);
           }}
-          aria-label="名前またはメールで検索"
+          aria-label={t("searchPlaceholder")}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
-          無効も表示
+          {t("showInactive")}
         </label>
       </div>
 
@@ -95,16 +99,13 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
             onClick={loadMembers}
             className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
           >
-            再試行
+            {tc("retry")}
           </button>
         </div>
       ) : isLoading ? (
         <Skeleton.Table rows={5} cols={5} />
       ) : members.length === 0 ? (
-        <EmptyState
-          title="メンバーが見つかりません"
-          description={hasFilters ? "検索条件を変更してください" : "まだメンバーがいません"}
-        />
+        <EmptyState title={t("notFound")} description={hasFilters ? t("changeFilter") : t("noMembersYet")} />
       ) : isMobile ? (
         <div className="space-y-3">
           {members.map((member) => (
@@ -116,18 +117,20 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
                     member.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {member.isActive ? "有効" : "無効"}
+                  {member.isActive ? tc("active") : tc("inactive")}
                 </span>
               </div>
               <p className="text-xs text-gray-500">{member.email}</p>
-              <p className="text-xs text-gray-500">上司: {member.managerName || "—"}</p>
+              <p className="text-xs text-gray-500">
+                {t("managerLabel")}: {member.managerName || "—"}
+              </p>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => onEdit(member)}
                   className="text-blue-600 hover:text-blue-800 text-xs"
                 >
-                  編集
+                  {tc("edit")}
                 </button>
                 {member.isActive ? (
                   <button
@@ -135,7 +138,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
                     onClick={() => onDeactivate(member.id)}
                     className="text-red-600 hover:text-red-800 text-xs"
                   >
-                    無効化
+                    {t("deactivate")}
                   </button>
                 ) : (
                   <button
@@ -143,7 +146,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
                     onClick={() => onActivate(member.id)}
                     className="text-green-600 hover:text-green-800 text-xs"
                   >
-                    有効化
+                    {t("activate")}
                   </button>
                 )}
               </div>
@@ -155,11 +158,11 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">名前</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">メール</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">上司</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">状態</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-700">操作</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.name")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.email")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("managerLabel")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.status")}</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-700">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -174,7 +177,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
                         member.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {member.isActive ? "有効" : "無効"}
+                      {member.isActive ? tc("active") : tc("inactive")}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -184,7 +187,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
                         onClick={() => onEdit(member)}
                         className="text-blue-600 hover:text-blue-800 text-xs"
                       >
-                        編集
+                        {tc("edit")}
                       </button>
                       {member.isActive ? (
                         <button
@@ -192,7 +195,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
                           onClick={() => onDeactivate(member.id)}
                           className="text-red-600 hover:text-red-800 text-xs"
                         >
-                          無効化
+                          {t("deactivate")}
                         </button>
                       ) : (
                         <button
@@ -200,7 +203,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
                           onClick={() => onActivate(member.id)}
                           className="text-green-600 hover:text-green-800 text-xs"
                         >
-                          有効化
+                          {t("activate")}
                         </button>
                       )}
                     </div>
@@ -220,7 +223,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
             disabled={page === 0}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            前へ
+            {tc("previous")}
           </button>
           <span className="px-3 py-1 text-sm text-gray-600">
             {page + 1} / {totalPages}
@@ -231,7 +234,7 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
             disabled={page >= totalPages - 1}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            次へ
+            {tc("next")}
           </button>
         </div>
       )}

@@ -2,28 +2,30 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useAdminContext } from "@/providers/AdminProvider";
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: string;
   shortLabel: string;
   permission?: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "ダッシュボード", shortLabel: "D" },
-  { href: "/admin/tenants", label: "テナント管理", shortLabel: "T", permission: "tenant.view" },
-  { href: "/admin/users", label: "ユーザー管理", shortLabel: "U", permission: "user.view" },
-  { href: "/admin/members", label: "メンバー管理", shortLabel: "M", permission: "member.view" },
-  { href: "/admin/projects", label: "プロジェクト管理", shortLabel: "P", permission: "project.view" },
-  { href: "/admin/assignments", label: "アサイン管理", shortLabel: "A", permission: "assignment.view" },
-  { href: "/admin/organizations", label: "組織管理", shortLabel: "O", permission: "organization.view" },
+  { href: "/admin", labelKey: "dashboard", shortLabel: "D" },
+  { href: "/admin/tenants", labelKey: "tenants", shortLabel: "T", permission: "tenant.view" },
+  { href: "/admin/users", labelKey: "users", shortLabel: "U", permission: "user.view" },
+  { href: "/admin/members", labelKey: "members", shortLabel: "M", permission: "member.view" },
+  { href: "/admin/projects", labelKey: "projects", shortLabel: "P", permission: "project.view" },
+  { href: "/admin/assignments", labelKey: "assignments", shortLabel: "A", permission: "assignment.view" },
+  { href: "/admin/organizations", labelKey: "organizations", shortLabel: "O", permission: "organization.view" },
 ];
 
 export function AdminNav() {
+  const t = useTranslations("admin.nav");
   const { hasPermission, adminContext } = useAdminContext();
   const pathname = usePathname();
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -73,10 +75,12 @@ export function AdminNav() {
     <>
       <div className="p-4 border-b border-gray-200">
         {collapsed ? (
-          <p className="text-xs font-medium text-gray-500 text-center">管理</p>
+          <p className="text-xs font-medium text-gray-500 text-center">{t("sectionLabels.management")}</p>
         ) : (
           <>
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">管理メニュー</p>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {t("sectionLabels.management")}
+            </p>
             {adminContext && (
               <p className="mt-1 text-sm text-gray-700 truncate">{adminContext.role.replace(/_/g, " ")}</p>
             )}
@@ -96,12 +100,12 @@ export function AdminNav() {
                     ? "bg-blue-50 text-blue-700 font-medium border-r-2 border-blue-700"
                     : "text-gray-700 hover:bg-gray-50"
                 }`}
-                title={collapsed ? item.label : undefined}
+                title={collapsed ? t(item.labelKey) : undefined}
               >
                 {collapsed ? (
                   <span className="flex items-center justify-center w-8 h-5 text-xs font-bold">{item.shortLabel}</span>
                 ) : (
-                  item.label
+                  t(item.labelKey)
                 )}
               </Link>
             </li>
@@ -120,7 +124,7 @@ export function AdminNav() {
           ref={triggerRef}
           onClick={() => setIsOpen(true)}
           className="fixed top-16 left-3 z-30 p-2 bg-white border border-gray-200 rounded-md shadow-sm"
-          aria-label="メニューを開く"
+          aria-label={t("sectionLabels.management")}
         >
           <svg
             className="w-5 h-5 text-gray-600"
@@ -143,16 +147,18 @@ export function AdminNav() {
               className="fixed inset-y-0 left-0 w-64 bg-white shadow-xl z-50 transform transition-transform"
               role="dialog"
               aria-modal="true"
-              aria-label="管理メニュー"
+              aria-label={t("sectionLabels.management")}
             >
               <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">管理メニュー</p>
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {t("sectionLabels.management")}
+                </p>
                 <button
                   type="button"
                   ref={closeButtonRef}
                   onClick={closeDrawer}
                   className="p-1 text-gray-400 hover:text-gray-600"
-                  aria-label="メニューを閉じる"
+                  aria-label={t("sectionLabels.management")}
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -178,7 +184,7 @@ export function AdminNav() {
                             : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
-                        {item.label}
+                        {t(item.labelKey)}
                       </Link>
                     </li>
                   );

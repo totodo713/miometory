@@ -1,22 +1,35 @@
 import { render, screen } from "@testing-library/react";
+import { IntlWrapper } from "../../../../tests/helpers/intl";
 import UnverifiedBanner from "../UnverifiedBanner";
 
 describe("UnverifiedBanner", () => {
   test("does not render when no user", () => {
-    const { container } = render(<UnverifiedBanner user={null} isVerified={false} />);
+    const { container } = render(
+      <IntlWrapper>
+        <UnverifiedBanner user={null} isVerified={false} />
+      </IntlWrapper>,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
   test("does not render when user is verified", () => {
     const user = { id: "1", email: "a@example.com", displayName: "A" };
-    const { container } = render(<UnverifiedBanner user={user} isVerified={true} />);
+    const { container } = render(
+      <IntlWrapper>
+        <UnverifiedBanner user={user} isVerified={true} />
+      </IntlWrapper>,
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
   test("renders when user exists and not verified", () => {
     const user = { id: "1", email: "a@example.com", displayName: "A" };
-    render(<UnverifiedBanner user={user} isVerified={false} />);
+    render(
+      <IntlWrapper>
+        <UnverifiedBanner user={user} isVerified={false} />
+      </IntlWrapper>,
+    );
     expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(screen.getByText(/not verified/i)).toBeInTheDocument();
+    expect(screen.getByText(/メールアドレスが未確認です/)).toBeInTheDocument();
   });
 });

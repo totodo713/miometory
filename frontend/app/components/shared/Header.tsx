@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { api } from "@/services/api";
+import { LocaleToggle } from "./LocaleToggle";
 import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const { user, logout } = useAuthContext();
   const pathname = usePathname();
+  const t = useTranslations("header");
   const [hasAdminAccess, setHasAdminAccess] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -82,7 +85,7 @@ export function Header() {
               ref={triggerRef}
               onClick={() => setDrawerOpen(true)}
               className="p-2 text-gray-600 hover:text-gray-800"
-              aria-label="メニューを開く"
+              aria-label={t("openMenu")}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -100,16 +103,16 @@ export function Header() {
               className="fixed top-0 right-0 h-full w-64 bg-white shadow-lg z-50 flex flex-col"
               role="dialog"
               aria-modal="true"
-              aria-label="ナビゲーションメニュー"
+              aria-label={t("navigationMenu")}
             >
               <div className="flex items-center justify-between px-4 h-14 border-b border-gray-200">
-                <span className="text-sm font-medium text-gray-900">メニュー</span>
+                <span className="text-sm font-medium text-gray-900">{t("menu")}</span>
                 <button
                   type="button"
                   ref={closeButtonRef}
                   onClick={closeDrawer}
                   className="p-2 text-gray-500 hover:text-gray-700"
-                  aria-label="メニューを閉じる"
+                  aria-label={t("closeMenu")}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -124,7 +127,7 @@ export function Header() {
                     !isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
-                  勤怠
+                  {t("worklog")}
                 </Link>
                 {hasAdminAccess && (
                   <Link
@@ -134,12 +137,13 @@ export function Header() {
                       isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
-                    管理
+                    {t("admin")}
                   </Link>
                 )}
               </nav>
-              <div className="px-4 py-4 border-t border-gray-200">
-                <p className="text-sm text-gray-700 mb-3">{user.displayName}</p>
+              <div className="px-4 py-4 border-t border-gray-200 space-y-3">
+                <LocaleToggle />
+                <p className="text-sm text-gray-700">{user.displayName}</p>
                 <button
                   type="button"
                   onClick={() => {
@@ -148,7 +152,7 @@ export function Header() {
                   }}
                   className="w-full text-left text-sm text-gray-500 hover:text-gray-700"
                 >
-                  ログアウト
+                  {t("logout")}
                 </button>
               </div>
             </div>
@@ -171,7 +175,7 @@ export function Header() {
               !isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
             }`}
           >
-            勤怠
+            {t("worklog")}
           </Link>
           {hasAdminAccess && (
             <Link
@@ -180,16 +184,17 @@ export function Header() {
                 isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
               }`}
             >
-              管理
+              {t("admin")}
             </Link>
           )}
         </nav>
       </div>
       <div className="flex items-center gap-4">
         <NotificationBell />
+        <LocaleToggle />
         <span className="text-sm text-gray-700">{user.displayName}</span>
         <button type="button" onClick={logout} className="text-sm text-gray-500 hover:text-gray-700">
-          ログアウト
+          {t("logout")}
         </button>
       </div>
     </header>

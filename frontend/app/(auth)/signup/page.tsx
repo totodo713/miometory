@@ -2,14 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { useState } from "react";
+import { AuthLocaleToggle } from "@/components/auth/AuthLocaleToggle";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
 export default function SignupPage() {
   const router = useRouter();
   const toast = useToast();
+  const t = useTranslations("auth.signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -35,15 +38,15 @@ export default function SignupPage() {
     setIsSubmitting(true);
     try {
       await api.auth.signup(email, password);
-      toast.success("登録が完了しました");
+      toast.success(t("confirm.title"));
       router.push("/signup/confirm");
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 409) {
-        toast.error("このメールアドレスは既に登録されています");
+        toast.error(t("errors.emailExists"));
       } else if (err instanceof ApiError) {
         toast.error(err.message);
       } else {
-        toast.error("ネットワークエラーが発生しました");
+        toast.error(t("errors.networkError"));
       }
     } finally {
       setIsSubmitting(false);
@@ -53,15 +56,18 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow p-8">
+        <div className="flex justify-end mb-4">
+          <AuthLocaleToggle />
+        </div>
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">アカウント登録</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
           <p className="text-sm text-gray-500 mt-1">Miometry Time Entry System</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              メールアドレス
+              {t("emailLabel")}
             </label>
             <input
               id="email"
@@ -69,7 +75,7 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="you@example.com"
+              placeholder={t("emailPlaceholder")}
               disabled={isSubmitting}
               required
             />
@@ -77,7 +83,7 @@ export default function SignupPage() {
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              パスワード
+              {t("passwordLabel")}
             </label>
             <input
               id="password"
@@ -92,7 +98,7 @@ export default function SignupPage() {
 
           <div>
             <label htmlFor="passwordConfirm" className="block text-sm font-medium text-gray-700 mb-1">
-              パスワード確認
+              {t("confirmPasswordLabel")}
             </label>
             <input
               id="passwordConfirm"
@@ -104,7 +110,7 @@ export default function SignupPage() {
               disabled={isSubmitting}
               required
             />
-            {passwordMismatch && <p className="mt-1 text-sm text-red-600">パスワードが一致しません</p>}
+            {passwordMismatch && <p className="mt-1 text-sm text-red-600">{t("errors.passwordMismatch")}</p>}
           </div>
 
           <button
@@ -112,12 +118,12 @@ export default function SignupPage() {
             disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "登録中..." : "登録"}
+            {isSubmitting ? t("submitting") : t("submitButton")}
           </button>
 
           <div className="text-center">
             <Link href="/login" className="text-sm text-blue-600 hover:underline">
-              ログインページへ戻る
+              {t("loginLink")}
             </Link>
           </div>
         </form>

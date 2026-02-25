@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -20,7 +21,11 @@ interface Notification {
 
 type FilterValue = "all" | "unread" | "read";
 
-function getRelativeTime(dateString: string): string {
+function getRelativeTime(
+  dateString: string,
+  tt: (key: string, params?: Record<string, number>) => string,
+  formatter: ReturnType<typeof useFormatter>,
+): string {
   const now = new Date();
   const date = new Date(dateString);
   const diffMs = now.getTime() - date.getTime();
@@ -28,11 +33,11 @@ function getRelativeTime(dateString: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMinutes < 1) return "たった今";
-  if (diffMinutes < 60) return `${diffMinutes}分前`;
-  if (diffHours < 24) return `${diffHours}時間前`;
-  if (diffDays < 30) return `${diffDays}日前`;
-  return date.toLocaleDateString("ja-JP");
+  if (diffMinutes < 1) return tt("justNow");
+  if (diffMinutes < 60) return tt("minutesAgo", { count: diffMinutes });
+  if (diffHours < 24) return tt("hoursAgo", { count: diffHours });
+  if (diffDays < 30) return tt("daysAgo", { count: diffDays });
+  return formatter.dateTime(date, { year: "numeric", month: "short", day: "numeric" });
 }
 
 function getTypeIcon(type: string): string {
@@ -130,6 +135,11 @@ function TypeIcon({ type }: { type: string }) {
 const PAGE_SIZE = 20;
 
 export default function NotificationsPage() {
+  const t = useTranslations("notifications.page");
+  const tc = useTranslations("common");
+  const tt = useTranslations("notifications.time");
+  const tb = useTranslations("breadcrumbs");
+  const format = useFormatter();
   const router = useRouter();
   const toast = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -140,6 +150,7 @@ export default function NotificationsPage() {
   const [totalElements, setTotalElements] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t from useTranslations is stable
   const loadNotifications = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -150,7 +161,7 @@ export default function NotificationsPage() {
       setTotalElements(data.totalElements);
       setUnreadCount(data.unreadCount);
     } catch {
-      toast.error("通知の取得に失敗しました");
+      toast.error(t("loadError"));
     } finally {
       setIsLoading(false);
     }
@@ -165,7 +176,7 @@ export default function NotificationsPage() {
       await api.notification.markAllRead();
       await loadNotifications();
     } catch {
-      toast.error("既読処理に失敗しました");
+      toast.error(t("markReadError"));
     }
   };
 
@@ -189,18 +200,18 @@ export default function NotificationsPage() {
   };
 
   const filterTabs: { label: string; value: FilterValue }[] = [
-    { label: "すべて", value: "all" },
-    { label: "未読", value: "unread" },
-    { label: "既読", value: "read" },
+    { label: t("filterAll"), value: "all" },
+    { label: t("filterUnread"), value: "unread" },
+    { label: t("filterRead"), value: "read" },
   ];
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: "ホーム", href: "/" }, { label: "通知" }]} />
+      <Breadcrumbs items={[{ label: tb("home"), href: "/" }, { label: tb("notifications") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
         <h1 className="text-2xl font-bold text-gray-900">
-          通知
+          {t("titleLabel")}
           {unreadCount > 0 && (
             <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
               {unreadCount}
@@ -212,7 +223,7 @@ export default function NotificationsPage() {
           onClick={handleMarkAllRead}
           className="px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100"
         >
-          すべて既読にする
+          {t("markAllRead")}
         </button>
       </div>
 
@@ -240,7 +251,7 @@ export default function NotificationsPage() {
           <Skeleton.Table rows={5} cols={3} />
         </div>
       ) : notifications.length === 0 ? (
-        <EmptyState title="通知はありません" description="新しい通知はまだありません" />
+        <EmptyState title={t("noNotifications")} description={t("noNotificationsDescription")} />
       ) : (
         <div className="space-y-2">
           {notifications.map((notification) => (
@@ -272,7 +283,9 @@ export default function NotificationsPage() {
                   </div>
                   <p className="text-sm text-gray-600 mt-0.5 truncate">{notification.message}</p>
                 </div>
-                <div className="flex-shrink-0 text-xs text-gray-500">{getRelativeTime(notification.createdAt)}</div>
+                <div className="flex-shrink-0 text-xs text-gray-500">
+                  {getRelativeTime(notification.createdAt, tt, format)}
+                </div>
               </div>
             </button>
           ))}
@@ -283,7 +296,11 @@ export default function NotificationsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-gray-600">
-            全{totalElements}件中 {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, totalElements)}件
+            {t("totalCount", {
+              total: totalElements,
+              from: page * PAGE_SIZE + 1,
+              to: Math.min((page + 1) * PAGE_SIZE, totalElements),
+            })}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -292,10 +309,10 @@ export default function NotificationsPage() {
               disabled={page === 0}
               className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              前へ
+              {tc("previous")}
             </button>
             <span className="text-sm text-gray-600">
-              {page + 1} / {totalPages}
+              {tc("pagination.page", { current: page + 1, total: totalPages })}
             </span>
             <button
               type="button"
@@ -303,7 +320,7 @@ export default function NotificationsPage() {
               disabled={page >= totalPages - 1}
               className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
             >
-              次へ
+              {tc("next")}
             </button>
           </div>
         </div>

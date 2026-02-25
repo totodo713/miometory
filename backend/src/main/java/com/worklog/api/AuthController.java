@@ -62,6 +62,7 @@ public class AuthController {
                 user.getEmail(),
                 user.getName(),
                 user.getAccountStatus().name(),
+                user.getPreferredLocale(),
                 "Account created successfully. Please check your email to verify your account.");
     }
 
@@ -119,6 +120,7 @@ public class AuthController {
                         response.user().getEmail(),
                         response.user().getName(),
                         response.user().getAccountStatus().name(),
+                        response.user().getPreferredLocale(),
                         memberId),
                 sessionExpiresAt,
                 response.rememberMeToken(),

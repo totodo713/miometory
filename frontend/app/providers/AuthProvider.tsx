@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AUTH_UNAUTHORIZED_EVENT, api } from "@/services/api";
+import { COOKIE_NAME } from "../../i18n/config";
 
 const STORAGE_KEY = "miometry_auth_user";
 
@@ -10,6 +11,7 @@ export interface AuthUser {
   id: string;
   email: string;
   displayName: string;
+  preferredLocale?: string;
   memberId?: string;
 }
 
@@ -53,17 +55,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener(AUTH_UNAUTHORIZED_EVENT, handleUnauthorized);
   }, []);
 
-  const login = useCallback(async (email: string, password: string, rememberMe: boolean) => {
-    const response = await api.auth.login({ email, password, rememberMe });
-    const authUser: AuthUser = {
-      id: response.user.id,
-      email: response.user.email,
-      displayName: response.user.name,
-      memberId: response.user.memberId ?? undefined,
-    };
-    setUser(authUser);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string, rememberMe: boolean) => {
+      const response = await api.auth.login({ email, password, rememberMe });
+      const authUser: AuthUser = {
+        id: response.user.id,
+        email: response.user.email,
+        displayName: response.user.name,
+        preferredLocale: response.user.preferredLocale,
+        memberId: response.user.memberId ?? undefined,
+      };
+      setUser(authUser);
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));
+
+      // Sync preferred locale to cookie for SSR locale detection
+      if (response.user.preferredLocale) {
+        // biome-ignore lint/suspicious/noDocumentCookie: direct cookie access needed for locale sync on login
+        document.cookie = `${COOKIE_NAME}=${response.user.preferredLocale};path=/;max-age=31536000;SameSite=Lax`;
+        router.refresh();
+      }
+    },
+    [router],
+  );
 
   const logout = useCallback(async () => {
     try {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import type { OrganizationTreeNode } from "@/services/api";
 import { api } from "@/services/api";
@@ -16,6 +17,8 @@ interface TreeNodeProps {
 }
 
 function TreeNode({ node, onSelectOrg, selectedOrgId }: TreeNodeProps) {
+  const t = useTranslations("admin.organizations");
+  const tc = useTranslations("common");
   const [expanded, setExpanded] = useState(true);
   const hasChildren = node.children.length > 0;
   const isSelected = selectedOrgId === node.id;
@@ -28,7 +31,7 @@ function TreeNode({ node, onSelectOrg, selectedOrgId }: TreeNodeProps) {
             type="button"
             onClick={() => setExpanded((prev) => !prev)}
             className="w-5 h-5 flex items-center justify-center text-gray-500 hover:text-gray-700 text-xs flex-shrink-0"
-            aria-label={expanded ? "折りたたむ" : "展開する"}
+            aria-label={expanded ? t("tree.collapse") : t("tree.expand")}
           >
             {expanded ? "\u25BC" : "\u25B6"}
           </button>
@@ -51,11 +54,11 @@ function TreeNode({ node, onSelectOrg, selectedOrgId }: TreeNodeProps) {
               node.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
             }`}
           >
-            {node.status === "ACTIVE" ? "有効" : "無効"}
+            {node.status === "ACTIVE" ? tc("active") : tc("inactive")}
           </span>
 
-          <span className="text-xs text-gray-500 flex-shrink-0" title="メンバー数">
-            {node.memberCount}人
+          <span className="text-xs text-gray-500 flex-shrink-0" title={t("table.memberCount")}>
+            {t("tree.memberCount", { count: node.memberCount })}
           </span>
         </button>
       </div>
@@ -72,6 +75,8 @@ function TreeNode({ node, onSelectOrg, selectedOrgId }: TreeNodeProps) {
 }
 
 export function OrganizationTree({ refreshKey, onSelectOrg }: OrganizationTreeProps) {
+  const t = useTranslations("admin.organizations");
+  const tc = useTranslations("common");
   const [tree, setTree] = useState<OrganizationTreeNode[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showInactive, setShowInactive] = useState(false);
@@ -107,14 +112,14 @@ export function OrganizationTree({ refreshKey, onSelectOrg }: OrganizationTreePr
       <div className="flex items-center gap-4 mb-4">
         <label className="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap">
           <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} />
-          無効も表示
+          {t("showInactive")}
         </label>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-8 text-gray-500">読み込み中...</div>
+        <div className="text-center py-8 text-gray-500">{tc("loading")}</div>
       ) : tree.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">組織が見つかりません</div>
+        <div className="text-center py-8 text-gray-500">{t("notFound")}</div>
       ) : (
         <div className="py-1">
           {tree.map((node) => (

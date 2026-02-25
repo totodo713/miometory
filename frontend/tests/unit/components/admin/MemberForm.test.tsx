@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
 import { ToastProvider } from "@/components/shared/ToastProvider";
+import { IntlWrapper } from "../../../helpers/intl";
 
 const mockCreate = vi.fn();
 const mockUpdate = vi.fn();
@@ -30,7 +31,11 @@ vi.mock("@/services/api", () => ({
 }));
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 const existingMember: MemberRow = {
@@ -60,10 +65,10 @@ describe("MemberForm", () => {
     test("renders create form with empty fields", () => {
       renderWithProviders(<MemberForm {...defaultProps} />);
 
-      expect(screen.getByText("メンバー招待")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "メンバー招待" })).toBeInTheDocument();
       expect(screen.getByLabelText("メールアドレス")).toHaveValue("");
       expect(screen.getByLabelText("表示名")).toHaveValue("");
-      expect(screen.getByText("招待")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "メンバー招待" })).toBeInTheDocument();
     });
 
     test("creates member on submit", async () => {
@@ -73,7 +78,7 @@ describe("MemberForm", () => {
 
       await user.type(screen.getByLabelText("メールアドレス"), "new@test.com");
       await user.type(screen.getByLabelText("表示名"), "New User");
-      await user.click(screen.getByText("招待"));
+      await user.click(screen.getByRole("button", { name: "メンバー招待" }));
 
       await waitFor(() => {
         expect(mockCreate).toHaveBeenCalledWith({
@@ -98,7 +103,7 @@ describe("MemberForm", () => {
       // Type valid email then whitespace-only displayName
       await user.type(screen.getByLabelText("メールアドレス"), "a@b.com");
       await user.type(screen.getByLabelText("表示名"), "   ");
-      await user.click(screen.getByText("招待"));
+      await user.click(screen.getByRole("button", { name: "メンバー招待" }));
 
       expect(screen.getByText("メールと表示名は必須です")).toBeInTheDocument();
       expect(mockCreate).not.toHaveBeenCalled();
@@ -115,7 +120,7 @@ describe("MemberForm", () => {
     test("renders edit form with pre-filled fields", () => {
       renderWithProviders(<MemberForm {...editProps} />);
 
-      expect(screen.getByText("メンバー編集")).toBeInTheDocument();
+      expect(screen.getByText("メンバーを編集")).toBeInTheDocument();
       expect(screen.getByLabelText("メールアドレス")).toHaveValue("alice@test.com");
       expect(screen.getByLabelText("表示名")).toHaveValue("Alice");
       expect(screen.getByText("更新")).toBeInTheDocument();
@@ -159,7 +164,7 @@ describe("MemberForm", () => {
 
     await user.type(screen.getByLabelText("メールアドレス"), "dup@test.com");
     await user.type(screen.getByLabelText("表示名"), "Dup");
-    await user.click(screen.getByText("招待"));
+    await user.click(screen.getByRole("button", { name: "メンバー招待" }));
 
     await waitFor(() => {
       expect(screen.getAllByText("Duplicate email").length).toBeGreaterThan(0);
@@ -174,7 +179,7 @@ describe("MemberForm", () => {
 
     await user.type(screen.getByLabelText("メールアドレス"), "test@test.com");
     await user.type(screen.getByLabelText("表示名"), "Test");
-    await user.click(screen.getByText("招待"));
+    await user.click(screen.getByRole("button", { name: "メンバー招待" }));
 
     await waitFor(() => {
       expect(screen.getByText("エラーが発生しました")).toBeInTheDocument();
@@ -194,7 +199,7 @@ describe("MemberForm", () => {
 
     await user.type(screen.getByLabelText("メールアドレス"), "test@test.com");
     await user.type(screen.getByLabelText("表示名"), "Test");
-    await user.click(screen.getByText("招待"));
+    await user.click(screen.getByRole("button", { name: "メンバー招待" }));
 
     expect(screen.getByText("保存中...")).toBeInTheDocument();
     expect(screen.getByText("保存中...")).toBeDisabled();

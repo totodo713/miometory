@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { Header } from "@/components/shared/Header";
+import { IntlWrapper } from "../../../helpers/intl";
 
 const mockLogout = vi.fn();
 const mockUseAuthContext = vi.fn();
@@ -10,6 +11,7 @@ vi.mock("@/providers/AuthProvider", () => ({
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/worklog",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
 vi.mock("next/link", () => ({
@@ -39,7 +41,11 @@ describe("Header", () => {
 
   test("renders nothing when user is null", () => {
     mockUseAuthContext.mockReturnValue({ user: null, logout: mockLogout });
-    const { container } = render(<Header />);
+    const { container } = render(
+      <IntlWrapper>
+        <Header />
+      </IntlWrapper>,
+    );
     expect(container.innerHTML).toBe("");
   });
 
@@ -48,7 +54,11 @@ describe("Header", () => {
       user: { id: "1", email: "a@b.com", displayName: "Yamada Taro" },
       logout: mockLogout,
     });
-    render(<Header />);
+    render(
+      <IntlWrapper>
+        <Header />
+      </IntlWrapper>,
+    );
     expect(screen.getByText("Yamada Taro")).toBeInTheDocument();
     expect(screen.getByText("ログアウト")).toBeInTheDocument();
   });
@@ -58,7 +68,11 @@ describe("Header", () => {
       user: { id: "1", email: "a@b.com", displayName: "Yamada Taro" },
       logout: mockLogout,
     });
-    render(<Header />);
+    render(
+      <IntlWrapper>
+        <Header />
+      </IntlWrapper>,
+    );
     fireEvent.click(screen.getByText("ログアウト"));
     expect(mockLogout).toHaveBeenCalledTimes(1);
   });

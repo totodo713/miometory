@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemberList } from "@/components/admin/MemberList";
 import { ToastProvider } from "@/components/shared/ToastProvider";
+import { IntlWrapper } from "../../../helpers/intl";
 
 Object.defineProperty(window, "matchMedia", {
   writable: true,
@@ -51,7 +52,11 @@ const inactiveMember = {
 };
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 const defaultProps = {
@@ -193,7 +198,7 @@ describe("MemberList", () => {
       expect(screen.getByText("Alice")).toBeInTheDocument();
     });
 
-    const searchInput = screen.getByPlaceholderText("名前またはメールで検索...");
+    const searchInput = screen.getByPlaceholderText("名前またはメールで検索");
     await user.type(searchInput, "alice");
 
     await waitFor(() => {
@@ -277,9 +282,11 @@ describe("MemberList", () => {
     });
 
     rerender(
-      <ToastProvider>
-        <MemberList {...defaultProps} refreshKey={1} />
-      </ToastProvider>,
+      <IntlWrapper>
+        <ToastProvider>
+          <MemberList {...defaultProps} refreshKey={1} />
+        </ToastProvider>
+      </IntlWrapper>,
     );
 
     await waitFor(() => {
@@ -294,9 +301,9 @@ describe("MemberList", () => {
       expect(screen.getByText("Alice")).toBeInTheDocument();
     });
     expect(screen.getByText("名前")).toBeInTheDocument();
-    expect(screen.getByText("メール")).toBeInTheDocument();
+    expect(screen.getByText("メールアドレス")).toBeInTheDocument();
     expect(screen.getByText("上司")).toBeInTheDocument();
-    expect(screen.getByText("状態")).toBeInTheDocument();
+    expect(screen.getByText("ステータス")).toBeInTheDocument();
     expect(screen.getByText("操作")).toBeInTheDocument();
   });
 });

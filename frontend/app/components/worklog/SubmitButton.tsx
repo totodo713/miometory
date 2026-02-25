@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "@/services/api";
 import { useProxyMode } from "@/services/worklogStore";
@@ -28,6 +29,7 @@ export function SubmitButton({
   onSubmitSuccess,
 }: SubmitButtonProps) {
   const { isProxyMode, managerId } = useProxyMode();
+  const t = useTranslations("worklog.submitButton");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,11 +61,11 @@ export function SubmitButton({
 
   const getButtonText = () => {
     const proxyPrefix = isProxyMode ? "(Proxy) " : "";
-    if (isSubmitting) return `${proxyPrefix}Submitting...`;
-    if (isApproved) return "Approved";
-    if (isSubmitted) return "Submitted";
-    if (approvalStatus === "REJECTED") return `${proxyPrefix}Resubmit for Approval`;
-    return `${proxyPrefix}Submit for Approval`;
+    if (isSubmitting) return `${proxyPrefix}${t("submit")}...`;
+    if (isApproved) return t("submitted");
+    if (isSubmitted) return t("submitted");
+    if (approvalStatus === "REJECTED") return `${proxyPrefix}${t("resubmit")}`;
+    return `${proxyPrefix}${t("submit")}`;
   };
 
   const getButtonStyle = () => {
@@ -86,9 +88,7 @@ export function SubmitButton({
         {getButtonText()}
       </button>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      {approvalStatus === "REJECTED" && (
-        <p className="text-sm text-amber-600">Month was rejected. Make corrections and resubmit.</p>
-      )}
+      {approvalStatus === "REJECTED" && <p className="text-sm text-amber-600">{t("error")}</p>}
     </div>
   );
 }

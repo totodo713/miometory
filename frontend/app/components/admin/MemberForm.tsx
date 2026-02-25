@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
@@ -12,6 +13,8 @@ interface MemberFormProps {
 }
 
 export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
+  const t = useTranslations("admin.members");
+  const tc = useTranslations("common");
   const isEdit = member !== null;
   const toast = useToast();
 
@@ -33,7 +36,7 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
     setError(null);
 
     if (!email.trim() || !displayName.trim()) {
-      setError("メールと表示名は必須です");
+      setError(t("emailAndNameRequired"));
       return;
     }
 
@@ -44,15 +47,15 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
       } else {
         await api.admin.members.create({ email, displayName });
       }
-      toast.success(isEdit ? "メンバーを更新しました" : "メンバーを作成しました");
+      toast.success(isEdit ? t("updated") : t("created"));
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
-      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
+      toast.error(err instanceof ApiError ? err.message : t("saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -61,12 +64,12 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? "メンバー編集" : "メンバー招待"}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? t("editMember") : t("invite")}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="member-email" className="block text-sm font-medium text-gray-700 mb-1">
-              メールアドレス
+              {t("form.email")}
             </label>
             <input
               id="member-email"
@@ -80,7 +83,7 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
 
           <div>
             <label htmlFor="member-name" className="block text-sm font-medium text-gray-700 mb-1">
-              表示名
+              {t("form.displayName")}
             </label>
             <input
               id="member-name"
@@ -100,14 +103,14 @@ export function MemberForm({ member, onClose, onSaved }: MemberFormProps) {
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              キャンセル
+              {tc("cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isSubmitting ? "保存中..." : isEdit ? "更新" : "招待"}
+              {isSubmitting ? tc("saving") : isEdit ? tc("update") : t("invite")}
             </button>
           </div>
         </form>

@@ -9,6 +9,8 @@ import java.util.UUID;
  * @param email User's email address
  * @param name User's display name
  * @param accountStatus Current account status (e.g., "UNVERIFIED", "ACTIVE")
+ * @param preferredLocale User's preferred locale ("en" or "ja")
  * @param message Human-readable confirmation message
  */
-public record SignupResponse(UUID id, String email, String name, String accountStatus, String message) {}
+public record SignupResponse(
+        UUID id, String email, String name, String accountStatus, String preferredLocale, String message) {}

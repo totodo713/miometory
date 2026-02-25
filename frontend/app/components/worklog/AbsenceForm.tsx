@@ -1,8 +1,9 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { api } from "../../services/api";
-import { AbsenceType, AbsenceTypeLabels, type CreateAbsenceRequest } from "../../types/absence";
+import { AbsenceType, type CreateAbsenceRequest } from "../../types/absence";
 
 interface AbsenceFormProps {
   date: Date;
@@ -12,6 +13,9 @@ interface AbsenceFormProps {
 }
 
 export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormProps) {
+  const t = useTranslations("worklog.absence");
+  const td = useTranslations("worklog.dailyEntry");
+  const tc = useTranslations("common");
   const [hours, setHours] = useState<number>(8);
   const [absenceType, setAbsenceType] = useState<AbsenceType>(AbsenceType.PAID_LEAVE);
   const [reason, setReason] = useState<string>("");
@@ -81,16 +85,14 @@ export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormPro
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-4">
-        <h3 className="text-sm font-medium text-blue-900 mb-1">Record Absence</h3>
-        <p className="text-xs text-blue-700">
-          Use this form to record time away from work (vacation, sick leave, etc.) separate from project hours.
-        </p>
+        <h3 className="text-sm font-medium text-blue-900 mb-1">{t("title")}</h3>
+        <p className="text-xs text-blue-700">{t("title")}</p>
       </div>
 
       {/* Absence Type */}
       <div>
         <label htmlFor="absenceType" className="block text-sm font-medium text-gray-700 mb-1">
-          Absence Type *
+          {t("type")} *
         </label>
         <select
           id="absenceType"
@@ -101,7 +103,7 @@ export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormPro
         >
           {Object.values(AbsenceType).map((type) => (
             <option key={type} value={type}>
-              {AbsenceTypeLabels[type]}
+              {t(`types.${type}`)}
             </option>
           ))}
         </select>
@@ -110,7 +112,7 @@ export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormPro
       {/* Hours */}
       <div>
         <label htmlFor="hours" className="block text-sm font-medium text-gray-700 mb-1">
-          Hours *
+          {td("hours")} *
         </label>
         <input
           id="hours"
@@ -130,7 +132,7 @@ export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormPro
       {/* Reason */}
       <div>
         <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
-          Reason (Optional)
+          {t("reason")} ({tc("optional")})
         </label>
         <textarea
           id="reason"
@@ -140,7 +142,7 @@ export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormPro
           maxLength={500}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={isSaving}
-          placeholder="Optional: Add a note about this absence"
+          placeholder={t("reasonPlaceholder")}
         />
         <p className="mt-1 text-xs text-gray-500">{reason.length}/500 characters</p>
       </div>
@@ -160,14 +162,14 @@ export function AbsenceForm({ date, memberId, onSave, onCancel }: AbsenceFormPro
           disabled={isSaving}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
         >
-          Cancel
+          {tc("cancel")}
         </button>
         <button
           type="submit"
           disabled={isSaving || !!error}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSaving ? "Saving..." : "Save Absence"}
+          {isSaving ? tc("saving") : t("submit")}
         </button>
       </div>
     </form>

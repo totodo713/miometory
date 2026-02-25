@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -22,6 +23,9 @@ interface TenantListProps {
 }
 
 export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: TenantListProps) {
+  const format = useFormatter();
+  const t = useTranslations("admin.tenants");
+  const tc = useTranslations("common");
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
@@ -30,6 +34,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
   const [loadError, setLoadError] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 767px)");
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tc from useTranslations is stable
   const loadTenants = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -42,7 +47,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
       setTenants(result.content);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
-      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
+      setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -62,12 +67,12 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
             setStatusFilter(e.target.value);
             setPage(0);
           }}
-          aria-label="ステータスで絞り込み"
+          aria-label={t("filterByStatus")}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">すべてのステータス</option>
-          <option value="ACTIVE">有効</option>
-          <option value="INACTIVE">無効</option>
+          <option value="">{t("allStatuses")}</option>
+          <option value="ACTIVE">{tc("active")}</option>
+          <option value="INACTIVE">{tc("inactive")}</option>
         </select>
       </div>
 
@@ -79,16 +84,13 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
             onClick={loadTenants}
             className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
           >
-            再試行
+            {tc("retry")}
           </button>
         </div>
       ) : isLoading ? (
         <Skeleton.Table rows={5} cols={5} />
       ) : tenants.length === 0 ? (
-        <EmptyState
-          title="テナントが見つかりません"
-          description={statusFilter ? "検索条件を変更してください" : "まだテナントがありません"}
-        />
+        <EmptyState title={t("notFound")} description={statusFilter ? t("changeFilter") : t("noTenantsYet")} />
       ) : isMobile ? (
         <div className="space-y-3">
           {tenants.map((tenant) => (
@@ -100,18 +102,20 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                     tenant.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                   }`}
                 >
-                  {tenant.status === "ACTIVE" ? "有効" : "無効"}
+                  {tenant.status === "ACTIVE" ? tc("active") : tc("inactive")}
                 </span>
               </div>
               <p className="text-xs text-gray-500 font-mono">{tenant.code}</p>
-              <p className="text-xs text-gray-500">{new Date(tenant.createdAt).toLocaleDateString()}</p>
+              <p className="text-xs text-gray-500">
+                {format.dateTime(new Date(tenant.createdAt), { year: "numeric", month: "short", day: "numeric" })}
+              </p>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => onEdit(tenant)}
                   className="text-blue-600 hover:text-blue-800 text-xs"
                 >
-                  編集
+                  {tc("edit")}
                 </button>
                 {tenant.status === "ACTIVE" ? (
                   <button
@@ -119,7 +123,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                     onClick={() => onDeactivate(tenant.id)}
                     className="text-red-600 hover:text-red-800 text-xs"
                   >
-                    無効化
+                    {tc("disable")}
                   </button>
                 ) : (
                   <button
@@ -127,7 +131,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                     onClick={() => onActivate(tenant.id)}
                     className="text-green-600 hover:text-green-800 text-xs"
                   >
-                    有効化
+                    {tc("enable")}
                   </button>
                 )}
               </div>
@@ -139,11 +143,11 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">コード</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">名前</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">作成日</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">状態</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-700">操作</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.code")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.name")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("createdDate")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.status")}</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-700">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -151,14 +155,16 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                 <tr key={tenant.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4 font-mono text-xs">{tenant.code}</td>
                   <td className="py-3 px-4">{tenant.name}</td>
-                  <td className="py-3 px-4 text-gray-600 text-xs">{new Date(tenant.createdAt).toLocaleDateString()}</td>
+                  <td className="py-3 px-4 text-gray-600 text-xs">
+                    {format.dateTime(new Date(tenant.createdAt), { year: "numeric", month: "short", day: "numeric" })}
+                  </td>
                   <td className="py-3 px-4">
                     <span
                       className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
                         tenant.status === "ACTIVE" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {tenant.status === "ACTIVE" ? "有効" : "無効"}
+                      {tenant.status === "ACTIVE" ? tc("active") : tc("inactive")}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -168,7 +174,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                         onClick={() => onEdit(tenant)}
                         className="text-blue-600 hover:text-blue-800 text-xs"
                       >
-                        編集
+                        {tc("edit")}
                       </button>
                       {tenant.status === "ACTIVE" ? (
                         <button
@@ -176,7 +182,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                           onClick={() => onDeactivate(tenant.id)}
                           className="text-red-600 hover:text-red-800 text-xs"
                         >
-                          無効化
+                          {tc("disable")}
                         </button>
                       ) : (
                         <button
@@ -184,7 +190,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                           onClick={() => onActivate(tenant.id)}
                           className="text-green-600 hover:text-green-800 text-xs"
                         >
-                          有効化
+                          {tc("enable")}
                         </button>
                       )}
                     </div>
@@ -204,7 +210,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
             disabled={page === 0}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            前へ
+            {tc("previous")}
           </button>
           <span className="px-3 py-1 text-sm text-gray-600">
             {page + 1} / {totalPages}
@@ -215,7 +221,7 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
             disabled={page >= totalPages - 1}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            次へ
+            {tc("next")}
           </button>
         </div>
       )}

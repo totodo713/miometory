@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -85,6 +86,11 @@ export function DailyEntryForm({
   onSave,
 }: DailyEntryFormProps) {
   const { isProxyMode, targetMember } = useProxyMode();
+  const format = useFormatter();
+  const t = useTranslations("worklog.dailyEntry");
+  const ta = useTranslations("worklog.absence");
+  const tcd = useTranslations("worklog.confirmDialog");
+  const tc = useTranslations("common");
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<"work" | "absence">("work");
   const [projectRows, setProjectRows] = useState<ProjectRow[]>([{ projectId: "", hours: 0, comment: "", errors: {} }]);
@@ -241,10 +247,10 @@ export function DailyEntryForm({
       setSaveError(null);
       await api.worklog.deleteEntry(entryId);
       initialDataRef.current = "[]"; // Reset initial data
-      toast.success("削除しました");
+      toast.success(t("saved"));
       onSave();
     } catch (error: unknown) {
-      const message = error instanceof ApiError ? error.message : "エラーが発生しました";
+      const message = error instanceof ApiError ? error.message : tc("error");
       setSaveError(message);
       toast.error(message);
     } finally {
@@ -314,7 +320,7 @@ export function DailyEntryForm({
         if (isAutoSave) {
           setAutoSavedAt(new Date());
         } else {
-          toast.success("保存しました");
+          toast.success(t("saved"));
           onSave();
         }
       } catch (error: unknown) {
@@ -323,7 +329,7 @@ export function DailyEntryForm({
           setSaveError(message);
           toast.error(message);
         } else {
-          const message = error instanceof ApiError ? error.message : "エラーが発生しました";
+          const message = error instanceof ApiError ? error.message : tc("error");
           setSaveError(message);
           toast.error(message);
         }
@@ -331,7 +337,7 @@ export function DailyEntryForm({
         setIsSaving(false);
       }
     },
-    [projectRows, memberId, date, totalExceeds24, onSave, enteredBy, toast],
+    [projectRows, memberId, date, totalExceeds24, onSave, enteredBy, toast, t, tc],
   );
 
   // Handle close with unsaved changes warning
@@ -388,12 +394,7 @@ export function DailyEntryForm({
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h2 id="daily-entry-title" className="text-2xl font-bold">
-              Daily Entry -{" "}
-              {date.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {t("title", { date: format.dateTime(date, { year: "numeric", month: "long", day: "numeric" }) })}
             </h2>
             <button
               type="button"
@@ -439,7 +440,7 @@ export function DailyEntryForm({
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
               >
-                Work Hours
+                {t("workingHours")}
               </button>
               <button
                 type="button"
@@ -450,7 +451,7 @@ export function DailyEntryForm({
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
               >
-                Absence
+                {ta("title")}
               </button>
             </nav>
           </div>
@@ -471,13 +472,17 @@ export function DailyEntryForm({
 
           {/* Auto-save indicator */}
           {autoSavedAt && (
-            <div className="mb-4 text-sm text-green-600">Auto-saved at {autoSavedAt.toLocaleTimeString()}</div>
+            <div className="mb-4 text-sm text-green-600">
+              {t("lastSaved", {
+                time: format.dateTime(autoSavedAt, { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+              })}
+            </div>
           )}
 
           {/* Combined Total Hours Display */}
           <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-semibold text-gray-700">Total Daily Hours:</span>
+              <span className="font-semibold text-gray-700">{t("totalHours")}:</span>
               <span
                 className={`text-2xl font-bold ${
                   totalExceeds24 ? "text-red-600" : totalHours === 0 ? "text-gray-500" : "text-green-600"
@@ -490,13 +495,13 @@ export function DailyEntryForm({
               <div className="text-sm text-gray-600 space-y-1">
                 {totalWorkHours > 0 && (
                   <div className="flex justify-between">
-                    <span>Work Hours:</span>
+                    <span>{t("workingHours")}:</span>
                     <span className="font-medium">{totalWorkHours.toFixed(2)}h</span>
                   </div>
                 )}
                 {absenceHours > 0 && (
                   <div className="flex justify-between">
-                    <span>Absence Hours:</span>
+                    <span>{ta("title")}:</span>
                     <span className="font-medium text-blue-600">{absenceHours.toFixed(2)}h</span>
                   </div>
                 )}
@@ -520,7 +525,7 @@ export function DailyEntryForm({
                       {/* Project Selection */}
                       <div className="flex-1">
                         <label htmlFor={`project-${index}`} className="block text-sm font-medium mb-1">
-                          Project {renderStatusBadge(row.status)}
+                          {t("project")} {renderStatusBadge(row.status)}
                         </label>
                         <ProjectSelector
                           id={`project-${index}`}
@@ -531,14 +536,14 @@ export function DailyEntryForm({
                             !isEditableStatus(row.status) || !!row.id // Disable for existing entries (FR-008)
                           }
                           error={row.errors.project}
-                          placeholder="Select a project..."
+                          placeholder={t("selectProject")}
                         />
                       </div>
 
                       {/* Hours Input */}
                       <div className="w-32">
                         <label htmlFor={`hours-${index}`} className="block text-sm font-medium mb-1">
-                          Hours
+                          {t("hours")}
                         </label>
                         <input
                           id={`hours-${index}`}
@@ -569,7 +574,7 @@ export function DailyEntryForm({
                             aria-label={`Remove project entry ${index + 1}`}
                             className="text-red-600 hover:text-red-800"
                           >
-                            Remove
+                            {t("removeEntry")}
                           </button>
                         )}
                       </div>
@@ -578,7 +583,7 @@ export function DailyEntryForm({
                     {/* Comment */}
                     <div className="mt-4">
                       <label htmlFor={`comment-${index}`} className="block text-sm font-medium mb-1">
-                        Comment
+                        {t("description")}
                       </label>
                       <textarea
                         id={`comment-${index}`}
@@ -589,7 +594,7 @@ export function DailyEntryForm({
                         aria-invalid={!!row.errors.comment}
                         aria-describedby={row.errors.comment ? `comment-error-${index}` : undefined}
                         className={`w-full px-3 py-2 border rounded-md disabled:bg-gray-100 ${row.errors.comment ? "border-red-500" : "border-gray-300"}`}
-                        placeholder="Optional comment..."
+                        placeholder={t("descriptionPlaceholder")}
                       />
                       {row.errors.comment && (
                         <div id={`comment-error-${index}`} className="text-red-600 text-sm mt-1">
@@ -606,7 +611,7 @@ export function DailyEntryForm({
                           onClick={() => row.id && setConfirmAction({ type: "delete", id: row.id })}
                           className="text-red-600 hover:text-red-800 text-sm"
                         >
-                          Delete Entry
+                          {tc("delete")}
                         </button>
                       </div>
                     )}
@@ -621,7 +626,7 @@ export function DailyEntryForm({
                   onClick={addProjectRow}
                   className="mb-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
-                  + Add Project
+                  + {t("addEntry")}
                 </button>
               )}
 
@@ -632,7 +637,7 @@ export function DailyEntryForm({
                   onClick={handleClose}
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
                 >
-                  Cancel
+                  {tc("cancel")}
                 </button>
                 {!isReadOnly && (
                   <button
@@ -641,7 +646,7 @@ export function DailyEntryForm({
                     disabled={isSaving || hasValidationErrors() || totalExceeds24}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                   >
-                    {isSaving ? "Saving..." : "Save"}
+                    {isSaving ? tc("saving") : tc("save")}
                   </button>
                 )}
                 <SubmitDailyButton
@@ -657,7 +662,7 @@ export function DailyEntryForm({
                   wasRejected={!!rejectionSource}
                   onSaveFirst={() => handleSave(false)}
                   onSubmitSuccess={() => {
-                    toast.success("提出しました");
+                    toast.success(t("saved"));
                     onSave();
                   }}
                 />
@@ -675,13 +680,9 @@ export function DailyEntryForm({
       {/* Confirm Dialog for delete/submit */}
       <ConfirmDialog
         open={confirmAction !== null}
-        title={confirmAction?.type === "delete" ? "削除確認" : "提出確認"}
-        message={
-          confirmAction?.type === "delete"
-            ? "このエントリを削除しますか？"
-            : "本日分のエントリを提出しますか？提出後は編集できません。"
-        }
-        confirmLabel={confirmAction?.type === "delete" ? "削除" : "提出"}
+        title={confirmAction?.type === "delete" ? tcd("deleteTitle") : tc("confirm")}
+        message={confirmAction?.type === "delete" ? tcd("deleteMessage") : tc("confirm")}
+        confirmLabel={confirmAction?.type === "delete" ? tcd("deleteConfirm") : tc("confirm")}
         variant="danger"
         onConfirm={() => {
           if (confirmAction?.type === "delete" && confirmAction.id) {

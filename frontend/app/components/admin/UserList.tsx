@@ -1,5 +1,6 @@
 "use client";
 
+import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
@@ -24,14 +25,17 @@ interface UserListProps {
   refreshKey: number;
 }
 
-const statusLabels: Record<string, { label: string; className: string }> = {
-  active: { label: "有効", className: "bg-green-100 text-green-800" },
-  unverified: { label: "未確認", className: "bg-yellow-100 text-yellow-800" },
-  locked: { label: "ロック", className: "bg-red-100 text-red-800" },
-  deleted: { label: "削除済", className: "bg-gray-100 text-gray-600" },
+const statusClassNames: Record<string, string> = {
+  active: "bg-green-100 text-green-800",
+  unverified: "bg-yellow-100 text-yellow-800",
+  locked: "bg-red-100 text-red-800",
+  deleted: "bg-gray-100 text-gray-600",
 };
 
 export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refreshKey }: UserListProps) {
+  const format = useFormatter();
+  const t = useTranslations("admin.users");
+  const tc = useTranslations("common");
   const [users, setUsers] = useState<UserRow[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [page, setPage] = useState(0);
@@ -51,6 +55,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
     return () => clearTimeout(timer);
   }, [search]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: tc from useTranslations is stable
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -64,7 +69,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
       setUsers(result.content);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
-      setLoadError(err instanceof ApiError ? err.message : "データの取得に失敗しました");
+      setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
@@ -80,13 +85,13 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
       <div className="flex items-center gap-4 mb-4">
         <input
           type="text"
-          placeholder="メールまたは名前で検索..."
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(0);
           }}
-          aria-label="メールまたは名前で検索"
+          aria-label={t("searchLabel")}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
@@ -95,13 +100,13 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
             setAccountStatus(e.target.value);
             setPage(0);
           }}
-          aria-label="アカウントステータスで絞り込み"
+          aria-label={t("filterByStatus")}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="">すべてのステータス</option>
-          <option value="active">有効</option>
-          <option value="unverified">未確認</option>
-          <option value="locked">ロック</option>
+          <option value="">{t("allStatuses")}</option>
+          <option value="active">{t("statusLabels.active")}</option>
+          <option value="unverified">{t("statusLabels.unverified")}</option>
+          <option value="locked">{t("statusLabels.locked")}</option>
         </select>
       </div>
 
@@ -109,29 +114,24 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
         <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
           <p className="text-sm text-red-800">{loadError}</p>
           <button type="button" onClick={loadUsers} className="mt-2 text-sm text-red-600 hover:text-red-800 underline">
-            再試行
+            {tc("retry")}
           </button>
         </div>
       ) : isLoading ? (
         <Skeleton.Table rows={5} cols={7} />
       ) : users.length === 0 ? (
-        <EmptyState
-          title="ユーザーが見つかりません"
-          description={hasFilters ? "検索条件を変更してください" : "まだユーザーがいません"}
-        />
+        <EmptyState title={t("notFound")} description={hasFilters ? t("changeFilter") : t("noUsersYet")} />
       ) : isMobile ? (
         <div className="space-y-3">
           {users.map((user) => {
-            const statusInfo = statusLabels[user.accountStatus] ?? {
-              label: user.accountStatus,
-              className: "bg-gray-100 text-gray-600",
-            };
+            const statusClassName = statusClassNames[user.accountStatus] ?? "bg-gray-100 text-gray-600";
+            const statusLabel = t(`statusLabels.${user.accountStatus}` as Parameters<typeof t>[0]);
             return (
               <div key={user.id} className="border border-gray-200 rounded-lg p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-gray-900">{user.name}</span>
-                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.className}`}>
-                    {statusInfo.label}
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusClassName}`}>
+                    {statusLabel}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500">{user.email}</p>
@@ -144,7 +144,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                     onClick={() => onChangeRole(user)}
                     className="text-blue-600 hover:text-blue-800 text-xs"
                   >
-                    ロール変更
+                    {t("changeRole")}
                   </button>
                   {user.accountStatus === "locked" ? (
                     <button
@@ -152,7 +152,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                       onClick={() => onUnlock(user)}
                       className="text-green-600 hover:text-green-800 text-xs"
                     >
-                      ロック解除
+                      {t("unlock")}
                     </button>
                   ) : (
                     <button
@@ -160,7 +160,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                       onClick={() => onLock(user)}
                       className="text-red-600 hover:text-red-800 text-xs"
                     >
-                      ロック
+                      {t("lock")}
                     </button>
                   )}
                   <button
@@ -168,7 +168,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                     onClick={() => onResetPassword(user)}
                     className="text-orange-600 hover:text-orange-800 text-xs"
                   >
-                    PW初期化
+                    {t("resetPassword")}
                   </button>
                 </div>
               </div>
@@ -180,21 +180,19 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">メール</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">名前</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">ロール</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">テナント</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">状態</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">最終ログイン</th>
-                <th className="text-right py-3 px-4 font-medium text-gray-700">操作</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.email")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.name")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.role")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.tenant")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.status")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.lastLogin")}</th>
+                <th className="text-right py-3 px-4 font-medium text-gray-700">{t("table.actions")}</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => {
-                const statusInfo = statusLabels[user.accountStatus] ?? {
-                  label: user.accountStatus,
-                  className: "bg-gray-100 text-gray-600",
-                };
+                const statusClassName = statusClassNames[user.accountStatus] ?? "bg-gray-100 text-gray-600";
+                const statusLabel = t(`statusLabels.${user.accountStatus}` as Parameters<typeof t>[0]);
                 return (
                   <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 text-xs">{user.email}</td>
@@ -202,14 +200,20 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                     <td className="py-3 px-4 text-xs">{user.roleName}</td>
                     <td className="py-3 px-4 text-xs text-gray-600">{user.tenantName ?? "—"}</td>
                     <td className="py-3 px-4">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusInfo.className}`}
-                      >
-                        {statusInfo.label}
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusClassName}`}>
+                        {statusLabel}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-xs text-gray-600">
-                      {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "—"}
+                      {user.lastLoginAt
+                        ? format.dateTime(new Date(user.lastLoginAt), {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "—"}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex justify-end gap-2">
@@ -218,7 +222,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                           onClick={() => onChangeRole(user)}
                           className="text-blue-600 hover:text-blue-800 text-xs"
                         >
-                          ロール変更
+                          {t("changeRole")}
                         </button>
                         {user.accountStatus === "locked" ? (
                           <button
@@ -226,7 +230,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                             onClick={() => onUnlock(user)}
                             className="text-green-600 hover:text-green-800 text-xs"
                           >
-                            ロック解除
+                            {t("unlock")}
                           </button>
                         ) : (
                           <button
@@ -234,7 +238,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                             onClick={() => onLock(user)}
                             className="text-red-600 hover:text-red-800 text-xs"
                           >
-                            ロック
+                            {t("lock")}
                           </button>
                         )}
                         <button
@@ -242,7 +246,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
                           onClick={() => onResetPassword(user)}
                           className="text-orange-600 hover:text-orange-800 text-xs"
                         >
-                          PW初期化
+                          {t("resetPassword")}
                         </button>
                       </div>
                     </td>
@@ -262,7 +266,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
             disabled={page === 0}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            前へ
+            {tc("previous")}
           </button>
           <span className="px-3 py-1 text-sm text-gray-600">
             {page + 1} / {totalPages}
@@ -273,7 +277,7 @@ export function UserList({ onChangeRole, onLock, onUnlock, onResetPassword, refr
             disabled={page >= totalPages - 1}
             className="px-3 py-1 text-sm border rounded disabled:opacity-50"
           >
-            次へ
+            {tc("next")}
           </button>
         </div>
       )}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
@@ -12,6 +13,8 @@ interface TenantFormProps {
 }
 
 export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
+  const t = useTranslations("admin.tenants");
+  const tc = useTranslations("common");
   const isEdit = tenant !== null;
   const toast = useToast();
 
@@ -33,7 +36,7 @@ export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
     setError(null);
 
     if (!code.trim() || !name.trim()) {
-      setError("コードと名前は必須です");
+      setError(t("codeAndNameRequired"));
       return;
     }
 
@@ -44,15 +47,15 @@ export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
       } else {
         await api.admin.tenants.create({ code, name });
       }
-      toast.success(isEdit ? "テナントを更新しました" : "テナントを作成しました");
+      toast.success(isEdit ? t("updated") : t("created"));
       onSaved();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
-      toast.error(err instanceof ApiError ? err.message : "保存に失敗しました");
+      toast.error(err instanceof ApiError ? err.message : t("saveFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -61,12 +64,12 @@ export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? "テナント編集" : "テナント作成"}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">{isEdit ? t("editTenant") : t("addTenant")}</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="tenant-code" className="block text-sm font-medium text-gray-700 mb-1">
-              コード
+              {t("form.code")}
             </label>
             <input
               id="tenant-code"
@@ -81,7 +84,7 @@ export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
 
           <div>
             <label htmlFor="tenant-name" className="block text-sm font-medium text-gray-700 mb-1">
-              名前
+              {t("form.name")}
             </label>
             <input
               id="tenant-name"
@@ -101,14 +104,14 @@ export function TenantForm({ tenant, onClose, onSaved }: TenantFormProps) {
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              キャンセル
+              {tc("cancel")}
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isSubmitting ? "保存中..." : isEdit ? "更新" : "作成"}
+              {isSubmitting ? tc("saving") : isEdit ? tc("update") : tc("create")}
             </button>
           </div>
         </form>

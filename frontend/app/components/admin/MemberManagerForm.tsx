@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import type { OrganizationMemberRow, OrganizationRow } from "@/services/api";
 import { ApiError, api } from "@/services/api";
@@ -16,6 +17,9 @@ interface MemberManagerFormProps {
 }
 
 export function MemberManagerForm({ mode, organizationId, member, onClose, onSaved }: MemberManagerFormProps) {
+  const t = useTranslations("admin.memberManagerForm");
+  const tc = useTranslations("common");
+
   // ESC key handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,7 +89,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
 
   const handleAssignManager = async () => {
     if (!member || !managerId) {
-      setError("マネージャーを選択してください");
+      setError(t("selectManagerRequired"));
       return;
     }
 
@@ -98,7 +102,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
     } finally {
       setIsSubmitting(false);
@@ -107,7 +111,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
 
   const handleTransferOrg = async () => {
     if (!member || !targetOrgId) {
-      setError("移動先の組織を選択してください");
+      setError(t("selectOrgRequired"));
       return;
     }
 
@@ -120,7 +124,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
     } finally {
       setIsSubmitting(false);
@@ -131,7 +135,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
     e.preventDefault();
 
     if (!email.trim() || !displayName.trim()) {
-      setError("メールアドレスと表示名は必須です");
+      setError(t("emailAndNameRequired"));
       return;
     }
 
@@ -149,7 +153,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError("エラーが発生しました");
+        setError(tc("error"));
       }
     } finally {
       setIsSubmitting(false);
@@ -170,23 +174,23 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
   const getTitle = () => {
     switch (mode) {
       case "assignManager":
-        return "マネージャー割り当て";
+        return t("assignManager");
       case "transferOrg":
-        return "組織異動";
+        return t("transferOrg");
       case "createMember":
-        return "メンバー作成";
+        return t("createMember");
     }
   };
 
   const getSubmitLabel = () => {
-    if (isSubmitting) return "処理中...";
+    if (isSubmitting) return t("processing");
     switch (mode) {
       case "assignManager":
-        return "割り当て";
+        return t("assign");
       case "transferOrg":
-        return "異動";
+        return t("transfer");
       case "createMember":
-        return "作成";
+        return tc("create");
     }
   };
 
@@ -198,7 +202,8 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
         {member && mode !== "createMember" && (
           <div className="mb-4 p-3 bg-gray-50 rounded-md">
             <p className="text-sm text-gray-600">
-              対象メンバー: <span className="font-medium text-gray-900">{member.displayName}</span>
+              {t("targetMember")}
+              <span className="font-medium text-gray-900">{member.displayName}</span>
             </p>
             <p className="text-xs text-gray-500">{member.email}</p>
           </div>
@@ -208,7 +213,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
           {mode === "assignManager" && (
             <div>
               <label htmlFor="manager-select" className="block text-sm font-medium text-gray-700 mb-1">
-                マネージャー
+                {t("managerLabel")}
               </label>
               <select
                 id="manager-select"
@@ -216,7 +221,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
                 onChange={(e) => setManagerId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">マネージャーを選択...</option>
+                <option value="">{t("selectManager")}</option>
                 {availableMembers.map((m) => (
                   <option key={m.id} value={m.id}>
                     {m.displayName} ({m.email})
@@ -224,7 +229,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
                 ))}
               </select>
               {member?.managerName && (
-                <p className="mt-1 text-xs text-gray-500">現在のマネージャー: {member.managerName}</p>
+                <p className="mt-1 text-xs text-gray-500">{t("currentManager", { name: member.managerName })}</p>
               )}
             </div>
           )}
@@ -232,7 +237,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
           {mode === "transferOrg" && (
             <div>
               <label htmlFor="org-select" className="block text-sm font-medium text-gray-700 mb-1">
-                移動先組織
+                {t("targetOrg")}
               </label>
               <select
                 id="org-select"
@@ -240,7 +245,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
                 onChange={(e) => setTargetOrgId(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">組織を選択...</option>
+                <option value="">{t("selectOrg")}</option>
                 {availableOrgs.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.code} - {o.name}
@@ -254,7 +259,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
             <>
               <div>
                 <label htmlFor="new-member-email" className="block text-sm font-medium text-gray-700 mb-1">
-                  メールアドレス
+                  {t("emailLabel")}
                 </label>
                 <input
                   id="new-member-email"
@@ -269,7 +274,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
 
               <div>
                 <label htmlFor="new-member-name" className="block text-sm font-medium text-gray-700 mb-1">
-                  表示名
+                  {t("displayNameLabel")}
                 </label>
                 <input
                   id="new-member-name"
@@ -278,13 +283,13 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
                   onChange={(e) => setDisplayName(e.target.value)}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="山田 太郎"
+                  placeholder={t("namePlaceholder")}
                 />
               </div>
 
               <div>
                 <label htmlFor="new-member-manager" className="block text-sm font-medium text-gray-700 mb-1">
-                  マネージャー (任意)
+                  {t("managerOptional")}
                 </label>
                 <select
                   id="new-member-manager"
@@ -292,7 +297,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
                   onChange={(e) => setNewMemberManagerId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value="">なし</option>
+                  <option value="">{t("noManager")}</option>
                   {availableMembers.map((m) => (
                     <option key={m.id} value={m.id}>
                       {m.displayName} ({m.email})
@@ -311,7 +316,7 @@ export function MemberManagerForm({ mode, organizationId, member, onClose, onSav
               onClick={onClose}
               className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              キャンセル
+              {tc("cancel")}
             </button>
             <button
               type="submit"

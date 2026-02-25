@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type { AuthUser } from "@/hooks/useAuth";
 
 export type UnverifiedBannerProps = {
@@ -6,12 +9,14 @@ export type UnverifiedBannerProps = {
 };
 
 export function UnverifiedBanner({ user, isVerified }: UnverifiedBannerProps) {
+  const t = useTranslations("auth.unverifiedBanner");
+
   if (!user) return null;
   if (isVerified) return null;
 
   return (
     <div role="alert" aria-live="assertive" className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">
-      <p>Your email address is not verified. Please check your inbox for a verification link.</p>
+      <p>{t("message")}</p>
     </div>
   );
 }

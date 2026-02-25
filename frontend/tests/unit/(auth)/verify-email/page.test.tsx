@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { IntlWrapper } from "../../../helpers/intl";
 
 const { MockApiError } = vi.hoisted(() => {
   class MockApiError extends Error {
@@ -42,25 +43,37 @@ describe("VerifyEmailPage", () => {
 
   it("shows loading state initially", () => {
     (api.auth.verifyEmail as any).mockReturnValue(new Promise(() => {}));
-    render(<VerifyEmailPage />);
+    render(
+      <IntlWrapper>
+        <VerifyEmailPage />
+      </IntlWrapper>,
+    );
     const matches = screen.getAllByText(/メールアドレスを確認中/);
     expect(matches.length).toBeGreaterThan(0);
   });
 
   it("shows success state when verification succeeds", async () => {
     (api.auth.verifyEmail as any).mockResolvedValue(undefined);
-    render(<VerifyEmailPage />);
+    render(
+      <IntlWrapper>
+        <VerifyEmailPage />
+      </IntlWrapper>,
+    );
     await waitFor(() => {
-      expect(screen.getByText(/認証完了/)).toBeInTheDocument();
+      expect(screen.getByText(/メールアドレスが確認されました/)).toBeInTheDocument();
     });
     expect(api.auth.verifyEmail).toHaveBeenCalledWith("valid-token");
   });
 
   it("shows link to login after success", async () => {
     (api.auth.verifyEmail as any).mockResolvedValue(undefined);
-    render(<VerifyEmailPage />);
+    render(
+      <IntlWrapper>
+        <VerifyEmailPage />
+      </IntlWrapper>,
+    );
     await waitFor(() => {
-      expect(screen.getByText(/認証完了/)).toBeInTheDocument();
+      expect(screen.getByText(/メールアドレスが確認されました/)).toBeInTheDocument();
     });
     const loginLink = screen.getByRole("link", { name: /ログイン/ });
     expect(loginLink).toHaveAttribute("href", "/login");
@@ -68,7 +81,11 @@ describe("VerifyEmailPage", () => {
 
   it("shows error state when verification fails with ApiError", async () => {
     (api.auth.verifyEmail as any).mockRejectedValue(new MockApiError("invalid", 400));
-    render(<VerifyEmailPage />);
+    render(
+      <IntlWrapper>
+        <VerifyEmailPage />
+      </IntlWrapper>,
+    );
     await waitFor(() => {
       expect(screen.getByText(/トークンが無効/)).toBeInTheDocument();
     });
@@ -76,7 +93,11 @@ describe("VerifyEmailPage", () => {
 
   it("shows network error state when verification fails with non-ApiError", async () => {
     (api.auth.verifyEmail as any).mockRejectedValue(new TypeError("Failed to fetch"));
-    render(<VerifyEmailPage />);
+    render(
+      <IntlWrapper>
+        <VerifyEmailPage />
+      </IntlWrapper>,
+    );
     await waitFor(() => {
       expect(screen.getByText(/接続エラー/)).toBeInTheDocument();
     });
@@ -85,7 +106,11 @@ describe("VerifyEmailPage", () => {
 
   it("shows error when token is missing", async () => {
     (useSearchParams as any).mockReturnValue(new URLSearchParams(""));
-    render(<VerifyEmailPage />);
+    render(
+      <IntlWrapper>
+        <VerifyEmailPage />
+      </IntlWrapper>,
+    );
     await waitFor(() => {
       expect(screen.getByText(/トークンが無効/)).toBeInTheDocument();
     });
@@ -94,7 +119,11 @@ describe("VerifyEmailPage", () => {
 
   it("calls verifyEmail with token from search params", async () => {
     (api.auth.verifyEmail as any).mockResolvedValue(undefined);
-    render(<VerifyEmailPage />);
+    render(
+      <IntlWrapper>
+        <VerifyEmailPage />
+      </IntlWrapper>,
+    );
     await waitFor(() => {
       expect(api.auth.verifyEmail).toHaveBeenCalledWith("valid-token");
     });

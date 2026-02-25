@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, api } from "../../services/api";
 import { useCalendarRefresh, useProxyMode } from "../../services/worklogStore";
@@ -32,6 +33,8 @@ export function SubmitDailyButton({
   onSubmitSuccess,
 }: SubmitDailyButtonProps) {
   const { isProxyMode, managerId } = useProxyMode();
+  const t = useTranslations("worklog.submitDaily");
+  const tc = useTranslations("common");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecalling, setIsRecalling] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -118,17 +121,17 @@ export function SubmitDailyButton({
         submittedBy: effectiveSubmittedBy,
       });
 
-      setSubmitSuccess(`${result.submittedCount} entries submitted successfully.`);
+      setSubmitSuccess(t("successSubmit", { count: result.submittedCount }));
       triggerRefresh();
       onSubmitSuccess();
       scheduleDismiss();
     } catch (error: unknown) {
       if (error instanceof ApiError && (error.status === 409 || error.status === 412)) {
-        setSubmitError("Entries were modified by another session. Please refresh and try again.");
+        setSubmitError(t("errorConflict"));
       } else if (error instanceof Error) {
         setSubmitError(error.message);
       } else {
-        setSubmitError("Failed to submit entries. Please try again.");
+        setSubmitError(t("errorGeneral"));
       }
     } finally {
       setIsSubmitting(false);
@@ -149,19 +152,19 @@ export function SubmitDailyButton({
         recalledBy: effectiveRecalledBy,
       });
 
-      setSubmitSuccess(`${result.recalledCount} entries recalled to draft.`);
+      setSubmitSuccess(t("successRecall", { count: result.recalledCount }));
       triggerRefresh();
       onSubmitSuccess();
       scheduleDismiss();
     } catch (error: unknown) {
       if (error instanceof ApiError && error.status === 422) {
-        setSubmitError("Manager has already acted on this submission. Recall is no longer available.");
+        setSubmitError(t("errorRecallLocked"));
       } else if (error instanceof ApiError && (error.status === 409 || error.status === 412)) {
-        setSubmitError("Entries were modified by another session. Please refresh and try again.");
+        setSubmitError(t("errorConflict"));
       } else if (error instanceof Error) {
         setSubmitError(error.message);
       } else {
-        setSubmitError("Failed to recall entries. Please try again.");
+        setSubmitError(t("errorRecallGeneral"));
       }
     } finally {
       setIsRecalling(false);
@@ -178,7 +181,7 @@ export function SubmitDailyButton({
           disabled={isRecalling}
           className="px-4 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {isRecalling ? "Recalling..." : isProxyMode ? "(Proxy) Recall" : "Recall"}
+          {isRecalling ? t("recalling") : isProxyMode ? `${t("proxyPrefix")} ${t("recall")}` : t("recall")}
         </button>
         {submitError && (
           <div role="alert" aria-live="polite" className="text-red-600 text-sm mt-1 max-w-xs text-right">
@@ -207,7 +210,9 @@ export function SubmitDailyButton({
           disabled={isSubmitting}
           className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "Submitting..." : `${isProxyMode ? "(Proxy) " : ""}${wasRejected ? "Resubmit" : "Submit"}`}
+          {isSubmitting
+            ? t("submitting")
+            : `${isProxyMode ? `${t("proxyPrefix")} ` : ""}${wasRejected ? t("resubmit") : t("submit")}`}
         </button>
         {submitError && (
           <div role="alert" aria-live="polite" className="text-red-600 text-sm mt-1 max-w-xs text-right">
@@ -233,17 +238,18 @@ export function SubmitDailyButton({
           <div className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 id="submit-confirm-title" className="text-lg font-semibold text-gray-900">
-                Confirm Submission
+                {t("confirmTitle")}
               </h2>
             </div>
             <div className="px-6 py-4">
               <p className="text-sm text-gray-700">
-                You are about to submit <span className="font-semibold">{draftEntryCount}</span>{" "}
-                {draftEntryCount === 1 ? "entry" : "entries"} totaling{" "}
-                <span className="font-semibold">{draftTotalHours}</span> hours for{" "}
-                <span className="font-semibold">{date.toISOString().split("T")[0]}</span>.
+                {t("confirmDetail", {
+                  count: draftEntryCount,
+                  hours: draftTotalHours,
+                  date: date.toISOString().split("T")[0],
+                })}
               </p>
-              <p className="text-sm text-gray-500 mt-2">Submitted entries cannot be edited until recalled.</p>
+              <p className="text-sm text-gray-500 mt-2">{t("confirmMessage")}</p>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
               <button
@@ -251,14 +257,14 @@ export function SubmitDailyButton({
                 onClick={() => setShowConfirmDialog(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                Cancel
+                {tc("cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleSubmit}
                 className="px-4 py-2 text-sm font-medium text-white bg-green-700 rounded-md hover:bg-green-800"
               >
-                Submit
+                {t("submit")}
               </button>
             </div>
           </div>

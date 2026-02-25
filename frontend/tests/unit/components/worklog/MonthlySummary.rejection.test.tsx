@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { IntlWrapper } from "../../../helpers/intl";
 
 // Mock API module
 vi.mock("@/services/api", () => ({
@@ -48,13 +49,17 @@ describe("MonthlySummary — Rejection Display", () => {
       rejectionReason: "Hours don't match project plan",
     });
 
-    render(<MonthlySummary year={2026} month={1} memberId="member-123" />);
+    render(
+      <IntlWrapper>
+        <MonthlySummary year={2026} month={1} memberId="member-123" />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Monthly Rejection")).toBeInTheDocument();
+    expect(screen.getByText("差戻")).toBeInTheDocument();
     expect(screen.getByText("Hours don't match project plan")).toBeInTheDocument();
   });
 
@@ -65,10 +70,14 @@ describe("MonthlySummary — Rejection Display", () => {
       rejectionReason: null,
     });
 
-    render(<MonthlySummary year={2026} month={1} memberId="member-123" />);
+    render(
+      <IntlWrapper>
+        <MonthlySummary year={2026} month={1} memberId="member-123" />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("Monthly Summary")).toBeInTheDocument();
+      expect(screen.getByText("月次サマリー")).toBeInTheDocument();
     });
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -81,13 +90,17 @@ describe("MonthlySummary — Rejection Display", () => {
       rejectionReason: null,
     });
 
-    render(<MonthlySummary year={2026} month={1} memberId="member-123" />);
+    render(
+      <IntlWrapper>
+        <MonthlySummary year={2026} month={1} memberId="member-123" />
+      </IntlWrapper>,
+    );
 
     await waitFor(() => {
-      expect(screen.getByText("Monthly Summary")).toBeInTheDocument();
+      expect(screen.getByText("月次サマリー")).toBeInTheDocument();
     });
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(screen.queryByText("Monthly Rejection")).not.toBeInTheDocument();
+    expect(screen.queryByText("差戻")).not.toBeInTheDocument();
   });
 });

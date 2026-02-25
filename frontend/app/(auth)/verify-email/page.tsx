@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Suspense, useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ApiError, api } from "@/services/api";
@@ -9,6 +10,7 @@ import { ApiError, api } from "@/services/api";
 type VerifyStatus = "loading" | "success" | "error" | "network_error";
 
 function VerifyEmailContent() {
+  const t = useTranslations("auth.verifyEmail");
   const params = useSearchParams();
   const token = params?.get("token") || "";
   const [status, setStatus] = useState<VerifyStatus>("loading");
@@ -48,7 +50,7 @@ function VerifyEmailContent() {
   if (status === "loading") {
     return (
       <div className="text-center">
-        <LoadingSpinner size="lg" label="メールアドレスを確認中..." />
+        <LoadingSpinner size="lg" label={t("verifying")} />
       </div>
     );
   }
@@ -67,13 +69,12 @@ function VerifyEmailContent() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">認証完了</h1>
-        <p className="text-gray-600">メールアドレスの認証が完了しました。</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t("success")}</h1>
         <Link
           href="/login"
           className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          ログインページへ
+          {t("loginLink")}
         </Link>
       </div>
     );
@@ -98,16 +99,16 @@ function VerifyEmailContent() {
             />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">接続エラー</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("networkError")}</h1>
         <p className="text-gray-600" role="alert">
-          サーバーに接続できませんでした。ネットワーク接続を確認してください。
+          {t("networkErrorMessage")}
         </p>
         <button
           type="button"
           onClick={verify}
           className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          再試行
+          {t("retry")}
         </button>
       </div>
     );
@@ -126,15 +127,15 @@ function VerifyEmailContent() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
       </div>
-      <h1 className="text-2xl font-bold text-gray-900">認証エラー</h1>
+      <h1 className="text-2xl font-bold text-gray-900">{t("error")}</h1>
       <p className="text-gray-600" role="alert">
-        トークンが無効です。リンクの有効期限が切れている可能性があります。
+        {t("errorMessage")}
       </p>
       <Link
         href="/login"
         className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
-        ログインページへ
+        {t("loginLink")}
       </Link>
     </div>
   );
@@ -147,7 +148,7 @@ export default function VerifyEmailPage() {
         <Suspense
           fallback={
             <div className="text-center">
-              <LoadingSpinner size="lg" label="読み込み中..." />
+              <LoadingSpinner size="lg" />
             </div>
           }
         >

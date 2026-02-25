@@ -1,3 +1,7 @@
+"use client";
+
+import { useFormatter, useTranslations } from "next-intl";
+
 export interface RejectionBannerProps {
   rejectionReason: string;
   rejectionSource: "monthly" | "daily";
@@ -15,7 +19,9 @@ export function RejectionBanner({
   rejectedByName,
   rejectedAt,
 }: RejectionBannerProps) {
-  const sourceLabel = rejectionSource === "monthly" ? "Monthly Rejection" : "Daily Rejection";
+  const format = useFormatter();
+  const t = useTranslations("worklog.rejection");
+  const sourceLabel = rejectionSource === "monthly" ? t("title") : t("title");
 
   return (
     <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
@@ -32,10 +38,14 @@ export function RejectionBanner({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h3 className="text-sm font-semibold text-red-800">{sourceLabel}</h3>
-            {rejectedByName && <span className="text-xs text-red-600">by {rejectedByName}</span>}
+            {rejectedByName && (
+              <span className="text-xs text-red-600">
+                {t("by")}: {rejectedByName}
+              </span>
+            )}
             {rejectedAt && (
               <span className="text-xs text-red-500">
-                {new Date(rejectedAt).toLocaleDateString("en-US", {
+                {format.dateTime(new Date(rejectedAt), {
                   month: "short",
                   day: "numeric",
                   hour: "2-digit",

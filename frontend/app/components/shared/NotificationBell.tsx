@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { useNotifications } from "@/hooks/useNotifications";
 
 export function NotificationBell() {
+  const t = useTranslations("notifications.bell");
+  const tt = useTranslations("notifications.time");
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -25,12 +28,12 @@ export function NotificationBell() {
   const formatTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return "たった今";
-    if (minutes < 60) return `${minutes}分前`;
+    if (minutes < 1) return tt("justNow");
+    if (minutes < 60) return tt("minutesAgo", { count: minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}時間前`;
+    if (hours < 24) return tt("hoursAgo", { count: hours });
     const days = Math.floor(hours / 24);
-    return `${days}日前`;
+    return tt("daysAgo", { count: days });
   };
 
   return (
@@ -39,10 +42,17 @@ export function NotificationBell() {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-800"
-        aria-label="通知"
+        aria-label={t("label")}
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" role="img" aria-label="通知ベル">
-          <title>通知</title>
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          role="img"
+          aria-label={t("label")}
+        >
+          <title>{t("label")}</title>
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -60,20 +70,20 @@ export function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-900">通知</h3>
+            <h3 className="text-sm font-semibold text-gray-900">{t("label")}</h3>
             {unreadCount > 0 && (
               <button
                 type="button"
                 onClick={() => markAllRead().catch(() => {})}
                 className="text-xs text-blue-600 hover:text-blue-800"
               >
-                すべて既読
+                {t("markAllRead")}
               </button>
             )}
           </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <EmptyState title="通知はありません" description="新しい通知はまだありません" />
+              <EmptyState title={t("noNotifications")} description="" />
             ) : (
               notifications.map((notification) => (
                 <button
@@ -109,7 +119,7 @@ export function NotificationBell() {
             className="block px-4 py-3 text-center text-xs text-blue-600 hover:text-blue-800 border-t border-gray-100"
             onClick={() => setIsOpen(false)}
           >
-            すべての通知を見る →
+            {t("viewAll")}
           </Link>
         </div>
       )}

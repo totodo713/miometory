@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
 import { MemberManagerForm } from "@/components/admin/MemberManagerForm";
@@ -23,6 +24,9 @@ import { ApiError, api } from "@/services/api";
 type ViewMode = "list" | "tree";
 
 export default function AdminOrganizationsPage() {
+  const t = useTranslations("admin.organizations");
+  const tc = useTranslations("common");
+  const tb = useTranslations("breadcrumbs");
   const { adminContext } = useAdminContext();
   const toast = useToast();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -71,6 +75,7 @@ export default function AdminOrganizationsPage() {
   }, []);
 
   // Load members when an org is selected
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t from useTranslations is stable
   const loadMembers = useCallback(async () => {
     if (!selectedOrg) return;
     setIsMembersLoading(true);
@@ -83,7 +88,7 @@ export default function AdminOrganizationsPage() {
       setMembers(result.content);
       setMemberTotalPages(result.totalPages);
     } catch (err: unknown) {
-      setMembersLoadError(err instanceof ApiError ? err.message : "メンバーの取得に失敗しました");
+      setMembersLoadError(err instanceof ApiError ? err.message : t("membersFetchError"));
     } finally {
       setIsMembersLoading(false);
     }
@@ -140,6 +145,7 @@ export default function AdminOrganizationsPage() {
     [],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t/tc from useTranslations are stable
   const handlePatternSave = useCallback(async () => {
     if (!selectedOrg) return;
     setPatternError(null);
@@ -153,10 +159,10 @@ export default function AdminOrganizationsPage() {
       );
       setCurrentFiscalYearPatternId(selectedFiscalYearPatternId || null);
       setCurrentMonthlyPeriodPatternId(selectedMonthlyPeriodPatternId || null);
-      setPatternSuccess("パターンを保存しました");
+      setPatternSuccess(t("patternSaved"));
       setTimeout(() => setPatternSuccess(null), 3000);
     } catch (err: unknown) {
-      setPatternError(err instanceof ApiError ? err.message : "エラーが発生しました");
+      setPatternError(err instanceof ApiError ? err.message : tc("error"));
     } finally {
       setIsPatternSaving(false);
     }
@@ -170,28 +176,29 @@ export default function AdminOrganizationsPage() {
     setConfirmTarget({ id, action: "activate" });
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: t/tc from useTranslations are stable
   const executeAction = useCallback(
     async (target: { id: string; action: "deactivate" | "activate" | "removeManager" }) => {
       try {
         if (target.action === "deactivate") {
           const result = await api.admin.organizations.deactivate(target.id);
           if (result.warnings && result.warnings.length > 0) {
-            toast.warning(`無効化しました。警告: ${result.warnings.join(", ")}`);
+            toast.warning(t("deactivateWarning", { warnings: result.warnings.join(", ") }));
           } else {
-            toast.success("組織を無効化しました");
+            toast.success(t("deactivated"));
           }
           refresh();
         } else if (target.action === "activate") {
           await api.admin.organizations.activate(target.id);
-          toast.success("組織を有効化しました");
+          toast.success(t("activated"));
           refresh();
         } else if (target.action === "removeManager") {
           await api.admin.members.removeManager(target.id);
-          toast.success("マネージャー割り当てを解除しました");
+          toast.success(t("managerRemoved"));
           refreshMembers();
         }
       } catch (err: unknown) {
-        toast.error(err instanceof ApiError ? err.message : "エラーが発生しました");
+        toast.error(err instanceof ApiError ? err.message : tc("error"));
       }
     },
     [refresh, refreshMembers, toast],
@@ -310,7 +317,7 @@ export default function AdminOrganizationsPage() {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: "管理", href: "/admin" }, { label: "組織管理" }]} />
+      <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("organizations") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
         <div className="flex items-center gap-3">
@@ -320,11 +327,11 @@ export default function AdminOrganizationsPage() {
               onClick={handleBackToList}
               className="px-3 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              戻る
+              {t("back")}
             </button>
           )}
           <h1 className="text-2xl font-bold text-gray-900">
-            {selectedOrg ? `${selectedOrg.name} - メンバー` : "組織管理"}
+            {selectedOrg ? t("orgMembers", { name: selectedOrg.name }) : t("title")}
           </h1>
         </div>
         {!selectedOrg ? (
@@ -336,7 +343,7 @@ export default function AdminOrganizationsPage() {
             }}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
-            作成
+            {tc("create")}
           </button>
         ) : (
           <button
@@ -344,7 +351,7 @@ export default function AdminOrganizationsPage() {
             onClick={handleCreateMember}
             className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
           >
-            メンバー作成
+            {t("createMember")}
           </button>
         )}
       </div>
@@ -363,7 +370,7 @@ export default function AdminOrganizationsPage() {
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
-            リスト表示
+            {t("listView")}
           </button>
           <button
             type="button"
@@ -376,7 +383,7 @@ export default function AdminOrganizationsPage() {
                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             }`}
           >
-            ツリー表示
+            {t("treeView")}
           </button>
         </div>
       )}
@@ -399,17 +406,21 @@ export default function AdminOrganizationsPage() {
         <div className="space-y-4">
           {/* Pattern assignment section */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">パターン設定</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("patternSettings")}</h2>
             {isPatternsLoading ? (
-              <div className="text-sm text-gray-500">読み込み中...</div>
+              <div className="text-sm text-gray-500">{tc("loading")}</div>
             ) : fiscalYearPatterns.length === 0 && monthlyPeriodPatterns.length === 0 ? (
               <div className="space-y-3">
-                <p className="text-sm text-gray-500">パターンが登録されていません</p>
+                <p className="text-sm text-gray-500">{t("noPatternsRegistered")}</p>
                 {currentFiscalYearPatternId && (
-                  <p className="text-xs text-gray-500">現在の会計年度パターンID: {currentFiscalYearPatternId}</p>
+                  <p className="text-xs text-gray-500">
+                    {t("currentFiscalYearPatternId", { id: currentFiscalYearPatternId })}
+                  </p>
                 )}
                 {currentMonthlyPeriodPatternId && (
-                  <p className="text-xs text-gray-500">現在の月次期間パターンID: {currentMonthlyPeriodPatternId}</p>
+                  <p className="text-xs text-gray-500">
+                    {t("currentMonthlyPeriodPatternId", { id: currentMonthlyPeriodPatternId })}
+                  </p>
                 )}
               </div>
             ) : (
@@ -417,7 +428,7 @@ export default function AdminOrganizationsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="fiscal-year-pattern" className="block text-sm font-medium text-gray-700 mb-1">
-                      会計年度パターン
+                      {t("fiscalYearPattern")}
                     </label>
                     <div className="flex items-center gap-2">
                       <select
@@ -430,10 +441,10 @@ export default function AdminOrganizationsPage() {
                         }}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">未設定</option>
+                        <option value="">{t("unset")}</option>
                         {fiscalYearPatterns.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name} ({p.startMonth}月{p.startDay}日開始)
+                            {p.name} ({p.startMonth}/{p.startDay})
                           </option>
                         ))}
                       </select>
@@ -442,13 +453,13 @@ export default function AdminOrganizationsPage() {
                         onClick={() => setShowFiscalYearForm(true)}
                         className="text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
                       >
-                        + 新規作成
+                        {t("createNew")}
                       </button>
                     </div>
                   </div>
                   <div>
                     <label htmlFor="monthly-period-pattern" className="block text-sm font-medium text-gray-700 mb-1">
-                      月次期間パターン
+                      {t("monthlyPeriodPattern")}
                     </label>
                     <div className="flex items-center gap-2">
                       <select
@@ -461,10 +472,10 @@ export default function AdminOrganizationsPage() {
                         }}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">未設定</option>
+                        <option value="">{t("unset")}</option>
                         {monthlyPeriodPatterns.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.name} ({p.startDay}日開始)
+                            {p.name} ({p.startDay})
                           </option>
                         ))}
                       </select>
@@ -473,7 +484,7 @@ export default function AdminOrganizationsPage() {
                         onClick={() => setShowMonthlyPeriodForm(true)}
                         className="text-sm text-blue-600 hover:text-blue-800 whitespace-nowrap"
                       >
-                        + 新規作成
+                        {t("createNew")}
                       </button>
                     </div>
                   </div>
@@ -489,7 +500,7 @@ export default function AdminOrganizationsPage() {
                     disabled={isPatternSaving || !patternsDirty}
                     className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
                   >
-                    {isPatternSaving ? "保存中..." : "保存"}
+                    {isPatternSaving ? tc("saving") : tc("save")}
                   </button>
                 </div>
               </div>
@@ -506,23 +517,23 @@ export default function AdminOrganizationsPage() {
                   onClick={loadMembers}
                   className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
                 >
-                  再試行
+                  {tc("retry")}
                 </button>
               </div>
             ) : isMembersLoading ? (
-              <div className="text-center py-8 text-gray-500">読み込み中...</div>
+              <div className="text-center py-8 text-gray-500">{tc("loading")}</div>
             ) : members.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">メンバーが見つかりません</div>
+              <div className="text-center py-8 text-gray-500">{tc("noData")}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">名前</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">メール</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">マネージャー</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-700">ステータス</th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-700">アクション</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">{t("memberTable.name")}</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">{t("memberTable.email")}</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">{t("memberTable.manager")}</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-700">{t("memberTable.status")}</th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-700">{t("memberTable.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -537,9 +548,9 @@ export default function AdminOrganizationsPage() {
                               {member.managerIsActive === false && (
                                 <span
                                   className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800"
-                                  title="マネージャーが無効です"
+                                  title={t("managerInactive")}
                                 >
-                                  無効
+                                  {tc("inactive")}
                                 </span>
                               )}
                             </span>
@@ -553,7 +564,7 @@ export default function AdminOrganizationsPage() {
                               member.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
                             }`}
                           >
-                            {member.isActive ? "有効" : "無効"}
+                            {member.isActive ? tc("active") : tc("inactive")}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -563,7 +574,7 @@ export default function AdminOrganizationsPage() {
                               onClick={() => handleAssignManager(member)}
                               className="text-blue-600 hover:text-blue-800 text-xs"
                             >
-                              {member.managerId ? "マネージャー変更" : "マネージャー割当"}
+                              {member.managerId ? t("changeManager") : t("assignManager")}
                             </button>
                             {member.managerId && (
                               <button
@@ -571,7 +582,7 @@ export default function AdminOrganizationsPage() {
                                 onClick={() => handleRemoveManager(member)}
                                 className="text-red-600 hover:text-red-800 text-xs"
                               >
-                                マネージャー解除
+                                {t("removeManager")}
                               </button>
                             )}
                             <button
@@ -579,7 +590,7 @@ export default function AdminOrganizationsPage() {
                               onClick={() => handleTransferOrg(member)}
                               className="text-purple-600 hover:text-purple-800 text-xs"
                             >
-                              組織異動
+                              {t("transferOrg")}
                             </button>
                           </div>
                         </td>
@@ -598,10 +609,10 @@ export default function AdminOrganizationsPage() {
                   disabled={memberPage === 0}
                   className="px-3 py-1 text-sm border rounded disabled:opacity-50"
                 >
-                  前へ
+                  {tc("previous")}
                 </button>
                 <span className="px-3 py-1 text-sm text-gray-600">
-                  {memberPage + 1} / {memberTotalPages}
+                  {tc("pagination.page", { current: memberPage + 1, total: memberTotalPages })}
                 </span>
                 <button
                   type="button"
@@ -609,7 +620,7 @@ export default function AdminOrganizationsPage() {
                   disabled={memberPage >= memberTotalPages - 1}
                   className="px-3 py-1 text-sm border rounded disabled:opacity-50"
                 >
-                  次へ
+                  {tc("next")}
                 </button>
               </div>
             )}
@@ -657,18 +668,20 @@ export default function AdminOrganizationsPage() {
 
       <ConfirmDialog
         open={confirmTarget !== null}
-        title="確認"
+        title={tc("confirm")}
         message={
           confirmTarget?.action === "removeManager"
-            ? `${confirmTarget.memberName} のマネージャー割り当てを解除しますか？`
-            : `この組織を${confirmTarget?.action === "deactivate" ? "無効化" : "有効化"}しますか？`
+            ? t("confirmRemoveManager", { name: confirmTarget.memberName ?? "" })
+            : confirmTarget?.action === "deactivate"
+              ? t("confirmDeactivate")
+              : t("confirmActivate")
         }
         confirmLabel={
           confirmTarget?.action === "removeManager"
-            ? "解除"
+            ? t("removeManagerLabel")
             : confirmTarget?.action === "deactivate"
-              ? "無効化"
-              : "有効化"
+              ? tc("disable")
+              : tc("enable")
         }
         variant={confirmTarget?.action === "activate" ? "warning" : "danger"}
         onConfirm={async () => {
