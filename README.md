@@ -48,7 +48,7 @@ work-log/
 - **Testing**: JUnit 5, Testcontainers, Instancio, DBUnit Rider
 
 ### Frontend
-- **Framework**: Next.js 16.1.1
+- **Framework**: Next.js 16.1.6
 - **UI Library**: React 19.2.3
 - **Language**: TypeScript 5.x
 - **Styling**: Tailwind CSS
@@ -313,7 +313,7 @@ Services:
 
 ## 📝 License
 
-[Add your license here]
+This project is licensed under the [Apache License 2.0](LICENSE).
 
 ## 👥 Team
 
@@ -321,6 +321,6 @@ Services:
 
 ---
 
-**Last Updated**: 2026-02-01  
-**Version**: 0.2.0  
+**Last Updated**: 2026-02-25
+**Version**: 0.3.0
 **Product**: Miometry (ミオメトリー)
