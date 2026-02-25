@@ -340,7 +340,19 @@
       "confirmTitle": "Submit daily worklog?",
       "confirmMessage": "This will submit the worklog for this day.",
       "success": "Daily worklog submitted",
-      "error": "Failed to submit"
+      "error": "Failed to submit",
+      "recall": "Recall",
+      "submitting": "Submitting...",
+      "recalling": "Recalling...",
+      "successSubmit": "{count} entries submitted successfully.",
+      "successRecall": "{count} entries recalled to draft.",
+      "errorConflict": "Entries were modified by another session. Please refresh and try again.",
+      "errorRecallLocked": "Manager has already acted on this submission. Recall is no longer available.",
+      "errorGeneral": "Failed to submit entries. Please try again.",
+      "errorRecallGeneral": "Failed to recall entries. Please try again.",
+      "confirmDetail": "You are about to submit {count} entries totaling {hours} hours for {date}.",
+      "proxyPrefix": "(Proxy)",
+      "resubmit": "Resubmit"
     },
     "copyDialog": {
       "title": "Copy Previous Month",
@@ -395,6 +407,21 @@
       "deleteTitle": "Delete Entry",
       "deleteMessage": "Are you sure you want to delete this entry? This action cannot be undone.",
       "deleteConfirm": "Delete"
+    },
+    "csvImport": {
+      "backToWorklog": "← Back to Worklog",
+      "howToImport": "How to Import",
+      "step1": "Download the CSV template or prepare your own CSV file",
+      "step2": "Fill in your work log entries (Date, Project Code, Hours, Notes)",
+      "step3": "Upload the file using the form below",
+      "step4": "Wait for the import to complete and review any errors",
+      "csvFormat": "CSV Format",
+      "formatDate": "YYYY-MM-DD format (e.g., 2026-01-21)",
+      "formatProjectCode": "Valid project code (e.g., PRJ-001)",
+      "formatHours": "0.25 increments, 0-24 range (e.g., 8.00, 4.50)",
+      "formatNotes": "Optional text, max 500 characters",
+      "downloadError": "Failed to download template",
+      "uploadForm": "Upload"
     }
   },
   "admin": {

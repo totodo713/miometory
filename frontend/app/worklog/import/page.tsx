@@ -8,6 +8,7 @@ import { downloadTemplate } from "@/services/csvService";
 
 export default function CsvImportPage() {
   const t = useTranslations("worklog.csvUploader");
+  const ti = useTranslations("worklog.csvImport");
   const tc = useTranslations("common");
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -21,7 +22,7 @@ export default function CsvImportPage() {
     try {
       await downloadTemplate();
     } catch (error) {
-      setDownloadError(error instanceof Error ? error.message : "Failed to download template");
+      setDownloadError(error instanceof Error ? error.message : ti("downloadError"));
     } finally {
       setIsDownloading(false);
     }
@@ -37,7 +38,7 @@ export default function CsvImportPage() {
         {/* Header */}
         <div className="mb-8">
           <Link href="/worklog" className="text-blue-600 hover:text-blue-800 mb-4 inline-block">
-            ← Back to Miometry
+            {ti("backToWorklog")}
           </Link>
           <h1 className="text-3xl font-bold text-gray-900">{t("title")}</h1>
           <p className="text-gray-600 mt-2">{t("dropzone")}</p>
@@ -45,12 +46,12 @@ export default function CsvImportPage() {
 
         {/* Instructions */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">How to Import</h2>
+          <h2 className="text-xl font-semibold mb-4">{ti("howToImport")}</h2>
           <ol className="list-decimal list-inside space-y-2 text-gray-700">
-            <li>Download the CSV template or prepare your own CSV file</li>
-            <li>Fill in your work log entries (Date, Project Code, Hours, Notes)</li>
-            <li>Upload the file using the form below</li>
-            <li>Wait for the import to complete and review any errors</li>
+            <li>{ti("step1")}</li>
+            <li>{ti("step2")}</li>
+            <li>{ti("step3")}</li>
+            <li>{ti("step4")}</li>
           </ol>
 
           <div className="mt-6">
@@ -68,26 +69,26 @@ export default function CsvImportPage() {
 
         {/* CSV Format Info */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-blue-900 mb-2">CSV Format</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">{ti("csvFormat")}</h3>
           <div className="text-sm text-blue-800 space-y-1">
             <p>
-              <strong>Date:</strong> YYYY-MM-DD format (e.g., 2026-01-21)
+              <strong>Date:</strong> {ti("formatDate")}
             </p>
             <p>
-              <strong>Project Code:</strong> Valid project code (e.g., PRJ-001)
+              <strong>Project Code:</strong> {ti("formatProjectCode")}
             </p>
             <p>
-              <strong>Hours:</strong> 0.25 increments, 0-24 range (e.g., 8.00, 4.50)
+              <strong>Hours:</strong> {ti("formatHours")}
             </p>
             <p>
-              <strong>Notes:</strong> Optional text, max 500 characters
+              <strong>Notes:</strong> {ti("formatNotes")}
             </p>
           </div>
         </div>
 
         {/* Upload Form */}
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">{t("title")}</h2>
+          <h2 className="text-xl font-semibold mb-4">{ti("uploadForm")}</h2>
           <CsvUploader memberId={memberId} onImportComplete={handleImportComplete} />
         </div>
       </div>

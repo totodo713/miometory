@@ -1,5 +1,6 @@
 package com.worklog.application.service;
 
+import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,9 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserContextService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final JdbcUserRepository userRepository;
 
-    public UserContextService(JdbcTemplate jdbcTemplate) {
+    public UserContextService(JdbcTemplate jdbcTemplate, JdbcUserRepository userRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -56,5 +59,24 @@ public class UserContextService {
         String sql = "SELECT m.id FROM members m WHERE LOWER(m.email) = LOWER(?) LIMIT 1";
         List<UUID> results = jdbcTemplate.queryForList(sql, UUID.class, email);
         return results.isEmpty() ? null : results.get(0);
+    }
+
+    /**
+     * Updates the preferred locale for the user identified by email.
+     *
+     * @param email the user's email address
+     * @param locale locale code ("en" or "ja")
+     * @throws IllegalArgumentException if locale is invalid
+     * @throws IllegalStateException if user is not found
+     */
+    @Transactional
+    public void updatePreferredLocale(String email, String locale) {
+        if (locale == null || (!"en".equals(locale) && !"ja".equals(locale))) {
+            throw new IllegalArgumentException("Invalid locale: " + locale);
+        }
+        var user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User not found: " + email));
+        userRepository.updateLocale(user.getId(), locale);
     }
 }

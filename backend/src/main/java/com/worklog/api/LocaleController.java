@@ -1,12 +1,9 @@
 package com.worklog.api;
 
-import com.worklog.domain.user.UserId;
-import com.worklog.infrastructure.persistence.JdbcUserRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
-import java.util.UUID;
+import com.worklog.application.service.UserContextService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -16,36 +13,32 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/user")
 public class LocaleController {
 
-    private final JdbcUserRepository userRepository;
+    private final UserContextService userContextService;
 
-    public LocaleController(JdbcUserRepository userRepository) {
-        this.userRepository = userRepository;
+    public LocaleController(UserContextService userContextService) {
+        this.userContextService = userContextService;
     }
 
     /**
      * Update the authenticated user's preferred locale.
      *
      * @param request Locale update request body
-     * @param httpRequest HTTP request for session access
+     * @param authentication Spring Security authentication
      * @return 204 No Content on success
      */
     @PatchMapping("/locale")
-    public ResponseEntity<Void> updateLocale(@RequestBody LocaleUpdateRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<Void> updateLocale(@RequestBody LocaleUpdateRequest request, Authentication authentication) {
 
-        HttpSession session = httpRequest.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) {
+        if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        UUID userId = (UUID) session.getAttribute("userId");
-
-        if (request.locale() == null
-                || (!request.locale().equals("en") && !request.locale().equals("ja"))) {
+        try {
+            userContextService.updatePreferredLocale(authentication.getName(), request.locale());
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
-
-        userRepository.updateLocale(UserId.of(userId), request.locale());
-        return ResponseEntity.noContent().build();
     }
 
     /**

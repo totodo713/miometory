@@ -145,7 +145,7 @@ describe("SubmitDailyButton", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("3 entries submitted successfully.")).toBeInTheDocument();
+      expect(screen.getByText("3件のエントリを提出しました。")).toBeInTheDocument();
     });
 
     expect(defaultProps.onSubmitSuccess).toHaveBeenCalled();
@@ -183,7 +183,7 @@ describe("SubmitDailyButton", () => {
     fireEvent.click(submitButtons[submitButtons.length - 1]);
 
     await waitFor(() => {
-      expect(screen.getByText(/refresh and try again/)).toBeInTheDocument();
+      expect(screen.getByText(/更新してもう一度お試しください/)).toBeInTheDocument();
     });
   });
 
@@ -220,7 +220,7 @@ describe("SubmitDailyButton", () => {
           <SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />
         </IntlWrapper>,
       );
-      expect(screen.getByRole("button", { name: "日次提出" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "取り消し" })).toBeInTheDocument();
     });
 
     it("does not render when both hasDraftEntries and hasSubmittedEntries are false", () => {
@@ -244,7 +244,7 @@ describe("SubmitDailyButton", () => {
           <SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />
         </IntlWrapper>,
       );
-      fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
+      fireEvent.click(screen.getByRole("button", { name: "取り消し" }));
 
       await waitFor(() => {
         expect(mockRecallDailyEntries).toHaveBeenCalledWith({
@@ -255,7 +255,7 @@ describe("SubmitDailyButton", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("2 entries recalled to draft.")).toBeInTheDocument();
+        expect(screen.getByText("2件のエントリを下書きに戻しました。")).toBeInTheDocument();
       });
     });
 
@@ -267,10 +267,10 @@ describe("SubmitDailyButton", () => {
           <SubmitDailyButton {...defaultProps} hasDraftEntries={false} hasSubmittedEntries={true} />
         </IntlWrapper>,
       );
-      fireEvent.click(screen.getByRole("button", { name: "日次提出" }));
+      fireEvent.click(screen.getByRole("button", { name: "取り消し" }));
 
       await waitFor(() => {
-        expect(screen.getByText(/Manager has already acted/)).toBeInTheDocument();
+        expect(screen.getByText(/管理者がこの提出に対してすでに処理を行いました/)).toBeInTheDocument();
       });
     });
   });

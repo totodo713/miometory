@@ -9,7 +9,7 @@ interface IntlWrapperProps {
 
 export function IntlWrapper({ children, locale = "ja" }: IntlWrapperProps) {
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    <NextIntlClientProvider locale={locale} messages={messages} timeZone="Asia/Tokyo">
       {children}
     </NextIntlClientProvider>
   );

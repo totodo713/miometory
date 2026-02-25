@@ -340,7 +340,19 @@
       "confirmTitle": "日次勤怠を提出しますか？",
       "confirmMessage": "この日の勤怠を提出します。",
       "success": "日次勤怠を提出しました",
-      "error": "提出に失敗しました"
+      "error": "提出に失敗しました",
+      "recall": "取り消し",
+      "submitting": "提出中...",
+      "recalling": "取り消し中...",
+      "successSubmit": "{count}件のエントリを提出しました。",
+      "successRecall": "{count}件のエントリを下書きに戻しました。",
+      "errorConflict": "別のセッションでエントリが変更されました。更新してもう一度お試しください。",
+      "errorRecallLocked": "管理者がこの提出に対してすでに処理を行いました。取り消しはできません。",
+      "errorGeneral": "提出に失敗しました。もう一度お試しください。",
+      "errorRecallGeneral": "取り消しに失敗しました。もう一度お試しください。",
+      "confirmDetail": "{count}件のエントリ（合計{hours}時間）を{date}分として提出します。",
+      "proxyPrefix": "(代理)",
+      "resubmit": "再提出"
     },
     "copyDialog": {
       "title": "前月データのコピー",
@@ -395,6 +407,21 @@
       "deleteTitle": "エントリの削除",
       "deleteMessage": "このエントリを削除しますか？この操作は取り消せません。",
       "deleteConfirm": "削除"
+    },
+    "csvImport": {
+      "backToWorklog": "← 勤怠入力に戻る",
+      "howToImport": "インポート方法",
+      "step1": "CSVテンプレートをダウンロードするか、自分のCSVファイルを準備してください",
+      "step2": "勤怠データを入力してください（日付、プロジェクトコード、時間、備考）",
+      "step3": "以下のフォームからファイルをアップロードしてください",
+      "step4": "インポートの完了を待ち、エラーがあれば確認してください",
+      "csvFormat": "CSVフォーマット",
+      "formatDate": "YYYY-MM-DD形式（例: 2026-01-21）",
+      "formatProjectCode": "有効なプロジェクトコード（例: PRJ-001）",
+      "formatHours": "0.25刻み、0-24の範囲（例: 8.00、4.50）",
+      "formatNotes": "任意のテキスト、最大500文字",
+      "downloadError": "テンプレートのダウンロードに失敗しました",
+      "uploadForm": "アップロード"
     }
   },
   "admin": {
