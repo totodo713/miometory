@@ -21,15 +21,35 @@ Object.defineProperty(window, "matchMedia", {
 
 const mockListProjects = vi.fn();
 
-vi.mock("@/services/api", () => ({
-  api: {
-    admin: {
-      projects: {
-        list: (...args: unknown[]) => mockListProjects(...args),
+vi.mock("@/services/api", () => {
+  class MockApiError extends Error {
+    status: number;
+    code?: string;
+    constructor(message: string, status: number, code?: string) {
+      super(message);
+      this.name = "ApiError";
+      this.status = status;
+      this.code = code;
+    }
+  }
+  class MockForbiddenError extends MockApiError {
+    constructor(message = "Access denied") {
+      super(message, 403, "FORBIDDEN");
+      this.name = "ForbiddenError";
+    }
+  }
+  return {
+    api: {
+      admin: {
+        projects: {
+          list: (...args: unknown[]) => mockListProjects(...args),
+        },
       },
     },
-  },
-}));
+    ApiError: MockApiError,
+    ForbiddenError: MockForbiddenError,
+  };
+});
 
 const activeProject = {
   id: "p1",
@@ -317,5 +337,15 @@ describe("ProjectList", () => {
     expect(screen.getByText("メンバー数")).toBeInTheDocument();
     expect(screen.getByText("ステータス")).toBeInTheDocument();
     expect(screen.getByText("操作")).toBeInTheDocument();
+  });
+
+  test("calls onForbidden when API returns 403", async () => {
+    const { ForbiddenError } = await import("@/services/api");
+    mockListProjects.mockRejectedValue(new (ForbiddenError as any)());
+    const onForbidden = vi.fn();
+    renderWithProviders(<ProjectList {...defaultProps} onForbidden={onForbidden} />);
+    await waitFor(() => {
+      expect(onForbidden).toHaveBeenCalledTimes(1);
+    });
   });
 });
