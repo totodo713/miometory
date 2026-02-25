@@ -123,8 +123,8 @@ export class UnauthorizedError extends ApiError {
 }
 
 export class ForbiddenError extends ApiError {
-  constructor(message = "Access denied") {
-    super(message, 403, "FORBIDDEN");
+  constructor(message = "Access denied", code = "FORBIDDEN") {
+    super(message, 403, code);
     this.name = "ForbiddenError";
   }
 }
@@ -203,7 +203,11 @@ class ApiClient {
       }
 
       if (response.status === 403) {
-        throw new ForbiddenError();
+        const errorData = await response.json().catch(() => ({}) as Record<string, unknown>);
+        throw new ForbiddenError(
+          typeof errorData.message === "string" ? errorData.message : undefined,
+          typeof errorData.code === "string" ? errorData.code : undefined,
+        );
       }
 
       if (response.status === 412) {

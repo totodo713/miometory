@@ -1,7 +1,5 @@
 # Permission Boundary UX Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** Remove tenant-scoped permissions from SYSTEM_ADMIN and add frontend AccessDenied UX for 403 responses.
 
 **Architecture:** Backend Flyway migration removes `member.view`/`project.view` from SYSTEM_ADMIN. Frontend adds `ForbiddenError` to API client, `AccessDenied` display component, and `onForbidden` callback to List components. Dashboard grid and AdminNav get P1 UX improvements.

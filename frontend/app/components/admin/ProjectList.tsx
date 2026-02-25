@@ -60,14 +60,16 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, onForbidden, ref
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
       if (err instanceof ForbiddenError) {
-        onForbidden?.();
-        return;
+        if (onForbidden) {
+          onForbidden();
+          return;
+        }
       }
       setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
-  }, [page, debouncedSearch, showInactive]);
+  }, [page, debouncedSearch, showInactive, onForbidden]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {
