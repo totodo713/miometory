@@ -37,7 +37,9 @@ public class GlobalExceptionHandler {
                 ErrorResponse.of(ex.getErrorCode(), ex.getMessage(), Map.of("path", getRequestPath(request)));
 
         HttpStatus status;
-        if (isConflict(ex.getErrorCode())) {
+        if (isNotFound(ex.getErrorCode())) {
+            status = HttpStatus.NOT_FOUND;
+        } else if (isConflict(ex.getErrorCode())) {
             status = HttpStatus.CONFLICT;
         } else if (isStateViolation(ex.getErrorCode())) {
             // State violations return 422 UNPROCESSABLE_ENTITY
@@ -51,10 +53,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Determines if an error code represents a conflict (409) — duplicate resource.
+     * Determines if an error code represents a "not found" condition (404).
+     */
+    private boolean isNotFound(String errorCode) {
+        return errorCode != null && errorCode.endsWith("_NOT_FOUND");
+    }
+
+    /**
+     * Determines if an error code represents a conflict (409) — duplicate resource or already-completed operation.
      */
     private boolean isConflict(String errorCode) {
-        return errorCode != null && errorCode.contains("DUPLICATE_");
+        return errorCode != null && (errorCode.contains("DUPLICATE_") || errorCode.contains("ALREADY_BOOTSTRAPPED"));
     }
 
     /**
