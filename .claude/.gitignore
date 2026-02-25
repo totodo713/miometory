@@ -1,2 +1,4 @@
 commands/speckit.*
 *.local.md
+worktrees/*
+agent-memory/*
