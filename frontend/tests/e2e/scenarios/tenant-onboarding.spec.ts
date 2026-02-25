@@ -12,6 +12,9 @@ interface AuthUser {
 }
 
 async function loginAs(page: Page, email: string, password: string): Promise<AuthUser> {
+  // Force English locale (NEXT_LOCALE cookie = Priority 1 in i18n/request.ts)
+  await page.context().addCookies([{ name: "NEXT_LOCALE", value: "en", domain: "localhost", path: "/" }]);
+
   // Navigate to app origin first — sessionStorage requires a real origin (not about:blank)
   if (page.url() === "about:blank") {
     await page.goto("/");

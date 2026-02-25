@@ -1,10 +1,66 @@
-import { test as base } from "@playwright/test";
+import { type Page, test as base } from "@playwright/test";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+/** Mock globally-called APIs to prevent real backend hits in tests */
+export async function mockGlobalApis(page: Page) {
+  // Header.tsx → api.admin.getContext()
+  await page.route("**/api/v1/admin/context", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        role: "USER",
+        permissions: [],
+        tenantId: null,
+        tenantName: null,
+        memberId: null,
+      }),
+    });
+  });
+
+  // NotificationBell → api.notification.list() (30s polling)
+  await page.route("**/api/v1/notifications**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        content: [],
+        unreadCount: 0,
+        totalElements: 0,
+        totalPages: 0,
+      }),
+    });
+  });
+
+  // useRejectionStatus → api.approval.getMemberApproval()
+  await page.route("**/api/v1/worklog/approvals/member/**", async (route) => {
+    await route.fulfill({
+      status: 404,
+      contentType: "application/json",
+      body: JSON.stringify({ message: "No approval found" }),
+    });
+  });
+
+  // useRejectionStatus → api.worklog.getDailyRejections()
+  await page.route("**/api/v1/worklog/rejections/daily**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ rejections: [] }),
+    });
+  });
+}
+
 export const test = base.extend({
   page: async ({ page }, use) => {
-    // 1. Login API to establish backend session (JSESSIONID)
+    // 0. Force English locale (NEXT_LOCALE cookie = Priority 1 in i18n/request.ts)
+    await page.context().addCookies([{ name: "NEXT_LOCALE", value: "en", domain: "localhost", path: "/" }]);
+
+    // 1. Mock globally-called APIs (header, notifications, approval status)
+    await mockGlobalApis(page);
+
+    // 2. Login API to establish backend session (JSESSIONID)
     const loginResponse = await page.request.post(`${API_BASE_URL}/api/v1/auth/login`, {
       data: {
         email: process.env.E2E_TEST_EMAIL || "bob.engineer@miometry.example.com",
