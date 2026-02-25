@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PreToolUse hook: block PR creation until tests and coverage are verified.
+# PreToolUse hook: block PR creation until lint, format, tests, and coverage are verified.
 # Gates both `gh pr create` (Bash) and MCP `create_pull_request` tool.
 # Uses a time-limited flag file (.claude/.pr-tests-verified) as the gate.
 #
@@ -63,36 +63,51 @@ fi
 # --- Block PR creation ---
 
 cat >&2 <<'BLOCK_MSG'
-BLOCKED: PR creation requires test verification first.
+BLOCKED: PR creation requires lint, format, test, and coverage verification first.
 
-Before creating a PR, you MUST complete the following steps:
+Before creating a PR, you MUST complete ALL of the following steps:
 
 1. IDENTIFY changed files:
    git diff main...HEAD --name-only
 
-2. CHECK test file existence:
+2. RUN lint and format checks (if relevant files changed):
+
+   Backend (if *.java, *.kt, or *.gradle.kts changed):
+     cd backend && ./gradlew checkFormat
+     cd backend && ./gradlew detekt
+   - checkFormat verifies Spotless formatting (palantir-java-format + ktlint)
+   - detekt runs Kotlin static analysis
+   - Both must pass with zero violations
+
+   Frontend (if *.ts, *.tsx, *.js, *.jsx, or *.css changed):
+     cd frontend && npx biome ci
+   - biome ci checks both lint rules and formatting in one command
+   - Must pass with zero errors (warnings are acceptable)
+
+3. CHECK test file existence:
    - Backend source (*.java, *.kt) → corresponding *Test.java/*Test.kt must exist
    - Frontend source (*.ts, *.tsx) → corresponding *.test.ts/*.test.tsx must exist
    - List any source files WITHOUT corresponding tests as warnings
 
-3. RUN backend tests (if backend files changed):
+4. RUN backend tests (if backend files changed):
    cd backend && ./gradlew test jacocoTestReport
    - Check JaCoCo report for coverage of changed packages
    - Target: 80%+ LINE coverage per changed package
 
-4. RUN frontend tests (if frontend files changed):
+5. RUN frontend tests (if frontend files changed):
    cd frontend && npm test -- --run
    - Verify all tests pass
 
-5. REPORT results to user:
+6. REPORT results to user:
+   - Lint/format check results (pass/fail per tool)
    - Number of changed source files and their test coverage status
    - Test pass/fail summary
    - Coverage metrics for changed packages
-   - Any warnings (missing tests, low coverage areas)
+   - Any warnings (missing tests, low coverage areas, lint warnings)
 
-6. If all checks pass, create the verification flag:
+7. If ALL checks pass, create the verification flag:
    touch .claude/.pr-tests-verified
 
-7. Then RETRY the PR creation command.
+8. Then RETRY the PR creation command.
 BLOCK_MSG
 exit 2
