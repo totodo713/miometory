@@ -315,7 +315,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Verify conflict warning appears
-    await expect(page.locator("text=/Entry was modified|Conflict|Refresh/i")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Entry was modified|Conflict|Refresh/i").first()).toBeVisible({ timeout: 5000 });
 
     // User can resolve by refreshing
     await page.reload();
