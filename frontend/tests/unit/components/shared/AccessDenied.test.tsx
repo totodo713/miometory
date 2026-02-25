@@ -21,4 +21,15 @@ describe("AccessDenied", () => {
     const link = screen.getByRole("link", { name: "ダッシュボードに戻る" });
     expect(link).toHaveAttribute("href", "/admin");
   });
+
+  test("has role='alert' for screen reader accessibility", () => {
+    renderWithIntl(<AccessDenied />);
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  test("renders custom title and message when provided", () => {
+    renderWithIntl(<AccessDenied title="カスタムタイトル" message="カスタムメッセージ" />);
+    expect(screen.getByText("カスタムタイトル")).toBeInTheDocument();
+    expect(screen.getByText("カスタムメッセージ")).toBeInTheDocument();
+  });
 });
