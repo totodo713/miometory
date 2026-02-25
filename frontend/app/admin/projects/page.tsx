@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import type { ProjectRow } from "@/components/admin/ProjectList";
 import { ProjectList } from "@/components/admin/ProjectList";
+import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
@@ -19,6 +20,7 @@ export default function AdminProjectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: "deactivate" | "activate" } | null>(null);
+  const [isForbidden, setIsForbidden] = useState(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -65,6 +67,10 @@ export default function AdminProjectsPage() {
     setEditingProject(null);
   }, []);
 
+  if (isForbidden) {
+    return <AccessDenied />;
+  }
+
   return (
     <div>
       <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("projects") }]} />
@@ -89,6 +95,7 @@ export default function AdminProjectsPage() {
           onDeactivate={handleDeactivate}
           onActivate={handleActivate}
           refreshKey={refreshKey}
+          onForbidden={() => setIsForbidden(true)}
         />
       </div>
 

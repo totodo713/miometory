@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
 import { MemberList } from "@/components/admin/MemberList";
+import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
@@ -19,6 +20,7 @@ export default function AdminMembersPage() {
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: "deactivate" | "activate" } | null>(null);
+  const [isForbidden, setIsForbidden] = useState(false);
 
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -67,6 +69,10 @@ export default function AdminMembersPage() {
     setEditingMember(null);
   }, []);
 
+  if (isForbidden) {
+    return <AccessDenied />;
+  }
+
   return (
     <div>
       <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("members") }]} />
@@ -91,6 +97,7 @@ export default function AdminMembersPage() {
           onDeactivate={handleDeactivate}
           onActivate={handleActivate}
           refreshKey={refreshKey}
+          onForbidden={() => setIsForbidden(true)}
         />
       </div>
 
