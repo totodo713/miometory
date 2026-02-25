@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { ApiError, ForbiddenError, api } from "@/services/api";
+import { ApiError, api, ForbiddenError } from "@/services/api";
 
 interface MemberRow {
   id: string;
