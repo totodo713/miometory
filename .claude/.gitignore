@@ -2,3 +2,4 @@ commands/speckit.*
 *.local.md
 worktrees/*
 agent-memory/*
+.pr-tests-verified

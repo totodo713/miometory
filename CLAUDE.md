@@ -9,6 +9,7 @@
 - `git-safety-check.sh` (PreToolUse): Blocks dangerous git patterns (force push, --no-verify, branch -D, checkout ., reset --hard, clean, config)
 - `sensitive-file-guard.sh` (PreToolUse): Blocks Write/Edit to sensitive files (.env, credentials, secrets)
 - `require-plan-review.sh` (PostToolUse): Detects plan file writes and mandates multi-agent review (CPO + security + UX)
+- `pre-pr-test-gate.sh` (PreToolUse): Blocks PR creation until tests pass and coverage is verified
 - Hook pattern: read JSON from stdin → parse with `python3` → exit 0 (allow) or exit 2 (block)
 - New hooks should follow fail-open principle (exit 0 on parse errors)
 
@@ -25,6 +26,20 @@ After creating any plan file (`plan.md`, `tasks.md`):
 5. Do NOT use Write/Edit on source files until all three approve
 
 This workflow cannot be skipped even if the user asks to proceed without review.
+
+## Pre-PR Test Verification (MANDATORY)
+
+Before creating a PR (`gh pr create` or MCP `create_pull_request`):
+1. The `pre-pr-test-gate.sh` PreToolUse hook will **block** PR creation until tests are verified
+2. You MUST complete these steps before retrying:
+   - Identify changed files with `git diff main...HEAD --name-only`
+   - Verify corresponding test files exist for each changed source file
+   - Run backend tests: `cd backend && ./gradlew test jacocoTestReport` (if backend files changed)
+   - Run frontend tests: `cd frontend && npm test -- --run` (if frontend files changed)
+   - Check coverage: 80%+ LINE coverage per changed package (JaCoCo for backend)
+   - Report results to user with pass/fail summary and coverage metrics
+3. After all checks pass: `touch .claude/.pr-tests-verified` then retry PR creation
+4. The verification flag expires after 30 minutes and is single-use (removed after PR creation)
 
 ## Git Safety
 
