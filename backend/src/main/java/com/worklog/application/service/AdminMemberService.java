@@ -139,6 +139,8 @@ public class AdminMemberService {
         String hashedPassword = passwordEncoder.encode(tempPassword);
 
         var user = User.create(command.email(), command.displayName(), hashedPassword, userRole.getId());
+        // Admin-provisioned users are pre-verified (no email confirmation needed)
+        user.verifyEmail();
         userRepository.save(user);
 
         var member = Member.create(

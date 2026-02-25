@@ -12,6 +12,7 @@ export interface AuthUser {
   email: string;
   displayName: string;
   preferredLocale?: string;
+  memberId?: string;
 }
 
 interface AuthContextValue {
@@ -62,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: response.user.email,
         displayName: response.user.name,
         preferredLocale: response.user.preferredLocale,
+        memberId: response.user.memberId ?? undefined,
       };
       setUser(authUser);
       sessionStorage.setItem(STORAGE_KEY, JSON.stringify(authUser));

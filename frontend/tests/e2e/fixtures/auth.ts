@@ -24,6 +24,7 @@ export const test = base.extend({
       id: body.user.id,
       email: body.user.email,
       displayName: body.user.name,
+      memberId: body.user.memberId ?? undefined,
     };
 
     await page.addInitScript((user) => {

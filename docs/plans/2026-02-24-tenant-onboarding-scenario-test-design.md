@@ -46,9 +46,9 @@ Scenario tests are placed in a `scenarios/` subdirectory to distinguish them fro
 |---|---|---|---|---|
 | 1 | Create tenant | sys-admin | Create tenant via `/admin/tenants` | Tenant appears in list, status ACTIVE |
 | 2 | Configure fiscal patterns | sys-admin | Create fiscal year pattern (Jan start) and monthly period pattern (1st day) | Patterns created and selectable |
-| 3 | Invite 2 tenant owners | sys-admin | Invite tenant-owner-1, 2 via `/admin/members`, assign TENANT_ADMIN role | Invitation successful, temporary password issued |
-| 4 | Tenant owner 1 creates Org A | tenant-owner-1 | Login with temp password -> Create Org A via `/admin/organizations` -> Assign patterns | Organization created with patterns linked |
-| 5 | Tenant owner 2 creates Org B | tenant-owner-2 | Same as above for Org B | Same verification |
+| 3 | Bootstrap orgs + invite tenant owners | sys-admin | Create Org A & B via API, assign patterns, invite tenant-owner-1, 2, assign TENANT_ADMIN role | Orgs created with patterns, tenant owners have temp passwords |
+| 4 | Tenant owner 1 verifies Org A | tenant-owner-1 | Login with temp password -> Navigate to `/admin/organizations` -> Verify Org A and patterns | Organization visible with patterns linked |
+| 5 | Tenant owner 2 verifies Org B | tenant-owner-2 | Same as above for Org B | Same verification |
 | 6 | Invite Org A admins | tenant-owner-1 | Invite org-a-admin-1, 2 as MODERATOR via `/admin/members` | Invitation successful |
 | 7 | Invite Org B admins | tenant-owner-2 | Invite org-b-admin-1, 2 as MODERATOR | Invitation successful |
 | 8 | Org A: Invite members + assign manager | org-a-admin-1 | Login -> Invite 3 members -> Assign org-a-admin-1 as manager | Members in list, manager linked |

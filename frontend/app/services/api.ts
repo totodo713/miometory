@@ -714,6 +714,7 @@ export const api = {
           name: string;
           accountStatus: string;
           preferredLocale: string;
+          memberId: string | null;
         };
         sessionExpiresAt: string;
         rememberMeToken: string | null;

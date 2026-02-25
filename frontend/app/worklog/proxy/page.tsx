@@ -21,14 +21,14 @@ import { type SubordinateMember, useProxyMode } from "@/services/worklogStore";
 
 export default function ProxyEntryPage() {
   const router = useRouter();
-  const { userId } = useAuth();
+  const { memberId } = useAuth();
   const t = useTranslations("worklog.proxyMode");
   const tc = useTranslations("common");
   const { enableProxyMode, isProxyMode, targetMember, disableProxyMode } = useProxyMode();
   const [selectedMember, setSelectedMember] = useState<SubordinateMember | null>(targetMember);
 
   // Guard: require authentication
-  if (!userId) {
+  if (!memberId) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
         <p className="text-gray-600">Please log in to access this page.</p>
@@ -37,9 +37,9 @@ export default function ProxyEntryPage() {
   }
 
   function handleEnterTime() {
-    if (!selectedMember || !userId) return;
+    if (!selectedMember || !memberId) return;
 
-    enableProxyMode(userId, selectedMember);
+    enableProxyMode(memberId, selectedMember);
     router.push("/worklog");
   }
 
@@ -86,7 +86,7 @@ export default function ProxyEntryPage() {
         {/* Member Selection Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <MemberSelector
-            managerId={userId}
+            managerId={memberId}
             selectedMember={selectedMember}
             onSelectMember={setSelectedMember}
             includeIndirect={false}

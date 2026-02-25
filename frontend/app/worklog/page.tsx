@@ -30,7 +30,7 @@ export default function WorkLogPage() {
   const [isCopyDialogOpen, setIsCopyDialogOpen] = useState(false);
 
   // Authentication state
-  const { userId } = useAuth();
+  const { memberId } = useAuth();
 
   // Proxy mode state
   const { isProxyMode, targetMember, disableProxyMode } = useProxyMode();
@@ -43,8 +43,8 @@ export default function WorkLogPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1); // 1-indexed
 
-  // Use target member ID if in proxy mode, otherwise use current user
-  const effectiveMemberId = isProxyMode && targetMember ? targetMember.id : (userId ?? "");
+  // Use target member ID if in proxy mode, otherwise use current user's member
+  const effectiveMemberId = isProxyMode && targetMember ? targetMember.id : (memberId ?? "");
 
   const loadCalendar = useCallback(async () => {
     setIsLoading(true);
@@ -256,7 +256,13 @@ export default function WorkLogPage() {
 
             {/* Monthly Summary (T072) */}
             <div className="mt-6">
-              <MonthlySummary year={year} month={month} memberId={effectiveMemberId} />
+              <MonthlySummary
+                year={year}
+                month={month}
+                memberId={effectiveMemberId}
+                fiscalMonthStart={calendarData.periodStart}
+                fiscalMonthEnd={calendarData.periodEnd}
+              />
             </div>
           </>
         )}
