@@ -77,6 +77,7 @@
     "users": "ユーザー管理",
     "projects": "プロジェクト管理",
     "assignments": "アサイン管理",
+    "masterData": "マスタデータ",
     "notifications": "通知"
   },
   "auth": {
@@ -440,6 +441,7 @@
       "users": "ユーザー管理",
       "projects": "プロジェクト管理",
       "assignments": "アサイン管理",
+      "masterData": "マスタデータ",
       "dailyApproval": "日次承認",
       "monthlyApproval": "月次承認",
       "settings": "設定",
@@ -461,7 +463,8 @@
         "dailyApprovalDescription": "チームメンバーの日次記録を承認・却下します",
         "organizationsDescription": "組織の階層構造・マネージャー割当・パターン設定を管理します",
         "tenantsDescription": "テナントの作成・編集・無効化を行います",
-        "usersDescription": "ユーザーアカウントのロール変更・ロック管理を行います"
+        "usersDescription": "ユーザーアカウントのロール変更・ロック管理を行います",
+        "masterDataDescription": "システム共通のプリセットパターンを管理"
       }
     },
     "members": {
@@ -903,6 +906,119 @@
       "processing": "処理中...",
       "assign": "割り当て",
       "transfer": "異動"
+    },
+    "masterData": {
+      "title": "マスタデータ管理",
+      "tabs": {
+        "fiscalYearPatterns": "会計年度パターン",
+        "monthlyPeriodPatterns": "締め日パターン",
+        "holidayCalendars": "祝日カレンダー"
+      },
+      "searchPlaceholder": "名前で検索...",
+      "searchLabel": "名前で検索",
+      "showInactive": "無効を表示",
+      "notFound": "データがありません",
+      "changeFilter": "検索条件を変更してください",
+      "noItemsYet": "まだデータがありません",
+      "saveFailed": "保存に失敗しました",
+      "create": "作成",
+      "edit": "編集",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "confirmDeactivate": "このアイテムを無効にしますか？",
+      "confirmActivate": "このアイテムを有効にしますか？",
+      "deactivated": "無効化しました",
+      "activated": "有効化しました",
+      "created": "作成しました",
+      "updated": "更新しました",
+      "deleted": "削除しました",
+      "confirmDeleteEntry": "この祝日エントリを削除しますか？",
+      "fiscalYear": {
+        "name": "名前",
+        "description": "説明",
+        "startMonth": "開始月",
+        "startDay": "開始日",
+        "status": "ステータス",
+        "actions": "操作",
+        "active": "有効",
+        "inactive": "無効",
+        "createTitle": "会計年度パターンの作成",
+        "editTitle": "会計年度パターンの編集",
+        "nameRequired": "名前は必須です",
+        "startDayRange": "開始日は1から31の間で指定してください",
+        "months": {
+          "1": "1月",
+          "2": "2月",
+          "3": "3月",
+          "4": "4月",
+          "5": "5月",
+          "6": "6月",
+          "7": "7月",
+          "8": "8月",
+          "9": "9月",
+          "10": "10月",
+          "11": "11月",
+          "12": "12月"
+        }
+      },
+      "monthlyPeriod": {
+        "name": "名前",
+        "description": "説明",
+        "startDay": "開始日",
+        "status": "ステータス",
+        "actions": "操作",
+        "active": "有効",
+        "inactive": "無効",
+        "createTitle": "締め日パターンの作成",
+        "editTitle": "締め日パターンの編集",
+        "nameRequired": "名前は必須です",
+        "startDayRange": "開始日は1から28の間で指定してください"
+      },
+      "holidayCalendar": {
+        "name": "名前",
+        "description": "説明",
+        "country": "国",
+        "entryCount": "エントリ数",
+        "status": "ステータス",
+        "actions": "操作",
+        "active": "有効",
+        "inactive": "無効",
+        "createTitle": "祝日カレンダーの作成",
+        "editTitle": "祝日カレンダーの編集",
+        "nameRequired": "名前は必須です",
+        "entries": "祝日エントリ",
+        "addEntry": "祝日を追加",
+        "entryName": "祝日名",
+        "entryType": "種類",
+        "entryFixed": "固定日",
+        "entryNthWeekday": "第N曜日",
+        "month": "月",
+        "day": "日",
+        "nthOccurrence": "第N",
+        "dayOfWeek": "曜日",
+        "specificYear": "特定年（任意）",
+        "editEntry": "祝日エントリの編集",
+        "createEntry": "祝日エントリの追加",
+        "weekdays": {
+          "1": "月曜日",
+          "2": "火曜日",
+          "3": "水曜日",
+          "4": "木曜日",
+          "5": "金曜日",
+          "6": "土曜日",
+          "7": "日曜日"
+        },
+        "nthLabels": {
+          "1": "第1",
+          "2": "第2",
+          "3": "第3",
+          "4": "第4",
+          "5": "第5"
+        },
+        "expandEntries": "エントリを表示",
+        "collapseEntries": "エントリを非表示",
+        "nthWeekdayFormat": "{month} {nth}{weekday}"
+      }
     }
   },
   "notifications": {

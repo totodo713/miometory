@@ -48,6 +48,12 @@ const CARDS: CardDef[] = [
     descriptionKey: "cards.tenantsDescription",
     href: "/admin/tenants",
   },
+  {
+    permission: "master_data.view",
+    titleKey: "masterData",
+    descriptionKey: "cards.masterDataDescription",
+    href: "/admin/master-data",
+  },
   { permission: "user.view", titleKey: "users", descriptionKey: "cards.usersDescription", href: "/admin/users" },
 ];
 

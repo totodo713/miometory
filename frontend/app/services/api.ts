@@ -12,6 +12,13 @@
  * Session timeout (30 minutes) is handled client-side via session timeout warnings.
  */
 
+import type {
+  FiscalYearPresetRow,
+  HolidayCalendarPresetRow,
+  HolidayEntryRow,
+  MonthlyPeriodPresetRow,
+  PresetPage,
+} from "@/types/masterData";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 import { getCsrfToken } from "./csrf";
 
@@ -1076,6 +1083,106 @@ export const api = {
         apiClient.post<FiscalYearPatternOption>(`/api/v1/tenants/${tenantId}/fiscal-year-patterns`, data),
       createMonthlyPeriodPattern: (tenantId: string, data: { name: string; startDay: number }) =>
         apiClient.post<MonthlyPeriodPatternOption>(`/api/v1/tenants/${tenantId}/monthly-period-patterns`, data),
+    },
+
+    /**
+     * Master data preset management endpoints (SYSTEM_ADMIN only)
+     */
+    masterData: {
+      fiscalYearPresets: {
+        list: (params?: { search?: string; isActive?: boolean; page?: number; size?: number }) => {
+          const query = new URLSearchParams();
+          if (params?.search) query.set("search", params.search);
+          if (params?.isActive !== undefined) query.set("isActive", params.isActive.toString());
+          if (params?.page !== undefined) query.set("page", params.page.toString());
+          if (params?.size !== undefined) query.set("size", params.size.toString());
+          const qs = query.toString();
+          return apiClient.get<PresetPage<FiscalYearPresetRow>>(
+            `/api/v1/admin/master-data/fiscal-year-patterns${qs ? `?${qs}` : ""}`,
+          );
+        },
+        create: (data: { name: string; description?: string; startMonth: number; startDay: number }) =>
+          apiClient.post<{ id: string }>("/api/v1/admin/master-data/fiscal-year-patterns", data),
+        update: (id: string, data: { name: string; description?: string; startMonth: number; startDay: number }) =>
+          apiClient.put<void>(`/api/v1/admin/master-data/fiscal-year-patterns/${id}`, data),
+        deactivate: (id: string) =>
+          apiClient.patch<void>(`/api/v1/admin/master-data/fiscal-year-patterns/${id}/deactivate`, {}),
+        activate: (id: string) =>
+          apiClient.patch<void>(`/api/v1/admin/master-data/fiscal-year-patterns/${id}/activate`, {}),
+      },
+
+      monthlyPeriodPresets: {
+        list: (params?: { search?: string; isActive?: boolean; page?: number; size?: number }) => {
+          const query = new URLSearchParams();
+          if (params?.search) query.set("search", params.search);
+          if (params?.isActive !== undefined) query.set("isActive", params.isActive.toString());
+          if (params?.page !== undefined) query.set("page", params.page.toString());
+          if (params?.size !== undefined) query.set("size", params.size.toString());
+          const qs = query.toString();
+          return apiClient.get<PresetPage<MonthlyPeriodPresetRow>>(
+            `/api/v1/admin/master-data/monthly-period-patterns${qs ? `?${qs}` : ""}`,
+          );
+        },
+        create: (data: { name: string; description?: string; startDay: number }) =>
+          apiClient.post<{ id: string }>("/api/v1/admin/master-data/monthly-period-patterns", data),
+        update: (id: string, data: { name: string; description?: string; startDay: number }) =>
+          apiClient.put<void>(`/api/v1/admin/master-data/monthly-period-patterns/${id}`, data),
+        deactivate: (id: string) =>
+          apiClient.patch<void>(`/api/v1/admin/master-data/monthly-period-patterns/${id}/deactivate`, {}),
+        activate: (id: string) =>
+          apiClient.patch<void>(`/api/v1/admin/master-data/monthly-period-patterns/${id}/activate`, {}),
+      },
+
+      holidayCalendars: {
+        list: (params?: { search?: string; isActive?: boolean; page?: number; size?: number }) => {
+          const query = new URLSearchParams();
+          if (params?.search) query.set("search", params.search);
+          if (params?.isActive !== undefined) query.set("isActive", params.isActive.toString());
+          if (params?.page !== undefined) query.set("page", params.page.toString());
+          if (params?.size !== undefined) query.set("size", params.size.toString());
+          const qs = query.toString();
+          return apiClient.get<PresetPage<HolidayCalendarPresetRow>>(
+            `/api/v1/admin/master-data/holiday-calendars${qs ? `?${qs}` : ""}`,
+          );
+        },
+        create: (data: { name: string; description?: string; country?: string }) =>
+          apiClient.post<{ id: string }>("/api/v1/admin/master-data/holiday-calendars", data),
+        update: (id: string, data: { name: string; description?: string; country?: string }) =>
+          apiClient.put<void>(`/api/v1/admin/master-data/holiday-calendars/${id}`, data),
+        deactivate: (id: string) =>
+          apiClient.patch<void>(`/api/v1/admin/master-data/holiday-calendars/${id}/deactivate`, {}),
+        activate: (id: string) =>
+          apiClient.patch<void>(`/api/v1/admin/master-data/holiday-calendars/${id}/activate`, {}),
+        listEntries: (calendarId: string) =>
+          apiClient.get<HolidayEntryRow[]>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries`),
+        addEntry: (
+          calendarId: string,
+          data: {
+            name: string;
+            entryType: string;
+            month: number;
+            day?: number;
+            nthOccurrence?: number;
+            dayOfWeek?: number;
+            specificYear?: number;
+          },
+        ) => apiClient.post<{ id: string }>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries`, data),
+        updateEntry: (
+          calendarId: string,
+          entryId: string,
+          data: {
+            name: string;
+            entryType: string;
+            month: number;
+            day?: number;
+            nthOccurrence?: number;
+            dayOfWeek?: number;
+            specificYear?: number;
+          },
+        ) => apiClient.put<void>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries/${entryId}`, data),
+        deleteEntry: (calendarId: string, entryId: string) =>
+          apiClient.delete<void>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries/${entryId}`),
+      },
     },
   },
 
