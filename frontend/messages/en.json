@@ -75,6 +75,7 @@
     "users": "Users",
     "projects": "Projects",
     "assignments": "Assignments",
+    "masterData": "Master Data",
     "notifications": "Notifications"
   },
   "auth": {
@@ -895,6 +896,7 @@
       "created": "Created successfully",
       "updated": "Updated successfully",
       "deleted": "Deleted successfully",
+      "confirmDeleteEntry": "Are you sure you want to delete this holiday entry?",
       "fiscalYear": {
         "name": "Name",
         "description": "Description",
