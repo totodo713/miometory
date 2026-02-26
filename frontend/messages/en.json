@@ -75,6 +75,7 @@
     "users": "Users",
     "projects": "Projects",
     "assignments": "Assignments",
+    "masterData": "Master Data",
     "notifications": "Notifications"
   },
   "auth": {
@@ -438,6 +439,7 @@
       "users": "Users",
       "projects": "Projects",
       "assignments": "Assignments",
+      "masterData": "Master Data",
       "dailyApproval": "Daily Approval",
       "monthlyApproval": "Monthly Approval",
       "sectionLabels": {
@@ -458,7 +460,8 @@
         "dailyApprovalDescription": "Approve or reject team daily entries",
         "organizationsDescription": "Manage organization hierarchy, managers, and patterns",
         "tenantsDescription": "Create, edit, and deactivate tenants",
-        "usersDescription": "Change user roles and manage account locks"
+        "usersDescription": "Change user roles and manage account locks",
+        "masterDataDescription": "Manage system-wide preset patterns"
       }
     },
     "members": {
@@ -867,6 +870,119 @@
       "processing": "Processing...",
       "assign": "Assign",
       "transfer": "Transfer"
+    },
+    "masterData": {
+      "title": "Master Data Management",
+      "tabs": {
+        "fiscalYearPatterns": "Fiscal Year Patterns",
+        "monthlyPeriodPatterns": "Monthly Period Patterns",
+        "holidayCalendars": "Holiday Calendars"
+      },
+      "searchPlaceholder": "Search by name...",
+      "searchLabel": "Search by name",
+      "showInactive": "Show inactive",
+      "notFound": "No items found",
+      "changeFilter": "Try changing your search criteria",
+      "noItemsYet": "No items yet",
+      "saveFailed": "Failed to save",
+      "create": "Create",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "confirmDeactivate": "Are you sure you want to deactivate this item?",
+      "confirmActivate": "Are you sure you want to activate this item?",
+      "deactivated": "Deactivated successfully",
+      "activated": "Activated successfully",
+      "created": "Created successfully",
+      "updated": "Updated successfully",
+      "deleted": "Deleted successfully",
+      "confirmDeleteEntry": "Are you sure you want to delete this holiday entry?",
+      "fiscalYear": {
+        "name": "Name",
+        "description": "Description",
+        "startMonth": "Start Month",
+        "startDay": "Start Day",
+        "status": "Status",
+        "actions": "Actions",
+        "active": "Active",
+        "inactive": "Inactive",
+        "createTitle": "Create Fiscal Year Pattern",
+        "editTitle": "Edit Fiscal Year Pattern",
+        "nameRequired": "Name is required",
+        "startDayRange": "Start day must be between 1 and 31",
+        "months": {
+          "1": "January",
+          "2": "February",
+          "3": "March",
+          "4": "April",
+          "5": "May",
+          "6": "June",
+          "7": "July",
+          "8": "August",
+          "9": "September",
+          "10": "October",
+          "11": "November",
+          "12": "December"
+        }
+      },
+      "monthlyPeriod": {
+        "name": "Name",
+        "description": "Description",
+        "startDay": "Start Day",
+        "status": "Status",
+        "actions": "Actions",
+        "active": "Active",
+        "inactive": "Inactive",
+        "createTitle": "Create Monthly Period Pattern",
+        "editTitle": "Edit Monthly Period Pattern",
+        "nameRequired": "Name is required",
+        "startDayRange": "Start day must be between 1 and 28"
+      },
+      "holidayCalendar": {
+        "name": "Name",
+        "description": "Description",
+        "country": "Country",
+        "entryCount": "Entries",
+        "status": "Status",
+        "actions": "Actions",
+        "active": "Active",
+        "inactive": "Inactive",
+        "createTitle": "Create Holiday Calendar",
+        "editTitle": "Edit Holiday Calendar",
+        "nameRequired": "Name is required",
+        "entries": "Holiday Entries",
+        "addEntry": "Add Holiday",
+        "entryName": "Holiday Name",
+        "entryType": "Type",
+        "entryFixed": "Fixed Date",
+        "entryNthWeekday": "Nth Weekday",
+        "month": "Month",
+        "day": "Day",
+        "nthOccurrence": "Nth Occurrence",
+        "dayOfWeek": "Day of Week",
+        "specificYear": "Specific Year (optional)",
+        "editEntry": "Edit Holiday Entry",
+        "createEntry": "Add Holiday Entry",
+        "weekdays": {
+          "1": "Monday",
+          "2": "Tuesday",
+          "3": "Wednesday",
+          "4": "Thursday",
+          "5": "Friday",
+          "6": "Saturday",
+          "7": "Sunday"
+        },
+        "nthLabels": {
+          "1": "1st",
+          "2": "2nd",
+          "3": "3rd",
+          "4": "4th",
+          "5": "5th"
+        },
+        "expandEntries": "Show entries",
+        "collapseEntries": "Hide entries",
+        "nthWeekdayFormat": "{nth} {weekday} of {month}"
+      }
     }
   },
   "notifications": {

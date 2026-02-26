@@ -21,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/members", labelKey: "members", shortLabel: "M", permission: "member.view" },
   { href: "/admin/projects", labelKey: "projects", shortLabel: "P", permission: "project.view" },
   { href: "/admin/assignments", labelKey: "assignments", shortLabel: "A", permission: "assignment.view" },
+  { href: "/admin/master-data", labelKey: "masterData", shortLabel: "MD", permission: "master_data.view" },
   { href: "/admin/organizations", labelKey: "organizations", shortLabel: "O", permission: "organization.view" },
 ];
 
