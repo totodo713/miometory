@@ -60,3 +60,13 @@ PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `check
 - Run `npm ci` in `frontend/` before using `npx biome` — without it, `npx` may resolve a wrong global version
 - CI uses `biome ci` (= `biome check` + format check); locally use `npx biome check` or `npx biome ci` to match
 - Biome version is pinned in `frontend/package.json` (`@biomejs/biome`); always use the project-local binary
+
+## E2E Tests (Playwright)
+
+- WSL2: `npx playwright test --project=chromium` — WebKit/Firefox system deps are missing locally
+- Playwright strict mode: locators matching multiple elements fail; use `.first()` or `{ exact: true }`
+- Button selectors: `has-text("Assign")` also matches `"Assign Manager"` — use `getByRole("button", { name: "Assign", exact: true })` for modals
+- ProjectSelector is a combobox (`role="combobox"` + `role="option"`), not a plain input; use `selectProject()` helper in `fixtures/auth.ts`
+- UI text source of truth: `frontend/messages/en.json` (next-intl) — always verify against this file, not guesses
+- `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
+- When fixing test selectors, read actual UI components first to avoid guesswork and rework
