@@ -171,7 +171,7 @@ export function FiscalYearPresetList({
                 <tr key={preset.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4">{preset.name}</td>
                   <td className="py-3 px-4 text-gray-600 text-xs max-w-[200px] truncate">
-                    {preset.description || "—"}
+                    {preset.description || "\u2014"}
                   </td>
                   <td className="py-3 px-4">{t(`fiscalYear.months.${preset.startMonth}`)}</td>
                   <td className="py-3 px-4 text-center">{preset.startDay}</td>
