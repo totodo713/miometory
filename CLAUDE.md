@@ -8,14 +8,14 @@
 - `auto-test-on-edit.sh` (PostToolUse): Runs relevant tests when source/test files are edited
 - `git-safety-check.sh` (PreToolUse): Blocks dangerous git patterns (force push, --no-verify, branch -D, checkout ., reset --hard, clean, config)
 - `sensitive-file-guard.sh` (PreToolUse): Blocks Write/Edit to sensitive files (.env, credentials, secrets)
-- `require-plan-review.sh` (PostToolUse): Detects plan file writes and mandates multi-agent review (CPO + security + UX)
+- `require-plan-review.sh` (PostToolUse): Detects `docs/plan/` 配下へのファイル書き込みを検知し、multi-agent review を強制 (CPO + security + UX)
 - `pre-pr-test-gate.sh` (PreToolUse): Blocks PR creation until lint, format, tests, and coverage pass
 - Hook pattern: read JSON from stdin → parse with `python3` → exit 0 (allow) or exit 2 (block)
 - New hooks should follow fail-open principle (exit 0 on parse errors)
 
 ## Plan Review Workflow (MANDATORY)
 
-After creating any plan file (`plan.md`, `tasks.md`):
+After `docs/plan/` フォルダ配下にファイルを作成・編集した場合:
 1. The `require-plan-review.sh` PostToolUse hook will automatically detect the write and inject a review directive
 2. You MUST invoke three review agents **in parallel** using the Task tool:
    - `chief-product-officer` — product feasibility, spec alignment, feature completeness

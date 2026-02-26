@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PostToolUse hook: require multi-agent plan review after writing plan files.
-# Detects when plan.md or tasks.md is created/edited and instructs Claude
+# Detects when files under docs/plan/ are created/edited and instructs Claude
 # to invoke three specialist review agents in parallel before implementation.
 #
 # Review agents:
@@ -27,13 +27,13 @@ print(tool_input.get('file_path', ''))
 # Exit if no file path found
 [[ -z "$FILE_PATH" ]] && exit 0
 
-# Normalize to basename for pattern matching
-BASENAME=$(basename "$FILE_PATH")
+# Detect plan files under docs/plan/ directory
+# Match any file written inside the docs/plan/ folder (at any depth)
+if [[ "$FILE_PATH" != */docs/plan/* ]]; then
+  exit 0
+fi
 
-# Detect plan/task files (common naming conventions)
-case "$BASENAME" in
-  plan.md | tasks.md | PLAN.md | TASKS.md)
-    cat <<'DIRECTIVE'
+cat <<'DIRECTIVE'
 MANDATORY PLAN REVIEW: A plan file was just written. Before writing ANY implementation code, you MUST:
 
 1. Invoke the following three review agents IN PARALLEL using the Task tool:
@@ -47,8 +47,7 @@ MANDATORY PLAN REVIEW: A plan file was just written. Before writing ANY implemen
 
 3. Do NOT use Write/Edit on source files until all three reviewers approve.
 DIRECTIVE
-    echo "Plan file detected ($BASENAME). Multi-agent review required before implementation." >&2
-    ;;
-esac
+BASENAME=$(basename "$FILE_PATH")
+echo "Plan file detected (docs/plan/$BASENAME). Multi-agent review required before implementation." >&2
 
 exit 0
