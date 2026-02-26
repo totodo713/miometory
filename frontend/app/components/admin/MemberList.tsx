@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { ApiError, api } from "@/services/api";
+import { ApiError, api, ForbiddenError } from "@/services/api";
 
 interface MemberRow {
   id: string;
@@ -22,9 +22,10 @@ interface MemberListProps {
   onDeactivate: (id: string) => void;
   onActivate: (id: string) => void;
   refreshKey: number;
+  onForbidden?: () => void;
 }
 
-export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: MemberListProps) {
+export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey, onForbidden }: MemberListProps) {
   const t = useTranslations("admin.members");
   const tc = useTranslations("common");
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -58,11 +59,17 @@ export function MemberList({ onEdit, onDeactivate, onActivate, refreshKey }: Mem
       setMembers(result.content);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
+      if (err instanceof ForbiddenError) {
+        if (onForbidden) {
+          onForbidden();
+          return;
+        }
+      }
       setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
-  }, [page, debouncedSearch, showInactive]);
+  }, [page, debouncedSearch, showInactive, onForbidden]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {

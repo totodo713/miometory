@@ -321,10 +321,10 @@ test.describe("Approval Workflow", () => {
     await expect(page.locator(`button[aria-label*="January 25"]`)).toBeVisible();
 
     // Step 2: Verify Submit button is visible (since we have entries)
-    await expect(page.locator('button:has-text("Submit for Approval")')).toBeVisible();
+    await expect(page.locator('button:has-text("Submit Monthly")')).toBeVisible();
 
     // Step 3: Submit month for approval
-    await page.click('button:has-text("Submit for Approval")');
+    await page.click('button:has-text("Submit Monthly")');
 
     // Wait for submission to complete
     await page.waitForTimeout(1000);
@@ -341,8 +341,8 @@ test.describe("Approval Workflow", () => {
 
     // Step 5: Verify entry is read-only (inputs should be disabled)
     await page.waitForSelector('[role="dialog"]');
-    await expect(page.locator('input[id="project-0"]')).toBeDisabled();
-    await expect(page.locator('input[id="hours-0"]')).toBeDisabled();
+    await expect(page.locator("#project-0")).toBeDisabled();
+    await expect(page.locator("#hours-0")).toBeDisabled();
 
     // Verify Save button is hidden (read-only mode)
     await expect(page.locator('button:has-text("Save")')).not.toBeVisible();
@@ -366,7 +366,7 @@ test.describe("Approval Workflow", () => {
     await expect(page.locator(`button[aria-label*="January 25"]`)).toBeVisible();
 
     // Step 2: Submit month for approval
-    await page.click('button:has-text("Submit for Approval")');
+    await page.click('button:has-text("Submit Monthly")');
     await page.waitForTimeout(1000);
 
     // Step 3: Simulate rejection by resetting approval state
@@ -409,7 +409,7 @@ test.describe("Approval Workflow", () => {
     // The mock has 8h for the testDate
 
     // Step 3: Submit month
-    await page.click('button:has-text("Submit for Approval")');
+    await page.click('button:has-text("Submit Monthly")');
     await page.waitForTimeout(1000);
 
     // Verify submission state changed
@@ -437,14 +437,14 @@ test.describe("Approval Workflow", () => {
 
     // Verify delete/remove button is visible for DRAFT entry
     // The form shows "Remove" for removing project rows and "Delete Entry" for deleting
-    const removeButton = page.locator('button:has-text("Remove")').or(page.locator('button:has-text("Delete Entry")'));
+    const removeButton = page.locator('button:has-text("Remove Entry")').or(page.locator('button:has-text("Delete")'));
     await expect(removeButton.first()).toBeVisible();
 
     // Step 2: Go back to calendar
     await page.goto(`/worklog`, { waitUntil: "networkidle" });
 
     // Submit month for approval
-    await page.click('button:has-text("Submit for Approval")');
+    await page.click('button:has-text("Submit Monthly")');
     await page.waitForTimeout(1000);
 
     // Step 3: Go back to entry

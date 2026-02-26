@@ -82,7 +82,10 @@ export function AdminNav() {
               {t("sectionLabels.management")}
             </p>
             {adminContext && (
-              <p className="mt-1 text-sm text-gray-700 truncate">{adminContext.role.replace(/_/g, " ")}</p>
+              <>
+                <p className="mt-1 text-sm text-gray-700 truncate">{adminContext.role.replace(/_/g, " ")}</p>
+                {adminContext.tenantName && <p className="text-xs text-gray-500 truncate">{adminContext.tenantName}</p>}
+              </>
             )}
           </>
         )}
@@ -168,6 +171,9 @@ export function AdminNav() {
               {adminContext && (
                 <div className="px-4 py-2 border-b border-gray-200">
                   <p className="text-sm text-gray-700 truncate">{adminContext.role.replace(/_/g, " ")}</p>
+                  {adminContext.tenantName && (
+                    <p className="text-xs text-gray-500 truncate">{adminContext.tenantName}</p>
+                  )}
                 </div>
               )}
               <ul className="py-2">

@@ -11,7 +11,7 @@
  * - Data persists after page reload
  */
 
-import { expect, mockProjectsApi, test } from "./fixtures/auth";
+import { expect, mockProjectsApi, selectProject, test } from "./fixtures/auth";
 
 test.describe("Daily Entry Workflow", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";
@@ -175,7 +175,7 @@ test.describe("Daily Entry Workflow", () => {
     }
 
     // Verify calendar is loaded
-    await expect(page.locator("h1")).toContainText("Miometry", {
+    await expect(page.locator("h1")).toContainText("Worklog", {
       timeout: 10000,
     });
 
@@ -193,28 +193,23 @@ test.describe("Daily Entry Workflow", () => {
 
     // Wait for form to load
     await page.waitForLoadState("networkidle");
-    await page.waitForSelector('input[id="project-0"]', { timeout: 10000 });
+    await page.waitForSelector('[role="combobox"]', { timeout: 10000 });
 
     // Verify form is loaded
-    await expect(page.locator("h2, h3")).toContainText(/Work Log Entry|Daily Entry|2026-01-15/i);
+    await expect(page.locator("h2, h3")).toContainText(/Worklog for/i);
 
     // Step 4: Enter time for first project
-    // Add first project row (project is text input, not select)
-    const firstProjectInput = page.locator('input[id="project-0"]');
+    await selectProject(page, 0, "Project Alpha");
     const firstHoursInput = page.locator('input[id="hours-0"]');
-
-    await firstProjectInput.fill("project-1");
     await firstHoursInput.fill("5");
 
     // Step 5: Add second project
-    // Click "Add Project" button
-    await page.click('button:has-text("+ Add Project")');
+    // Click "Add Entry" button
+    await page.click('button:has-text("+ Add Entry")');
 
     // Fill second project row
-    const secondProjectInput = page.locator('input[id="project-1"]');
+    await selectProject(page, 1, "Project Beta");
     const secondHoursInput = page.locator('input[id="hours-1"]');
-
-    await secondProjectInput.fill("project-2");
     await secondHoursInput.fill("3");
 
     // Step 6: Verify total hours calculation (use .first() to target main total display)
@@ -231,11 +226,10 @@ test.describe("Daily Entry Workflow", () => {
     // Navigate to daily entry form
     await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
-    await page.waitForSelector('input[id="hours-0"]', { timeout: 10000 });
+    await page.waitForSelector('[role="combobox"]', { timeout: 10000 });
 
     // Fill in project first
-    const projectInput = page.locator('input[id="project-0"]');
-    await projectInput.fill("project-1");
+    await selectProject(page, 0, "Project Alpha");
 
     // Enter hours exceeding 24
     const hoursInput = page.locator('input[id="hours-0"]');
@@ -257,18 +251,14 @@ test.describe("Daily Entry Workflow", () => {
     await page.goto(`/worklog/${testDate}`);
 
     // Enter time with 15-minute increments
-    const projectInput = page.locator('input[id="project-0"]');
+    await selectProject(page, 0, "Project Alpha");
     const hoursInput = page.locator('input[id="hours-0"]');
-
-    await projectInput.fill("project-1");
     await hoursInput.fill("2.25"); // 2 hours 15 minutes
 
     // Add another project with 0.5h
-    await page.click('button:has-text("+ Add Project")');
-    const secondProjectInput = page.locator('input[id="project-1"]');
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 1, "Project Beta");
     const secondHoursInput = page.locator('input[id="hours-1"]');
-
-    await secondProjectInput.fill("project-2");
     await secondHoursInput.fill("0.75"); // 45 minutes
 
     // Verify total: 2.25 + 0.75 = 3.0 (use .first() to target main total display)
@@ -300,28 +290,28 @@ test.describe("Daily Entry Workflow", () => {
     await page.goto(`/worklog/${testDate}`);
 
     // Initially should have 1 row
-    const projectRows = page.locator('input[id^="project-"]');
+    const projectRows = page.locator('[role="combobox"]');
     await expect(projectRows).toHaveCount(1);
 
     // Add 2 more rows
-    await page.click('button:has-text("+ Add Project")');
-    await page.click('button:has-text("+ Add Project")');
+    await page.click('button:has-text("+ Add Entry")');
+    await page.click('button:has-text("+ Add Entry")');
 
     // Should now have 3 rows
     await expect(projectRows).toHaveCount(3);
 
     // Fill all rows
-    await page.locator('input[id="project-0"]').fill("project-1");
+    await selectProject(page, 0, "Project Alpha");
     await page.locator('input[id="hours-0"]').fill("3");
 
-    await page.locator('input[id="project-1"]').fill("project-2");
+    await selectProject(page, 1, "Project Beta");
     await page.locator('input[id="hours-1"]').fill("2");
 
-    await page.locator('input[id="project-2"]').fill("project-3");
+    await selectProject(page, 2, "Project Alpha");
     await page.locator('input[id="hours-2"]').fill("1");
 
     // Remove middle row
-    const removeButtons = page.locator('button:has-text("Remove")');
+    const removeButtons = page.locator('button:has-text("Remove Entry")');
     await removeButtons.nth(1).click();
 
     // Should now have 2 rows

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { ApiError, api } from "@/services/api";
+import { ApiError, api, ForbiddenError } from "@/services/api";
 
 interface ProjectRow {
   id: string;
@@ -21,10 +21,11 @@ interface ProjectListProps {
   onEdit: (project: ProjectRow) => void;
   onDeactivate: (id: string) => void;
   onActivate: (id: string) => void;
+  onForbidden?: () => void;
   refreshKey: number;
 }
 
-export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: ProjectListProps) {
+export function ProjectList({ onEdit, onDeactivate, onActivate, onForbidden, refreshKey }: ProjectListProps) {
   const t = useTranslations("admin.projects");
   const tc = useTranslations("common");
   const [projects, setProjects] = useState<ProjectRow[]>([]);
@@ -58,11 +59,17 @@ export function ProjectList({ onEdit, onDeactivate, onActivate, refreshKey }: Pr
       setProjects(result.content);
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
+      if (err instanceof ForbiddenError) {
+        if (onForbidden) {
+          onForbidden();
+          return;
+        }
+      }
       setLoadError(err instanceof ApiError ? err.message : tc("fetchError"));
     } finally {
       setIsLoading(false);
     }
-  }, [page, debouncedSearch, showInactive]);
+  }, [page, debouncedSearch, showInactive, onForbidden]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
   useEffect(() => {

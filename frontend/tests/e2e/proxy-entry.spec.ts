@@ -202,7 +202,7 @@ test.describe("Proxy Entry Workflow", () => {
 
     // Step 2: Click on "Enter Time for Team" link
     const proxyLink = page.getByRole("link", {
-      name: /Enter Time for Team/i,
+      name: /Proxy Mode/i,
     });
     await expect(proxyLink).toBeVisible();
     await proxyLink.click();
@@ -211,7 +211,7 @@ test.describe("Proxy Entry Workflow", () => {
     await expect(page).toHaveURL(/\/worklog\/proxy/);
 
     // Step 4: Verify subordinate selector is available (it's a select dropdown)
-    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    const memberSelector = page.locator('select[aria-label="Select member"]');
     await expect(memberSelector).toBeVisible();
 
     // Verify subordinate is listed as an option
@@ -225,24 +225,24 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Select subordinate from dropdown
-    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    const memberSelector = page.locator('select[aria-label="Select member"]');
     await expect(memberSelector).toBeVisible();
     await memberSelector.selectOption({ value: subordinateId });
 
     // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
     const enterTimeButton = page.getByRole("button", {
-      name: /Enter Time for/i,
+      name: /Proxy Entry/i,
     });
     await enterTimeButton.click();
 
     // Should redirect back to worklog with proxy mode enabled
-    await expect(page).toHaveURL(/\/worklog$/);
+    await expect(page).toHaveURL(/\/worklog(\?.*)?$/);
 
     // Verify proxy banner is displayed (text says "Proxy Mode: Entering time for")
-    const proxyBanner = page.getByText(/Proxy Mode: Entering time for/i);
+    const proxyBanner = page.getByText(/Entering for:/i).first();
     await expect(proxyBanner).toBeVisible();
     // Subordinate name appears in the proxy banner
-    await expect(proxyBanner.locator("..").getByText(subordinateName)).toBeVisible();
+    await expect(proxyBanner).toContainText(subordinateName);
   });
 
   test("manager can exit proxy mode", async ({ page }) => {
@@ -252,17 +252,17 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Select subordinate
-    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    const memberSelector = page.locator('select[aria-label="Select member"]');
     await memberSelector.selectOption({ value: subordinateId });
 
     // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
     const enterTimeButton = page.getByRole("button", {
-      name: /Enter Time for/i,
+      name: /Proxy Entry/i,
     });
     await enterTimeButton.click();
 
     // Verify in proxy mode
-    await expect(page.getByText(/Proxy Mode: Entering time for/i)).toBeVisible();
+    await expect(page.getByText(/Entering for:/i)).toBeVisible();
 
     // Click exit proxy mode button
     const exitButton = page.getByRole("button", { name: /Exit Proxy Mode/i });
@@ -270,7 +270,7 @@ test.describe("Proxy Entry Workflow", () => {
     await exitButton.click();
 
     // Verify proxy banner is no longer visible
-    await expect(page.getByText(/Proxy Mode: Entering time for/i)).not.toBeVisible();
+    await expect(page.getByText(/Entering for:/i)).not.toBeVisible();
   });
 
   test("proxy entry form shows 'Entering as' banner", async ({ page }) => {
@@ -280,12 +280,12 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Select subordinate to enter proxy mode
-    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    const memberSelector = page.locator('select[aria-label="Select member"]');
     await memberSelector.selectOption({ value: subordinateId });
 
     // Click Enter Time button (text changes to "Enter Time for {name}" when selected)
     const enterTimeButton = page.getByRole("button", {
-      name: /Enter Time for/i,
+      name: /Proxy Entry/i,
     });
     await enterTimeButton.click();
 
@@ -311,12 +311,12 @@ test.describe("Proxy Entry Workflow", () => {
     });
 
     // Select subordinate
-    const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+    const memberSelector = page.locator('select[aria-label="Select member"]');
     await memberSelector.selectOption({ value: subordinateId });
 
     // Click Enter Time button to enable proxy mode
     const enterTimeButton = page.getByRole("button", {
-      name: /Enter Time for/i,
+      name: /Proxy Entry/i,
     });
     await enterTimeButton.click();
 

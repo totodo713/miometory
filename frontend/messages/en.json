@@ -1,4 +1,9 @@
 {
+  "accessDenied": {
+    "title": "Access Denied",
+    "message": "You do not have permission to view this page. Please contact your administrator.",
+    "backToDashboard": "Back to Dashboard"
+  },
   "common": {
     "loading": "Loading...",
     "saving": "Saving...",
