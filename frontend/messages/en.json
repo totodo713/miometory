@@ -35,6 +35,7 @@
     "today": "Today",
     "search": "Search",
     "filter": "Filter",
+    "details": "Details",
     "noData": "No data available",
     "backToTop": "Back to top",
     "description": "Description",
@@ -440,6 +441,7 @@
       "assignments": "Assignments",
       "dailyApproval": "Daily Approval",
       "monthlyApproval": "Monthly Approval",
+      "settings": "Settings",
       "sectionLabels": {
         "management": "Management",
         "approval": "Approval"
@@ -629,7 +631,40 @@
       "updated": "Organization updated",
       "createError": "Failed to create organization",
       "updateError": "Failed to update organization",
-      "noOrganizations": "No organizations registered"
+      "noOrganizations": "No organizations registered",
+      "effectivePatterns": "Effective Patterns",
+      "inheritedFrom": "Inherited from",
+      "source": {
+        "system": "System default",
+        "tenant": "Tenant default",
+        "organization": "Organization: {name}"
+      }
+    },
+    "systemSettings": {
+      "title": "System Settings",
+      "description": "Configure system-wide default patterns. These values apply when no tenant or organization override is set.",
+      "fiscalYear": {
+        "title": "Default Fiscal Year Pattern",
+        "startMonth": "Start Month",
+        "startDay": "Start Day"
+      },
+      "monthlyPeriod": {
+        "title": "Default Monthly Period Pattern",
+        "startDay": "Start Day"
+      },
+      "saving": "Saving...",
+      "saved": "Settings saved",
+      "saveError": "Failed to save settings",
+      "loadError": "Failed to load settings"
+    },
+    "tenantDefaultPatterns": {
+      "title": "Default Patterns",
+      "description": "Set default patterns for this tenant. Organizations without patterns will inherit these.",
+      "fiscalYearPattern": "Default Fiscal Year Pattern",
+      "monthlyPeriodPattern": "Default Monthly Period Pattern",
+      "noPattern": "None (use system default)",
+      "saved": "Default patterns saved",
+      "saveError": "Failed to save default patterns"
     },
     "users": {
       "title": "Users",

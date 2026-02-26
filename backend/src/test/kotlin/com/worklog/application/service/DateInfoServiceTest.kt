@@ -11,9 +11,9 @@ import com.worklog.domain.tenant.TenantId
 import com.worklog.infrastructure.repository.FiscalYearPatternRepository
 import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository
 import com.worklog.infrastructure.repository.OrganizationRepository
+import com.worklog.infrastructure.repository.TenantRepository
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.jdbc.core.JdbcTemplate
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -47,7 +47,7 @@ class DateInfoServiceTest : IntegrationTestBase() {
     private lateinit var monthlyPeriodPatternRepository: MonthlyPeriodPatternRepository
 
     @Autowired
-    private lateinit var jdbcTemplate: JdbcTemplate
+    private lateinit var tenantRepository: TenantRepository
 
     @Test
     fun `getDateInfo should calculate correct fiscal year and monthly period for root organization`() {
@@ -221,29 +221,33 @@ class DateInfoServiceTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `getDateInfo should fail when no fiscal year pattern in hierarchy`() {
+    fun `getDateInfo should fall back to system default when no fiscal year pattern in hierarchy`() {
         val tenantId = createTenant()
         val mpPatternId = createMonthlyPeriodPattern(tenantId, 21)
 
-        // Root without fiscal year pattern
+        // Root without fiscal year pattern -> should fall back to system default (April 1)
         val org = createOrganization(tenantId, null, "ROOT", null, mpPatternId)
 
-        assertFailsWith<IllegalStateException> {
-            dateInfoService.getDateInfo(org.id.value(), LocalDate.of(2024, 1, 25))
-        }
+        val dateInfo = dateInfoService.getDateInfo(org.id.value(), LocalDate.of(2024, 1, 25))
+        // System default is April 1 start -> FY 2023
+        assertEquals(2023, dateInfo.fiscalYear)
+        assertEquals("system", dateInfo.fiscalYearSource)
+        kotlin.test.assertNull(dateInfo.fiscalYearPatternId)
     }
 
     @Test
-    fun `getDateInfo should fail when no monthly period pattern in hierarchy`() {
+    fun `getDateInfo should fall back to system default when no monthly period pattern in hierarchy`() {
         val tenantId = createTenant()
         val fyPatternId = createFiscalYearPattern(tenantId, 4, 1)
 
-        // Root without monthly period pattern
+        // Root without monthly period pattern -> should fall back to system default (1st)
         val org = createOrganization(tenantId, null, "ROOT", fyPatternId, null)
 
-        assertFailsWith<IllegalStateException> {
-            dateInfoService.getDateInfo(org.id.value(), LocalDate.of(2024, 1, 25))
-        }
+        val dateInfo = dateInfoService.getDateInfo(org.id.value(), LocalDate.of(2024, 1, 25))
+        // System default is 1st day start
+        assertEquals(LocalDate.of(2024, 1, 1), dateInfo.monthlyPeriodStart)
+        assertEquals("system", dateInfo.monthlyPeriodSource)
+        kotlin.test.assertNull(dateInfo.monthlyPeriodPatternId)
     }
 
     @Test
@@ -448,17 +452,77 @@ class DateInfoServiceTest : IntegrationTestBase() {
         assertEquals(2023, dateInfo2.fiscalYear)
     }
 
+    @Test
+    fun `getDateInfo should track source as organization when pattern found on org`() {
+        val tenantId = createTenant()
+        val fyPatternId = createFiscalYearPattern(tenantId, 4, 1)
+        val mpPatternId = createMonthlyPeriodPattern(tenantId, 1)
+
+        val org = createOrganization(tenantId, null, "ROOT", fyPatternId, mpPatternId)
+
+        val dateInfo = dateInfoService.getDateInfo(org.id.value(), LocalDate.of(2024, 1, 25))
+        assertEquals("organization:${org.id.value()}", dateInfo.fiscalYearSource)
+        assertEquals("organization:${org.id.value()}", dateInfo.monthlyPeriodSource)
+    }
+
+    @Test
+    fun `getDateInfo should track source as parent organization when inherited`() {
+        val tenantId = createTenant()
+        val fyPatternId = createFiscalYearPattern(tenantId, 4, 1)
+        val mpPatternId = createMonthlyPeriodPattern(tenantId, 1)
+
+        val root = createOrganization(tenantId, null, "ROOT", fyPatternId, mpPatternId)
+        val child = createOrganization(tenantId, root.id, "CHILD", null, null)
+
+        val dateInfo = dateInfoService.getDateInfo(child.id.value(), LocalDate.of(2024, 1, 25))
+        assertEquals("organization:${root.id.value()}", dateInfo.fiscalYearSource)
+        assertEquals("organization:${root.id.value()}", dateInfo.monthlyPeriodSource)
+    }
+
+    @Test
+    fun `getDateInfo should fall back to tenant default when no org patterns`() {
+        val tenantId = createTenant()
+
+        // Create patterns owned by the tenant
+        val fyPatternId = createFiscalYearPattern(tenantId, 10, 1) // October start
+        val mpPatternId = createMonthlyPeriodPattern(tenantId, 15)
+
+        // Assign as tenant defaults
+        setTenantDefaultPatterns(tenantId, fyPatternId, mpPatternId)
+
+        // Create org with no patterns
+        val org = createOrganization(tenantId, null, "ROOT", null, null)
+
+        val dateInfo = dateInfoService.getDateInfo(org.id.value(), LocalDate.of(2024, 1, 25))
+        assertEquals("tenant", dateInfo.fiscalYearSource)
+        assertEquals("tenant", dateInfo.monthlyPeriodSource)
+        assertEquals(fyPatternId, dateInfo.fiscalYearPatternId)
+        assertEquals(mpPatternId, dateInfo.monthlyPeriodPatternId)
+        // October start: Jan 25 is in FY 2023
+        assertEquals(2023, dateInfo.fiscalYear)
+    }
+
+    @Test
+    fun `getDateInfo should fall back to system default when no org or tenant patterns`() {
+        val tenantId = createTenant()
+
+        // Create org with no patterns, tenant has no defaults
+        val org = createOrganization(tenantId, null, "ROOT", null, null)
+
+        val dateInfo = dateInfoService.getDateInfo(org.id.value(), LocalDate.of(2024, 1, 25))
+        assertEquals("system", dateInfo.fiscalYearSource)
+        assertEquals("system", dateInfo.monthlyPeriodSource)
+        kotlin.test.assertNull(dateInfo.fiscalYearPatternId)
+        kotlin.test.assertNull(dateInfo.monthlyPeriodPatternId)
+        // System default is April 1 start -> FY 2023
+        assertEquals(2023, dateInfo.fiscalYear)
+    }
+
     // Helper methods
 
     private fun createTenant(): TenantId {
         val tenant = Tenant.create("T${UUID.randomUUID().toString().take(8)}", "Test Tenant")
-        jdbcTemplate.update(
-            "INSERT INTO tenant (id, code, name, status) VALUES (?, ?, ?, ?)",
-            tenant.id.value(),
-            tenant.code.value(),
-            tenant.name,
-            tenant.status.name,
-        )
+        tenantRepository.save(tenant)
         return tenant.id
     }
 
@@ -474,6 +538,12 @@ class DateInfoServiceTest : IntegrationTestBase() {
         // Save using repository to persist in event store
         monthlyPeriodPatternRepository.save(pattern)
         return pattern.id.value()
+    }
+
+    private fun setTenantDefaultPatterns(tenantId: TenantId, fyPatternId: UUID?, mpPatternId: UUID?) {
+        val tenant = tenantRepository.findById(tenantId).orElseThrow()
+        tenant.assignDefaultPatterns(fyPatternId, mpPatternId)
+        tenantRepository.save(tenant)
     }
 
     private fun createOrganization(

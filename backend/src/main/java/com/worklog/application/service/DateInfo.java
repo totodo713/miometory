@@ -8,6 +8,12 @@ import java.util.UUID;
  *
  * This is returned by DateInfoService when calculating fiscal year and monthly period
  * for a given date and organization.
+ *
+ * Pattern IDs are nullable when the system default is used (no actual pattern entity exists).
+ * The source fields indicate where the pattern was resolved from:
+ * - "organization:&lt;id&gt;" — from a specific organization in the hierarchy
+ * - "tenant" — from the tenant's default pattern
+ * - "system" — from the system-wide default
  */
 public record DateInfo(
         LocalDate date,
@@ -18,7 +24,9 @@ public record DateInfo(
         LocalDate monthlyPeriodEnd,
         UUID fiscalYearPatternId,
         UUID monthlyPeriodPatternId,
-        UUID organizationId) {
+        UUID organizationId,
+        String fiscalYearSource,
+        String monthlyPeriodSource) {
     public DateInfo {
         if (date == null) {
             throw new IllegalArgumentException("Date cannot be null");
@@ -35,14 +43,14 @@ public record DateInfo(
         if (monthlyPeriodEnd == null) {
             throw new IllegalArgumentException("Monthly period end cannot be null");
         }
-        if (fiscalYearPatternId == null) {
-            throw new IllegalArgumentException("Fiscal year pattern ID cannot be null");
-        }
-        if (monthlyPeriodPatternId == null) {
-            throw new IllegalArgumentException("Monthly period pattern ID cannot be null");
-        }
         if (organizationId == null) {
             throw new IllegalArgumentException("Organization ID cannot be null");
+        }
+        if (fiscalYearSource == null) {
+            throw new IllegalArgumentException("Fiscal year source cannot be null");
+        }
+        if (monthlyPeriodSource == null) {
+            throw new IllegalArgumentException("Monthly period source cannot be null");
         }
     }
 }

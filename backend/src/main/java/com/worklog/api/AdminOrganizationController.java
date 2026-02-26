@@ -2,6 +2,8 @@ package com.worklog.api;
 
 import com.worklog.application.command.CreateOrganizationCommand;
 import com.worklog.application.service.AdminOrganizationService;
+import com.worklog.application.service.DateInfoService;
+import com.worklog.application.service.DateInfoService.EffectivePatterns;
 import com.worklog.application.service.UserContextService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -26,10 +28,13 @@ public class AdminOrganizationController {
 
     private final AdminOrganizationService service;
     private final UserContextService userContextService;
+    private final DateInfoService dateInfoService;
 
-    public AdminOrganizationController(AdminOrganizationService service, UserContextService userContextService) {
+    public AdminOrganizationController(
+            AdminOrganizationService service, UserContextService userContextService, DateInfoService dateInfoService) {
         this.service = service;
         this.userContextService = userContextService;
+        this.dateInfoService = dateInfoService;
     }
 
     @GetMapping
@@ -112,6 +117,13 @@ public class AdminOrganizationController {
             Authentication authentication) {
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         return service.listMembersByOrganization(id, tenantId, page, Math.min(size, 100), isActive);
+    }
+
+    @GetMapping("/{id}/effective-patterns")
+    @PreAuthorize("hasPermission(null, 'organization.view')")
+    public ResponseEntity<EffectivePatterns> getEffectivePatterns(@PathVariable UUID id) {
+        EffectivePatterns patterns = dateInfoService.getEffectivePatterns(id);
+        return ResponseEntity.ok(patterns);
     }
 
     // Request/Response DTOs

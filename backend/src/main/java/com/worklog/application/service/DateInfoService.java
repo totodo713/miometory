@@ -8,9 +8,15 @@ import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
 import com.worklog.domain.organization.Organization;
 import com.worklog.domain.organization.OrganizationId;
+import com.worklog.domain.settings.SystemDefaultFiscalYearPattern;
+import com.worklog.domain.settings.SystemDefaultMonthlyPeriodPattern;
+import com.worklog.domain.tenant.Tenant;
+import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
 import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
 import com.worklog.infrastructure.repository.OrganizationRepository;
+import com.worklog.infrastructure.repository.SystemDefaultSettingsRepository;
+import com.worklog.infrastructure.repository.TenantRepository;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -20,11 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
  * Application service for calculating date information (fiscal year and monthly period)
  * for organizations.
  *
- * This service:
- * - Resolves fiscal year and monthly period patterns from organization hierarchy
- * - Child organizations inherit patterns from parents if not set
- * - Root organizations must have both patterns set
- * - Calculates fiscal year and monthly period for a given date
+ * Resolution chain (3-tier inheritance):
+ * 1. Organization hierarchy — walk up from current org to root
+ * 2. Tenant default — tenant-level default pattern reference
+ * 3. System default — system-wide default values (raw startMonth/startDay)
  */
 @Service
 public class DateInfoService {
@@ -32,14 +37,20 @@ public class DateInfoService {
     private final OrganizationRepository organizationRepository;
     private final FiscalYearPatternRepository fiscalYearPatternRepository;
     private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private final TenantRepository tenantRepository;
+    private final SystemDefaultSettingsRepository systemDefaultSettingsRepository;
 
     public DateInfoService(
             OrganizationRepository organizationRepository,
             FiscalYearPatternRepository fiscalYearPatternRepository,
-            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository) {
+            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository,
+            TenantRepository tenantRepository,
+            SystemDefaultSettingsRepository systemDefaultSettingsRepository) {
         this.organizationRepository = organizationRepository;
         this.fiscalYearPatternRepository = fiscalYearPatternRepository;
         this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
+        this.tenantRepository = tenantRepository;
+        this.systemDefaultSettingsRepository = systemDefaultSettingsRepository;
     }
 
     /**
@@ -47,39 +58,27 @@ public class DateInfoService {
      *
      * @param organizationId The organization ID
      * @param date The date to calculate for
-     * @return DateInfo containing fiscal year and monthly period information
+     * @return DateInfo containing fiscal year, monthly period, and source information
      * @throws IllegalArgumentException if organization not found
      * @throws IllegalStateException if no patterns can be resolved
      */
     @Transactional(readOnly = true)
     public DateInfo getDateInfo(UUID organizationId, LocalDate date) {
-        // Load organization
         Organization org = organizationRepository
                 .findById(new OrganizationId(organizationId))
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + organizationId));
 
-        // Resolve patterns from hierarchy
-        UUID fiscalYearPatternId = resolveFiscalYearPattern(org);
-        UUID monthlyPeriodPatternId = resolveMonthlyPeriodPattern(org);
-
-        if (fiscalYearPatternId == null) {
-            throw new IllegalStateException("No fiscal year pattern found for organization: " + organizationId);
-        }
-
-        if (monthlyPeriodPatternId == null) {
-            throw new IllegalStateException("No monthly period pattern found for organization: " + organizationId);
-        }
-
-        // Load patterns
-        FiscalYearPattern fiscalYearPattern = loadFiscalYearPattern(fiscalYearPatternId);
-        MonthlyPeriodPattern monthlyPeriodPattern = loadMonthlyPeriodPattern(monthlyPeriodPatternId);
+        PatternResolution fyResolution = resolveFiscalYearPattern(org);
+        PatternResolution mpResolution = resolveMonthlyPeriodPattern(org);
 
         // Calculate fiscal year
-        int fiscalYear = fiscalYearPattern.getFiscalYear(date);
-        Pair<LocalDate, LocalDate> fiscalYearRange = fiscalYearPattern.getFiscalYearRange(fiscalYear);
+        FiscalYearPattern fyPattern = loadOrCreateFiscalYearPattern(fyResolution);
+        int fiscalYear = fyPattern.getFiscalYear(date);
+        Pair<LocalDate, LocalDate> fiscalYearRange = fyPattern.getFiscalYearRange(fiscalYear);
 
         // Calculate monthly period
-        MonthlyPeriod monthlyPeriod = monthlyPeriodPattern.getMonthlyPeriod(date);
+        MonthlyPeriodPattern mpPattern = loadOrCreateMonthlyPeriodPattern(mpResolution);
+        MonthlyPeriod monthlyPeriod = mpPattern.getMonthlyPeriod(date);
 
         return new DateInfo(
                 date,
@@ -88,80 +87,126 @@ public class DateInfoService {
                 fiscalYearRange.second(),
                 monthlyPeriod.start(),
                 monthlyPeriod.end(),
-                fiscalYearPatternId,
-                monthlyPeriodPatternId,
-                organizationId);
+                fyResolution.patternId,
+                mpResolution.patternId,
+                organizationId,
+                fyResolution.source,
+                mpResolution.source);
     }
 
     /**
-     * Resolves fiscal year pattern ID from organization hierarchy.
-     * Walks up the hierarchy until a pattern is found.
-     *
-     * @param org The organization to start from
-     * @return The fiscal year pattern ID, or null if not found
+     * Resolves the effective patterns for an organization (used by admin effective-patterns endpoint).
      */
-    private UUID resolveFiscalYearPattern(Organization org) {
-        Organization current = org;
+    @Transactional(readOnly = true)
+    public EffectivePatterns getEffectivePatterns(UUID organizationId) {
+        Organization org = organizationRepository
+                .findById(new OrganizationId(organizationId))
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + organizationId));
 
+        PatternResolution fyResolution = resolveFiscalYearPattern(org);
+        PatternResolution mpResolution = resolveMonthlyPeriodPattern(org);
+
+        return new EffectivePatterns(
+                fyResolution.patternId, fyResolution.source, mpResolution.patternId, mpResolution.source);
+    }
+
+    /**
+     * Resolves fiscal year pattern from organization hierarchy, then tenant, then system.
+     */
+    private PatternResolution resolveFiscalYearPattern(Organization org) {
+        // Step 1: Walk organization hierarchy
+        Organization current = org;
         while (current != null) {
             if (current.getFiscalYearPatternId() != null) {
-                return current.getFiscalYearPatternId();
+                return new PatternResolution(
+                        current.getFiscalYearPatternId(),
+                        "organization:" + current.getId().value());
             }
-
-            // Walk up to parent
             if (current.getParentId() != null) {
                 current = organizationRepository.findById(current.getParentId()).orElse(null);
             } else {
-                // Reached root without finding pattern
                 current = null;
             }
         }
 
-        return null;
+        // Step 2: Check tenant default
+        Tenant tenant = tenantRepository.findById(org.getTenantId()).orElse(null);
+        if (tenant != null && tenant.getDefaultFiscalYearPatternId() != null) {
+            return new PatternResolution(tenant.getDefaultFiscalYearPatternId(), "tenant");
+        }
+
+        // Step 3: Fall back to system default
+        return new PatternResolution(null, "system");
     }
 
     /**
-     * Resolves monthly period pattern ID from organization hierarchy.
-     * Walks up the hierarchy until a pattern is found.
-     *
-     * @param org The organization to start from
-     * @return The monthly period pattern ID, or null if not found
+     * Resolves monthly period pattern from organization hierarchy, then tenant, then system.
      */
-    private UUID resolveMonthlyPeriodPattern(Organization org) {
+    private PatternResolution resolveMonthlyPeriodPattern(Organization org) {
+        // Step 1: Walk organization hierarchy
         Organization current = org;
-
         while (current != null) {
             if (current.getMonthlyPeriodPatternId() != null) {
-                return current.getMonthlyPeriodPatternId();
+                return new PatternResolution(
+                        current.getMonthlyPeriodPatternId(),
+                        "organization:" + current.getId().value());
             }
-
-            // Walk up to parent
             if (current.getParentId() != null) {
                 current = organizationRepository.findById(current.getParentId()).orElse(null);
             } else {
-                // Reached root without finding pattern
                 current = null;
             }
         }
 
-        return null;
+        // Step 2: Check tenant default
+        Tenant tenant = tenantRepository.findById(org.getTenantId()).orElse(null);
+        if (tenant != null && tenant.getDefaultMonthlyPeriodPatternId() != null) {
+            return new PatternResolution(tenant.getDefaultMonthlyPeriodPatternId(), "tenant");
+        }
+
+        // Step 3: Fall back to system default
+        return new PatternResolution(null, "system");
     }
 
-    /**
-     * Loads fiscal year pattern from event store via repository.
-     */
-    private FiscalYearPattern loadFiscalYearPattern(UUID patternId) {
-        return fiscalYearPatternRepository
-                .findById(FiscalYearPatternId.of(patternId))
-                .orElseThrow(() -> new IllegalStateException("Fiscal year pattern not found: " + patternId));
+    private FiscalYearPattern loadOrCreateFiscalYearPattern(PatternResolution resolution) {
+        if (resolution.patternId != null) {
+            return fiscalYearPatternRepository
+                    .findById(FiscalYearPatternId.of(resolution.patternId))
+                    .orElseThrow(
+                            () -> new IllegalStateException("Fiscal year pattern not found: " + resolution.patternId));
+        }
+        // System default: create transient pattern for calculation
+        SystemDefaultFiscalYearPattern systemDefault = systemDefaultSettingsRepository.getDefaultFiscalYearPattern();
+        return FiscalYearPattern.createWithId(
+                FiscalYearPatternId.generate(),
+                TenantId.of(new UUID(0, 0)),
+                "System Default",
+                systemDefault.startMonth(),
+                systemDefault.startDay());
     }
 
-    /**
-     * Loads monthly period pattern from event store via repository.
-     */
-    private MonthlyPeriodPattern loadMonthlyPeriodPattern(UUID patternId) {
-        return monthlyPeriodPatternRepository
-                .findById(MonthlyPeriodPatternId.of(patternId))
-                .orElseThrow(() -> new IllegalStateException("Monthly period pattern not found: " + patternId));
+    private MonthlyPeriodPattern loadOrCreateMonthlyPeriodPattern(PatternResolution resolution) {
+        if (resolution.patternId != null) {
+            return monthlyPeriodPatternRepository
+                    .findById(MonthlyPeriodPatternId.of(resolution.patternId))
+                    .orElseThrow(() ->
+                            new IllegalStateException("Monthly period pattern not found: " + resolution.patternId));
+        }
+        // System default: create transient pattern for calculation
+        SystemDefaultMonthlyPeriodPattern systemDefault =
+                systemDefaultSettingsRepository.getDefaultMonthlyPeriodPattern();
+        return MonthlyPeriodPattern.createWithId(
+                MonthlyPeriodPatternId.generate(),
+                TenantId.of(new UUID(0, 0)),
+                "System Default",
+                systemDefault.startDay());
     }
+
+    private record PatternResolution(UUID patternId, String source) {}
+
+    public record EffectivePatterns(
+            UUID fiscalYearPatternId,
+            String fiscalYearSource,
+            UUID monthlyPeriodPatternId,
+            String monthlyPeriodSource) {}
 }

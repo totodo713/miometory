@@ -4,6 +4,7 @@ import com.worklog.domain.shared.AggregateRoot;
 import com.worklog.domain.shared.Code;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.DomainException;
+import java.util.UUID;
 
 /**
  * Tenant aggregate root.
@@ -28,6 +29,8 @@ public class Tenant extends AggregateRoot<TenantId> {
     private Code code;
     private String name;
     private Status status;
+    private UUID defaultFiscalYearPatternId;
+    private UUID defaultMonthlyPeriodPatternId;
 
     // Private constructor for factory method
     private Tenant() {}
@@ -105,6 +108,20 @@ public class Tenant extends AggregateRoot<TenantId> {
     }
 
     /**
+     * Assigns default patterns for this tenant.
+     * Either or both may be null (clearing the tenant-level default).
+     */
+    public void assignDefaultPatterns(UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {
+        if (this.status == Status.INACTIVE) {
+            throw new DomainException("TENANT_INACTIVE", "Cannot update an inactive tenant");
+        }
+
+        TenantDefaultPatternsAssigned event =
+                TenantDefaultPatternsAssigned.create(this.id.value(), fiscalYearPatternId, monthlyPeriodPatternId);
+        raiseEvent(event);
+    }
+
+    /**
      * Reactivates an inactive tenant.
      */
     public void activate() {
@@ -133,6 +150,10 @@ public class Tenant extends AggregateRoot<TenantId> {
             }
             case TenantActivated e -> {
                 this.status = Status.ACTIVE;
+            }
+            case TenantDefaultPatternsAssigned e -> {
+                this.defaultFiscalYearPatternId = e.defaultFiscalYearPatternId();
+                this.defaultMonthlyPeriodPatternId = e.defaultMonthlyPeriodPatternId();
             }
             default ->
                 throw new IllegalArgumentException(
@@ -175,5 +196,13 @@ public class Tenant extends AggregateRoot<TenantId> {
 
     public boolean isActive() {
         return status == Status.ACTIVE;
+    }
+
+    public UUID getDefaultFiscalYearPatternId() {
+        return defaultFiscalYearPatternId;
+    }
+
+    public UUID getDefaultMonthlyPeriodPatternId() {
+        return defaultMonthlyPeriodPatternId;
     }
 }
