@@ -13,6 +13,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { useAdminContext } from "@/providers/AdminProvider";
 import type {
+  EffectivePatterns,
   FiscalYearPatternOption,
   MonthlyPeriodPatternOption,
   OrganizationMemberRow,
@@ -65,6 +66,10 @@ export default function AdminOrganizationsPage() {
   const [patternSuccess, setPatternSuccess] = useState<string | null>(null);
   const [showFiscalYearForm, setShowFiscalYearForm] = useState(false);
   const [showMonthlyPeriodForm, setShowMonthlyPeriodForm] = useState(false);
+
+  // Effective patterns state
+  const [effectivePatterns, setEffectivePatterns] = useState<EffectivePatterns | null>(null);
+  const [isEffectivePatternsLoading, setIsEffectivePatternsLoading] = useState(false);
 
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -133,6 +138,32 @@ export default function AdminOrganizationsPage() {
       cancelled = true;
     };
   }, [selectedOrg, adminContext?.tenantId]);
+
+  // Load effective patterns when org is selected
+  useEffect(() => {
+    if (!selectedOrg) {
+      setEffectivePatterns(null);
+      return;
+    }
+    let cancelled = false;
+
+    const loadEffective = async () => {
+      setIsEffectivePatternsLoading(true);
+      try {
+        const result = await api.admin.organizations.getEffectivePatterns(selectedOrg.id);
+        if (!cancelled) setEffectivePatterns(result);
+      } catch {
+        if (!cancelled) setEffectivePatterns(null);
+      } finally {
+        if (!cancelled) setIsEffectivePatternsLoading(false);
+      }
+    };
+
+    loadEffective();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedOrg]);
 
   // Initialize pattern selections from org data when org is selected from list
   const initPatternSelections = useCallback(
@@ -504,6 +535,45 @@ export default function AdminOrganizationsPage() {
                   </button>
                 </div>
               </div>
+            )}
+          </div>
+
+          {/* Effective patterns (inheritance display) */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("effectivePatterns")}</h2>
+            {isEffectivePatternsLoading ? (
+              <div className="text-sm text-gray-500">{tc("loading")}</div>
+            ) : effectivePatterns ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{t("fiscalYearPattern")}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {t("inheritedFrom")}:{" "}
+                    {effectivePatterns.fiscalYearSource === "system"
+                      ? t("source.system")
+                      : effectivePatterns.fiscalYearSource === "tenant"
+                        ? t("source.tenant")
+                        : t("source.organization", {
+                            name: effectivePatterns.fiscalYearSourceName ?? effectivePatterns.fiscalYearSource,
+                          })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{t("monthlyPeriodPattern")}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {t("inheritedFrom")}:{" "}
+                    {effectivePatterns.monthlyPeriodSource === "system"
+                      ? t("source.system")
+                      : effectivePatterns.monthlyPeriodSource === "tenant"
+                        ? t("source.tenant")
+                        : t("source.organization", {
+                            name: effectivePatterns.monthlyPeriodSourceName ?? effectivePatterns.monthlyPeriodSource,
+                          })}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-gray-500">{tc("noData")}</div>
             )}
           </div>
 

@@ -23,6 +23,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/assignments", labelKey: "assignments", shortLabel: "A", permission: "assignment.view" },
   { href: "/admin/master-data", labelKey: "masterData", shortLabel: "MD", permission: "master_data.view" },
   { href: "/admin/organizations", labelKey: "organizations", shortLabel: "O", permission: "organization.view" },
+  { href: "/admin/settings", labelKey: "settings", shortLabel: "S", permission: "system_settings.view" },
 ];
 
 export function AdminNav() {

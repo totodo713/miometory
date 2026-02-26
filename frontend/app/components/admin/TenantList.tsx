@@ -19,10 +19,11 @@ interface TenantListProps {
   onEdit: (tenant: TenantRow) => void;
   onDeactivate: (id: string) => void;
   onActivate: (id: string) => void;
+  onSelectTenant?: (tenant: TenantRow) => void;
   refreshKey: number;
 }
 
-export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: TenantListProps) {
+export function TenantList({ onEdit, onDeactivate, onActivate, onSelectTenant, refreshKey }: TenantListProps) {
   const format = useFormatter();
   const t = useTranslations("admin.tenants");
   const tc = useTranslations("common");
@@ -110,6 +111,15 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                 {format.dateTime(new Date(tenant.createdAt), { year: "numeric", month: "short", day: "numeric" })}
               </p>
               <div className="flex gap-2 pt-1">
+                {onSelectTenant && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectTenant(tenant)}
+                    className="text-indigo-600 hover:text-indigo-800 text-xs"
+                  >
+                    {tc("details")}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onEdit(tenant)}
@@ -169,6 +179,15 @@ export function TenantList({ onEdit, onDeactivate, onActivate, refreshKey }: Ten
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex justify-end gap-2">
+                      {onSelectTenant && (
+                        <button
+                          type="button"
+                          onClick={() => onSelectTenant(tenant)}
+                          className="text-indigo-600 hover:text-indigo-800 text-xs"
+                        >
+                          {tc("details")}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => onEdit(tenant)}

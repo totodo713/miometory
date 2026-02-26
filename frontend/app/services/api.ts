@@ -969,6 +969,15 @@ export const api = {
       update: (id: string, data: { name: string }) => apiClient.put<void>(`/api/v1/admin/tenants/${id}`, data),
       deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/tenants/${id}/deactivate`, {}),
       activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/tenants/${id}/activate`, {}),
+      getDefaultPatterns: (id: string) =>
+        apiClient.get<{
+          defaultFiscalYearPatternId: string | null;
+          defaultMonthlyPeriodPatternId: string | null;
+        }>(`/api/v1/admin/tenants/${id}/default-patterns`),
+      updateDefaultPatterns: (
+        id: string,
+        data: { defaultFiscalYearPatternId: string | null; defaultMonthlyPeriodPatternId: string | null },
+      ) => apiClient.put<void>(`/api/v1/admin/tenants/${id}/default-patterns`, data),
     },
 
     users: {
@@ -1052,6 +1061,14 @@ export const api = {
           monthlyPeriodStart: string;
           monthlyPeriodEnd: string;
         }>(`/api/v1/tenants/${tenantId}/organizations/${orgId}/date-info`, { date }),
+      getEffectivePatterns: (orgId: string) =>
+        apiClient.get<EffectivePatterns>(`/api/v1/admin/organizations/${orgId}/effective-patterns`),
+    },
+
+    system: {
+      getPatterns: () => apiClient.get<SystemDefaultPatterns>("/api/v1/admin/system/settings/patterns"),
+      updatePatterns: (data: SystemDefaultPatterns) =>
+        apiClient.put<void>("/api/v1/admin/system/settings/patterns", data),
     },
 
     /**
@@ -1259,6 +1276,27 @@ export async function checkAuth(): Promise<boolean> {
 }
 
 /**
+ * System default pattern settings
+ */
+interface SystemDefaultPatterns {
+  fiscalYearStartMonth: number;
+  fiscalYearStartDay: number;
+  monthlyPeriodStartDay: number;
+}
+
+/**
+ * Effective patterns for an organization (resolved from inheritance chain)
+ */
+interface EffectivePatterns {
+  fiscalYearPatternId: string | null;
+  fiscalYearSource: string;
+  fiscalYearSourceName: string | null;
+  monthlyPeriodPatternId: string | null;
+  monthlyPeriodSource: string;
+  monthlyPeriodSourceName: string | null;
+}
+
+/**
  * Organization tree node type for tree view
  */
 interface OrganizationTreeNode {
@@ -1282,4 +1320,6 @@ export type {
   OrganizationTreeNode,
   FiscalYearPatternOption,
   MonthlyPeriodPatternOption,
+  SystemDefaultPatterns,
+  EffectivePatterns,
 };

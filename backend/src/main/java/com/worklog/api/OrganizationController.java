@@ -178,10 +178,19 @@ public class OrganizationController {
             response.put("fiscalYearEnd", dateInfo.fiscalYearEnd().toString());
             response.put("monthlyPeriodStart", dateInfo.monthlyPeriodStart().toString());
             response.put("monthlyPeriodEnd", dateInfo.monthlyPeriodEnd().toString());
-            response.put("fiscalYearPatternId", dateInfo.fiscalYearPatternId().toString());
             response.put(
-                    "monthlyPeriodPatternId", dateInfo.monthlyPeriodPatternId().toString());
+                    "fiscalYearPatternId",
+                    dateInfo.fiscalYearPatternId() != null
+                            ? dateInfo.fiscalYearPatternId().toString()
+                            : null);
+            response.put(
+                    "monthlyPeriodPatternId",
+                    dateInfo.monthlyPeriodPatternId() != null
+                            ? dateInfo.monthlyPeriodPatternId().toString()
+                            : null);
             response.put("organizationId", dateInfo.organizationId().toString());
+            response.put("fiscalYearSource", dateInfo.fiscalYearSource());
+            response.put("monthlyPeriodSource", dateInfo.monthlyPeriodSource());
 
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {

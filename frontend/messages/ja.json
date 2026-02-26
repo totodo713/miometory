@@ -35,7 +35,9 @@
     "today": "今日",
     "search": "検索",
     "filter": "フィルター",
+    "details": "詳細",
     "noData": "データがありません",
+    "back": "戻る",
     "backToTop": "トップに戻る",
     "description": "説明",
     "required": "必須",
@@ -442,6 +444,7 @@
       "masterData": "マスタデータ",
       "dailyApproval": "日次承認",
       "monthlyApproval": "月次承認",
+      "settings": "設定",
       "sectionLabels": {
         "management": "管理",
         "approval": "承認"
@@ -632,7 +635,40 @@
       "updated": "組織を更新しました",
       "createError": "組織の作成に失敗しました",
       "updateError": "組織の更新に失敗しました",
-      "noOrganizations": "組織が登録されていません"
+      "noOrganizations": "組織が登録されていません",
+      "effectivePatterns": "有効なパターン",
+      "inheritedFrom": "継承元",
+      "source": {
+        "system": "システムデフォルト",
+        "tenant": "テナントデフォルト",
+        "organization": "組織: {name}"
+      }
+    },
+    "systemSettings": {
+      "title": "システム設定",
+      "description": "システム全体のデフォルトパターンを設定します。テナントや組織でオーバーライドされていない場合にこの値が適用されます。",
+      "fiscalYear": {
+        "title": "デフォルト会計年度パターン",
+        "startMonth": "開始月",
+        "startDay": "開始日"
+      },
+      "monthlyPeriod": {
+        "title": "デフォルト月次期間パターン",
+        "startDay": "開始日"
+      },
+      "saving": "保存中...",
+      "saved": "設定を保存しました",
+      "saveError": "設定の保存に失敗しました",
+      "loadError": "設定の読み込みに失敗しました"
+    },
+    "tenantDefaultPatterns": {
+      "title": "デフォルトパターン",
+      "description": "このテナントのデフォルトパターンを設定します。パターンが未設定の組織はこの設定を継承します。",
+      "fiscalYearPattern": "デフォルト会計年度パターン",
+      "monthlyPeriodPattern": "デフォルト月次期間パターン",
+      "noPattern": "なし（システムデフォルトを使用）",
+      "saved": "デフォルトパターンを保存しました",
+      "saveError": "デフォルトパターンの保存に失敗しました"
     },
     "users": {
       "title": "ユーザー管理",

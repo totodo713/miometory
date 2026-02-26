@@ -83,18 +83,24 @@ public class TenantRepository {
      */
     private void updateProjection(Tenant tenant) {
         jdbcTemplate.update(
-                "INSERT INTO tenant (id, code, name, status, version, created_at, updated_at) "
-                        + "VALUES (?, ?, ?, ?, ?, NOW(), NOW()) "
+                "INSERT INTO tenant (id, code, name, status, version, "
+                        + "default_fiscal_year_pattern_id, default_monthly_period_pattern_id, "
+                        + "created_at, updated_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "
                         + "status = EXCLUDED.status, "
                         + "version = EXCLUDED.version, "
+                        + "default_fiscal_year_pattern_id = EXCLUDED.default_fiscal_year_pattern_id, "
+                        + "default_monthly_period_pattern_id = EXCLUDED.default_monthly_period_pattern_id, "
                         + "updated_at = NOW()",
                 tenant.getId().value(),
                 tenant.getCode().value(),
                 tenant.getName(),
                 tenant.getStatus().name(),
-                tenant.getVersion());
+                tenant.getVersion(),
+                tenant.getDefaultFiscalYearPatternId(),
+                tenant.getDefaultMonthlyPeriodPatternId());
     }
 
     /**
@@ -107,6 +113,8 @@ public class TenantRepository {
                 case "TenantUpdated" -> objectMapper.readValue(storedEvent.payload(), TenantUpdated.class);
                 case "TenantDeactivated" -> objectMapper.readValue(storedEvent.payload(), TenantDeactivated.class);
                 case "TenantActivated" -> objectMapper.readValue(storedEvent.payload(), TenantActivated.class);
+                case "TenantDefaultPatternsAssigned" ->
+                    objectMapper.readValue(storedEvent.payload(), TenantDefaultPatternsAssigned.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {

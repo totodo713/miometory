@@ -1,6 +1,14 @@
 package com.worklog.api;
 
 import com.worklog.application.service.AdminTenantService;
+import com.worklog.domain.fiscalyear.FiscalYearPatternId;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.shared.DomainException;
+import com.worklog.domain.tenant.Tenant;
+import com.worklog.domain.tenant.TenantId;
+import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
+import com.worklog.infrastructure.repository.TenantRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -22,9 +30,19 @@ import org.springframework.web.bind.annotation.*;
 public class AdminTenantController {
 
     private final AdminTenantService adminTenantService;
+    private final TenantRepository tenantRepository;
+    private final FiscalYearPatternRepository fiscalYearPatternRepository;
+    private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
 
-    public AdminTenantController(AdminTenantService adminTenantService) {
+    public AdminTenantController(
+            AdminTenantService adminTenantService,
+            TenantRepository tenantRepository,
+            FiscalYearPatternRepository fiscalYearPatternRepository,
+            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository) {
         this.adminTenantService = adminTenantService;
+        this.tenantRepository = tenantRepository;
+        this.fiscalYearPatternRepository = fiscalYearPatternRepository;
+        this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
     }
 
     @GetMapping
@@ -76,6 +94,45 @@ public class AdminTenantController {
         return new BootstrapTenantResponse(result);
     }
 
+    @GetMapping("/{id}/default-patterns")
+    @PreAuthorize("hasPermission(null, 'tenant.view')")
+    public ResponseEntity<DefaultPatternsResponse> getDefaultPatterns(@PathVariable UUID id) {
+        Tenant tenant = tenantRepository
+                .findById(TenantId.of(id))
+                .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
+        return ResponseEntity.ok(new DefaultPatternsResponse(
+                tenant.getDefaultFiscalYearPatternId(), tenant.getDefaultMonthlyPeriodPatternId()));
+    }
+
+    @PutMapping("/{id}/default-patterns")
+    @PreAuthorize("hasPermission(null, 'tenant.update')")
+    public ResponseEntity<Void> updateDefaultPatterns(
+            @PathVariable UUID id, @RequestBody @Valid UpdateDefaultPatternsRequest request) {
+        Tenant tenant = tenantRepository
+                .findById(TenantId.of(id))
+                .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
+
+        // Validate that patterns belong to this tenant (if provided)
+        if (request.defaultFiscalYearPatternId() != null) {
+            fiscalYearPatternRepository
+                    .findById(FiscalYearPatternId.of(request.defaultFiscalYearPatternId()))
+                    .filter(p -> p.getTenantId().value().equals(id))
+                    .orElseThrow(() -> new DomainException(
+                            "PATTERN_NOT_OWNED", "Fiscal year pattern does not belong to this tenant"));
+        }
+        if (request.defaultMonthlyPeriodPatternId() != null) {
+            monthlyPeriodPatternRepository
+                    .findById(MonthlyPeriodPatternId.of(request.defaultMonthlyPeriodPatternId()))
+                    .filter(p -> p.getTenantId().value().equals(id))
+                    .orElseThrow(() -> new DomainException(
+                            "PATTERN_NOT_OWNED", "Monthly period pattern does not belong to this tenant"));
+        }
+
+        tenant.assignDefaultPatterns(request.defaultFiscalYearPatternId(), request.defaultMonthlyPeriodPatternId());
+        tenantRepository.save(tenant);
+        return ResponseEntity.noContent().build();
+    }
+
     // Request/Response DTOs
 
     public record CreateTenantRequest(
@@ -113,4 +170,8 @@ public class AdminTenantController {
     public record CreatedOrganization(UUID id, String code) {}
 
     public record CreatedMember(String id, String email, String temporaryPassword) {}
+
+    public record DefaultPatternsResponse(UUID defaultFiscalYearPatternId, UUID defaultMonthlyPeriodPatternId) {}
+
+    public record UpdateDefaultPatternsRequest(UUID defaultFiscalYearPatternId, UUID defaultMonthlyPeriodPatternId) {}
 }

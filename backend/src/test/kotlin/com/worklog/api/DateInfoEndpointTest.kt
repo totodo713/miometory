@@ -253,8 +253,8 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should return error when no patterns found in hierarchy`() {
-        // Given: organization with no patterns (root org, so no inheritance possible)
+    fun `should fall back to system default when no patterns found in hierarchy`() {
+        // Given: organization with no patterns (root org, no inheritance, no tenant defaults)
         val tenantId = createTenantWithProjection()
         val orgId = createOrganization(tenantId, null, null, null)
 
@@ -268,8 +268,8 @@ class DateInfoEndpointTest : IntegrationTestBase() {
                 String::class.java,
             )
 
-        // Then: should return error (500 or 400)
-        assert(response.statusCode.is4xxClientError || response.statusCode.is5xxServerError)
+        // Then: should fall back to system defaults and return 200
+        assertEquals(HttpStatus.OK, response.statusCode)
     }
 
     // ========== Edge Case Tests ==========

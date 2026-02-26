@@ -48,6 +48,8 @@ class PasswordResetE2ETest : IntegrationTestBase() {
         jdbcTemplate.update("DELETE FROM password_reset_tokens")
         jdbcTemplate.update("DELETE FROM user_sessions")
         jdbcTemplate.update("DELETE FROM audit_logs")
+        // Clear FK references from system_default_settings before deleting users
+        jdbcTemplate.update("UPDATE system_default_settings SET updated_by = NULL")
         jdbcTemplate.update("DELETE FROM users")
 
         // Ensure test role exists
