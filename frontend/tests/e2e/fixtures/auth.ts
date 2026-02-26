@@ -2,23 +2,10 @@ import { test as base, type Page } from "@playwright/test";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
-/** Mock globally-called APIs to prevent real backend hits in tests */
+/** Mock polling/background APIs to prevent flaky timeouts in tests.
+ *  admin/context is NOT mocked — it needs the real session to return
+ *  a valid memberId, permissions, and tenantId for pages to render. */
 export async function mockGlobalApis(page: Page) {
-  // Header.tsx → api.admin.getContext()
-  await page.route("**/api/v1/admin/context", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        role: "USER",
-        permissions: [],
-        tenantId: null,
-        tenantName: null,
-        memberId: null,
-      }),
-    });
-  });
-
   // NotificationBell → api.notification.list() (30s polling)
   await page.route("**/api/v1/notifications**", async (route) => {
     await route.fulfill({
@@ -92,6 +79,13 @@ export const test = base.extend({
 });
 
 export { expect } from "@playwright/test";
+
+/** Select a project from the ProjectSelector combobox */
+export async function selectProject(page: Page, index: number, projectName: string) {
+  const combobox = page.locator(`#project-${index}`);
+  await combobox.fill(projectName);
+  await page.locator('[role="option"]').filter({ hasText: projectName }).first().click();
+}
 
 /** Mock the projects API to prevent timeouts in tests */
 export async function mockProjectsApi(

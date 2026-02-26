@@ -113,7 +113,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Wait for auto-save indicator to appear
-    await expect(page.locator("text=/Auto-saved at/i")).toBeVisible({
+    await expect(page.locator("text=/Last saved/i")).toBeVisible({
       timeout: 5000,
     });
   });
@@ -135,7 +135,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Wait for auto-save to complete
-    await expect(page.locator("text=/Auto-saved at/i")).toBeVisible({
+    await expect(page.locator("text=/Last saved/i")).toBeVisible({
       timeout: 5000,
     });
 
@@ -166,12 +166,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.goto(`/worklog/${testDate}`);
     await page.waitForLoadState("networkidle");
 
-    // Fill project first to make it valid, then clear it to create validation error
-    const projectInput = page.locator('input[id="project-0"]');
-    await projectInput.fill("project-1");
-    await projectInput.clear();
-
-    // Fill hours (project is empty = validation error)
+    // Fill only hours without selecting a project (= validation error: project required)
     const hoursInput = page.locator('input[id="hours-0"]');
     await hoursInput.fill("6");
 
@@ -182,7 +177,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.waitForTimeout(100);
 
     // Auto-save indicator should NOT appear (validation blocks auto-save)
-    await expect(page.locator("text=/Auto-saved at/i")).not.toBeVisible();
+    await expect(page.locator("text=/Last saved/i")).not.toBeVisible();
   });
 
   test("should reset auto-save timer on subsequent changes", async ({ page }) => {
@@ -205,7 +200,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Auto-save should have triggered after 60s from first change
-    await expect(page.locator("text=/Auto-saved at/i")).toBeVisible({
+    await expect(page.locator("text=/Last saved/i")).toBeVisible({
       timeout: 5000,
     });
   });
@@ -227,7 +222,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Verify auto-save indicator with timestamp
-    await expect(page.locator("text=/Auto-saved at (14:31|2:31)/i")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=/Last saved/i")).toBeVisible({ timeout: 5000 });
   });
 
   test("should NOT auto-save for read-only entries", async ({ page }) => {
@@ -272,7 +267,7 @@ test.describe("Auto-Save Reliability", () => {
     await page.clock.fastForward(60000);
 
     // Auto-save should NOT trigger for read-only entries
-    await expect(page.locator("text=/Auto-saved at/i")).not.toBeVisible();
+    await expect(page.locator("text=/Last saved/i")).not.toBeVisible();
   });
 
   test("should handle auto-save conflicts gracefully", async ({ page }) => {

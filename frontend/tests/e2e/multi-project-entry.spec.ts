@@ -6,12 +6,9 @@
  * and verify the 24-hour daily limit validation.
  */
 
-import { expect, mockProjectsApi, test } from "./fixtures/auth";
+import { expect, mockProjectsApi, selectProject, test } from "./fixtures/auth";
 
 test.describe("Multi-project time allocation", () => {
-  const projectA = "11111111-1111-1111-1111-111111111111";
-  const projectB = "22222222-2222-2222-2222-222222222222";
-  const projectC = "33333333-3333-3333-3333-333333333333";
   const memberId = "00000000-0000-0000-0000-000000000001";
 
   test.beforeEach(async ({ page }) => {
@@ -130,7 +127,7 @@ test.describe("Multi-project time allocation", () => {
     await page.goto(`/worklog`);
 
     // Wait for calendar to load
-    await expect(page.locator("h1")).toContainText("Miometry");
+    await expect(page.locator("h1")).toContainText("Worklog");
   });
 
   test("should allow adding multiple project entries for the same day", async ({ page }) => {
@@ -138,10 +135,10 @@ test.describe("Multi-project time allocation", () => {
     await page.click('button[aria-label*="January 15"]');
 
     // Wait for the daily entry form to appear
-    await expect(page.locator("text=/Daily Entry/i")).toBeVisible();
+    await expect(page.locator("text=/Worklog for/i")).toBeVisible();
 
     // First row is already present, fill it with 4.5 hours
-    await page.locator('input[id="project-0"]').fill(projectA);
+    await selectProject(page, 0, "Project Alpha");
     await page.locator('input[id="hours-0"]').fill("4.5");
     await page.locator('textarea[id="comment-0"]').fill("Project A work");
 
@@ -149,8 +146,8 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator("text=/4\\.50h/i").first()).toBeVisible();
 
     // Add second project row
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-1"]').fill(projectB);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 1, "Project Beta");
     await page.locator('input[id="hours-1"]').fill("2.5");
     await page.locator('textarea[id="comment-1"]').fill("Project B work");
 
@@ -158,8 +155,8 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator("text=/7\\.00h/i").first()).toBeVisible();
 
     // Add third project row
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-2"]').fill(projectC);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 2, "Project Gamma");
     await page.locator('input[id="hours-2"]').fill("1.0");
     await page.locator('textarea[id="comment-2"]').fill("Internal tasks");
 
@@ -179,10 +176,10 @@ test.describe("Multi-project time allocation", () => {
     await page.click('button[aria-label*="January 16"]');
 
     // Wait for the daily entry form
-    await expect(page.locator("text=/Daily Entry/i")).toBeVisible();
+    await expect(page.locator("text=/Worklog for/i")).toBeVisible();
 
     // Add first entry: 12 hours
-    await page.locator('input[id="project-0"]').fill(projectA);
+    await selectProject(page, 0, "Project Alpha");
     await page.locator('input[id="hours-0"]').fill("12");
     await page.locator('textarea[id="comment-0"]').fill("Long project day");
 
@@ -190,8 +187,8 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator("text=/12\\.00h/i").first()).toBeVisible();
 
     // Add second entry: 10 hours
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-1"]').fill(projectB);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 1, "Project Beta");
     await page.locator('input[id="hours-1"]').fill("10");
     await page.locator('textarea[id="comment-1"]').fill("Another project");
 
@@ -199,8 +196,8 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator("text=/22\\.00h/i").first()).toBeVisible();
 
     // Add third entry: 3 hours (would exceed 24h limit)
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-2"]').fill(projectC);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 2, "Project Gamma");
     await page.locator('input[id="hours-2"]').fill("3");
     await page.locator('textarea[id="comment-2"]').fill("Too much work");
 
@@ -224,20 +221,20 @@ test.describe("Multi-project time allocation", () => {
     // Click on January 17, 2026
     await page.click('button[aria-label*="January 17"]');
 
-    await expect(page.locator("text=/Daily Entry/i")).toBeVisible();
+    await expect(page.locator("text=/Worklog for/i")).toBeVisible();
 
     // Add entries totaling exactly 24 hours
-    await page.locator('input[id="project-0"]').fill(projectA);
+    await selectProject(page, 0, "Project Alpha");
     await page.locator('input[id="hours-0"]').fill("8");
     await page.locator('textarea[id="comment-0"]').fill("Morning shift");
 
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-1"]').fill(projectB);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 1, "Project Beta");
     await page.locator('input[id="hours-1"]').fill("8");
     await page.locator('textarea[id="comment-1"]').fill("Afternoon shift");
 
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-2"]').fill(projectC);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 2, "Project Gamma");
     await page.locator('input[id="hours-2"]').fill("8");
     await page.locator('textarea[id="comment-2"]').fill("Evening shift");
 
@@ -251,8 +248,8 @@ test.describe("Multi-project time allocation", () => {
     await expect(page.locator("text=/cannot exceed 24 hours/i")).not.toBeVisible();
 
     // Try to add one more quarter hour
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-3"]').fill(projectA);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 3, "Project Alpha");
     await page.locator('input[id="hours-3"]').fill("0.25");
     await page.locator('textarea[id="comment-3"]').fill("Extra work");
 
@@ -266,15 +263,15 @@ test.describe("Multi-project time allocation", () => {
     // Click on January 18, 2026
     await page.click('button[aria-label*="January 18"]');
 
-    await expect(page.locator("text=/Daily Entry/i")).toBeVisible();
+    await expect(page.locator("text=/Worklog for/i")).toBeVisible();
 
     // Add two entries
-    await page.locator('input[id="project-0"]').fill(projectA);
+    await selectProject(page, 0, "Project Alpha");
     await page.locator('input[id="hours-0"]').fill("5");
     await page.locator('textarea[id="comment-0"]').fill("Initial work");
 
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-1"]').fill(projectB);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 1, "Project Beta");
     await page.locator('input[id="hours-1"]').fill("3");
     await page.locator('textarea[id="comment-1"]').fill("More work");
 
@@ -302,36 +299,36 @@ test.describe("Multi-project time allocation", () => {
     // Click on January 19, 2026
     await page.click('button[aria-label*="January 19"]');
 
-    await expect(page.locator("text=/Daily Entry/i")).toBeVisible();
+    await expect(page.locator("text=/Worklog for/i")).toBeVisible();
 
     // Add first project
-    await page.locator('input[id="project-0"]').fill(projectA);
+    await selectProject(page, 0, "Project Alpha");
     await page.locator('input[id="hours-0"]').fill("4");
     await page.locator('textarea[id="comment-0"]').fill("Project 1");
 
     // Verify total shows 4.00h
     await expect(page.locator("text=/4\\.00h/i").first()).toBeVisible();
     // Verify Work Hours breakdown appears
-    await expect(page.locator("text=/Work Hours:/i")).toBeVisible();
+    await expect(page.locator("text=/Total Hours/i").first()).toBeVisible();
 
     // Add second project
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-1"]').fill(projectB);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 1, "Project Beta");
     await page.locator('input[id="hours-1"]').fill("3");
     await page.locator('textarea[id="comment-1"]').fill("Project 2");
 
     // Verify total updates to 7.00h
     await expect(page.locator("text=/7\\.00h/i").first()).toBeVisible();
-    await expect(page.locator("text=/Work Hours:/i")).toBeVisible();
+    await expect(page.locator("text=/Total Hours/i").first()).toBeVisible();
 
     // Add third project
-    await page.click('button:has-text("+ Add Project")');
-    await page.locator('input[id="project-2"]').fill(projectC);
+    await page.click('button:has-text("+ Add Entry")');
+    await selectProject(page, 2, "Project Gamma");
     await page.locator('input[id="hours-2"]').fill("2");
     await page.locator('textarea[id="comment-2"]').fill("Project 3");
 
     // Verify total updates to 9.00h
     await expect(page.locator("text=/9\\.00h/i").first()).toBeVisible();
-    await expect(page.locator("text=/Work Hours:/i")).toBeVisible();
+    await expect(page.locator("text=/Total Hours/i").first()).toBeVisible();
   });
 });

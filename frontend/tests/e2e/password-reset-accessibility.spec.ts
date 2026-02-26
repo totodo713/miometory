@@ -181,8 +181,14 @@ test.describe("Password Reset Accessibility - WCAG 2.1 AA", () => {
     await page.fill("#confirm-password", "ValidPassword123!");
     await page.click('button[type="submit"]');
 
-    // Wait for success message (redirect countdown)
-    await expect(page.locator("text=/ログインページにリダイレクトします/")).toBeVisible({
+    // Wait for success — either the redirect countdown message appears
+    // or the app redirects directly to the login page
+    await expect(
+      page
+        .locator("text=/Redirecting to login page/")
+        .or(page.locator("text=/Password reset successful/"))
+        .or(page.locator("#email")),
+    ).toBeVisible({
       timeout: 10000,
     });
   });

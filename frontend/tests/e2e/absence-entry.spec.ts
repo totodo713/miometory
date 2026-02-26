@@ -12,7 +12,7 @@
  * - Calendar shows absence hours with appropriate styling (blue background, 🏖️ icon)
  */
 
-import { expect, mockProjectsApi, test } from "./fixtures/auth";
+import { expect, mockProjectsApi, selectProject, test } from "./fixtures/auth";
 
 test.describe("Absence Entry Workflow", () => {
   const memberId = "00000000-0000-0000-0000-000000000001";
@@ -168,7 +168,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Step 4: Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
 
     // Step 5: Wait for absence form to be visible
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
@@ -183,7 +183,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(page.locator('input[id="hours"]')).toHaveValue("8");
 
     // Step 8: Save absence
-    await page.click('button:has-text("Save Absence")');
+    await page.click('button:has-text("Submit")');
 
     // Step 9: Wait for redirect or success indication
     await page.waitForTimeout(500);
@@ -198,8 +198,8 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Step 1: Add work hours first (4 hours)
-    await page.waitForSelector('input[id="project-0"]', { timeout: 5000 });
-    await page.fill('input[id="project-0"]', "project-1");
+    await page.waitForSelector('[role="combobox"]', { timeout: 5000 });
+    await selectProject(page, 0, "Project Alpha");
     await page.fill('input[id="hours-0"]', "4");
 
     // Step 2: Verify work hours are shown in the daily summary
@@ -207,7 +207,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(page.locator("text=/4\\.00h/i").first()).toBeVisible();
 
     // Step 3: Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
 
     // Step 4: Wait for absence form
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
@@ -218,7 +218,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.fill('textarea[id="reason"]', "Doctor appointment");
 
     // Step 6: Save absence - this should succeed
-    await page.click('button:has-text("Save Absence")');
+    await page.click('button:has-text("Submit")');
 
     // Success - absence saved (work hours would need separate save on Work tab)
     await page.waitForTimeout(500);
@@ -230,8 +230,8 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Step 1: Add work hours (20 hours)
-    await page.waitForSelector('input[id="project-0"]', { timeout: 5000 });
-    await page.fill('input[id="project-0"]', "project-1");
+    await page.waitForSelector('[role="combobox"]', { timeout: 5000 });
+    await selectProject(page, 0, "Project Alpha");
     await page.fill('input[id="hours-0"]', "20");
 
     // Step 2: Verify work hours display shows 20h
@@ -243,7 +243,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(workSaveButton).not.toBeDisabled();
 
     // Step 4: Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
 
     // Step 5: Try to add 8 hours of absence
@@ -253,7 +253,7 @@ test.describe("Absence Entry Workflow", () => {
 
     // Step 6: Save button should be enabled (absence hours alone are valid)
     // Combined validation happens on the server or when both are saved
-    const saveButton = page.locator('button:has-text("Save Absence")');
+    const saveButton = page.locator('button:has-text("Submit")');
     await expect(saveButton).not.toBeDisabled();
   });
 
@@ -263,15 +263,15 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Step 1: Add work hours (16 hours)
-    await page.waitForSelector('input[id="project-0"]', { timeout: 5000 });
-    await page.fill('input[id="project-0"]', "project-1");
+    await page.waitForSelector('[role="combobox"]', { timeout: 5000 });
+    await selectProject(page, 0, "Project Alpha");
     await page.fill('input[id="hours-0"]', "16");
 
     // Step 2: Verify work hours display shows 16h
     await expect(page.locator("text=/16\\.00h/i").first()).toBeVisible();
 
     // Step 3: Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
 
     // Step 4: Add 8 hours of absence (total = 24h, should be valid)
@@ -280,7 +280,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.fill('textarea[id="reason"]', "Vacation half-day");
 
     // Step 5: Save button should be enabled (8h absence is valid)
-    const saveButton = page.locator('button:has-text("Save Absence")');
+    const saveButton = page.locator('button:has-text("Submit")');
     await expect(saveButton).not.toBeDisabled();
 
     // Step 6: Save should succeed
@@ -302,7 +302,7 @@ test.describe("Absence Entry Workflow", () => {
       await page.waitForLoadState("networkidle");
 
       // Switch to Absence tab
-      await page.click('button:has-text("Absence")');
+      await page.click('button:has-text("Leave Request")');
       await page.waitForSelector('select[id="absenceType"]', {
         timeout: 5000,
       });
@@ -316,7 +316,7 @@ test.describe("Absence Entry Workflow", () => {
       await expect(page.locator('select[id="absenceType"]')).toHaveValue(absenceType.value);
 
       // Save should be enabled
-      const saveButton = page.locator('button:has-text("Save Absence")');
+      const saveButton = page.locator('button:has-text("Submit")');
       await expect(saveButton).not.toBeDisabled();
     }
   });
@@ -327,7 +327,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
 
     // Test various quarter-hour increments
@@ -351,7 +351,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
 
     // Fill form with valid data
@@ -375,7 +375,7 @@ test.describe("Absence Entry Workflow", () => {
     expect(textareaValue.length).toBe(500);
 
     // Save button should still be enabled (500 chars is valid)
-    const saveButton = page.locator('button:has-text("Save Absence")');
+    const saveButton = page.locator('button:has-text("Submit")');
     await expect(saveButton).not.toBeDisabled();
   });
 
@@ -385,7 +385,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
 
     // Fill form with exactly 500 character reason
@@ -402,7 +402,7 @@ test.describe("Absence Entry Workflow", () => {
     await expect(page.locator("text=/Reason cannot exceed 500 characters/i")).not.toBeVisible();
 
     // Save button should be enabled
-    const saveButton = page.locator('button:has-text("Save Absence")');
+    const saveButton = page.locator('button:has-text("Submit")');
     await expect(saveButton).not.toBeDisabled();
   });
 
@@ -412,7 +412,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.waitForLoadState("networkidle");
 
     // Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
 
     // Fill form WITHOUT reason
@@ -421,7 +421,7 @@ test.describe("Absence Entry Workflow", () => {
     // Leave reason empty
 
     // Save button should still be enabled
-    const saveButton = page.locator('button:has-text("Save Absence")');
+    const saveButton = page.locator('button:has-text("Submit")');
     await expect(saveButton).not.toBeDisabled();
 
     // Save should succeed
@@ -459,11 +459,11 @@ test.describe("Absence Entry Workflow", () => {
 
     // The DailyEntryForm header should show the existing absence hours
     // from the API response (8h absence hours loaded)
-    await expect(page.locator("text=/Absence Hours:/i")).toBeVisible();
+    await expect(page.locator("text=/Leave Request:/i")).toBeVisible();
     await expect(page.locator("text=/8\\.00h/i").first()).toBeVisible();
 
     // Switch to Absence tab
-    await page.click('button:has-text("Absence")');
+    await page.click('button:has-text("Leave Request")');
     await page.waitForSelector('select[id="absenceType"]', { timeout: 5000 });
 
     // Note: The AbsenceForm is always a fresh form for creating NEW absences
@@ -476,7 +476,7 @@ test.describe("Absence Entry Workflow", () => {
     await page.fill('textarea[id="reason"]', "Additional sick time");
 
     // Save new absence
-    await page.click('button:has-text("Save Absence")');
+    await page.click('button:has-text("Submit")');
     await page.waitForTimeout(500);
 
     // Success - new absence created
@@ -610,13 +610,13 @@ test.describe("Absence Entry Workflow", () => {
       });
     });
 
-    // Navigate to calendar
-    await page.goto(`/worklog`);
+    // Navigate to calendar (explicitly specify year/month to match mock data)
+    await page.goto("/worklog?year=2026&month=1");
     await page.waitForLoadState("networkidle");
 
     // Monthly summary should show work and absence breakdown
     // The MonthlySummary shows total hours with breakdown
-    await expect(page.locator("text=/Total Hours/i")).toBeVisible();
+    await expect(page.locator("text=/Total Hours/i").first()).toBeVisible();
 
     // Look for the absence indicator - there may be multiple (calendar + summary)
     await expect(page.locator("text=🏖️").first()).toBeVisible();

@@ -64,7 +64,7 @@ async function inviteMemberViaOrgPage(page: Page, orgName: string, member: Perso
   await page.waitForLoadState("networkidle");
 
   // Find and click the "create member" button
-  await page.click('button:has-text("メンバー作成")');
+  await page.click('button:has-text("Create Member")');
 
   // Fill in the form
   await page.fill("#new-member-email", member.email);
@@ -75,7 +75,7 @@ async function inviteMemberViaOrgPage(page: Page, orgName: string, member: Perso
     (resp) => resp.url().includes("/api/v1/admin/members") && resp.request().method() === "POST",
   );
 
-  await page.getByRole("button", { name: "作成", exact: true }).click();
+  await page.getByRole("button", { name: "Create", exact: true }).click();
 
   const response = await responsePromise;
   expect(response.ok()).toBe(true);
@@ -157,9 +157,9 @@ async function assignManagerViaOrgPage(
   await page.click(`text=${orgName}`);
   await page.waitForLoadState("networkidle");
 
-  // Find the member row and click "マネージャー割当"
+  // Find the member row and click "Assign Manager"
   const memberRow = page.locator(`tr:has-text("${memberEmail}")`);
-  await memberRow.locator('button:has-text("マネージャー割当")').click();
+  await memberRow.locator('button:has-text("Assign Manager")').click();
 
   // Select the manager from the dropdown (label format: "DisplayName (email)")
   const managerOption = page.locator("#manager-select option").filter({ hasText: managerDisplayName });
@@ -168,8 +168,8 @@ async function assignManagerViaOrgPage(
   expect(optionValue).toBeTruthy();
   await page.selectOption("#manager-select", optionValue as string);
 
-  // Click assign button
-  await page.click('button:has-text("割り当て")');
+  // Click assign button (exact match to avoid matching "Assign Manager" buttons)
+  await page.getByRole("button", { name: "Assign", exact: true }).click();
 
   // Wait for success
   await page.waitForLoadState("networkidle");
@@ -282,7 +282,7 @@ test.describe
       await page.waitForLoadState("networkidle");
 
       // Click create tenant button
-      await page.click('button:has-text("テナント作成")');
+      await page.click('button:has-text("Add Tenant")');
 
       // Fill in tenant form
       tenantCode = `SCEN${Date.now().toString().slice(-6)}`;
@@ -296,8 +296,8 @@ test.describe
         (resp) => resp.url().includes("/api/v1/admin/tenants") && resp.request().method() === "POST",
       );
 
-      // Submit (exact match avoids hitting the "テナント作成" header button)
-      await page.getByRole("button", { name: "作成", exact: true }).click();
+      // Submit (exact match avoids hitting the "Add Tenant" header button)
+      await page.getByRole("button", { name: "Create", exact: true }).click();
 
       // Capture the created tenant ID from the POST response
       const createResponse = await createResponsePromise;
@@ -620,7 +620,7 @@ test.describe
       await page.waitForLoadState("networkidle");
 
       // Select org-b-member-1 from the dropdown
-      const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+      const memberSelector = page.locator('select[aria-label="Select member"]');
       await expect(memberSelector).toBeVisible({ timeout: 10_000 });
 
       // Wait for subordinate options to load, then select by member ID
@@ -630,12 +630,12 @@ test.describe
       await memberSelector.selectOption(orgBMembers[0].id as string);
 
       // Click "Enter Time for..." button and wait for navigation to /worklog
-      await page.click('button:has-text("Enter Time for")');
+      await page.click('button:has-text("Proxy Entry")');
       await page.waitForURL(/\/worklog$/, { timeout: 10_000 });
       await page.waitForLoadState("networkidle");
 
       // Verify proxy mode banner is shown on worklog page (includes member name)
-      await expect(page.getByText(`Entering time for ${orgBMembers[0].displayName}`)).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(/Entering for:/i).first()).toBeVisible({ timeout: 10_000 });
 
       // Enter work log for 3 days (same pattern as Step 10)
       await fillWorkLogEntries(page, "7.5", 3);
@@ -654,8 +654,8 @@ test.describe
       await page.goto("/worklog");
       await page.waitForLoadState("networkidle");
 
-      // Click "Submit for Approval" button (directly submits, no confirmation dialog)
-      const submitButton = page.getByRole("button", { name: "Submit for Approval" });
+      // Click "Submit Monthly" button (directly submits, no confirmation dialog)
+      const submitButton = page.getByRole("button", { name: "Submit Monthly" });
       await expect(submitButton).toBeVisible({ timeout: 10_000 });
       await expect(submitButton).toBeEnabled();
       await submitButton.click();
@@ -714,23 +714,23 @@ test.describe
       await page.goto("/worklog/proxy");
       await page.waitForLoadState("networkidle");
 
-      const memberSelector = page.locator('select[aria-label="Select Team Member"]');
+      const memberSelector = page.locator('select[aria-label="Select member"]');
       await expect(memberSelector).toBeVisible({ timeout: 10_000 });
       await expect(memberSelector.locator(`option:has-text("${orgBMembers[0].displayName}")`)).toBeAttached({
         timeout: 10_000,
       });
       await memberSelector.selectOption(orgBMembers[0].id as string);
-      await page.click('button:has-text("Enter Time for")');
+      await page.click('button:has-text("Proxy Entry")');
       await page.waitForURL(/\/worklog$/, { timeout: 10_000 });
       await page.waitForLoadState("networkidle");
 
       // Verify proxy mode is active on worklog page
-      await expect(page.getByText("Entering time for")).toBeVisible({
+      await expect(page.getByText(/Entering for:/i).first()).toBeVisible({
         timeout: 10_000,
       });
 
-      // Click "Submit for Approval" (proxy submit, no confirmation dialog)
-      const submitButton = page.getByRole("button", { name: /Submit for Approval/ });
+      // Click "Submit Monthly" (proxy submit, no confirmation dialog)
+      const submitButton = page.getByRole("button", { name: /Submit Monthly/ });
       await expect(submitButton).toBeVisible({ timeout: 10_000 });
       await submitButton.click();
 

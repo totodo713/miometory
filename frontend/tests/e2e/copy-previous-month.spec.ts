@@ -122,10 +122,10 @@ test.describe("Copy Previous Month", () => {
     await page.click('button:has-text("Copy Previous Month")');
 
     // Verify dialog appears
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Verify dialog has expected elements
-    await expect(page.locator("text=Select projects to copy")).toBeVisible();
+    await expect(page.locator("text=Copy worklog data from the previous month")).toBeVisible();
   });
 
   test("should show empty state when no previous entries exist", async ({ page }) => {
@@ -151,10 +151,10 @@ test.describe("Copy Previous Month", () => {
     await page.click('button:has-text("Copy Previous Month")');
 
     // Wait for dialog to load
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Should show empty state after loading
-    await expect(page.locator("text=No projects found").or(page.locator("text=Loading projects"))).toBeVisible({
+    await expect(page.locator("text=No previous month data to copy").first()).toBeVisible({
       timeout: 5000,
     });
   });
@@ -162,13 +162,13 @@ test.describe("Copy Previous Month", () => {
   test("should close dialog when Cancel is clicked", async ({ page }) => {
     // Open the dialog
     await page.click('button:has-text("Copy Previous Month")');
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Click Cancel
     await page.click('button:has-text("Cancel")');
 
     // Verify dialog is closed
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).not.toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).not.toBeVisible();
   });
 
   test("should have Copy button disabled when no projects selected", async ({ page }) => {
@@ -178,7 +178,7 @@ test.describe("Copy Previous Month", () => {
 
     // Open the dialog
     await page.click('button:has-text("Copy Previous Month")');
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Wait for loading to complete
     await page.waitForTimeout(1000);
@@ -188,7 +188,7 @@ test.describe("Copy Previous Month", () => {
     const copyButton = page.locator('button:has-text("Copy")').last();
 
     // Check if we have the empty state
-    const hasNoProjects = await page.locator("text=No projects found").isVisible();
+    const hasNoProjects = await page.locator("text=No previous month data to copy").isVisible();
 
     if (hasNoProjects) {
       await expect(copyButton).toBeDisabled();
@@ -198,13 +198,13 @@ test.describe("Copy Previous Month", () => {
   test("should show previous period date range in dialog", async ({ page }) => {
     // Open the dialog
     await page.click('button:has-text("Copy Previous Month")');
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Wait for content to load
     await page.waitForTimeout(500);
 
     // Should show the previous period info
-    await expect(page.locator("text=Previous period:")).toBeVisible();
+    await expect(page.locator("text=Previous period")).toBeVisible();
   });
 
   test("should allow selecting and deselecting projects", async ({ page }) => {
@@ -213,7 +213,7 @@ test.describe("Copy Previous Month", () => {
 
     // Open the dialog
     await page.click('button:has-text("Copy Previous Month")');
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Wait for loading
     await page.waitForTimeout(1000);
@@ -222,14 +222,14 @@ test.describe("Copy Previous Month", () => {
     const hasProjects = await page.locator("text=projects selected").isVisible();
 
     if (hasProjects) {
-      // Click Deselect all
-      await page.click("text=Deselect all");
+      // Click None (deselect all)
+      await page.click('button:has-text("None")');
 
       // Verify count shows 0 selected
       await expect(page.locator("text=0 of")).toBeVisible();
 
-      // Click Select all
-      await page.click("text=Select all");
+      // Click All (select all)
+      await page.click('button:has-text("All")');
 
       // Count should increase
       await expect(page.locator("text=projects selected")).toBeVisible();
@@ -239,7 +239,7 @@ test.describe("Copy Previous Month", () => {
   test("should store copied projects in session storage on confirm", async ({ page }) => {
     // Open the dialog
     await page.click('button:has-text("Copy Previous Month")');
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Wait for loading
     await page.waitForTimeout(1000);
@@ -249,10 +249,10 @@ test.describe("Copy Previous Month", () => {
 
     if (hasProjects) {
       // Click Copy
-      await page.click('button:has-text("Copy (")');
+      await page.click('button:has-text("Copy"):not(:has-text("Copy Previous"))');
 
       // Dialog should close
-      await expect(page.locator('h2:has-text("Copy from Previous Month")')).not.toBeVisible();
+      await expect(page.locator('h2:has-text("Copy Previous Month")')).not.toBeVisible();
 
       // Verify session storage was set
       const copiedProjects = await page.evaluate(() => {
@@ -277,26 +277,26 @@ test.describe("Copy Previous Month", () => {
     await page.waitForLoadState("networkidle");
 
     // Step 2: Navigate to the next month
-    await page.click('button:has-text("Next")');
+    await page.click('button:has-text("Next month")');
     await page.waitForLoadState("networkidle");
 
     // Step 3: Click Copy Previous Month
     await page.click('button:has-text("Copy Previous Month")');
 
     // Step 4: Verify dialog opens
-    await expect(page.locator('h2:has-text("Copy from Previous Month")')).toBeVisible();
+    await expect(page.locator('h2:has-text("Copy Previous Month")')).toBeVisible();
 
     // Step 5: Wait for projects to load
     await page.waitForTimeout(1000);
 
     // Step 6: Either confirm (if projects exist) or close (if empty)
-    const copyButton = page.locator('button:has-text("Copy (")');
+    const copyButton = page.locator('button:has-text("Copy"):not(:has-text("Copy Previous"))');
     const isCopyEnabled = await copyButton.isEnabled().catch(() => false);
 
     if (isCopyEnabled) {
       await copyButton.click();
       // Dialog should close
-      await expect(page.locator('h2:has-text("Copy from Previous Month")')).not.toBeVisible();
+      await expect(page.locator('h2:has-text("Copy Previous Month")')).not.toBeVisible();
     } else {
       // Close dialog
       await page.click('button:has-text("Cancel")');

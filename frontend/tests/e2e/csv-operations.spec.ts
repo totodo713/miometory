@@ -160,7 +160,7 @@ test.describe("CSV Import/Export", () => {
 
     // Click download template button
     const downloadPromise = page.waitForEvent("download");
-    await page.click('button:has-text("Download CSV Template")');
+    await page.click('button:has-text("Download template")');
     const download = await downloadPromise;
 
     // Verify download
@@ -185,10 +185,10 @@ test.describe("CSV Import/Export", () => {
     });
 
     // Click import button
-    await page.click('button:has-text("Import CSV")');
+    await page.click('button:has-text("CSV Import")');
 
     // Wait for import to complete (may have errors if project codes don't exist)
-    await expect(page.locator("text=Import completed!")).toBeVisible({
+    await expect(page.locator("text=/Import completed/i")).toBeVisible({
       timeout: 10000,
     });
 
@@ -201,7 +201,7 @@ test.describe("CSV Import/Export", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify calendar page loaded successfully
-    await expect(page.locator("h1")).toContainText("Miometry");
+    await expect(page.locator("h1")).toContainText("Worklog");
   });
 
   test("should export CSV with correct data", async ({ page }) => {
@@ -250,10 +250,10 @@ test.describe("CSV Import/Export", () => {
       buffer: Buffer.from(csvContent),
     });
 
-    await page.click('button:has-text("Import CSV")');
+    await page.click('button:has-text("CSV Import")');
 
     // Wait longer for import to complete (might be slow when running full suite)
-    await expect(page.locator("text=Import completed!")).toBeVisible({
+    await expect(page.locator("text=/Import completed/i")).toBeVisible({
       timeout: 30000,
     });
 
@@ -262,7 +262,7 @@ test.describe("CSV Import/Export", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify calendar page loaded
-    await expect(page.locator("h1")).toContainText("Miometry");
+    await expect(page.locator("h1")).toContainText("Worklog");
 
     // Step 3: Export CSV for January 2026
     const downloadPromise = page.waitForEvent("download");
@@ -314,10 +314,10 @@ invalid-date,PRJ-002,4.00,Bad date format
       buffer: Buffer.from(invalidCsv),
     });
 
-    await page.click('button:has-text("Import CSV")');
+    await page.click('button:has-text("CSV Import")');
 
     // Wait for import to complete with errors
-    await expect(page.locator("text=Import completed!")).toBeVisible({
+    await expect(page.locator("text=/Import completed/i")).toBeVisible({
       timeout: 10000,
     });
 
@@ -346,11 +346,11 @@ invalid-date,PRJ-002,4.00,Bad date format
       buffer: Buffer.from(csvContent),
     });
 
-    await page.click('button:has-text("Import CSV")');
+    await page.click('button:has-text("CSV Import")');
 
     // Import might complete too fast to see "Importing..." but we can verify completion
     // Wait for completion message
-    await expect(page.locator("text=Import completed!")).toBeVisible({
+    await expect(page.locator("text=/Import completed/i")).toBeVisible({
       timeout: 15000,
     });
 
