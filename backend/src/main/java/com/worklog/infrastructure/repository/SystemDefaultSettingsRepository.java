@@ -49,22 +49,30 @@ public class SystemDefaultSettingsRepository {
     public void updateDefaultFiscalYearPattern(SystemDefaultFiscalYearPattern pattern, UUID updatedBy) {
         String json = String.format("{\"startMonth\": %d, \"startDay\": %d}", pattern.startMonth(), pattern.startDay());
         jdbcTemplate.update(
-                "UPDATE system_default_settings SET setting_value = ?::jsonb, updated_by = ?, updated_at = NOW() "
-                        + "WHERE setting_key = ?",
+                "INSERT INTO system_default_settings (setting_key, setting_value, updated_by, updated_at) "
+                        + "VALUES (?, ?::jsonb, ?, NOW()) "
+                        + "ON CONFLICT (setting_key) DO UPDATE SET "
+                        + "setting_value = EXCLUDED.setting_value, "
+                        + "updated_by = EXCLUDED.updated_by, "
+                        + "updated_at = NOW()",
+                KEY_FISCAL_YEAR,
                 json,
-                updatedBy,
-                KEY_FISCAL_YEAR);
+                updatedBy);
     }
 
     @Transactional
     public void updateDefaultMonthlyPeriodPattern(SystemDefaultMonthlyPeriodPattern pattern, UUID updatedBy) {
         String json = String.format("{\"startDay\": %d}", pattern.startDay());
         jdbcTemplate.update(
-                "UPDATE system_default_settings SET setting_value = ?::jsonb, updated_by = ?, updated_at = NOW() "
-                        + "WHERE setting_key = ?",
+                "INSERT INTO system_default_settings (setting_key, setting_value, updated_by, updated_at) "
+                        + "VALUES (?, ?::jsonb, ?, NOW()) "
+                        + "ON CONFLICT (setting_key) DO UPDATE SET "
+                        + "setting_value = EXCLUDED.setting_value, "
+                        + "updated_by = EXCLUDED.updated_by, "
+                        + "updated_at = NOW()",
+                KEY_MONTHLY_PERIOD,
                 json,
-                updatedBy,
-                KEY_MONTHLY_PERIOD);
+                updatedBy);
     }
 
     private SystemDefaultFiscalYearPattern parseFiscalYearPattern(String json) {

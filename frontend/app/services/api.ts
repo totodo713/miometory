@@ -1183,8 +1183,10 @@ interface SystemDefaultPatterns {
 interface EffectivePatterns {
   fiscalYearPatternId: string | null;
   fiscalYearSource: string;
+  fiscalYearSourceName: string | null;
   monthlyPeriodPatternId: string | null;
   monthlyPeriodSource: string;
+  monthlyPeriodSourceName: string | null;
 }
 
 /**

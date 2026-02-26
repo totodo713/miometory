@@ -60,7 +60,7 @@ public class DateInfoService {
      * @param date The date to calculate for
      * @return DateInfo containing fiscal year, monthly period, and source information
      * @throws IllegalArgumentException if organization not found
-     * @throws IllegalStateException if no patterns can be resolved
+     * @throws IllegalStateException if system default settings are missing or an internal error prevents resolving patterns
      */
     @Transactional(readOnly = true)
     public DateInfo getDateInfo(UUID organizationId, LocalDate date) {
@@ -107,7 +107,23 @@ public class DateInfoService {
         PatternResolution mpResolution = resolveMonthlyPeriodPattern(org);
 
         return new EffectivePatterns(
-                fyResolution.patternId, fyResolution.source, mpResolution.patternId, mpResolution.source);
+                fyResolution.patternId,
+                fyResolution.source,
+                resolveSourceName(fyResolution.source),
+                mpResolution.patternId,
+                mpResolution.source,
+                resolveSourceName(mpResolution.source));
+    }
+
+    private String resolveSourceName(String source) {
+        if (source.startsWith("organization:")) {
+            UUID orgId = UUID.fromString(source.substring("organization:".length()));
+            return organizationRepository
+                    .findById(new OrganizationId(orgId))
+                    .map(Organization::getName)
+                    .orElse(null);
+        }
+        return null;
     }
 
     /**
@@ -207,6 +223,8 @@ public class DateInfoService {
     public record EffectivePatterns(
             UUID fiscalYearPatternId,
             String fiscalYearSource,
+            String fiscalYearSourceName,
             UUID monthlyPeriodPatternId,
-            String monthlyPeriodSource) {}
+            String monthlyPeriodSource,
+            String monthlyPeriodSourceName) {}
 }

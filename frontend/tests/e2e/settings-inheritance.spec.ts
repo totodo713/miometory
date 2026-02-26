@@ -1,8 +1,11 @@
 /** E2E Test: Settings Inheritance (System > Tenant > Organization) */
 
 import { expect, type Page, test } from "@playwright/test";
+import { mockGlobalApis } from "./fixtures/auth";
 
 // --- Setup helpers (no real backend needed — all APIs mocked) ---
+// NOTE: This spec uses fully-mocked APIs (no real backend) unlike other E2E specs
+// that use the shared auth fixture with a real login endpoint.
 
 async function setupMockedPage(page: Page) {
   // Force English locale
@@ -24,20 +27,8 @@ async function setupMockedPage(page: Page) {
     });
   });
 
-  // Mock global APIs (notifications, approvals, rejections)
-  await page.route("**/api/v1/notifications**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ content: [], unreadCount: 0, totalElements: 0, totalPages: 0 }),
-    });
-  });
-  await page.route("**/api/v1/worklog/approvals/member/**", async (route) => {
-    await route.fulfill({ status: 404, contentType: "application/json", body: '{"message":"No approval found"}' });
-  });
-  await page.route("**/api/v1/worklog/rejections/daily**", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: '{"rejections":[]}' });
-  });
+  // Reuse shared global API mocks (notifications, approvals, rejections)
+  await mockGlobalApis(page);
 
   // Mock auth session check
   await page.route("**/api/v1/auth/session", async (route) => {
@@ -110,7 +101,7 @@ test.describe("System Settings Page", () => {
           }),
         });
       } else if (route.request().method() === "PUT") {
-        await route.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+        await route.fulfill({ status: 204 });
       }
     });
   });
@@ -246,8 +237,10 @@ test.describe("Organization Effective Patterns Display", () => {
         body: JSON.stringify({
           fiscalYearPatternId: null,
           fiscalYearSource: "system",
+          fiscalYearSourceName: null,
           monthlyPeriodPatternId: null,
           monthlyPeriodSource: "system",
+          monthlyPeriodSourceName: null,
         }),
       });
     });
@@ -273,8 +266,10 @@ test.describe("Organization Effective Patterns Display", () => {
         body: JSON.stringify({
           fiscalYearPatternId: "fy-pattern-001",
           fiscalYearSource: "tenant",
+          fiscalYearSourceName: null,
           monthlyPeriodPatternId: "mp-pattern-001",
           monthlyPeriodSource: "tenant",
+          monthlyPeriodSourceName: null,
         }),
       });
     });

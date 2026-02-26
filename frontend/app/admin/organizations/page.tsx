@@ -554,7 +554,7 @@ export default function AdminOrganizationsPage() {
                       : effectivePatterns.fiscalYearSource === "tenant"
                         ? t("source.tenant")
                         : t("source.organization", {
-                            name: effectivePatterns.fiscalYearSource.replace("organization:", ""),
+                            name: effectivePatterns.fiscalYearSourceName ?? effectivePatterns.fiscalYearSource,
                           })}
                   </p>
                 </div>
@@ -567,7 +567,7 @@ export default function AdminOrganizationsPage() {
                       : effectivePatterns.monthlyPeriodSource === "tenant"
                         ? t("source.tenant")
                         : t("source.organization", {
-                            name: effectivePatterns.monthlyPeriodSource.replace("organization:", ""),
+                            name: effectivePatterns.monthlyPeriodSourceName ?? effectivePatterns.monthlyPeriodSource,
                           })}
                   </p>
                 </div>

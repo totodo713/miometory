@@ -1,6 +1,8 @@
 package com.worklog.api;
 
 import com.worklog.application.service.AdminTenantService;
+import com.worklog.domain.fiscalyear.FiscalYearPatternId;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.tenant.Tenant;
 import com.worklog.domain.tenant.TenantId;
@@ -112,16 +114,16 @@ public class AdminTenantController {
 
         // Validate that patterns belong to this tenant (if provided)
         if (request.defaultFiscalYearPatternId() != null) {
-            var pattern = fiscalYearPatternRepository.findByTenantId(id).stream()
-                    .filter(p -> p.getId().value().equals(request.defaultFiscalYearPatternId()))
-                    .findFirst()
+            fiscalYearPatternRepository
+                    .findById(FiscalYearPatternId.of(request.defaultFiscalYearPatternId()))
+                    .filter(p -> p.getTenantId().value().equals(id))
                     .orElseThrow(() -> new DomainException(
                             "PATTERN_NOT_OWNED", "Fiscal year pattern does not belong to this tenant"));
         }
         if (request.defaultMonthlyPeriodPatternId() != null) {
-            var pattern = monthlyPeriodPatternRepository.findByTenantId(id).stream()
-                    .filter(p -> p.getId().value().equals(request.defaultMonthlyPeriodPatternId()))
-                    .findFirst()
+            monthlyPeriodPatternRepository
+                    .findById(MonthlyPeriodPatternId.of(request.defaultMonthlyPeriodPatternId()))
+                    .filter(p -> p.getTenantId().value().equals(id))
                     .orElseThrow(() -> new DomainException(
                             "PATTERN_NOT_OWNED", "Monthly period pattern does not belong to this tenant"));
         }

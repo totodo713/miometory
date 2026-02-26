@@ -215,6 +215,8 @@ class DateInfoServiceUnitTest {
 
             assertEquals(fyPatternUuid, result.fiscalYearPatternId());
             assertEquals("organization:" + orgUuid, result.fiscalYearSource());
+            assertNotNull(result.fiscalYearSourceName());
+            assertNotNull(result.monthlyPeriodSourceName());
         }
 
         @Test
@@ -232,8 +234,10 @@ class DateInfoServiceUnitTest {
 
             assertNull(result.fiscalYearPatternId());
             assertEquals("system", result.fiscalYearSource());
+            assertNull(result.fiscalYearSourceName());
             assertNull(result.monthlyPeriodPatternId());
             assertEquals("system", result.monthlyPeriodSource());
+            assertNull(result.monthlyPeriodSourceName());
         }
     }
 }
