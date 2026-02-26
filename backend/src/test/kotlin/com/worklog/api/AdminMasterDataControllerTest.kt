@@ -229,6 +229,32 @@ class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
         }
 
         @Test
+        fun `update entry returns 200`() {
+            val calName = "HC-Upd-${UUID.randomUUID().toString().take(8)}"
+            val calResult = mockMvc.perform(
+                post("$basePath/holiday-calendars").with(user(adminEmail))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"name":"$calName","country":"US"}"""),
+            ).andExpect(status().isCreated).andReturn()
+
+            val calId = objectMapper.readTree(calResult.response.contentAsString).get("id").asText()
+
+            val entryResult = mockMvc.perform(
+                post("$basePath/holiday-calendars/$calId/entries").with(user(adminEmail))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"name":"New Year","entryType":"FIXED","month":1,"day":1}"""),
+            ).andExpect(status().isCreated).andReturn()
+
+            val entryId = objectMapper.readTree(entryResult.response.contentAsString).get("id").asText()
+
+            mockMvc.perform(
+                put("$basePath/holiday-calendars/$calId/entries/$entryId").with(user(adminEmail))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"name":"New Year Updated","entryType":"FIXED","month":1,"day":2}"""),
+            ).andExpect(status().isOk)
+        }
+
+        @Test
         fun `list returns 403 for tenant admin`() {
             mockMvc.perform(get("$basePath/holiday-calendars").with(user(tenantAdminEmail)))
                 .andExpect(status().isForbidden)

@@ -373,6 +373,8 @@ public class AdminMasterDataService {
             Integer nthOccurrence,
             Integer dayOfWeek,
             Integer specificYear) {
+        validateEntryType(entryType, day, nthOccurrence, dayOfWeek);
+
         // Verify calendar exists
         Long count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM holiday_calendar_preset WHERE id = ?", Long.class, calendarId);
@@ -398,6 +400,8 @@ public class AdminMasterDataService {
             Integer nthOccurrence,
             Integer dayOfWeek,
             Integer specificYear) {
+        validateEntryType(entryType, day, nthOccurrence, dayOfWeek);
+
         int rows = jdbcTemplate.update(
                 """
                 UPDATE holiday_calendar_entry_preset
@@ -422,6 +426,19 @@ public class AdminMasterDataService {
     // ========================================================================
     // Helper
     // ========================================================================
+
+    private static void validateEntryType(String entryType, Integer day, Integer nthOccurrence, Integer dayOfWeek) {
+        if (!"FIXED".equals(entryType) && !"NTH_WEEKDAY".equals(entryType)) {
+            throw new DomainException("INVALID_ENTRY_TYPE", "Entry type must be FIXED or NTH_WEEKDAY");
+        }
+        if ("FIXED".equals(entryType) && day == null) {
+            throw new DomainException("VALIDATION_ERROR", "Day is required for FIXED entries");
+        }
+        if ("NTH_WEEKDAY".equals(entryType) && (nthOccurrence == null || dayOfWeek == null)) {
+            throw new DomainException(
+                    "VALIDATION_ERROR", "nthOccurrence and dayOfWeek are required for NTH_WEEKDAY entries");
+        }
+    }
 
     private static String escapeLike(String input) {
         return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
