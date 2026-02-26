@@ -149,9 +149,12 @@ describe("SystemSettingsPage", () => {
 
   it("should disable save button while saving", async () => {
     const user = userEvent.setup();
-    let resolveUpdate: () => void;
+    let resolveUpdate: () => void = () => {};
     (api.admin.system.updatePatterns as ReturnType<typeof vi.fn>).mockImplementation(
-      () => new Promise<void>((resolve) => { resolveUpdate = resolve; }),
+      () =>
+        new Promise<void>((resolve) => {
+          resolveUpdate = resolve;
+        }),
     );
 
     render(
@@ -173,7 +176,7 @@ describe("SystemSettingsPage", () => {
     });
 
     // Resolve the save
-    resolveUpdate!();
+    resolveUpdate();
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "保存" })).not.toBeDisabled();

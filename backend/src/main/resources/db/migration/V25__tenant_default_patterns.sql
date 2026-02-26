@@ -1,6 +1,6 @@
 -- ==========================================
 -- Tenant Default Pattern Columns
--- Migration: V24__tenant_default_patterns.sql
+-- Migration: V25__tenant_default_patterns.sql
 -- Feature: System > Tenant > Organization settings inheritance
 -- Date: 2026-02-26
 -- ==========================================

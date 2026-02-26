@@ -1,6 +1,6 @@
 -- ==========================================
 -- System Default Settings Table
--- Migration: V23__system_default_patterns.sql
+-- Migration: V24__system_default_patterns.sql
 -- Feature: System > Tenant > Organization settings inheritance
 -- Date: 2026-02-26
 -- ==========================================

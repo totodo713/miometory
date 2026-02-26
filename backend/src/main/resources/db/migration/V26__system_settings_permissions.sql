@@ -1,6 +1,6 @@
 -- ==========================================
 -- System Settings Permissions
--- Migration: V25__system_settings_permissions.sql
+-- Migration: V26__system_settings_permissions.sql
 -- Feature: System > Tenant > Organization settings inheritance
 -- Date: 2026-02-26
 -- ==========================================

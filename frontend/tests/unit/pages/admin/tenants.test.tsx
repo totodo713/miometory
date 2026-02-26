@@ -75,9 +75,7 @@ describe("AdminTenantsPage", () => {
     mockListFiscalYearPatterns.mockResolvedValue([
       { id: "fy1", name: "April Start", startMonth: 4, startDay: 1, tenantId: "t1" },
     ]);
-    mockListMonthlyPeriodPatterns.mockResolvedValue([
-      { id: "mp1", name: "1st Start", startDay: 1, tenantId: "t1" },
-    ]);
+    mockListMonthlyPeriodPatterns.mockResolvedValue([{ id: "mp1", name: "1st Start", startDay: 1, tenantId: "t1" }]);
     mockUpdateDefaultPatterns.mockResolvedValue(undefined);
   });
 
@@ -347,10 +345,17 @@ describe("AdminTenantsPage", () => {
     const user = userEvent.setup();
     // Delay pattern loading
     mockGetDefaultPatterns.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({
-        defaultFiscalYearPatternId: null,
-        defaultMonthlyPeriodPatternId: null,
-      }), 100)),
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                defaultFiscalYearPatternId: null,
+                defaultMonthlyPeriodPatternId: null,
+              }),
+            100,
+          ),
+        ),
     );
 
     render(
