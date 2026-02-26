@@ -21,6 +21,7 @@ interface HolidayCalendarPresetListProps {
 
 function formatEntryDate(
   entry: HolidayEntryRow,
+  t: (key: string, values?: Record<string, string>) => string,
   tMonth: (key: string) => string,
   tNth: (key: string) => string,
   tWeekday: (key: string) => string,
@@ -28,7 +29,10 @@ function formatEntryDate(
   if (entry.entryType === "FIXED") {
     return `${tMonth(String(entry.month))} ${entry.day}`;
   }
-  return `${tNth(String(entry.nthOccurrence))} ${tWeekday(String(entry.dayOfWeek))} of ${tMonth(String(entry.month))}`;
+  const nth = tNth(String(entry.nthOccurrence));
+  const weekday = tWeekday(String(entry.dayOfWeek));
+  const month = tMonth(String(entry.month));
+  return t("holidayCalendar.nthWeekdayFormat", { nth, weekday, month });
 }
 
 export function HolidayCalendarPresetList({
@@ -185,7 +189,7 @@ export function HolidayCalendarPresetList({
                   <td className="py-2 px-3">{entry.name}</td>
                   <td className="py-2 px-3">{renderEntryTypeBadge(entry.entryType)}</td>
                   <td className="py-2 px-3 text-gray-600">
-                    {formatEntryDate(entry, tMonth, tNth, tWeekday)}
+                    {formatEntryDate(entry, t, tMonth, tNth, tWeekday)}
                     {entry.specificYear ? ` (${entry.specificYear})` : ""}
                   </td>
                   <td className="py-2 px-3 text-right">
@@ -247,7 +251,7 @@ export function HolidayCalendarPresetList({
                   {renderEntryTypeBadge(entry.entryType)}
                 </div>
                 <p className="text-xs text-gray-600">
-                  {formatEntryDate(entry, tMonth, tNth, tWeekday)}
+                  {formatEntryDate(entry, t, tMonth, tNth, tWeekday)}
                   {entry.specificYear ? ` (${entry.specificYear})` : ""}
                 </p>
                 <div className="flex gap-2 pt-1">
@@ -388,8 +392,8 @@ export function HolidayCalendarPresetList({
                         className="text-gray-400 hover:text-gray-600 text-xs"
                         aria-label={
                           expandedCalendarId === calendar.id
-                            ? t("holidayCalendar.entries")
-                            : t("holidayCalendar.entries")
+                            ? t("holidayCalendar.collapseEntries")
+                            : t("holidayCalendar.expandEntries")
                         }
                       >
                         {expandedCalendarId === calendar.id ? "\u25B2" : "\u25BC"}

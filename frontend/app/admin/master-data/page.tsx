@@ -33,7 +33,7 @@ export default function AdminMasterDataPage() {
 
   const [activeTab, setActiveTab] = useState<TabType>("fiscal-year");
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
-  const [editingEntry, setEditingEntry] = useState<{ calendarId: string; entry: HolidayEntryRow } | null>(null);
+  const [editingEntry, setEditingEntry] = useState<{ calendarId: string; entry: HolidayEntryRow | null } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -98,7 +98,7 @@ export default function AdminMasterDataPage() {
 
   // --- Holiday entry callbacks ---
   const handleAddEntry = useCallback((calendarId: string) => {
-    setEditingEntry({ calendarId, entry: null as unknown as HolidayEntryRow });
+    setEditingEntry({ calendarId, entry: null });
     setShowEntryForm(true);
   }, []);
 
@@ -227,7 +227,7 @@ export default function AdminMasterDataPage() {
       {showEntryForm && editingEntry && (
         <HolidayEntryForm
           calendarId={editingEntry.calendarId}
-          entry={editingEntry.entry || null}
+          entry={editingEntry.entry}
           onClose={handleEntryClose}
           onSaved={handleEntrySaved}
         />

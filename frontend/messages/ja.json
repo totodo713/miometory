@@ -895,6 +895,7 @@
       "created": "作成しました",
       "updated": "更新しました",
       "deleted": "削除しました",
+      "confirmDeleteEntry": "この祝日エントリを削除しますか？",
       "fiscalYear": {
         "name": "名前",
         "description": "説明",
@@ -932,7 +933,8 @@
         "inactive": "無効",
         "createTitle": "締め日パターンの作成",
         "editTitle": "締め日パターンの編集",
-        "nameRequired": "名前は必須です"
+        "nameRequired": "名前は必須です",
+        "startDayRange": "開始日は1から28の間で指定してください"
       },
       "holidayCalendar": {
         "name": "名前",
@@ -974,7 +976,10 @@
           "3": "第3",
           "4": "第4",
           "5": "第5"
-        }
+        },
+        "expandEntries": "エントリを表示",
+        "collapseEntries": "エントリを非表示",
+        "nthWeekdayFormat": "{month} {nth}{weekday}"
       }
     }
   },

@@ -42,7 +42,7 @@ export function MonthlyPeriodPresetForm({ preset, onClose, onSaved }: MonthlyPer
     }
 
     if (startDay < 1 || startDay > 28) {
-      setError(t("monthlyPeriod.startDay"));
+      setError(t("monthlyPeriod.startDayRange"));
       return;
     }
 
