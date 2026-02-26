@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
-import type { SystemDefaultPatterns } from "@/services/api";
 
 export default function SystemSettingsPage() {
   const t = useTranslations("admin.systemSettings");
@@ -13,7 +12,6 @@ export default function SystemSettingsPage() {
   const tc = useTranslations("common");
   const toast = useToast();
 
-  const [patterns, setPatterns] = useState<SystemDefaultPatterns | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -21,11 +19,11 @@ export default function SystemSettingsPage() {
   const [fyStartDay, setFyStartDay] = useState(1);
   const [mpStartDay, setMpStartDay] = useState(1);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: load once on mount
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.admin.system.getPatterns();
-      setPatterns(data);
       setFyStartMonth(data.fiscalYearStartMonth);
       setFyStartDay(data.fiscalYearStartDay);
       setMpStartDay(data.monthlyPeriodStartDay);
@@ -34,7 +32,6 @@ export default function SystemSettingsPage() {
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

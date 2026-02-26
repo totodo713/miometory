@@ -153,9 +153,7 @@ export default function AdminTenantsPage() {
               {tc("backToTop")}
             </button>
           )}
-          <h1 className="text-2xl font-bold text-gray-900">
-            {selectedTenant ? selectedTenant.name : t("title")}
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">{selectedTenant ? selectedTenant.name : t("title")}</h1>
         </div>
         {!selectedTenant && (
           <button

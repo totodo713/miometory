@@ -21,9 +21,9 @@ vi.mock("@/hooks/useToast", () => ({
   }),
 }));
 
-import { IntlWrapper } from "../../../helpers/intl";
-import { api } from "@/services/api";
 import SystemSettingsPage from "@/admin/settings/page";
+import { api } from "@/services/api";
+import { IntlWrapper } from "../../../helpers/intl";
 
 describe("SystemSettingsPage", () => {
   beforeEach(() => {

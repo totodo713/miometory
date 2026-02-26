@@ -1059,8 +1059,7 @@ export const api = {
     },
 
     system: {
-      getPatterns: () =>
-        apiClient.get<SystemDefaultPatterns>("/api/v1/admin/system/settings/patterns"),
+      getPatterns: () => apiClient.get<SystemDefaultPatterns>("/api/v1/admin/system/settings/patterns"),
       updatePatterns: (data: SystemDefaultPatterns) =>
         apiClient.put<void>("/api/v1/admin/system/settings/patterns", data),
     },

@@ -143,8 +143,7 @@ test.describe("System Settings Page", () => {
 
     // Intercept the PUT request
     const putPromise = page.waitForRequest(
-      (req) =>
-        req.url().includes("/api/v1/admin/system/settings/patterns") && req.method() === "PUT",
+      (req) => req.url().includes("/api/v1/admin/system/settings/patterns") && req.method() === "PUT",
     );
 
     // Click save
