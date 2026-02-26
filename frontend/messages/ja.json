@@ -909,6 +909,7 @@
         "createTitle": "会計年度パターンの作成",
         "editTitle": "会計年度パターンの編集",
         "nameRequired": "名前は必須です",
+        "startDayRange": "開始日は1から31の間で指定してください",
         "months": {
           "1": "1月",
           "2": "2月",

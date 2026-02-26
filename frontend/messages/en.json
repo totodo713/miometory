@@ -909,6 +909,7 @@
         "createTitle": "Create Fiscal Year Pattern",
         "editTitle": "Edit Fiscal Year Pattern",
         "nameRequired": "Name is required",
+        "startDayRange": "Start day must be between 1 and 31",
         "months": {
           "1": "January",
           "2": "February",

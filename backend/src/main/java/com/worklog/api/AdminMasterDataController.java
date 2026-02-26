@@ -38,8 +38,9 @@ public class AdminMasterDataController {
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        int effectiveSize = Math.min(size, 100);
-        return adminMasterDataService.listFiscalYearPresets(search, isActive, page, effectiveSize);
+        int effectivePage = Math.max(page, 0);
+        int effectiveSize = Math.max(Math.min(size, 100), 1);
+        return adminMasterDataService.listFiscalYearPresets(search, isActive, effectivePage, effectiveSize);
     }
 
     @PostMapping("/fiscal-year-patterns")
@@ -86,8 +87,9 @@ public class AdminMasterDataController {
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        int effectiveSize = Math.min(size, 100);
-        return adminMasterDataService.listMonthlyPeriodPresets(search, isActive, page, effectiveSize);
+        int effectivePage = Math.max(page, 0);
+        int effectiveSize = Math.max(Math.min(size, 100), 1);
+        return adminMasterDataService.listMonthlyPeriodPresets(search, isActive, effectivePage, effectiveSize);
     }
 
     @PostMapping("/monthly-period-patterns")
@@ -134,8 +136,9 @@ public class AdminMasterDataController {
                     @RequestParam(required = false) Boolean isActive,
                     @RequestParam(defaultValue = "0") int page,
                     @RequestParam(defaultValue = "20") int size) {
-        int effectiveSize = Math.min(size, 100);
-        return adminMasterDataService.listHolidayCalendarPresets(search, isActive, page, effectiveSize);
+        int effectivePage = Math.max(page, 0);
+        int effectiveSize = Math.max(Math.min(size, 100), 1);
+        return adminMasterDataService.listHolidayCalendarPresets(search, isActive, effectivePage, effectiveSize);
     }
 
     @PostMapping("/holiday-calendars")
@@ -244,12 +247,12 @@ public class AdminMasterDataController {
 
     public record CreateHolidayEntryRequest(
             @NotBlank @Size(max = 128) String name,
-            @NotBlank String entryType,
+            @NotBlank @Size(max = 16) String entryType,
             @Min(1) @Max(12) int month,
-            Integer day,
-            Integer nthOccurrence,
-            Integer dayOfWeek,
-            Integer specificYear) {}
+            @Min(1) @Max(31) Integer day,
+            @Min(1) @Max(5) Integer nthOccurrence,
+            @Min(1) @Max(7) Integer dayOfWeek,
+            @Min(1900) @Max(2200) Integer specificYear) {}
 
     public record CreateResponse(String id) {}
 }

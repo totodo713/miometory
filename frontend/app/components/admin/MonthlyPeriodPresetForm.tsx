@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 import type { MonthlyPeriodPresetRow } from "@/types/masterData";
@@ -17,13 +17,38 @@ export function MonthlyPeriodPresetForm({ preset, onClose, onSaved }: MonthlyPer
   const tc = useTranslations("common");
   const isEdit = preset !== null;
   const toast = useToast();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const firstInput = dialog.querySelector<HTMLElement>("input, select, textarea");
+    firstInput?.focus();
+
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialog) {
+        const focusable = dialog.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
   const [name, setName] = useState(preset?.name ?? "");
@@ -77,8 +102,14 @@ export function MonthlyPeriodPresetForm({ preset, onClose, onSaved }: MonthlyPer
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
+      >
+        <h2 id={titleId} className="text-lg font-semibold text-gray-900 mb-4">
           {isEdit ? t("monthlyPeriod.editTitle") : t("monthlyPeriod.createTitle")}
         </h2>
 
@@ -125,7 +156,11 @@ export function MonthlyPeriodPresetForm({ preset, onClose, onSaved }: MonthlyPer
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-red-600">
+              {error}
+            </p>
+          )}
 
           <div className="flex justify-end gap-3 pt-2">
             <button

@@ -159,7 +159,7 @@ export default function AdminMasterDataPage() {
             setEditingItem(null);
             setShowForm(true);
           }}
-          className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           {createButtonLabel}
         </button>
@@ -167,7 +167,12 @@ export default function AdminMasterDataPage() {
 
       <MasterDataTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div
+        role="tabpanel"
+        id={`tabpanel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+        className="bg-white rounded-lg border border-gray-200 p-4"
+      >
         {activeTab === "fiscal-year" && (
           <FiscalYearPresetList
             onEdit={handleEdit}

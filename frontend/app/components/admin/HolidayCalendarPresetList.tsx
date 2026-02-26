@@ -335,6 +335,12 @@ export function HolidayCalendarPresetList({
                   type="button"
                   onClick={() => handleToggleExpand(calendar.id)}
                   className="text-gray-600 hover:text-gray-800 text-xs"
+                  aria-expanded={expandedCalendarId === calendar.id}
+                  aria-label={
+                    expandedCalendarId === calendar.id
+                      ? t("holidayCalendar.collapseEntries")
+                      : t("holidayCalendar.expandEntries")
+                  }
                 >
                   {expandedCalendarId === calendar.id ? "\u25B2" : "\u25BC"} {t("holidayCalendar.entries")}
                 </button>
@@ -390,6 +396,7 @@ export function HolidayCalendarPresetList({
                         type="button"
                         onClick={() => handleToggleExpand(calendar.id)}
                         className="text-gray-400 hover:text-gray-600 text-xs"
+                        aria-expanded={expandedCalendarId === calendar.id}
                         aria-label={
                           expandedCalendarId === calendar.id
                             ? t("holidayCalendar.collapseEntries")
