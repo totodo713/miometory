@@ -75,6 +75,7 @@
     "users": "ユーザー管理",
     "projects": "プロジェクト管理",
     "assignments": "アサイン管理",
+    "masterData": "マスタデータ",
     "notifications": "通知"
   },
   "auth": {
