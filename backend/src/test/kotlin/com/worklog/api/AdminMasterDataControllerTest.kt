@@ -6,8 +6,13 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 
 class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
@@ -182,10 +187,12 @@ class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
             ).andExpect(status().isCreated)
 
             // Add NTH_WEEKDAY entry
+            val nthBody = """{"name":"Thanksgiving","entryType":"NTH_WEEKDAY",""" +
+                """"month":11,"nthOccurrence":4,"dayOfWeek":4}"""
             mockMvc.perform(
                 post("$basePath/holiday-calendars/$calId/entries").with(user(adminEmail))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"name":"Thanksgiving","entryType":"NTH_WEEKDAY","month":11,"nthOccurrence":4,"dayOfWeek":4}"""),
+                    .content(nthBody),
             ).andExpect(status().isCreated)
 
             // Verify entries

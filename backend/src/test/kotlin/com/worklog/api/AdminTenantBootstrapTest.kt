@@ -3,6 +3,7 @@ package com.worklog.api
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
@@ -178,5 +179,96 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
                 .content(body2),
         )
             .andExpect(status().isConflict)
+    }
+
+    @Test
+    fun `bootstrap copies active presets as tenant master data`() {
+        val tenantId = createTenant()
+        val email = "preset-${UUID.randomUUID().toString().take(6)}@test.com"
+
+        // Count active presets before bootstrap
+        val activeFyPresets = countActivePresets("fiscal_year_pattern_preset")
+        val activeMpPresets = countActivePresets("monthly_period_pattern_preset")
+        val activeHcPresets = countActivePresets("holiday_calendar_preset")
+
+        // Bootstrap the tenant
+        bootstrapTenantWithMinimalData(tenantId, email)
+
+        // Verify all preset types were copied to tenant
+        assertTenantPatternsCopied(tenantId, activeFyPresets, activeMpPresets, activeHcPresets)
+        assertHolidayEntriesCopied(tenantId)
+        assertFiscalYearNamesCopied(tenantId)
+    }
+
+    private fun countActivePresets(table: String): Long = baseJdbcTemplate.queryForObject(
+        "SELECT COUNT(*) FROM $table WHERE is_active = true",
+        Long::class.java,
+    )!!
+
+    private fun bootstrapTenantWithMinimalData(tenantId: String, email: String) {
+        mockMvc.perform(
+            post("/api/v1/admin/tenants/$tenantId/bootstrap")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        mapOf(
+                            "organizations" to listOf(mapOf("code" to "ORG_P", "name" to "Org")),
+                            "members" to listOf(
+                                mapOf(
+                                    "email" to email,
+                                    "displayName" to "Tester",
+                                    "organizationCode" to "ORG_P",
+                                    "tenantAdmin" to false,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+        ).andExpect(status().isCreated)
+    }
+
+    private fun assertTenantPatternsCopied(tenantId: String, expectedFy: Long, expectedMp: Long, expectedHc: Long) {
+        val fyCount = countTenantRecords("fiscal_year_pattern", tenantId)
+        assertEquals(expectedFy, fyCount, "Fiscal year patterns count mismatch")
+        assertTrue(fyCount >= 2, "Expected at least 2 fiscal year patterns")
+
+        val mpCount = countTenantRecords("monthly_period_pattern", tenantId)
+        assertEquals(expectedMp, mpCount, "Monthly period patterns count mismatch")
+        assertTrue(mpCount >= 4, "Expected at least 4 monthly period patterns")
+
+        val hcCount = countTenantRecords("holiday_calendar", tenantId)
+        assertEquals(expectedHc, hcCount, "Holiday calendars count mismatch")
+        assertTrue(hcCount >= 1, "Expected at least 1 holiday calendar")
+    }
+
+    private fun countTenantRecords(table: String, tenantId: String): Long = baseJdbcTemplate.queryForObject(
+        "SELECT COUNT(*) FROM $table WHERE tenant_id = ?::UUID",
+        Long::class.java,
+        tenantId,
+    )!!
+
+    private fun assertHolidayEntriesCopied(tenantId: String) {
+        val entryCount = baseJdbcTemplate.queryForObject(
+            """SELECT COUNT(*) FROM holiday_calendar_entry hce
+               JOIN holiday_calendar hc ON hc.id = hce.holiday_calendar_id
+               WHERE hc.tenant_id = ?::UUID""",
+            Long::class.java,
+            tenantId,
+        )!!
+        assertTrue(entryCount >= 16, "Expected at least 16 holiday entries")
+    }
+
+    private fun assertFiscalYearNamesCopied(tenantId: String) {
+        val tenantNames = baseJdbcTemplate.queryForList(
+            "SELECT name FROM fiscal_year_pattern WHERE tenant_id = ?::UUID ORDER BY name",
+            String::class.java,
+            tenantId,
+        )
+        val presetNames = baseJdbcTemplate.queryForList(
+            "SELECT name FROM fiscal_year_pattern_preset WHERE is_active = true ORDER BY name",
+            String::class.java,
+        )
+        assertEquals(presetNames, tenantNames, "FY pattern names should match presets")
     }
 }

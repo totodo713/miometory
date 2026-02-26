@@ -1,8 +1,14 @@
 package com.worklog.application.service;
 
+import com.worklog.domain.fiscalyear.FiscalYearPattern;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
 import com.worklog.domain.shared.DomainException;
+import com.worklog.domain.tenant.TenantId;
+import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,9 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminMasterDataService {
 
     private final JdbcTemplate jdbcTemplate;
+    private final FiscalYearPatternRepository fiscalYearPatternRepository;
+    private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
 
-    public AdminMasterDataService(JdbcTemplate jdbcTemplate) {
+    public AdminMasterDataService(
+            JdbcTemplate jdbcTemplate,
+            FiscalYearPatternRepository fiscalYearPatternRepository,
+            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository) {
         this.jdbcTemplate = jdbcTemplate;
+        this.fiscalYearPatternRepository = fiscalYearPatternRepository;
+        this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
     }
 
     // ========================================================================
@@ -424,6 +437,109 @@ public class AdminMasterDataService {
     }
 
     // ========================================================================
+    // Tenant Bootstrap: Copy Active Presets to Tenant
+    // ========================================================================
+
+    /**
+     * Copies all active presets to a tenant as initial master data.
+     * Called during tenant bootstrap to provide default fiscal year patterns,
+     * monthly period patterns, and holiday calendars.
+     *
+     * <p>Fiscal year and monthly period patterns use event-sourced domain models.
+     * Holiday calendars use direct JDBC inserts (no event sourcing).
+     */
+    @Transactional
+    public CopiedPresets copyPresetsToTenant(UUID tenantId) {
+        TenantId tid = TenantId.of(tenantId);
+
+        // 1. Copy active fiscal year presets → fiscal_year_pattern (event-sourced)
+        List<CopiedPattern> fyPatterns = new ArrayList<>();
+        jdbcTemplate.query(
+                "SELECT id, name, start_month, start_day FROM fiscal_year_pattern_preset WHERE is_active = true ORDER BY name",
+                (rs) -> {
+                    UUID presetId = rs.getObject("id", UUID.class);
+                    String name = rs.getString("name");
+                    int startMonth = rs.getInt("start_month");
+                    int startDay = rs.getInt("start_day");
+
+                    FiscalYearPattern pattern = FiscalYearPattern.create(tid, name, startMonth, startDay);
+                    fiscalYearPatternRepository.save(pattern);
+                    fyPatterns.add(new CopiedPattern(presetId, pattern.getId().value(), name));
+                });
+
+        // 2. Copy active monthly period presets → monthly_period_pattern (event-sourced)
+        List<CopiedPattern> mpPatterns = new ArrayList<>();
+        jdbcTemplate.query(
+                "SELECT id, name, start_day FROM monthly_period_pattern_preset WHERE is_active = true ORDER BY name",
+                (rs) -> {
+                    UUID presetId = rs.getObject("id", UUID.class);
+                    String name = rs.getString("name");
+                    int startDay = rs.getInt("start_day");
+
+                    MonthlyPeriodPattern pattern = MonthlyPeriodPattern.create(tid, name, startDay);
+                    monthlyPeriodPatternRepository.save(pattern);
+                    mpPatterns.add(new CopiedPattern(presetId, pattern.getId().value(), name));
+                });
+
+        // 3. Copy active holiday calendars + entries → holiday_calendar + holiday_calendar_entry (direct JDBC)
+        List<CopiedCalendar> hcCalendars = new ArrayList<>();
+        jdbcTemplate.query(
+                "SELECT id, name, description, country FROM holiday_calendar_preset WHERE is_active = true ORDER BY name",
+                (rs) -> {
+                    UUID presetCalendarId = rs.getObject("id", UUID.class);
+                    String name = rs.getString("name");
+                    String description = rs.getString("description");
+                    String country = rs.getString("country");
+
+                    UUID tenantCalendarId = UUID.randomUUID();
+                    Instant now = Instant.now();
+                    jdbcTemplate.update(
+                            """
+                            INSERT INTO holiday_calendar (id, tenant_id, name, description, country, is_active, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, ?, true, ?, ?)
+                            """,
+                            tenantCalendarId,
+                            tenantId,
+                            name,
+                            description,
+                            country,
+                            Timestamp.from(now),
+                            Timestamp.from(now));
+
+                    // Copy all entries from the preset calendar
+                    jdbcTemplate.query(
+                            "SELECT name, entry_type, month, day, nth_occurrence, day_of_week, specific_year "
+                                    + "FROM holiday_calendar_entry_preset WHERE holiday_calendar_id = ?",
+                            (entryRs) -> {
+                                UUID entryId = UUID.randomUUID();
+                                jdbcTemplate.update(
+                                        """
+                                        INSERT INTO holiday_calendar_entry (id, holiday_calendar_id, name, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                        """,
+                                        entryId,
+                                        tenantCalendarId,
+                                        entryRs.getString("name"),
+                                        entryRs.getString("entry_type"),
+                                        entryRs.getInt("month"),
+                                        entryRs.getObject("day") != null ? entryRs.getInt("day") : null,
+                                        entryRs.getObject("nth_occurrence") != null
+                                                ? entryRs.getInt("nth_occurrence")
+                                                : null,
+                                        entryRs.getObject("day_of_week") != null ? entryRs.getInt("day_of_week") : null,
+                                        entryRs.getObject("specific_year") != null
+                                                ? entryRs.getInt("specific_year")
+                                                : null);
+                            },
+                            presetCalendarId);
+
+                    hcCalendars.add(new CopiedCalendar(presetCalendarId, tenantCalendarId, name));
+                });
+
+        return new CopiedPresets(fyPatterns, mpPatterns, hcCalendars);
+    }
+
+    // ========================================================================
     // Helper
     // ========================================================================
 
@@ -467,4 +583,15 @@ public class AdminMasterDataService {
             Integer nthOccurrence,
             Integer dayOfWeek,
             Integer specificYear) {}
+
+    // Tenant bootstrap copy result DTOs
+
+    public record CopiedPresets(
+            List<CopiedPattern> fiscalYearPatterns,
+            List<CopiedPattern> monthlyPeriodPatterns,
+            List<CopiedCalendar> holidayCalendars) {}
+
+    public record CopiedPattern(UUID presetId, UUID tenantPatternId, String name) {}
+
+    public record CopiedCalendar(UUID presetId, UUID tenantCalendarId, String name) {}
 }

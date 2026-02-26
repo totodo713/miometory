@@ -29,16 +29,19 @@ public class AdminTenantService {
     private final JdbcTemplate jdbcTemplate;
     private final AdminOrganizationService adminOrganizationService;
     private final AdminMemberService adminMemberService;
+    private final AdminMasterDataService adminMasterDataService;
 
     public AdminTenantService(
             TenantRepository tenantRepository,
             JdbcTemplate jdbcTemplate,
             AdminOrganizationService adminOrganizationService,
-            AdminMemberService adminMemberService) {
+            AdminMemberService adminMemberService,
+            AdminMasterDataService adminMasterDataService) {
         this.tenantRepository = tenantRepository;
         this.jdbcTemplate = jdbcTemplate;
         this.adminOrganizationService = adminOrganizationService;
         this.adminMemberService = adminMemberService;
+        this.adminMasterDataService = adminMasterDataService;
     }
 
     @Transactional(readOnly = true)
@@ -153,6 +156,9 @@ public class AdminTenantService {
             throw new DomainException(
                     "ALREADY_BOOTSTRAPPED", "Tenant already has organizations; bootstrap can only run once");
         }
+
+        // Copy active presets as initial tenant master data
+        adminMasterDataService.copyPresetsToTenant(tenantId);
 
         // Create organizations
         Map<String, UUID> orgCodeToId = new HashMap<>();
