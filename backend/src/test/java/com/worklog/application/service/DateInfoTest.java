@@ -21,9 +21,17 @@ class DateInfoTest {
 
     private DateInfo validDateInfo() {
         return new DateInfo(
-                DATE, 2025, FY_START, FY_END, MP_START, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID,
-                "organization:" + ORG_ID, "organization:" + ORG_ID);
+                DATE,
+                2025,
+                FY_START,
+                FY_END,
+                MP_START,
+                MP_END,
+                FY_PATTERN_ID,
+                MP_PATTERN_ID,
+                ORG_ID,
+                "organization:" + ORG_ID,
+                "organization:" + ORG_ID);
     }
 
     @Test
@@ -40,9 +48,8 @@ class DateInfoTest {
     @Test
     @DisplayName("should allow null pattern IDs for system default")
     void shouldAllowNullPatternIds() {
-        DateInfo info = new DateInfo(
-                DATE, 2025, FY_START, FY_END, MP_START, MP_END,
-                null, null, ORG_ID, "system", "system");
+        DateInfo info =
+                new DateInfo(DATE, 2025, FY_START, FY_END, MP_START, MP_END, null, null, ORG_ID, "system", "system");
         assertNull(info.fiscalYearPatternId());
         assertNull(info.monthlyPeriodPatternId());
     }
@@ -50,64 +57,152 @@ class DateInfoTest {
     @Test
     @DisplayName("should reject null date")
     void shouldRejectNullDate() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                null, 2025, FY_START, FY_END, MP_START, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID, "system", "system"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        null,
+                        2025,
+                        FY_START,
+                        FY_END,
+                        MP_START,
+                        MP_END,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        ORG_ID,
+                        "system",
+                        "system"));
     }
 
     @Test
     @DisplayName("should reject null fiscalYearStart")
     void shouldRejectNullFiscalYearStart() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                DATE, 2025, null, FY_END, MP_START, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID, "system", "system"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        DATE,
+                        2025,
+                        null,
+                        FY_END,
+                        MP_START,
+                        MP_END,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        ORG_ID,
+                        "system",
+                        "system"));
     }
 
     @Test
     @DisplayName("should reject null fiscalYearEnd")
     void shouldRejectNullFiscalYearEnd() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                DATE, 2025, FY_START, null, MP_START, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID, "system", "system"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        DATE,
+                        2025,
+                        FY_START,
+                        null,
+                        MP_START,
+                        MP_END,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        ORG_ID,
+                        "system",
+                        "system"));
     }
 
     @Test
     @DisplayName("should reject null monthlyPeriodStart")
     void shouldRejectNullMonthlyPeriodStart() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                DATE, 2025, FY_START, FY_END, null, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID, "system", "system"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        DATE,
+                        2025,
+                        FY_START,
+                        FY_END,
+                        null,
+                        MP_END,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        ORG_ID,
+                        "system",
+                        "system"));
     }
 
     @Test
     @DisplayName("should reject null monthlyPeriodEnd")
     void shouldRejectNullMonthlyPeriodEnd() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                DATE, 2025, FY_START, FY_END, MP_START, null,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID, "system", "system"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        DATE,
+                        2025,
+                        FY_START,
+                        FY_END,
+                        MP_START,
+                        null,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        ORG_ID,
+                        "system",
+                        "system"));
     }
 
     @Test
     @DisplayName("should reject null organizationId")
     void shouldRejectNullOrganizationId() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                DATE, 2025, FY_START, FY_END, MP_START, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, null, "system", "system"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        DATE,
+                        2025,
+                        FY_START,
+                        FY_END,
+                        MP_START,
+                        MP_END,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        null,
+                        "system",
+                        "system"));
     }
 
     @Test
     @DisplayName("should reject null fiscalYearSource")
     void shouldRejectNullFiscalYearSource() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                DATE, 2025, FY_START, FY_END, MP_START, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID, null, "system"));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        DATE,
+                        2025,
+                        FY_START,
+                        FY_END,
+                        MP_START,
+                        MP_END,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        ORG_ID,
+                        null,
+                        "system"));
     }
 
     @Test
     @DisplayName("should reject null monthlyPeriodSource")
     void shouldRejectNullMonthlyPeriodSource() {
-        assertThrows(IllegalArgumentException.class, () -> new DateInfo(
-                DATE, 2025, FY_START, FY_END, MP_START, MP_END,
-                FY_PATTERN_ID, MP_PATTERN_ID, ORG_ID, "system", null));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new DateInfo(
+                        DATE,
+                        2025,
+                        FY_START,
+                        FY_END,
+                        MP_START,
+                        MP_END,
+                        FY_PATTERN_ID,
+                        MP_PATTERN_ID,
+                        ORG_ID,
+                        "system",
+                        null));
     }
 }
