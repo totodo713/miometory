@@ -63,7 +63,7 @@ PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `check
 
 ## E2E Tests (Playwright)
 
-- WSL2: `npx playwright test --project=chromium` — WebKit/Firefox system deps are missing locally
+- WSL2: `npx playwright test --project=chromium` — only the `chromium` Playwright project is configured and run in CI
 - Playwright strict mode: locators matching multiple elements fail; use `.first()` or `{ exact: true }`
 - Button selectors: `has-text("Assign")` also matches `"Assign Manager"` — use `getByRole("button", { name: "Assign", exact: true })` for modals
 - ProjectSelector is a combobox (`role="combobox"` + `role="option"`), not a plain input; use `selectProject()` helper in `frontend/tests/e2e/fixtures/auth.ts`
