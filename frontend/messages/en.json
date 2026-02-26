@@ -878,8 +878,12 @@
         "holidayCalendars": "Holiday Calendars"
       },
       "searchPlaceholder": "Search by name...",
+      "searchLabel": "Search by name",
       "showInactive": "Show inactive",
       "notFound": "No items found",
+      "changeFilter": "Try changing your search criteria",
+      "noItemsYet": "No items yet",
+      "saveFailed": "Failed to save",
       "create": "Create",
       "edit": "Edit",
       "save": "Save",

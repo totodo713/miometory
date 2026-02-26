@@ -878,8 +878,12 @@
         "holidayCalendars": "祝日カレンダー"
       },
       "searchPlaceholder": "名前で検索...",
+      "searchLabel": "名前で検索",
       "showInactive": "無効を表示",
       "notFound": "データがありません",
+      "changeFilter": "検索条件を変更してください",
+      "noItemsYet": "まだデータがありません",
+      "saveFailed": "保存に失敗しました",
       "create": "作成",
       "edit": "編集",
       "save": "保存",
