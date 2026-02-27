@@ -21,6 +21,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { Suspense, useEffect, useState } from "react";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
@@ -41,6 +42,8 @@ function PasswordResetConfirmForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
+  const t = useTranslations("passwordReset.confirm");
+  const tc = useTranslations("passwordReset.common");
 
   // Token state
   const [token, setToken] = useState<string | null>(null);
@@ -68,9 +71,9 @@ function PasswordResetConfirmForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const validateField = (name: string, value: string) => {
-    if (name === "newPassword" && !value.trim()) return "パスワードは必須です";
-    if (name === "confirmPassword" && !value.trim()) return "パスワードの確認は必須です";
-    if (name === "confirmPassword" && value !== newPassword) return "パスワードが一致しません";
+    if (name === "newPassword" && !value.trim()) return t("errors.passwordRequired");
+    if (name === "confirmPassword" && !value.trim()) return t("errors.confirmPasswordRequired");
+    if (name === "confirmPassword" && value !== newPassword) return t("errors.passwordMismatch");
     return "";
   };
 
@@ -115,7 +118,7 @@ function PasswordResetConfirmForm() {
           // No token available
           setError({
             type: "expired_token",
-            message: "無効なリンクです。パスワードリセットを再度リクエストしてください。",
+            message: t("errors.tokenInvalid"),
             isRetryable: false,
           });
           setIsTokenReady(true);
@@ -126,7 +129,7 @@ function PasswordResetConfirmForm() {
         console.warn("Failed to retrieve token from sessionStorage:", e);
         setError({
           type: "expired_token",
-          message: "無効なリンクです。パスワードリセットを再度リクエストしてください。",
+          message: t("errors.tokenInvalid"),
           isRetryable: false,
         });
         setIsTokenReady(true);
@@ -167,7 +170,7 @@ function PasswordResetConfirmForm() {
     if (!token) {
       setError({
         type: "expired_token",
-        message: "無効なリンクです。パスワードリセットを再度リクエストしてください。",
+        message: t("errors.tokenInvalid"),
         isRetryable: false,
       });
       return;
@@ -197,13 +200,13 @@ function PasswordResetConfirmForm() {
       // Show success message and start countdown
       setIsSuccess(true);
       setRedirectCountdown(3);
-      toast.success("パスワードを変更しました");
+      toast.success(t("successTitle"));
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         if (err.status === 404) {
           setError({
             type: "expired_token",
-            message: "リンクの有効期限が切れています。パスワードリセットを再度リクエストしてください。",
+            message: t("errors.tokenExpired"),
             isRetryable: false,
           });
 
@@ -216,13 +219,13 @@ function PasswordResetConfirmForm() {
         } else if (err.status === 400) {
           setError({
             type: "validation",
-            message: err.message || "パスワードが要件を満たしていません。",
+            message: err.message || t("errors.passwordValidation"),
             isRetryable: false,
           });
         } else {
           setError({
             type: "server",
-            message: "サーバーエラーが発生しました。しばらくしてから再試行してください。",
+            message: t("errors.serverError"),
             isRetryable: true,
           });
         }
@@ -230,7 +233,7 @@ function PasswordResetConfirmForm() {
         // Network error or unknown
         setError({
           type: "network",
-          message: "ネットワークエラーが発生しました。接続を確認して再試行してください。",
+          message: t("errors.networkError"),
           isRetryable: true,
         });
       }
@@ -283,7 +286,7 @@ function PasswordResetConfirmForm() {
       <div className="container">
         <div className="card">
           <output className="loading" aria-live="polite">
-            処理中...
+            {tc("loading")}
           </output>
         </div>
 
@@ -323,13 +326,13 @@ function PasswordResetConfirmForm() {
           <div className="success-icon" aria-hidden="true">
             ✓
           </div>
-          <h1 className="title">パスワードを変更しました</h1>
-          <p className="message">新しいパスワードでログインできます。</p>
+          <h1 className="title">{t("successTitle")}</h1>
+          <p className="message">{t("successMessage")}</p>
           <output className="redirect-message" aria-live="polite">
-            {redirectCountdown}秒後にログインページにリダイレクトします...
+            {t("redirectCountdown", { seconds: redirectCountdown })}
           </output>
           <Link href="/login" className="link">
-            今すぐログインする
+            {t("loginNow")}
           </Link>
         </div>
 
@@ -402,15 +405,15 @@ function PasswordResetConfirmForm() {
   return (
     <div className="container">
       <div className="card">
-        <h1 className="title">新しいパスワードを設定</h1>
-        <p className="description">新しいパスワードを入力してください。</p>
+        <h1 className="title">{t("title")}</h1>
+        <p className="description">{t("description")}</p>
 
         {/* Token error (invalid/expired) */}
         {error.type === "expired_token" && (
           <div className="error-banner" role="alert" aria-live="assertive">
             <p className="error-message">{error.message}</p>
             <Link href="/password-reset/request" className="link">
-              パスワードリセットをリクエスト
+              {t("requestReset")}
             </Link>
           </div>
         )}
@@ -420,13 +423,8 @@ function PasswordResetConfirmForm() {
           <div className="error-banner" role="alert" aria-live="assertive">
             <p className="error-message">{error.message}</p>
             {error.isRetryable && (
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="retry-button"
-                aria-label="エラーをクリアして再試行"
-              >
-                再試行
+              <button type="button" onClick={handleRetry} className="retry-button" aria-label={t("retryAriaLabel")}>
+                {tc("retry")}
               </button>
             )}
           </div>
@@ -436,7 +434,7 @@ function PasswordResetConfirmForm() {
           {/* New Password Field */}
           <div className="field">
             <label htmlFor="new-password" className="label">
-              新しいパスワード
+              {t("newPasswordLabel")}
               <span className="required">*</span>
             </label>
             <input
@@ -446,7 +444,7 @@ function PasswordResetConfirmForm() {
               value={newPassword}
               onChange={handleNewPasswordChange}
               onBlur={() => handleFieldBlur("newPassword", newPassword)}
-              placeholder="8文字以上で入力してください"
+              placeholder={t("newPasswordPlaceholder")}
               disabled={isLoading || error.type === "expired_token"}
               required
               aria-invalid={!!(validationErrors.newPassword || fieldErrors.newPassword)}
@@ -470,7 +468,7 @@ function PasswordResetConfirmForm() {
           {/* Confirm Password Field */}
           <div className="field">
             <label htmlFor="confirm-password" className="label">
-              パスワードの確認
+              {t("confirmPasswordLabel")}
               <span className="required">*</span>
             </label>
             <input
@@ -480,7 +478,7 @@ function PasswordResetConfirmForm() {
               value={confirmPassword}
               onChange={handleConfirmPasswordChange}
               onBlur={() => handleFieldBlur("confirmPassword", confirmPassword)}
-              placeholder="もう一度入力してください"
+              placeholder={t("confirmPasswordPlaceholder")}
               disabled={isLoading || error.type === "expired_token"}
               required
               aria-invalid={!!(validationErrors.confirmPassword || fieldErrors.confirmPassword)}
@@ -507,14 +505,14 @@ function PasswordResetConfirmForm() {
             className="submit-button"
             aria-busy={isLoading}
           >
-            {isLoading ? "処理中..." : "パスワードを変更"}
+            {isLoading ? tc("loading") : t("submitButton")}
           </button>
         </form>
 
         {/* Back to Login Link */}
         <div className="footer">
           <Link href="/login" className="link">
-            ログインに戻る
+            {t("backToLogin")}
           </Link>
         </div>
       </div>
@@ -693,47 +691,54 @@ function PasswordResetConfirmForm() {
 }
 
 /**
+ * Suspense fallback component for loading state
+ */
+function PasswordResetLoading() {
+  const t = useTranslations("passwordReset.common");
+
+  return (
+    <div className="container">
+      <div className="card">
+        <output className="loading" aria-live="polite">
+          {t("loading")}
+        </output>
+      </div>
+
+      <style jsx>{`
+        .container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          padding: 1rem;
+          background-color: #f5f5f5;
+        }
+
+        .card {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          padding: 2rem;
+          width: 100%;
+          max-width: 400px;
+        }
+
+        .loading {
+          text-align: center;
+          color: #666;
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/**
  * Page component with Suspense boundary
  * Required for useSearchParams() in Next.js 16+
  */
 export default function PasswordResetConfirmPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="container">
-          <div className="card">
-            <output className="loading" aria-live="polite">
-              処理中...
-            </output>
-          </div>
-
-          <style jsx>{`
-            .container {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-              padding: 1rem;
-              background-color: #f5f5f5;
-            }
-
-            .card {
-              background: white;
-              border-radius: 8px;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-              padding: 2rem;
-              width: 100%;
-              max-width: 400px;
-            }
-
-            .loading {
-              text-align: center;
-              color: #666;
-            }
-          `}</style>
-        </div>
-      }
-    >
+    <Suspense fallback={<PasswordResetLoading />}>
       <PasswordResetConfirmForm />
     </Suspense>
   );
