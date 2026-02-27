@@ -177,7 +177,13 @@ function PasswordResetConfirmForm() {
     }
 
     // Validate passwords
-    const errors = validatePasswordConfirm(newPassword, confirmPassword, token);
+    const errors = validatePasswordConfirm(newPassword, confirmPassword, token, {
+      tokenRequired: t("errors.tokenRequired"),
+      passwordMin: t("errors.passwordTooShort"),
+      passwordMax: t("errors.passwordTooLong"),
+      confirmRequired: t("errors.confirmPasswordRequired"),
+      passwordMismatch: t("errors.passwordMismatch"),
+    });
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       return;

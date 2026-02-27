@@ -83,7 +83,10 @@ export default function PasswordResetRequestPage() {
     setIsSuccess(false);
 
     // Validate email
-    const emailError = validateEmail(email);
+    const emailError = validateEmail(email, {
+      emailRequired: t("errors.emailRequired"),
+      emailInvalid: t("errors.emailInvalid"),
+    });
     if (emailError) {
       setValidationError(emailError);
       return;

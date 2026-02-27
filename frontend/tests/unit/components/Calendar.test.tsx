@@ -478,8 +478,8 @@ describe("Calendar Component", () => {
       );
 
       expect(screen.getByText(/2026年1月/)).toBeInTheDocument();
-      // Should show "会計期間:  ～ " with no dates
-      expect(screen.getByText(/会計期間:/)).toBeInTheDocument();
+      // Should not show fiscal period text when dates array is empty
+      expect(screen.queryByText(/会計期間:/)).not.toBeInTheDocument();
     });
 
     it("should handle single date", () => {

@@ -102,7 +102,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
           })}
         </h2>
         <p className="text-sm text-gray-600">
-          {t("fiscalPeriod", { start: dates[0]?.date, end: dates[dates.length - 1]?.date })}
+          {dates.length > 0 ? t("fiscalPeriod", { start: dates[0].date, end: dates[dates.length - 1].date }) : null}
         </p>
         {/* Date info (fiscal year, fiscal period, monthly period) */}
         {dateInfoLoading ? (
