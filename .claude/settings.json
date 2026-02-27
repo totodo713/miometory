@@ -173,11 +173,6 @@
             "type": "command",
             "command": ".claude/hooks/typecheck-on-edit.sh",
             "timeout": 30
-          },
-          {
-            "type": "command",
-            "command": ".claude/hooks/require-plan-review.sh",
-            "timeout": 5
           }
         ]
       }
