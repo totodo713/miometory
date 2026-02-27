@@ -139,8 +139,8 @@ describe("Calendar Component", () => {
         </IntlWrapper>,
       );
 
-      expect(screen.getByText(/Fiscal Period:/i)).toBeInTheDocument();
-      expect(screen.getByText(/2026-01-21 to 2026-01-28/i)).toBeInTheDocument();
+      expect(screen.getByText(/会計期間:/)).toBeInTheDocument();
+      expect(screen.getByText(/2026-01-21 ～ 2026-01-28/)).toBeInTheDocument();
     });
 
     it("should render day of week headers", () => {
@@ -478,8 +478,8 @@ describe("Calendar Component", () => {
       );
 
       expect(screen.getByText(/2026年1月/)).toBeInTheDocument();
-      // Should show "Fiscal Period: to" with no dates
-      expect(screen.getByText(/Fiscal Period:/i)).toBeInTheDocument();
+      // Should show "会計期間:  ～ " with no dates
+      expect(screen.getByText(/会計期間:/)).toBeInTheDocument();
     });
 
     it("should handle single date", () => {
