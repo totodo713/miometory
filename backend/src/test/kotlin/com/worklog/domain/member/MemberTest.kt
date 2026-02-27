@@ -232,19 +232,60 @@ class MemberTest {
     }
 
     @Test
-    fun `constructor should fail with null organizationId`() {
-        assertFailsWith<NullPointerException> {
-            Member(
-                MemberId.generate(),
-                tenantId,
-                null,
-                "user@example.com",
-                "John Doe",
-                null,
-                true,
-                Instant.now(),
-            )
-        }
+    fun `constructor should allow null organizationId`() {
+        val member = Member(
+            MemberId.generate(),
+            tenantId,
+            null,
+            "user@example.com",
+            "John Doe",
+            null,
+            true,
+            Instant.now(),
+        )
+
+        assertNull(member.organizationId)
+    }
+
+    @Test
+    fun `createForTenant should create member without organization`() {
+        val member = Member.createForTenant(
+            tenantId,
+            "user@example.com",
+            "John Doe",
+        )
+
+        assertNotNull(member.id)
+        assertEquals(tenantId, member.tenantId)
+        assertNull(member.organizationId)
+        assertEquals("user@example.com", member.email)
+        assertEquals("John Doe", member.displayName)
+        assertTrue(member.isActive)
+        assertNull(member.managerId)
+    }
+
+    @Test
+    fun `hasOrganization should return true when organization is set`() {
+        val member = Member.create(
+            tenantId,
+            organizationId,
+            "user@example.com",
+            "John Doe",
+            null,
+        )
+
+        assertTrue(member.hasOrganization())
+    }
+
+    @Test
+    fun `hasOrganization should return false when organization is null`() {
+        val member = Member.createForTenant(
+            tenantId,
+            "user@example.com",
+            "John Doe",
+        )
+
+        assertFalse(member.hasOrganization())
     }
 
     @Test
