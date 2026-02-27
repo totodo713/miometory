@@ -135,7 +135,7 @@ function PasswordResetConfirmForm() {
         setIsTokenReady(true);
       }
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, t]);
 
   /**
    * Auto-redirect countdown after success

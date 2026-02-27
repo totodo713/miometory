@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { AuthGuard } from "@/components/shared/AuthGuard";
+import { IntlWrapper } from "../../../helpers/intl";
 
 const mockReplace = vi.fn();
 
@@ -20,9 +21,11 @@ describe("AuthGuard", () => {
   test("shows spinner when isLoading is true", () => {
     mockUseAuthContext.mockReturnValue({ user: null, isLoading: true });
     render(
-      <AuthGuard>
-        <p>Protected</p>
-      </AuthGuard>,
+      <IntlWrapper>
+        <AuthGuard>
+          <p>Protected</p>
+        </AuthGuard>
+      </IntlWrapper>,
     );
     expect(screen.getAllByText("読み込み中...").length).toBeGreaterThan(0);
     expect(screen.queryByText("Protected")).not.toBeInTheDocument();
@@ -31,9 +34,11 @@ describe("AuthGuard", () => {
   test("redirects to /login when user is null and not loading", () => {
     mockUseAuthContext.mockReturnValue({ user: null, isLoading: false });
     render(
-      <AuthGuard>
-        <p>Protected</p>
-      </AuthGuard>,
+      <IntlWrapper>
+        <AuthGuard>
+          <p>Protected</p>
+        </AuthGuard>
+      </IntlWrapper>,
     );
     expect(mockReplace).toHaveBeenCalledWith("/login");
   });
@@ -44,9 +49,11 @@ describe("AuthGuard", () => {
       isLoading: false,
     });
     render(
-      <AuthGuard>
-        <p>Protected</p>
-      </AuthGuard>,
+      <IntlWrapper>
+        <AuthGuard>
+          <p>Protected</p>
+        </AuthGuard>
+      </IntlWrapper>,
     );
     expect(screen.getByText("Protected")).toBeInTheDocument();
   });

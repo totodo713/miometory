@@ -7,8 +7,8 @@
  * Fetches and displays the manager's subordinates for time entry on their behalf.
  */
 
-import { useEffect, useId, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useEffect, useId, useState } from "react";
 import { api } from "@/services/api";
 import type { SubordinateMember } from "@/services/worklogStore";
 
@@ -65,7 +65,7 @@ export function MemberSelector({
     }
 
     fetchSubordinates();
-  }, [managerId, includeIndirect]);
+  }, [managerId, includeIndirect, t]);
 
   function handleChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const memberId = event.target.value;

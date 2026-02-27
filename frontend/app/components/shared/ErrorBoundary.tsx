@@ -7,8 +7,8 @@
  * a fallback UI instead of crashing the whole app.
  */
 
-import { Component, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
   /** Child components to wrap */

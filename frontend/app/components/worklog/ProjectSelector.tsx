@@ -9,8 +9,8 @@
  * Feature: 003-project-selector-worklog
  */
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { api } from "@/services/api";
 import type { AssignedProject } from "@/types/worklog";
 
@@ -88,7 +88,7 @@ export function ProjectSelector({
     }
 
     fetchProjects();
-  }, [memberId]);
+  }, [memberId, t]);
 
   // Handle click outside to close dropdown
   useEffect(() => {

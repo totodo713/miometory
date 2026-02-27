@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useEffect } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { useAuthContext } from "@/providers/AuthProvider";
 
