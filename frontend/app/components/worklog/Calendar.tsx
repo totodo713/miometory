@@ -102,15 +102,19 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
           })}
         </h2>
         <p className="text-sm text-gray-600">
-          Fiscal Period: {dates[0]?.date} to {dates[dates.length - 1]?.date}
+          {t("fiscalPeriod", { start: dates[0]?.date, end: dates[dates.length - 1]?.date })}
         </p>
         {/* Date info (fiscal year, fiscal period, monthly period) */}
         {dateInfoLoading ? (
           <Skeleton.Text lines={1} />
         ) : dateInfo ? (
           <p className="text-xs text-gray-500 mt-1">
-            {dateInfo.fiscalYear} {dateInfo.fiscalPeriod} | 月次期間: {dateInfo.monthlyPeriodStart} -{" "}
-            {dateInfo.monthlyPeriodEnd}
+            {t("monthlyPeriod", {
+              fiscalYear: dateInfo.fiscalYear,
+              fiscalPeriod: dateInfo.fiscalPeriod,
+              start: dateInfo.monthlyPeriodStart,
+              end: dateInfo.monthlyPeriodEnd,
+            })}
           </p>
         ) : null}
       </div>
@@ -161,8 +165,8 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                   <div className="flex items-center gap-1">
                     {dateEntry.isHoliday && <span className="text-xs text-holiday-600">H</span>}
                     {dateEntry.hasProxyEntries && (
-                      <span className="text-xs text-amber-600" title="Contains entries made by manager" role="img">
-                        👤<span className="sr-only">Proxy entry indicator</span>
+                      <span className="text-xs text-amber-600" title={t("proxyEntryTitle")} role="img">
+                        👤<span className="sr-only">{t("proxyEntryLabel")}</span>
                       </span>
                     )}
                   </div>
@@ -183,7 +187,11 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                   {dateEntry.rejectionSource && (
                     <span
                       className="inline-block w-2 h-2 rounded-full bg-red-400"
-                      title={`${dateEntry.rejectionSource === "monthly" ? "Monthly" : "Daily"} rejection: ${dateEntry.rejectionReason ?? ""}`}
+                      title={
+                        dateEntry.rejectionSource === "monthly"
+                          ? t("rejectionMonthly", { reason: dateEntry.rejectionReason ?? "" })
+                          : t("rejectionDaily", { reason: dateEntry.rejectionReason ?? "" })
+                      }
                     />
                   )}
                   {(dateEntry.status !== "DRAFT" || hasAnyHours) && (
@@ -266,11 +274,11 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                         {dateEntry.hasProxyEntries && (
                           <span
                             className="text-xs text-amber-600"
-                            title="Contains entries made by manager"
-                            aria-label="Contains entries made by manager"
+                            title={t("proxyEntryTitle")}
+                            aria-label={t("proxyEntryTitle")}
                             role="img"
                           >
-                            👤<span className="sr-only">Proxy entry indicator</span>
+                            👤<span className="sr-only">{t("proxyEntryLabel")}</span>
                           </span>
                         )}
                         {dateEntry.isHoliday && <span className="text-xs text-holiday-600">H</span>}
@@ -283,7 +291,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                         {/* Work hours */}
                         {hasWorkHours && (
                           <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-600">Work:</span>
+                            <span className="text-xs text-gray-600">{t("workLabel")}</span>
                             <span className="text-sm font-semibold text-gray-900">{dateEntry.totalWorkHours}h</span>
                           </div>
                         )}
@@ -303,7 +311,11 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                       <div className="mt-1">
                         <span
                           className="inline-block w-full h-0.5 rounded bg-red-400"
-                          title={`${dateEntry.rejectionSource === "monthly" ? "Monthly" : "Daily"} rejection: ${dateEntry.rejectionReason ?? ""}`}
+                          title={
+                            dateEntry.rejectionSource === "monthly"
+                              ? t("rejectionMonthly", { reason: dateEntry.rejectionReason ?? "" })
+                              : t("rejectionDaily", { reason: dateEntry.rejectionReason ?? "" })
+                          }
                         />
                       </div>
                     )}
