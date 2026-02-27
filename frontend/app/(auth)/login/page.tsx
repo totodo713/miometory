@@ -15,6 +15,7 @@ export default function LoginPage() {
   const { user, isLoading, login } = useAuthContext();
   const t = useTranslations("auth.login");
   const tc = useTranslations("common");
+  const ta = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -105,7 +106,7 @@ export default function LoginPage() {
         </div>
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Miometry</h1>
-          <p className="text-sm text-gray-500 mt-1">Time Entry System</p>
+          <p className="text-sm text-gray-500 mt-1">{ta("brandTagline")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
