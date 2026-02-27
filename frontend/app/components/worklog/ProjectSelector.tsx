@@ -10,6 +10,7 @@
  */
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { api } from "@/services/api";
 import type { AssignedProject } from "@/types/worklog";
 
@@ -39,9 +40,11 @@ export function ProjectSelector({
   disabled = false,
   error,
   className = "",
-  placeholder = "Select a project...",
+  placeholder,
   id,
 }: ProjectSelectorProps) {
+  const t = useTranslations("worklog.projectSelector");
+  const resolvedPlaceholder = placeholder ?? t("placeholder");
   const generatedInputId = useId();
   const inputId = id || generatedInputId;
   const listboxId = useId();
@@ -77,7 +80,7 @@ export function ProjectSelector({
         const response = await api.members.getAssignedProjects(memberId);
         setProjects(response.projects);
       } catch (err) {
-        setLoadError(err instanceof Error ? err.message : "Failed to load projects");
+        setLoadError(err instanceof Error ? err.message : t("loadError"));
         setProjects([]);
       } finally {
         setIsLoading(false);
@@ -189,7 +192,7 @@ export function ProjectSelector({
         <input
           type="text"
           disabled
-          placeholder="Loading projects..."
+          placeholder={t("loading")}
           className="w-full px-3 py-2 border rounded-md bg-gray-100 cursor-not-allowed"
         />
       </div>
@@ -209,9 +212,7 @@ export function ProjectSelector({
   if (projects.length === 0) {
     return (
       <div className={`relative ${className}`}>
-        <div className="text-sm text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
-          No projects assigned. Please contact your administrator.
-        </div>
+        <div className="text-sm text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">{t("noAssigned")}</div>
       </div>
     );
   }
@@ -234,7 +235,7 @@ export function ProjectSelector({
           onFocus={handleFocus}
           onKeyDown={handleKeyDown}
           disabled={disabled}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           className={`w-full px-3 py-2 pr-8 border rounded-md 
             ${disabled ? "bg-gray-100 cursor-not-allowed" : "bg-white cursor-text"}
             ${error ? "border-red-500" : "border-gray-300"}
@@ -246,7 +247,7 @@ export function ProjectSelector({
           tabIndex={-1}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          aria-label="Toggle project list"
+          aria-label={t("toggleList")}
           className={`absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600
             ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}
         >
@@ -270,11 +271,11 @@ export function ProjectSelector({
         <div
           id={listboxId}
           role="listbox"
-          aria-label="Projects"
+          aria-label={t("listLabel")}
           className="absolute z-50 w-full mt-1 max-h-60 overflow-auto bg-white border border-gray-300 rounded-md shadow-lg"
         >
           {filteredProjects.length === 0 ? (
-            <div className="px-3 py-2 text-gray-500 text-sm">No matching projects found</div>
+            <div className="px-3 py-2 text-gray-500 text-sm">{t("noMatching")}</div>
           ) : (
             filteredProjects.map((project, index) => (
               <div
