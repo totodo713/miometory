@@ -1,6 +1,7 @@
 package com.worklog.infrastructure.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.worklog.WorkLogEntry;
@@ -251,17 +252,25 @@ public class JdbcWorkLogRepository {
         for (DomainEvent event : events) {
             switch (event) {
                 case WorkLogEntryCreated e -> {
-                    Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
-                    // V13 migration backfills member records for users who signed up
-                    // before the fix. If this still fails, the member record is genuinely missing.
-                    if (organizationId.isEmpty()) {
+                    Member member = findMemberForProjection(MemberId.of(e.memberId()))
+                            .orElseThrow(() -> {
+                                logger.warn(
+                                        "Cannot create projection for entry {}: member {} not found in members table",
+                                        e.aggregateId(),
+                                        e.memberId());
+                                return new IllegalStateException("Cannot create projection for entry "
+                                        + e.aggregateId() + ": member " + e.memberId()
+                                        + " not found in members table");
+                            });
+                    if (!member.hasOrganization()) {
                         logger.warn(
-                                "Cannot create projection for entry {}: member {} not found in members table",
+                                "Cannot create projection for entry {}: member {} has no organization assigned",
                                 e.aggregateId(),
                                 e.memberId());
                         throw new IllegalStateException("Cannot create projection for entry " + e.aggregateId()
-                                + ": member " + e.memberId() + " not found in members table");
+                                + ": member " + e.memberId() + " has no organization assigned");
                     }
+                    UUID organizationId = member.getOrganizationId().value();
                     jdbcTemplate.update(
                             """
                             INSERT INTO work_log_entries_projection
@@ -278,7 +287,7 @@ public class JdbcWorkLogRepository {
                             """,
                             e.aggregateId(),
                             e.memberId(),
-                            organizationId.get(),
+                            organizationId,
                             e.projectId(),
                             e.date(),
                             BigDecimal.valueOf(e.hours()),
@@ -309,12 +318,8 @@ public class JdbcWorkLogRepository {
         }
     }
 
-    private Optional<UUID> resolveOrganizationId(MemberId memberId) {
-        return memberRepository
-                .findById(memberId)
-                .flatMap(member -> member.hasOrganization()
-                        ? Optional.of(member.getOrganizationId().value())
-                        : Optional.empty());
+    private Optional<Member> findMemberForProjection(MemberId memberId) {
+        return memberRepository.findById(memberId);
     }
 
     private void evictCalendarCache(UUID memberId) {

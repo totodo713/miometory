@@ -83,7 +83,7 @@ public class Member {
 
     /**
      * Factory method for creating a new Member without an organization assignment.
-     * Used during public registration where tenant assignment happens later.
+     * Used during public registration where organization assignment happens later.
      */
     public static Member createForTenant(TenantId tenantId, String email, String displayName) {
         return new Member(

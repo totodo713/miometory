@@ -7,6 +7,7 @@ import com.worklog.domain.absence.events.AbsenceDeleted;
 import com.worklog.domain.absence.events.AbsenceRecorded;
 import com.worklog.domain.absence.events.AbsenceStatusChanged;
 import com.worklog.domain.absence.events.AbsenceUpdated;
+import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
@@ -222,17 +223,25 @@ public class JdbcAbsenceRepository {
         for (DomainEvent event : events) {
             switch (event) {
                 case AbsenceRecorded e -> {
-                    Optional<UUID> organizationId = resolveOrganizationId(MemberId.of(e.memberId()));
-                    // V13 migration backfills member records for users who signed up
-                    // before the fix. If this still fails, the member record is genuinely missing.
-                    if (organizationId.isEmpty()) {
+                    Member member = findMemberForProjection(MemberId.of(e.memberId()))
+                            .orElseThrow(() -> {
+                                logger.warn(
+                                        "Cannot create projection for absence {}: member {} not found in members table",
+                                        e.aggregateId(),
+                                        e.memberId());
+                                return new IllegalStateException("Cannot create projection for absence "
+                                        + e.aggregateId() + ": member " + e.memberId()
+                                        + " not found in members table");
+                            });
+                    if (!member.hasOrganization()) {
                         logger.warn(
-                                "Cannot create projection for absence {}: member {} not found in members table",
+                                "Cannot create projection for absence {}: member {} has no organization assigned",
                                 e.aggregateId(),
                                 e.memberId());
                         throw new IllegalStateException("Cannot create projection for absence " + e.aggregateId()
-                                + ": member " + e.memberId() + " not found in members table");
+                                + ": member " + e.memberId() + " has no organization assigned");
                     }
+                    UUID organizationId = member.getOrganizationId().value();
                     jdbcTemplate.update(
                             """
                             INSERT INTO absences_projection
@@ -242,7 +251,7 @@ public class JdbcAbsenceRepository {
                             """,
                             e.aggregateId(),
                             e.memberId(),
-                            organizationId.get(),
+                            organizationId,
                             e.absenceType(),
                             e.date(),
                             e.date(),
@@ -274,12 +283,8 @@ public class JdbcAbsenceRepository {
         }
     }
 
-    private Optional<UUID> resolveOrganizationId(MemberId memberId) {
-        return memberRepository
-                .findById(memberId)
-                .flatMap(member -> member.hasOrganization()
-                        ? Optional.of(member.getOrganizationId().value())
-                        : Optional.empty());
+    private Optional<Member> findMemberForProjection(MemberId memberId) {
+        return memberRepository.findById(memberId);
     }
 
     private void evictCalendarCache(UUID memberId) {
