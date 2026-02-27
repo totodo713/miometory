@@ -7,6 +7,7 @@
  * a fallback UI instead of crashing the whole app.
  */
 
+import { useTranslations } from "next-intl";
 import { Component, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
@@ -77,6 +78,7 @@ interface ErrorFallbackProps {
 }
 
 export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
+  const t = useTranslations("errorBoundary");
   return (
     <div
       className="flex min-h-64 flex-col items-center justify-center rounded-lg border border-red-200 bg-red-50 p-6"
@@ -86,16 +88,16 @@ export function ErrorFallback({ error, onRetry }: ErrorFallbackProps) {
       <div className="mb-4 text-4xl" aria-hidden="true">
         :(
       </div>
-      <h2 className="mb-2 text-lg font-semibold text-red-800">Something went wrong</h2>
-      <p className="mb-4 text-center text-sm text-red-600">{error?.message || "An unexpected error occurred"}</p>
+      <h2 className="mb-2 text-lg font-semibold text-red-800">{t("title")}</h2>
+      <p className="mb-4 text-center text-sm text-red-600">{error?.message || t("message")}</p>
       {onRetry && (
         <button
           type="button"
           onClick={onRetry}
           className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-          aria-label="Retry loading the content"
+          aria-label={t("retryAriaLabel")}
         >
-          Try Again
+          {t("retry")}
         </button>
       )}
     </div>
@@ -112,6 +114,7 @@ interface ErrorMessageProps {
 }
 
 export function ErrorMessage({ message, onRetry, className = "" }: ErrorMessageProps) {
+  const t = useTranslations("errorBoundary");
   return (
     <div className={`flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 ${className}`} role="alert">
       <span className="text-red-500" aria-hidden="true">
@@ -123,9 +126,9 @@ export function ErrorMessage({ message, onRetry, className = "" }: ErrorMessageP
           type="button"
           onClick={onRetry}
           className="text-sm font-medium text-red-600 hover:text-red-800 focus:outline-none focus:underline"
-          aria-label="Retry"
+          aria-label={t("retry")}
         >
-          Retry
+          {t("retry")}
         </button>
       )}
     </div>

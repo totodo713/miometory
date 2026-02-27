@@ -4,9 +4,14 @@ import PasswordResetRequestPage from "@/(auth)/password-reset/request/page";
 import { ToastProvider } from "@/components/shared/ToastProvider";
 import { checkRateLimit, getMinutesUntilReset, setupStorageListener } from "@/lib/utils/rate-limit";
 import { api } from "@/services/api";
+import { IntlWrapper } from "../../../../helpers/intl";
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 vi.mock("next/link", () => ({

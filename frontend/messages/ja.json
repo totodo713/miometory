@@ -161,7 +161,8 @@
       "sent": "送信しました",
       "successToast": "確認メールを再送信しました",
       "errorToast": "確認メールの送信に失敗しました"
-    }
+    },
+    "brandTagline": "勤怠管理システム"
   },
   "passwordReset": {
     "request": {
@@ -173,6 +174,10 @@
       "backToLogin": "ログインに戻る",
       "successTitle": "メールを送信しました",
       "successMessage": "パスワード再設定用のリンクをメールでお送りしました。受信トレイをご確認ください。",
+      "submitting": "送信中...",
+      "rateLimitReached": "リクエスト制限に達しました。{minutes}分後に再試行できます。",
+      "remainingAttempts": "残り試行回数: {count}",
+      "toastSuccess": "パスワードリセットメールを送信しました",
       "errors": {
         "emailRequired": "メールアドレスを入力してください",
         "emailInvalid": "有効なメールアドレスを入力してください",
@@ -193,6 +198,11 @@
       "successTitle": "パスワードを変更しました",
       "successMessage": "新しいパスワードでログインできます。",
       "redirecting": "ログインページにリダイレクトしています...",
+      "loginNow": "今すぐログインする",
+      "requestReset": "パスワードリセットをリクエスト",
+      "retryAriaLabel": "エラーをクリアして再試行",
+      "backToLogin": "ログインに戻る",
+      "redirectCountdown": "{seconds}秒後にログインページにリダイレクトします...",
       "errors": {
         "passwordRequired": "パスワードを入力してください",
         "passwordTooShort": "パスワードは8文字以上で入力してください",
@@ -203,7 +213,9 @@
         "tokenExpired": "リンクの有効期限が切れています。パスワードリセットを再度リクエストしてください。",
         "networkError": "ネットワークエラーが発生しました。接続を確認して再試行してください。",
         "serverError": "サーバーエラーが発生しました。しばらくしてから再試行してください。",
-        "unknownError": "予期しないエラーが発生しました。"
+        "unknownError": "予期しないエラーが発生しました。",
+        "passwordValidation": "パスワードが要件を満たしていません。",
+        "tokenRequired": "トークンが必要です"
       }
     },
     "strength": {
@@ -318,7 +330,14 @@
         "rejected": "差戻",
         "holiday": "祝日",
         "absence": "休暇"
-      }
+      },
+      "fiscalPeriod": "会計期間: {start} ～ {end}",
+      "monthlyPeriod": "{fiscalYear} {fiscalPeriod} | 月次期間: {start} - {end}",
+      "proxyEntryTitle": "マネージャーによる代理入力あり",
+      "proxyEntryLabel": "代理入力",
+      "rejectionMonthly": "月次差戻: {reason}",
+      "rejectionDaily": "日次差戻: {reason}",
+      "workLabel": "勤務:"
     },
     "monthlySummary": {
       "title": "月次サマリー",
@@ -430,6 +449,22 @@
       "formatNotes": "任意のテキスト、最大500文字",
       "downloadError": "テンプレートのダウンロードに失敗しました",
       "uploadForm": "アップロード"
+    },
+    "memberSelector": {
+      "label": "チームメンバーを選択",
+      "placeholder": "チームメンバーを選択...",
+      "noMembers": "チームメンバーが見つかりません。直属の部下のみ代理入力できます。",
+      "loading": "読み込み中...",
+      "loadError": "チームメンバーの読み込みに失敗しました"
+    },
+    "projectSelector": {
+      "placeholder": "プロジェクトを選択...",
+      "loading": "プロジェクト読み込み中...",
+      "noAssigned": "プロジェクトが割り当てられていません。管理者にお問い合わせください。",
+      "toggleList": "プロジェクト一覧を切替",
+      "noMatching": "一致するプロジェクトが見つかりません",
+      "listLabel": "プロジェクト",
+      "loadError": "プロジェクトの読み込みに失敗しました"
     }
   },
   "admin": {
@@ -1061,6 +1096,7 @@
   "errorBoundary": {
     "title": "エラーが発生しました",
     "message": "予期しないエラーが発生しました。ページを再読み込みしてください。",
-    "retry": "再試行"
+    "retry": "再試行",
+    "retryAriaLabel": "コンテンツの再読み込みを試行"
   }
 }

@@ -17,6 +17,7 @@
  */
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/useToast";
@@ -27,6 +28,8 @@ import { api } from "@/services/api";
 
 export default function PasswordResetRequestPage() {
   const toast = useToast();
+  const t = useTranslations("passwordReset.request");
+  const tc = useTranslations("passwordReset.common");
 
   // Form state
   const [email, setEmail] = useState("");
@@ -56,8 +59,8 @@ export default function PasswordResetRequestPage() {
   }, []);
 
   const validateField = (name: string, value: string) => {
-    if (name === "email" && !value.trim()) return "メールアドレスは必須です";
-    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "メールアドレスの形式が正しくありません";
+    if (name === "email" && !value.trim()) return t("errors.emailRequired");
+    if (name === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return t("errors.emailInvalid");
     return "";
   };
 
@@ -80,7 +83,10 @@ export default function PasswordResetRequestPage() {
     setIsSuccess(false);
 
     // Validate email
-    const emailError = validateEmail(email);
+    const emailError = validateEmail(email, {
+      emailRequired: t("errors.emailRequired"),
+      emailInvalid: t("errors.emailInvalid"),
+    });
     if (emailError) {
       setValidationError(emailError);
       return;
@@ -94,7 +100,7 @@ export default function PasswordResetRequestPage() {
       const minutes = rateLimitCheck.resetTime ? getMinutesUntilReset(rateLimitCheck.resetTime) : 5;
       setError({
         type: "rate_limit",
-        message: `リクエストが多すぎます。${minutes}分後に再試行してください。`,
+        message: t("errors.rateLimitExceeded", { minutes }),
         isRetryable: false,
       });
       return;
@@ -113,7 +119,7 @@ export default function PasswordResetRequestPage() {
       // Always show success message (anti-enumeration)
       setIsSuccess(true);
       setEmail(""); // Clear email for security
-      toast.success("パスワードリセットメールを送信しました");
+      toast.success(t("toastSuccess"));
     } catch (err) {
       // Handle API errors
       if (err instanceof Error) {
@@ -121,15 +127,13 @@ export default function PasswordResetRequestPage() {
 
         setError({
           type: isNetworkError ? "network" : "server",
-          message: isNetworkError
-            ? "ネットワークエラーが発生しました。接続を確認して再試行してください。"
-            : "サーバーエラーが発生しました。しばらくしてから再試行してください。",
+          message: isNetworkError ? t("errors.networkError") : t("errors.serverError"),
           isRetryable: true,
         });
       } else {
         setError({
           type: "server",
-          message: "予期しないエラーが発生しました。",
+          message: t("errors.unknownError"),
           isRetryable: true,
         });
       }
@@ -162,15 +166,15 @@ export default function PasswordResetRequestPage() {
   return (
     <div className="password-reset-request-page">
       <div className="container">
-        <h1>パスワードリセット</h1>
+        <h1>{t("title")}</h1>
 
         {/* Success message */}
         {isSuccess && (
           <div className="success-message" role="alert" aria-live="assertive">
-            <h2>メールを送信しました</h2>
-            <p>パスワード再設定用のリンクをメールでお送りしました。受信トレイをご確認ください。</p>
+            <h2>{t("successTitle")}</h2>
+            <p>{t("successMessage")}</p>
             <Link href="/login" className="back-to-login-link">
-              ログインに戻る
+              {t("backToLogin")}
             </Link>
           </div>
         )}
@@ -181,7 +185,7 @@ export default function PasswordResetRequestPage() {
             <p>{error.message}</p>
             {error.isRetryable && (
               <button type="button" onClick={handleRetry} className="retry-button">
-                再試行
+                {tc("retry")}
               </button>
             )}
           </div>
@@ -190,24 +194,18 @@ export default function PasswordResetRequestPage() {
         {/* Rate limit warning */}
         {!rateLimitState.isAllowed && rateLimitState.resetTime && (
           <div className="rate-limit-warning" role="alert" aria-live="polite">
-            <p>
-              リクエスト制限に達しました。
-              {getMinutesUntilReset(rateLimitState.resetTime)}
-              分後に再試行できます。
-            </p>
+            <p>{t("rateLimitReached", { minutes: getMinutesUntilReset(rateLimitState.resetTime) })}</p>
           </div>
         )}
 
         {/* Request form */}
         {!isSuccess && (
           <form onSubmit={handleSubmit} noValidate>
-            <p className="form-description">
-              登録されたメールアドレスを入力してください。パスワード再設定用のリンクをお送りします。
-            </p>
+            <p className="form-description">{t("description")}</p>
 
             <div className="form-field">
               <label htmlFor="email">
-                メールアドレス
+                {t("emailLabel")}
                 <span className="required-indicator">*</span>
               </label>
               <input
@@ -217,7 +215,7 @@ export default function PasswordResetRequestPage() {
                 value={email}
                 onChange={handleEmailChange}
                 onBlur={() => handleBlur("email", email)}
-                placeholder="example@company.com"
+                placeholder={t("emailPlaceholder")}
                 required
                 aria-required="true"
                 aria-invalid={!!(validationError || fieldErrors.email)}
@@ -238,17 +236,17 @@ export default function PasswordResetRequestPage() {
                 disabled={isLoading || !rateLimitState.isAllowed || hasFieldErrors}
                 aria-busy={isLoading}
               >
-                {isLoading ? "送信中..." : "リセットリンクを送信"}
+                {isLoading ? t("submitting") : t("submitButton")}
               </button>
             </div>
 
             <div className="form-footer">
               <Link href="/login" className="back-to-login-link">
-                ログインに戻る
+                {t("backToLogin")}
               </Link>
               {rateLimitState.isAllowed && rateLimitState.remainingAttempts < 3 && (
                 <p className="rate-limit-info" aria-live="polite">
-                  残り試行回数: {rateLimitState.remainingAttempts}
+                  {t("remainingAttempts", { count: rateLimitState.remainingAttempts })}
                 </p>
               )}
             </div>

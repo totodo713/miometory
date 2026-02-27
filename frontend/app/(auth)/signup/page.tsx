@@ -13,6 +13,7 @@ export default function SignupPage() {
   const router = useRouter();
   const toast = useToast();
   const t = useTranslations("auth.signup");
+  const ta = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -61,7 +62,7 @@ export default function SignupPage() {
         </div>
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-          <p className="text-sm text-gray-500 mt-1">Miometry Time Entry System</p>
+          <p className="text-sm text-gray-500 mt-1">Miometry {ta("brandTagline")}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

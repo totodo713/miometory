@@ -3,9 +3,14 @@ import type { ReactElement } from "react";
 import PasswordResetConfirmPage from "@/(auth)/password-reset/confirm/page";
 import { ToastProvider } from "@/components/shared/ToastProvider";
 import { api } from "@/services/api";
+import { IntlWrapper } from "../../../../helpers/intl";
 
 function renderWithProviders(ui: ReactElement) {
-  return render(<ToastProvider>{ui}</ToastProvider>);
+  return render(
+    <IntlWrapper>
+      <ToastProvider>{ui}</ToastProvider>
+    </IntlWrapper>,
+  );
 }
 
 vi.mock("next/link", () => ({

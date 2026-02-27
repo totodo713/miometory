@@ -2,7 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 import type { PasswordStrengthResult } from "@/lib/types/password-reset";
 
-// Mock next-intl useTranslations
+// Mock next-intl useTranslations and useLocale
 vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => {
     const translations: Record<string, string> = {
@@ -14,6 +14,7 @@ vi.mock("next-intl", () => ({
     };
     return translations[key] ?? key;
   },
+  useLocale: () => "ja",
 }));
 
 // Mock analyzePasswordStrength to control test results
@@ -227,7 +228,7 @@ describe("PasswordStrengthIndicator", () => {
         vi.advanceTimersByTime(300);
       });
 
-      expect(mockAnalyze).toHaveBeenCalledWith("test");
+      expect(mockAnalyze).toHaveBeenCalledWith("test", "ja");
     });
   });
 

@@ -17,7 +17,7 @@
  * @see specs/005-password-reset-frontend/spec.md
  */
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { PasswordStrengthResult } from "@/lib/types/password-reset";
 import { analyzePasswordStrength } from "@/lib/validation/password";
@@ -51,6 +51,7 @@ export function PasswordStrengthIndicator({
   className = "",
 }: PasswordStrengthIndicatorProps) {
   const t = useTranslations("passwordReset");
+  const locale = useLocale();
   const [result, setResult] = useState<PasswordStrengthResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -68,7 +69,7 @@ export function PasswordStrengthIndicator({
           strength: "weak",
           score: 0,
           feedback: [],
-          crackTimeDisplay: "即座",
+          crackTimeDisplay: locale === "ja" ? "即座" : "instant",
         });
       }
       return;
@@ -78,7 +79,7 @@ export function PasswordStrengthIndicator({
 
     // Debounce: Wait 300ms after last input before calculating
     const timeoutId = setTimeout(() => {
-      const strengthResult = analyzePasswordStrength(password);
+      const strengthResult = analyzePasswordStrength(password, locale);
       setResult(strengthResult);
       setIsCalculating(false);
 
@@ -90,7 +91,7 @@ export function PasswordStrengthIndicator({
 
     // Cleanup: Cancel previous timeout if user types again
     return () => clearTimeout(timeoutId);
-  }, [password, onChange]);
+  }, [password, locale, onChange]);
 
   // Don't render anything for empty passwords
   if (!password) {
