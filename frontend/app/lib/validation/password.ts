@@ -28,6 +28,25 @@ import type { PasswordStrengthResult, ValidationError } from "../types/password-
 export type { PasswordStrengthResult, ValidationError };
 
 /**
+ * Messages for email validation schema
+ */
+export interface EmailValidationMessages {
+  emailRequired: string;
+  emailInvalid: string;
+}
+
+/**
+ * Messages for password confirmation schema
+ */
+export interface PasswordConfirmMessages {
+  tokenRequired: string;
+  passwordMin: string;
+  passwordMax: string;
+  confirmRequired: string;
+  passwordMismatch: string;
+}
+
+/**
  * Initialize zxcvbn with English language dictionary
  *
  * Call this once at application startup or lazy-load when first needed.
@@ -59,36 +78,58 @@ if (typeof window !== "undefined") {
 }
 
 /**
- * Zod schema for password reset request form
+ * Factory: Create Zod schema for password reset request form
+ *
+ * @param messages - Localized validation messages
+ * @returns Zod schema with localized error messages
  */
-export const passwordResetRequestSchema = z.object({
-  email: z
-    .string()
-    .min(1, { message: "メールアドレスを入力してください" })
-    .email({ message: "有効なメールアドレスを入力してください" }),
-});
+export function createPasswordResetRequestSchema(messages: EmailValidationMessages) {
+  return z.object({
+    email: z.string().min(1, { message: messages.emailRequired }).email({ message: messages.emailInvalid }),
+  });
+}
 
 /**
- * Zod schema for password reset confirmation form
+ * Factory: Create Zod schema for password reset confirmation form
+ *
+ * @param messages - Localized validation messages
+ * @returns Zod schema with localized error messages
  */
-export const passwordResetConfirmSchema = z
-  .object({
-    token: z.string().min(1, { message: "トークンが必要です" }),
-    newPassword: z
-      .string()
-      .min(8, { message: "パスワードは8文字以上で入力してください" })
-      .max(128, { message: "パスワードは128文字以内で入力してください" }),
-    confirmPassword: z.string().min(1, { message: "確認用パスワードを入力してください" }),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "パスワードが一致しません",
-    path: ["confirmPassword"],
-  });
+export function createPasswordResetConfirmSchema(messages: PasswordConfirmMessages) {
+  return z
+    .object({
+      token: z.string().min(1, { message: messages.tokenRequired }),
+      newPassword: z.string().min(8, { message: messages.passwordMin }).max(128, { message: messages.passwordMax }),
+      confirmPassword: z.string().min(1, { message: messages.confirmRequired }),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: messages.passwordMismatch,
+      path: ["confirmPassword"],
+    });
+}
+
+/**
+ * Backward-compatible schema instances with Japanese messages.
+ * Existing callers can continue to use these directly.
+ */
+export const passwordResetRequestSchema = createPasswordResetRequestSchema({
+  emailRequired: "メールアドレスを入力してください",
+  emailInvalid: "有効なメールアドレスを入力してください",
+});
+
+export const passwordResetConfirmSchema = createPasswordResetConfirmSchema({
+  tokenRequired: "トークンが必要です",
+  passwordMin: "パスワードは8文字以上で入力してください",
+  passwordMax: "パスワードは128文字以内で入力してください",
+  confirmRequired: "確認用パスワードを入力してください",
+  passwordMismatch: "パスワードが一致しません",
+});
 
 /**
  * Validate email address
  *
  * @param email - Email address to validate
+ * @param messages - Optional localized validation messages (defaults to Japanese)
  * @returns Validation error or null if valid
  *
  * @example
@@ -99,8 +140,9 @@ export const passwordResetConfirmSchema = z
  * }
  * ```
  */
-export function validateEmail(email: string): ValidationError | null {
-  const result = passwordResetRequestSchema.safeParse({ email });
+export function validateEmail(email: string, messages?: EmailValidationMessages): ValidationError | null {
+  const schema = messages ? createPasswordResetRequestSchema(messages) : passwordResetRequestSchema;
+  const result = schema.safeParse({ email });
   if (result.success) {
     return null;
   }
@@ -119,6 +161,7 @@ export function validateEmail(email: string): ValidationError | null {
  * @param newPassword - New password to set
  * @param confirmPassword - Confirmation password
  * @param token - Password reset token (required but not validated here)
+ * @param messages - Optional localized validation messages (defaults to Japanese)
  * @returns Record of validation errors keyed by field name
  *
  * @example
@@ -136,8 +179,10 @@ export function validatePasswordConfirm(
   newPassword: string,
   confirmPassword: string,
   token: string,
+  messages?: PasswordConfirmMessages,
 ): Record<string, ValidationError> {
-  const result = passwordResetConfirmSchema.safeParse({
+  const schema = messages ? createPasswordResetConfirmSchema(messages) : passwordResetConfirmSchema;
+  const result = schema.safeParse({
     token,
     newPassword,
     confirmPassword,
@@ -185,6 +230,8 @@ function getErrorType(zodErrorCode: string): ValidationError["type"] {
  * Recommended: Debounce by 300ms to avoid excessive calculations during typing
  *
  * @param password - Password to analyze
+ * @param locale - Locale code (default: "ja"). When "ja", feedback is translated to Japanese.
+ *                 For other locales, raw English zxcvbn feedback is returned.
  * @returns Password strength result with score, strength category, and feedback
  *
  * @example
@@ -195,7 +242,7 @@ function getErrorType(zodErrorCode: string): ValidationError["type"] {
  * console.log(result.feedback); // ["Add more unique words or characters"]
  * ```
  */
-export function analyzePasswordStrength(password: string): PasswordStrengthResult {
+export function analyzePasswordStrength(password: string, locale = "ja"): PasswordStrengthResult {
   // Ensure zxcvbn is initialized
   initializeZxcvbn();
 
@@ -204,8 +251,8 @@ export function analyzePasswordStrength(password: string): PasswordStrengthResul
     return {
       strength: "weak",
       score: 0,
-      feedback: ["短すぎます"],
-      crackTimeDisplay: "即座",
+      feedback: [locale === "ja" ? "短すぎます" : "Too short"],
+      crackTimeDisplay: locale === "ja" ? "即座" : "instant",
     };
   }
 
@@ -221,20 +268,20 @@ export function analyzePasswordStrength(password: string): PasswordStrengthResul
     strength = "strong";
   }
 
-  // Translate zxcvbn feedback to Japanese
+  // Collect feedback: translate to Japanese only when locale is "ja"
   const feedback: string[] = [];
   if (result.feedback.warning) {
-    feedback.push(translateFeedback(result.feedback.warning));
+    feedback.push(locale === "ja" ? translateFeedback(result.feedback.warning) : result.feedback.warning);
   }
   for (const suggestion of result.feedback.suggestions) {
-    feedback.push(translateFeedback(suggestion));
+    feedback.push(locale === "ja" ? translateFeedback(suggestion) : suggestion);
   }
 
   return {
     strength,
     score: result.score,
     feedback,
-    crackTimeDisplay: result.crackTimesDisplay.offlineSlowHashing1e4PerSecond || "不明",
+    crackTimeDisplay: result.crackTimesDisplay.offlineSlowHashing1e4PerSecond || (locale === "ja" ? "不明" : "unknown"),
   };
 }
 
