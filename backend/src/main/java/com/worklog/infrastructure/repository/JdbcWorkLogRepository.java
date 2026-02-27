@@ -310,8 +310,11 @@ public class JdbcWorkLogRepository {
     }
 
     private Optional<UUID> resolveOrganizationId(MemberId memberId) {
-        return memberRepository.findById(memberId).map(member -> member.getOrganizationId()
-                .value());
+        return memberRepository
+                .findById(memberId)
+                .flatMap(member -> member.hasOrganization()
+                        ? Optional.of(member.getOrganizationId().value())
+                        : Optional.empty());
     }
 
     private void evictCalendarCache(UUID memberId) {
