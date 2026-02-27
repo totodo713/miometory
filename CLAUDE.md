@@ -8,24 +8,21 @@
 - `auto-test-on-edit.sh` (PostToolUse): Runs relevant tests when source/test files are edited
 - `git-safety-check.sh` (PreToolUse): Blocks dangerous git patterns (force push, --no-verify, branch -D, checkout ., reset --hard, clean, config)
 - `sensitive-file-guard.sh` (PreToolUse): Blocks Write/Edit to sensitive files (.env, credentials, secrets)
-- `require-plan-review.sh` (PostToolUse): Detects `docs/plan/` 配下へのファイル書き込みを検知し、multi-agent review を強制 (CPO + security + UX)
 - `pre-pr-test-gate.sh` (PreToolUse): Blocks PR creation until lint, format, tests, and coverage pass
 - Hook pattern: read JSON from stdin → parse with `python3` → exit 0 (allow) or exit 2 (block)
 - New hooks should follow fail-open principle (exit 0 on parse errors)
 
-## Plan Review Workflow (MANDATORY)
+## Plan Review Workflow
 
-After `docs/plan/` フォルダ配下にファイルを作成・編集した場合:
-1. The `require-plan-review.sh` PostToolUse hook will automatically detect the write and inject a review directive
-2. You MUST invoke three review agents **in parallel** using the Task tool:
+`docs/plan/` 配下のplanファイルのレビューには `/review-plan` コマンド（またはreview-planスキル）を使用する:
+
+1. `/review-plan docs/plan/feature-x.md` でレビュー対象を指定して実行（引数省略で最新ファイルを対象）
+2. 3つのレビューエージェントが **並列** で起動される:
    - `chief-product-officer` — product feasibility, spec alignment, feature completeness
    - `security-reviewer` — security risks, auth/authz, tenant isolation, injection
    - `ux-design-advisor` — UX quality, accessibility, user flow, responsive design
-3. After all three return, synthesize: ALL must APPROVE before implementation proceeds
-4. If ANY reviewer returns REJECTED, revise the plan and re-run only the rejected reviewers
-5. Do NOT use Write/Edit on source files until all three approve
-
-This workflow cannot be skipped even if the user asks to proceed without review.
+3. 全員 APPROVED → 実装に進んで良い。1つでも REJECTED → plan修正後、REJECTEDのレビューアーのみ再実行
+4. planファイル編集時にreview-planスキルが自動提案されることもある
 
 ## Pre-PR Verification (MANDATORY)
 
