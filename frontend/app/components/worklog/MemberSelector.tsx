@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useId, useState } from "react";
+import { useTranslations } from "next-intl";
 import { api } from "@/services/api";
 import type { SubordinateMember } from "@/services/worklogStore";
 
@@ -34,9 +35,12 @@ export function MemberSelector({
   onSelectMember,
   includeIndirect = false,
   className = "",
-  label = "Select Team Member",
-  placeholder = "Choose a team member...",
+  label,
+  placeholder,
 }: MemberSelectorProps) {
+  const t = useTranslations("worklog.memberSelector");
+  const resolvedLabel = label ?? t("label");
+  const resolvedPlaceholder = placeholder ?? t("placeholder");
   const selectorId = useId();
   const [subordinates, setSubordinates] = useState<SubordinateMember[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +57,7 @@ export function MemberSelector({
         const response = await api.members.getSubordinates(managerId, includeIndirect);
         setSubordinates(response.subordinates);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load team members");
+        setError(err instanceof Error ? err.message : t("loadError"));
         setSubordinates([]);
       } finally {
         setIsLoading(false);
@@ -77,7 +81,7 @@ export function MemberSelector({
   if (error) {
     return (
       <div className={`flex flex-col gap-1 ${className}`}>
-        {label && <span className="text-sm font-medium text-gray-700">{label}</span>}
+        {resolvedLabel && <span className="text-sm font-medium text-gray-700">{resolvedLabel}</span>}
         <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">{error}</div>
       </div>
     );
@@ -85,9 +89,9 @@ export function MemberSelector({
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
-      {label && (
+      {resolvedLabel && (
         <label htmlFor={selectorId} className="text-sm font-medium text-gray-700">
-          {label}
+          {resolvedLabel}
         </label>
       )}
       <select
@@ -95,19 +99,17 @@ export function MemberSelector({
         value={selectedMember?.id || ""}
         onChange={handleChange}
         disabled={isLoading}
-        aria-label={label}
+        aria-label={resolvedLabel}
         className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
       >
-        <option value="">{isLoading ? "Loading..." : placeholder}</option>
+        <option value="">{isLoading ? t("loading") : resolvedPlaceholder}</option>
         {subordinates.map((member) => (
           <option key={member.id} value={member.id}>
             {member.displayName} ({member.email})
           </option>
         ))}
       </select>
-      {subordinates.length === 0 && !isLoading && (
-        <p className="text-xs text-gray-500">No team members found. You can only enter time for your direct reports.</p>
-      )}
+      {subordinates.length === 0 && !isLoading && <p className="text-xs text-gray-500">{t("noMembers")}</p>}
     </div>
   );
 }
