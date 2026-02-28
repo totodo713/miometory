@@ -132,6 +132,8 @@ class UserStatusServiceTest {
             var member = Member.createForTenant(tenantId, TEST_EMAIL, "Test");
             when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
             when(memberRepository.findByEmail(tenantId, TEST_EMAIL)).thenReturn(Optional.of(member));
+            when(sessionRepository.updateSelectedTenant(sessionId, tenantId, user.getId()))
+                    .thenReturn(1);
 
             assertDoesNotThrow(() -> userStatusService.selectTenant(TEST_EMAIL, tenantId.value(), sessionId));
 

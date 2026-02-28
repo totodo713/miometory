@@ -199,9 +199,10 @@ public class JdbcUserSessionRepository {
      * @param tenantId Tenant to select, or null to clear
      * @param userId User ID that must own the session
      */
-    public void updateSelectedTenant(UUID sessionId, TenantId tenantId, UserId userId) {
+    public int updateSelectedTenant(UUID sessionId, TenantId tenantId, UserId userId) {
         String sql = "UPDATE user_sessions SET selected_tenant_id = ? WHERE session_id = ? AND user_id = ?";
-        jdbcTemplate.update(sql, tenantId != null ? tenantId.value() : null, sessionId.toString(), userId.value());
+        return jdbcTemplate.update(
+                sql, tenantId != null ? tenantId.value() : null, sessionId.toString(), userId.value());
     }
 
     /**

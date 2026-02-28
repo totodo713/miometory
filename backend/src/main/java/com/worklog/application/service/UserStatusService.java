@@ -89,7 +89,10 @@ public class UserStatusService {
             throw new DomainException("INVALID_TENANT_SELECTION", "Membership is not active for the specified tenant");
         }
 
-        sessionRepository.updateSelectedTenant(sessionId, tid, user.getId());
+        int updated = sessionRepository.updateSelectedTenant(sessionId, tid, user.getId());
+        if (updated == 0) {
+            throw new DomainException("SESSION_NOT_FOUND", "Session not found");
+        }
     }
 
     public record UserStatusResponse(
