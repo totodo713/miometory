@@ -1,8 +1,8 @@
 spring:
   servlet:
     multipart:
-      max-file-size: 1MB
-      max-request-size: 2MB
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:1MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:2MB}
 
   datasource:
     url: jdbc:postgresql://localhost:5432/worklog

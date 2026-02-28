@@ -27,8 +27,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -91,11 +89,9 @@ public class AdminMemberCsvService {
 
     @Transactional
     public byte[] executeImport(String sessionId, UUID tenantId) {
-        DryRunSession session = sessions.get(sessionId);
+        // Atomically claim the session to prevent concurrent imports
+        DryRunSession session = sessions.remove(sessionId);
         if (session == null || session.isExpired()) {
-            if (session != null) {
-                sessions.remove(sessionId);
-            }
             throw new DomainException("SESSION_NOT_FOUND", "Import session not found or expired");
         }
 
@@ -127,14 +123,6 @@ public class AdminMemberCsvService {
             }
         }
 
-        // Remove session after transaction commits
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                sessions.remove(sessionId);
-            }
-        });
-
         log.info("CSV import completed: {} members imported for tenant {}", importedRows.size(), tenantId);
         return buildResultCsv(importedRows);
     }
@@ -150,12 +138,12 @@ public class AdminMemberCsvService {
     }
 
     private boolean organizationExistsInProjection(UUID organizationId, UUID tenantId) {
-        Integer count = jdbcTemplate.queryForObject(
+        Long count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM organization WHERE id = ? AND tenant_id = ? AND status = 'ACTIVE'",
-                Integer.class,
+                Long.class,
                 organizationId,
                 tenantId);
-        return count != null && count > 0;
+        return count != null && count > 0L;
     }
 
     private void validateFile(MultipartFile file) {
@@ -172,52 +160,49 @@ public class AdminMemberCsvService {
     }
 
     private DryRunResult buildDryRunResult(String sessionId, List<MemberCsvRow> allRows, MemberCsvResult result) {
-        List<DryRunRowResult> rowResults = new ArrayList<>();
+        // Index all rows by row number for O(1) lookup
+        Map<Integer, MemberCsvRow> rowsByNumber = new java.util.LinkedHashMap<>();
+        for (MemberCsvRow row : allRows) {
+            rowsByNumber.put(row.rowNumber(), row);
+        }
+
+        // Build result map: valid rows first, then group errors by row number
+        Map<Integer, DryRunRowResult> resultMap = new java.util.TreeMap<>();
 
         for (MemberCsvRow row : result.validRows()) {
-            rowResults.add(new DryRunRowResult(row.rowNumber(), row.email(), row.displayName(), "VALID", List.of()));
+            resultMap.put(
+                    row.rowNumber(),
+                    new DryRunRowResult(row.rowNumber(), row.email(), row.displayName(), "VALID", List.of()));
         }
 
         for (CsvValidationError error : result.errors()) {
-            MemberCsvRow matchingRow = allRows.stream()
-                    .filter(r -> r.rowNumber() == error.rowNumber())
-                    .findFirst()
-                    .orElse(null);
-
+            MemberCsvRow matchingRow = rowsByNumber.get(error.rowNumber());
             String email = matchingRow != null ? matchingRow.email() : "";
             String displayName = matchingRow != null ? matchingRow.displayName() : "";
 
-            // Group errors by row number
-            DryRunRowResult existing = rowResults.stream()
-                    .filter(r -> r.rowNumber() == error.rowNumber())
-                    .findFirst()
-                    .orElse(null);
-
-            if (existing != null) {
+            DryRunRowResult existing = resultMap.get(error.rowNumber());
+            if (existing != null && "ERROR".equals(existing.status())) {
                 List<String> errors = new ArrayList<>(existing.errors());
                 errors.add(error.field() + ": " + error.message());
-                rowResults.remove(existing);
-                rowResults.add(new DryRunRowResult(error.rowNumber(), email, displayName, "ERROR", errors));
+                resultMap.put(
+                        error.rowNumber(), new DryRunRowResult(error.rowNumber(), email, displayName, "ERROR", errors));
             } else {
-                rowResults.add(new DryRunRowResult(
+                resultMap.put(
                         error.rowNumber(),
-                        email,
-                        displayName,
-                        "ERROR",
-                        List.of(error.field() + ": " + error.message())));
+                        new DryRunRowResult(
+                                error.rowNumber(),
+                                email,
+                                displayName,
+                                "ERROR",
+                                new ArrayList<>(List.of(error.field() + ": " + error.message()))));
             }
         }
 
-        rowResults.sort((a, b) -> Integer.compare(a.rowNumber(), b.rowNumber()));
+        List<DryRunRowResult> rowResults = new ArrayList<>(resultMap.values());
+        int errorCount = (int)
+                rowResults.stream().filter(r -> "ERROR".equals(r.status())).count();
 
-        return new DryRunResult(
-                sessionId,
-                allRows.size(),
-                result.validRows().size(),
-                (int) rowResults.stream()
-                        .filter(r -> "ERROR".equals(r.status()))
-                        .count(),
-                rowResults);
+        return new DryRunResult(sessionId, allRows.size(), result.validRows().size(), errorCount, rowResults);
     }
 
     private byte[] buildResultCsv(List<ImportedRow> rows) {
@@ -246,7 +231,13 @@ public class AdminMemberCsvService {
         // Prevent CSV formula injection
         if (!sanitized.isEmpty()) {
             char first = sanitized.charAt(0);
-            if (first == '=' || first == '+' || first == '-' || first == '@' || first == '\t' || first == '\r') {
+            if (first == '='
+                    || first == '+'
+                    || first == '-'
+                    || first == '\u2212'
+                    || first == '@'
+                    || first == '\t'
+                    || first == '\r') {
                 sanitized = "'" + sanitized;
             }
         }
