@@ -28,7 +28,5 @@ logging:
 worklog:
   auth:
     default-role-name: USER
-    default-tenant-id: 550e8400-e29b-41d4-a716-446655440001
-    default-organization-id: 880e8400-e29b-41d4-a716-446655440001
   rate-limit:
     enabled: false  # Base test config: keep disabled; enable per-test via @TestPropertySource

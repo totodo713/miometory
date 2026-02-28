@@ -7,7 +7,8 @@ import com.worklog.application.auth.RegistrationRequest;
 import com.worklog.application.password.PasswordResetConfirmCommand;
 import com.worklog.application.password.PasswordResetRequestCommand;
 import com.worklog.application.password.PasswordResetService;
-import com.worklog.application.service.UserContextService;
+import com.worklog.application.service.UserStatusService;
+import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +18,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -33,15 +36,17 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
+
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
-    private final UserContextService userContextService;
+    private final UserStatusService userStatusService;
 
     public AuthController(
-            AuthService authService, PasswordResetService passwordResetService, UserContextService userContextService) {
+            AuthService authService, PasswordResetService passwordResetService, UserStatusService userStatusService) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
-        this.userContextService = userContextService;
+        this.userStatusService = userStatusService;
     }
 
     /**
@@ -110,9 +115,31 @@ public class AuthController {
         // Calculate session expiration (30 minutes from now)
         Instant sessionExpiresAt = Instant.now().plusSeconds(session.getMaxInactiveInterval());
 
-        // Resolve member ID (null if user has no member record)
-        UUID memberId =
-                userContextService.resolveUserMemberIdOrNull(response.user().getEmail());
+        // Resolve user status (tenant affiliation state and memberships)
+        String email = response.user().getEmail();
+        UserStatusService.UserStatusResponse userStatus = userStatusService.getUserStatus(email);
+
+        // Map domain memberships to API DTOs (parse String IDs to UUID at boundary)
+        List<TenantMembershipDto> memberships = userStatus.memberships().stream()
+                .map(m -> new TenantMembershipDto(
+                        UUID.fromString(m.memberId()),
+                        UUID.fromString(m.tenantId()),
+                        m.tenantName(),
+                        m.organizationId() != null ? UUID.fromString(m.organizationId()) : null,
+                        m.organizationName()))
+                .toList();
+
+        // Auto-select tenant if user belongs to exactly one tenant (best-effort)
+        UUID memberId = null;
+        if (memberships.size() == 1) {
+            try {
+                UUID sessionUuid = UUID.fromString(response.sessionId());
+                userStatusService.selectTenant(email, memberships.get(0).tenantId(), sessionUuid);
+                memberId = memberships.get(0).memberId();
+            } catch (IllegalArgumentException | DomainException e) {
+                log.warn("Auto-select tenant failed for user {}: {}", email, e.getMessage());
+            }
+        }
 
         return new LoginResponseDto(
                 new UserDto(
@@ -124,8 +151,9 @@ public class AuthController {
                         memberId),
                 sessionExpiresAt,
                 response.rememberMeToken(),
-                null // No warning for now
-                );
+                null, // No warning for now
+                userStatus.state().name(),
+                memberships);
     }
 
     /**

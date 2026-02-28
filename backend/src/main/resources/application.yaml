@@ -97,13 +97,6 @@ worklog:
   auth:
     # Default role assigned to new users during signup
     default-role-name: ${DEFAULT_ROLE_NAME:USER}
-    # Default tenant and organization for new signups.
-    # IMPORTANT: In production, DEFAULT_TENANT_ID and DEFAULT_ORGANIZATION_ID
-    # must be set to the UUIDs of existing tenant/organization records
-    # (e.g. created via migrations or seed data). No hardcoded defaults are
-    # provided here to avoid relying on specific magic UUIDs.
-    default-tenant-id: ${DEFAULT_TENANT_ID:}
-    default-organization-id: ${DEFAULT_ORGANIZATION_ID:}
   # Frontend Base URL for email links (password reset, email verification)
   frontend:
     base-url: ${FRONTEND_BASE_URL:http://localhost:3000}

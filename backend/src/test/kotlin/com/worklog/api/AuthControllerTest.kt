@@ -6,7 +6,7 @@ import com.worklog.application.auth.LoginRequest
 import com.worklog.application.auth.LoginResponse
 import com.worklog.application.auth.RegistrationRequest
 import com.worklog.application.password.PasswordResetService
-import com.worklog.application.service.UserContextService
+import com.worklog.application.service.UserStatusService
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.config.LoggingProperties
 import com.worklog.infrastructure.config.RateLimitProperties
@@ -68,9 +68,19 @@ class AuthControllerTest {
     @Autowired
     private lateinit var passwordResetService: PasswordResetService
 
+    @Autowired
+    private lateinit var userStatusService: UserStatusService
+
     @BeforeEach
     fun setup() {
-        clearMocks(authService, passwordResetService)
+        clearMocks(authService, passwordResetService, userStatusService)
+        // Default: UNAFFILIATED with no memberships
+        every { userStatusService.getUserStatus(any()) } returns UserStatusService.UserStatusResponse(
+            "test-user-id",
+            "test@example.com",
+            com.worklog.domain.member.TenantAffiliationStatus.UNAFFILIATED,
+            emptyList(),
+        )
     }
 
     @TestConfiguration
@@ -85,7 +95,7 @@ class AuthControllerTest {
 
         @Bean
         @Primary
-        fun userContextService(): UserContextService = mockk(relaxed = true)
+        fun userStatusService(): UserStatusService = mockk(relaxed = true)
 
         @Bean
         fun loggingProperties(): LoggingProperties {
@@ -246,6 +256,8 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.user.email").value("user@example.com"))
             .andExpect(jsonPath("$.user.accountStatus").value("ACTIVE"))
             .andExpect(jsonPath("$.sessionExpiresAt").exists())
+            .andExpect(jsonPath("$.tenantAffiliationState").value("UNAFFILIATED"))
+            .andExpect(jsonPath("$.memberships").isArray)
         // Note: JSESSIONID cookie verification skipped - requires full Spring Security context
 
         verify(exactly = 1) { authService.login(any(), any(), any()) }
@@ -328,6 +340,129 @@ class AuthControllerTest {
             ).andExpect(status().isUnauthorized)
             .andExpect(jsonPath("$.errorCode").value("ACCOUNT_LOCKED"))
             .andExpect(jsonPath("$.message").exists())
+    }
+
+    @Test
+    fun `login should auto-select tenant when user has single membership`() {
+        // Given
+        val request = LoginRequest("user@example.com", "Password123", false)
+        val user = UserFixtures.createActiveUser(email = "user@example.com")
+        val sessionId = java.util.UUID.randomUUID().toString()
+        val response = LoginResponse(user, sessionId, null)
+
+        every { authService.login(any(), any(), any()) } returns response
+
+        val memberId = java.util.UUID.randomUUID().toString()
+        val tenantId = java.util.UUID.randomUUID().toString()
+        every { userStatusService.getUserStatus("user@example.com") } returns UserStatusService.UserStatusResponse(
+            user.getId().value().toString(),
+            "user@example.com",
+            com.worklog.domain.member.TenantAffiliationStatus.AFFILIATED_NO_ORG,
+            listOf(
+                UserStatusService.MembershipDto(memberId, tenantId, "Test Tenant", null, null),
+            ),
+        )
+        every { userStatusService.selectTenant(any(), any(), any()) } returns Unit
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.tenantAffiliationState").value("AFFILIATED_NO_ORG"))
+            .andExpect(jsonPath("$.memberships").isArray)
+            .andExpect(jsonPath("$.memberships.length()").value(1))
+            .andExpect(jsonPath("$.memberships[0].memberId").value(memberId))
+            .andExpect(jsonPath("$.memberships[0].tenantId").value(tenantId))
+            .andExpect(jsonPath("$.memberships[0].tenantName").value("Test Tenant"))
+            .andExpect(jsonPath("$.user.memberId").value(memberId))
+
+        verify(exactly = 1) { userStatusService.selectTenant(eq("user@example.com"), any(), any()) }
+    }
+
+    @Test
+    fun `login should succeed even when auto-select tenant fails`() {
+        // Given
+        val request = LoginRequest("user@example.com", "Password123", false)
+        val user = UserFixtures.createActiveUser(email = "user@example.com")
+        val response = LoginResponse(user, "session-123", null)
+
+        every { authService.login(any(), any(), any()) } returns response
+
+        val memberId = java.util.UUID.randomUUID().toString()
+        val tenantId = java.util.UUID.randomUUID().toString()
+        every { userStatusService.getUserStatus("user@example.com") } returns UserStatusService.UserStatusResponse(
+            user.getId().value().toString(),
+            "user@example.com",
+            com.worklog.domain.member.TenantAffiliationStatus.AFFILIATED_NO_ORG,
+            listOf(
+                UserStatusService.MembershipDto(memberId, tenantId, "Test Tenant", null, null),
+            ),
+        )
+        every { userStatusService.selectTenant(any(), any(), any()) } throws RuntimeException("DB error")
+
+        // When/Then — login should still succeed despite auto-select failure
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.tenantAffiliationState").value("AFFILIATED_NO_ORG"))
+            .andExpect(jsonPath("$.memberships.length()").value(1))
+            .andExpect(jsonPath("$.user.memberId").doesNotExist())
+    }
+
+    @Test
+    fun `login should not auto-select tenant when user has multiple memberships`() {
+        // Given
+        val request = LoginRequest("user@example.com", "Password123", false)
+        val user = UserFixtures.createActiveUser(email = "user@example.com")
+        val response = LoginResponse(user, "session-123", null)
+
+        every { authService.login(any(), any(), any()) } returns response
+
+        val membership1 = UserStatusService.MembershipDto(
+            java.util.UUID.randomUUID().toString(),
+            java.util.UUID.randomUUID().toString(),
+            "Tenant A",
+            java.util.UUID.randomUUID().toString(),
+            "Org A",
+        )
+        val membership2 = UserStatusService.MembershipDto(
+            java.util.UUID.randomUUID().toString(),
+            java.util.UUID.randomUUID().toString(),
+            "Tenant B",
+            null,
+            null,
+        )
+        every { userStatusService.getUserStatus("user@example.com") } returns UserStatusService.UserStatusResponse(
+            user.getId().value().toString(),
+            "user@example.com",
+            com.worklog.domain.member.TenantAffiliationStatus.FULLY_ASSIGNED,
+            listOf(membership1, membership2),
+        )
+
+        // When/Then
+        mockMvc
+            .perform(
+                post("/api/v1/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request))
+                    .with(csrf()),
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.tenantAffiliationState").value("FULLY_ASSIGNED"))
+            .andExpect(jsonPath("$.memberships.length()").value(2))
+            .andExpect(jsonPath("$.memberships[0].tenantName").value("Tenant A"))
+            .andExpect(jsonPath("$.memberships[0].organizationName").value("Org A"))
+            .andExpect(jsonPath("$.memberships[1].tenantName").value("Tenant B"))
+            .andExpect(jsonPath("$.user.memberId").doesNotExist())
+
+        verify(exactly = 0) { userStatusService.selectTenant(any(), any(), any()) }
     }
 
     // ============================================================

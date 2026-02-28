@@ -106,6 +106,8 @@ class SecurityConfig(private val corsConfigurationSource: CorsConfigurationSourc
                     .requestMatchers("/api/v1/admin/**").authenticated()
                     // Worklog and notification endpoints require authentication
                     .requestMatchers("/api/v1/worklog/**", "/api/v1/notifications/**").authenticated()
+                    // User status endpoints require authentication
+                    .requestMatchers("/api/v1/user/**").authenticated()
                     // All other requests require authentication (to be configured with SSO)
                     .anyRequest()
                     .permitAll() // TODO: Change to .authenticated() when SSO is enabled
