@@ -2,6 +2,7 @@ package com.worklog.infrastructure.persistence
 
 import com.worklog.IntegrationTestBase
 import com.worklog.domain.session.UserSession
+import com.worklog.domain.tenant.TenantId
 import com.worklog.domain.user.UserId
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -11,6 +12,7 @@ import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class JdbcUserSessionRepositoryTest : IntegrationTestBase() {
@@ -150,5 +152,83 @@ class JdbcUserSessionRepositoryTest : IntegrationTestBase() {
 
         val found = repository.findBySessionId(session.sessionId.toString())
         assertTrue(found.isPresent)
+    }
+
+    @Test
+    fun `deleteAll should remove all sessions`() {
+        val session = UserSession.create(userId, "10.0.0.1", "AgentDelAll", 30)
+        repository.save(session)
+        assertTrue(repository.count() >= 1)
+
+        repository.deleteAll()
+
+        assertEquals(0, repository.count())
+    }
+
+    @Test
+    fun `updateSelectedTenant should set tenant and return updated row count`() {
+        val session = UserSession.create(userId, "10.0.0.1", "TenantAgent", 30)
+        repository.save(session)
+
+        val tenantId = TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"))
+        val updated = repository.updateSelectedTenant(session.sessionId, tenantId, userId)
+
+        assertEquals(1, updated)
+        val found = repository.findBySessionId(session.sessionId.toString())
+        assertTrue(found.isPresent)
+        assertNotNull(found.get().selectedTenantId)
+        assertEquals(tenantId, found.get().selectedTenantId)
+    }
+
+    @Test
+    fun `updateSelectedTenant should clear tenant when null`() {
+        val session = UserSession.create(userId, "10.0.0.1", "ClearTenantAgent", 30)
+        repository.save(session)
+
+        // First set a tenant
+        val tenantId = TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"))
+        repository.updateSelectedTenant(session.sessionId, tenantId, userId)
+
+        // Then clear it
+        val updated = repository.updateSelectedTenant(session.sessionId, null, userId)
+        assertEquals(1, updated)
+
+        val found = repository.findBySessionId(session.sessionId.toString())
+        assertTrue(found.isPresent)
+        assertNull(found.get().selectedTenantId)
+    }
+
+    @Test
+    fun `updateSelectedTenant should return 0 for wrong user`() {
+        val session = UserSession.create(userId, "10.0.0.1", "WrongUserAgent", 30)
+        repository.save(session)
+
+        val otherUserId = UserId.of(UUID.randomUUID())
+        val tenantId = TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"))
+        val updated = repository.updateSelectedTenant(session.sessionId, tenantId, otherUserId)
+
+        assertEquals(0, updated)
+    }
+
+    @Test
+    fun `save and findBySessionId should round-trip session with selectedTenantId`() {
+        val tenantId = TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"))
+        val now = Instant.now()
+        val session = UserSession(
+            UUID.randomUUID(),
+            userId,
+            "10.0.0.1",
+            "TenantRoundTrip",
+            now,
+            now.plusSeconds(1800),
+            now,
+            tenantId,
+        )
+        repository.save(session)
+
+        val found = repository.findBySessionId(session.sessionId.toString())
+
+        assertTrue(found.isPresent)
+        assertEquals(tenantId, found.get().selectedTenantId)
     }
 }

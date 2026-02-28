@@ -31,6 +31,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class JdbcMemberRepository {
 
+    /** Maximum number of emails for batch IN queries. Must be >= MemberCsvProcessor.MAX_ROWS. */
+    static final int MAX_BATCH_EMAIL_CHECK = 1000;
+
     private final JdbcTemplate jdbcTemplate;
 
     public JdbcMemberRepository(JdbcTemplate jdbcTemplate) {
@@ -73,7 +76,8 @@ public class JdbcMemberRepository {
             WHERE tenant_id = ? AND email = ?
             """;
 
-        List<Member> results = jdbcTemplate.query(sql, new MemberRowMapper(), tenantId.value(), email);
+        List<Member> results =
+                jdbcTemplate.query(sql, new MemberRowMapper(), tenantId.value(), email.toLowerCase(Locale.ROOT));
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
@@ -92,11 +96,11 @@ public class JdbcMemberRepository {
             SELECT id, tenant_id, organization_id, email, display_name,
                    manager_id, is_active, version, created_at, updated_at
             FROM members
-            WHERE LOWER(email) = LOWER(?)
+            WHERE email = ?
             LIMIT 50
             """;
 
-        return jdbcTemplate.query(sql, new MemberRowMapper(), email);
+        return jdbcTemplate.query(sql, new MemberRowMapper(), email.toLowerCase(Locale.ROOT));
     }
 
     /**
@@ -353,9 +357,12 @@ public class JdbcMemberRepository {
         if (emails.isEmpty()) {
             return Set.of();
         }
+        if (emails.size() > MAX_BATCH_EMAIL_CHECK) {
+            throw new IllegalArgumentException("Too many emails to check: " + emails.size());
+        }
 
         String placeholders = emails.stream().map(e -> "?").collect(Collectors.joining(", "));
-        String sql = "SELECT LOWER(email) FROM members WHERE tenant_id = ? AND LOWER(email) IN (" + placeholders + ")";
+        String sql = "SELECT email FROM members WHERE tenant_id = ? AND email IN (" + placeholders + ")";
 
         Object[] params = new Object[1 + emails.size()];
         params[0] = tenantId.value();

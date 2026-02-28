@@ -60,7 +60,7 @@ public class UserStatusController {
 
         userStatusService.selectTenant(authentication.getName(), request.tenantId(), sessionId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     public record SelectTenantRequest(@NotNull UUID tenantId) {}

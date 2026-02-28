@@ -1,8 +1,13 @@
 package com.worklog.api
 
+import com.worklog.domain.session.UserSession
+import com.worklog.domain.user.UserId
+import com.worklog.infrastructure.persistence.JdbcUserSessionRepository
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.mock.web.MockHttpSession
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -19,7 +24,11 @@ import java.util.UUID
  */
 class UserStatusControllerTest : AdminIntegrationTestBase() {
 
+    @Autowired
+    private lateinit var sessionRepository: JdbcUserSessionRepository
+
     private lateinit var userEmail: String
+    private lateinit var userId: UUID
     private lateinit var unaffiliatedEmail: String
 
     @BeforeEach
@@ -29,7 +38,7 @@ class UserStatusControllerTest : AdminIntegrationTestBase() {
         unaffiliatedEmail = "unaffiliated-$suffix@test.com"
 
         // Create a user with a member record (FULLY_ASSIGNED: has organization)
-        createUser(userEmail, USER_ROLE_ID, "Status Test User")
+        userId = createUser(userEmail, USER_ROLE_ID, "Status Test User")
         createMemberForUser(userEmail)
 
         // Create a user without any member record (UNAFFILIATED)
@@ -105,5 +114,94 @@ class UserStatusControllerTest : AdminIntegrationTestBase() {
             .andExpect(status().isNotFound)
             .andExpect(jsonPath("$.errorCode").value("SESSION_NOT_FOUND"))
             .andExpect(jsonPath("$.message").isNotEmpty)
+    }
+
+    @Test
+    fun `select-tenant returns 204 with valid session and UUID sessionId attribute`() {
+        val session = UserSession.create(UserId.of(userId), "127.0.0.1", "TestAgent", 30)
+        sessionRepository.save(session)
+
+        val mockSession = MockHttpSession()
+        mockSession.setAttribute("sessionId", session.sessionId)
+
+        mockMvc.perform(
+            post("/api/v1/user/select-tenant")
+                .with(user(userEmail))
+                .session(mockSession)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"tenantId":"$ADM_TEST_TENANT_ID"}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `select-tenant returns 204 with String sessionId attribute`() {
+        val session = UserSession.create(UserId.of(userId), "127.0.0.1", "TestAgent", 30)
+        sessionRepository.save(session)
+
+        val mockSession = MockHttpSession()
+        mockSession.setAttribute("sessionId", session.sessionId.toString())
+
+        mockMvc.perform(
+            post("/api/v1/user/select-tenant")
+                .with(user(userEmail))
+                .session(mockSession)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"tenantId":"$ADM_TEST_TENANT_ID"}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `select-tenant returns 404 when session has no sessionId attribute`() {
+        val mockSession = MockHttpSession()
+        // No sessionId attribute set
+
+        mockMvc.perform(
+            post("/api/v1/user/select-tenant")
+                .with(user(userEmail))
+                .session(mockSession)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"tenantId":"$ADM_TEST_TENANT_ID"}"""),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("SESSION_NOT_FOUND"))
+    }
+
+    @Test
+    fun `select-tenant returns 404 for invalid sessionId format`() {
+        val mockSession = MockHttpSession()
+        mockSession.setAttribute("sessionId", "not-a-valid-uuid")
+
+        mockMvc.perform(
+            post("/api/v1/user/select-tenant")
+                .with(user(userEmail))
+                .session(mockSession)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"tenantId":"$ADM_TEST_TENANT_ID"}"""),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("SESSION_NOT_FOUND"))
+    }
+
+    @Test
+    fun `select-tenant returns 422 for tenant user is not member of`() {
+        val session = UserSession.create(UserId.of(userId), "127.0.0.1", "TestAgent", 30)
+        sessionRepository.save(session)
+
+        val mockSession = MockHttpSession()
+        mockSession.setAttribute("sessionId", session.sessionId)
+
+        val nonMemberTenantId = UUID.randomUUID()
+
+        mockMvc.perform(
+            post("/api/v1/user/select-tenant")
+                .with(user(userEmail))
+                .session(mockSession)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"tenantId":"$nonMemberTenantId"}"""),
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("$.errorCode").value("INVALID_TENANT_SELECTION"))
     }
 }

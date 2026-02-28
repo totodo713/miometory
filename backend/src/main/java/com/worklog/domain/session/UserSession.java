@@ -31,7 +31,7 @@ public class UserSession {
     }
 
     /**
-     * Backward-compatible 7-arg constructor (used by JdbcUserSessionRepository until Task 5).
+     * 7-arg constructor without selectedTenantId (defaults to null).
      */
     public UserSession(
             UUID sessionId,

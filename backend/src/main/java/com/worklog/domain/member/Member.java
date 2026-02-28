@@ -90,7 +90,7 @@ public class Member {
                 MemberId.generate(),
                 tenantId,
                 null, // No organization assigned yet
-                email,
+                email.toLowerCase(java.util.Locale.ROOT),
                 displayName,
                 null, // No manager
                 true, // New members are active by default

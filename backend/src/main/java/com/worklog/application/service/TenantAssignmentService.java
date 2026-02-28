@@ -7,7 +7,11 @@ import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,13 +32,15 @@ public class TenantAssignmentService {
         TenantId tid = TenantId.of(tenantId);
         var users = userRepository.searchByEmailPartial(emailPartial);
 
+        Set<String> emails = users.stream().map(u -> u.getEmail()).collect(Collectors.toSet());
+        Set<String> existingEmails = memberRepository.findExistingEmailsInTenant(tid, emails);
+
         List<UserSearchResult> results = users.stream()
-                .map(user -> {
-                    boolean alreadyInTenant =
-                            memberRepository.findByEmail(tid, user.getEmail()).isPresent();
-                    return new UserSearchResult(
-                            user.getId().value().toString(), user.getEmail(), user.getName(), alreadyInTenant);
-                })
+                .map(user -> new UserSearchResult(
+                        user.getId().value().toString(),
+                        user.getEmail(),
+                        user.getName(),
+                        existingEmails.contains(user.getEmail().toLowerCase(Locale.ROOT))))
                 .toList();
         return new UserSearchResponse(results);
     }
@@ -51,7 +57,11 @@ public class TenantAssignmentService {
         }
 
         Member member = Member.createForTenant(tid, user.getEmail(), displayName);
-        memberRepository.save(member);
+        try {
+            memberRepository.save(member);
+        } catch (DuplicateKeyException ex) {
+            throw new DomainException("DUPLICATE_TENANT_ASSIGNMENT", "User is already assigned to this tenant");
+        }
     }
 
     public record UserSearchResponse(List<UserSearchResult> users) {}
