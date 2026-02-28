@@ -444,4 +444,42 @@ class JdbcUserRepositoryTest {
         // Then
         Assertions.assertEquals(2, count)
     }
+
+    // ============================================================
+    // FindExistingEmails Tests
+    // ============================================================
+
+    @Test
+    fun `findExistingEmails - should return matching emails`() {
+        repository.save(User.create("alice@example.com", "Alice", "pass1", testRoleId))
+        repository.save(User.create("bob@example.com", "Bob", "pass2", testRoleId))
+
+        val result = repository.findExistingEmails(listOf("alice@example.com", "charlie@example.com"))
+
+        Assertions.assertEquals(setOf("alice@example.com"), result)
+    }
+
+    @Test
+    fun `findExistingEmails - should be case-insensitive`() {
+        repository.save(User.create("alice@example.com", "Alice", "pass", testRoleId))
+
+        val result = repository.findExistingEmails(listOf("ALICE@EXAMPLE.COM"))
+
+        Assertions.assertEquals(1, result.size)
+        Assertions.assertTrue(result.contains("alice@example.com"))
+    }
+
+    @Test
+    fun `findExistingEmails - should return empty set for empty input`() {
+        val result = repository.findExistingEmails(emptyList())
+
+        Assertions.assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `findExistingEmails - should return empty set when no matches`() {
+        val result = repository.findExistingEmails(listOf("nobody@example.com"))
+
+        Assertions.assertTrue(result.isEmpty())
+    }
 }

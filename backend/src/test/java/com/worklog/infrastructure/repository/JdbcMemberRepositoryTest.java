@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.worklog.IntegrationTestBase;
 import com.worklog.domain.member.MemberId;
+import com.worklog.domain.tenant.TenantId;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -74,5 +76,57 @@ class JdbcMemberRepositoryTest extends IntegrationTestBase {
         // Assert
         assertEquals(1, result.size());
         assertEquals("Test User " + id, result.get(MemberId.of(id)));
+    }
+
+    @Test
+    @DisplayName("findExistingEmailsInTenant should return empty set for empty input")
+    void findExistingEmailsInTenant_emptyInput_returnsEmptySet() {
+        Set<String> result = memberRepository.findExistingEmailsInTenant(
+                TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001")), List.of());
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findExistingEmailsInTenant should return matching emails")
+    void findExistingEmailsInTenant_existingMembers_returnsEmails() {
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        String email1 = "member1-" + id1 + "@example.com";
+        String email2 = "member2-" + id2 + "@example.com";
+        createTestMember(id1, email1);
+        createTestMember(id2, email2);
+
+        Set<String> result = memberRepository.findExistingEmailsInTenant(
+                TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001")),
+                List.of(email1, "nonexistent@example.com"));
+
+        assertEquals(1, result.size());
+        assertTrue(result.contains(email1.toLowerCase()));
+    }
+
+    @Test
+    @DisplayName("findExistingEmailsInTenant should be case-insensitive")
+    void findExistingEmailsInTenant_caseInsensitive_returnsMatch() {
+        UUID id = UUID.randomUUID();
+        String email = "CaseTest-" + id + "@example.com";
+        createTestMember(id, email);
+
+        Set<String> result = memberRepository.findExistingEmailsInTenant(
+                TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001")), List.of(email.toUpperCase()));
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    @DisplayName("findExistingEmailsInTenant should not return members from other tenants")
+    void findExistingEmailsInTenant_otherTenant_returnsEmpty() {
+        UUID id = UUID.randomUUID();
+        String email = "tenant-test-" + id + "@example.com";
+        createTestMember(id, email);
+
+        Set<String> result =
+                memberRepository.findExistingEmailsInTenant(TenantId.of(UUID.randomUUID()), List.of(email));
+
+        assertTrue(result.isEmpty());
     }
 }

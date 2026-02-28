@@ -8,7 +8,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -314,6 +316,32 @@ public class JdbcMemberRepository {
                 },
                 params);
         return result;
+    }
+
+    /**
+     * Finds which of the given emails already exist in the members table for a specific tenant
+     * (case-insensitive).
+     *
+     * @param tenantId Tenant ID to scope the search
+     * @param emails Collection of email addresses to check
+     * @return Set of existing emails (lowercased)
+     */
+    public Set<String> findExistingEmailsInTenant(TenantId tenantId, Collection<String> emails) {
+        if (emails.isEmpty()) {
+            return Set.of();
+        }
+
+        String placeholders = emails.stream().map(e -> "?").collect(Collectors.joining(", "));
+        String sql = "SELECT LOWER(email) FROM members WHERE tenant_id = ? AND LOWER(email) IN (" + placeholders + ")";
+
+        Object[] params = new Object[1 + emails.size()];
+        params[0] = tenantId.value();
+        int i = 1;
+        for (String email : emails) {
+            params[i++] = email.toLowerCase();
+        }
+
+        return new HashSet<>(jdbcTemplate.queryForList(sql, String.class, params));
     }
 
     /**
