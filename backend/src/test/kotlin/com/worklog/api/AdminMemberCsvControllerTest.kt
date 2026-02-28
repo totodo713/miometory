@@ -1,5 +1,7 @@
 package com.worklog.api
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -223,6 +225,8 @@ class AdminMemberCsvControllerTest : AdminIntegrationTestBase() {
                 .andExpect(status().isCreated)
                 .andExpect(content().contentType("text/csv;charset=UTF-8"))
                 .andExpect(header().string("Content-Disposition", """attachment; filename="import-result.csv""""))
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(header().string("Pragma", "no-cache"))
         }
 
         @Test
@@ -357,14 +361,14 @@ class AdminMemberCsvControllerTest : AdminIntegrationTestBase() {
 
             // Verify result CSV has BOM and content
             val resultBytes = importResult.response.contentAsByteArray
-            assert(resultBytes[0] == 0xEF.toByte()) { "Result CSV should start with UTF-8 BOM" }
-            assert(resultBytes[1] == 0xBB.toByte()) { "Result CSV should have BOM byte 2" }
-            assert(resultBytes[2] == 0xBF.toByte()) { "Result CSV should have BOM byte 3" }
+            assertEquals(0xEF.toByte(), resultBytes[0], "Result CSV should start with UTF-8 BOM")
+            assertEquals(0xBB.toByte(), resultBytes[1], "Result CSV should have BOM byte 2")
+            assertEquals(0xBF.toByte(), resultBytes[2], "Result CSV should have BOM byte 3")
 
             val resultCsv = String(resultBytes.drop(3).toByteArray())
-            assert(resultCsv.contains("temporaryPassword")) { "Result CSV should contain password header" }
-            assert(resultCsv.contains(email1)) { "Result CSV should contain first email" }
-            assert(resultCsv.contains(email2)) { "Result CSV should contain second email" }
+            assertTrue(resultCsv.contains("temporaryPassword")) { "Result CSV should contain password header" }
+            assertTrue(resultCsv.contains(email1)) { "Result CSV should contain first email" }
+            assertTrue(resultCsv.contains(email2)) { "Result CSV should contain second email" }
 
             // Verify DB state: users created
             val userCount = baseJdbcTemplate.queryForObject(
@@ -373,7 +377,7 @@ class AdminMemberCsvControllerTest : AdminIntegrationTestBase() {
                 email1,
                 email2,
             )
-            assert(userCount == 2L) { "Expected 2 users in DB, got $userCount" }
+            assertEquals(2L, userCount, "Expected 2 users in DB, got $userCount")
 
             // Verify DB state: members created
             val memberCount = baseJdbcTemplate.queryForObject(
@@ -382,7 +386,7 @@ class AdminMemberCsvControllerTest : AdminIntegrationTestBase() {
                 email1,
                 email2,
             )
-            assert(memberCount == 2L) { "Expected 2 members in DB, got $memberCount" }
+            assertEquals(2L, memberCount, "Expected 2 members in DB, got $memberCount")
         }
     }
 }

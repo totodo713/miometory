@@ -68,6 +68,7 @@ public class AdminMemberCsvController {
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"import-result.csv\"")
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
                 .body(resultCsv);
     }
 }

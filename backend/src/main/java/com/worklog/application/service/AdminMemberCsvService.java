@@ -166,7 +166,7 @@ public class AdminMemberCsvService {
             throw new IllegalArgumentException("CSV file must not exceed 1MB");
         }
         String filename = file.getOriginalFilename();
-        if (filename == null || !filename.toLowerCase().endsWith(".csv")) {
+        if (filename == null || !filename.toLowerCase(java.util.Locale.ROOT).endsWith(".csv")) {
             throw new IllegalArgumentException("File must be a CSV file (.csv)");
         }
     }
@@ -229,7 +229,7 @@ public class AdminMemberCsvService {
                 writer.write(escapeCsvField(row.email()) + ","
                         + escapeCsvField(row.displayName()) + ","
                         + "SUCCESS,"
-                        + row.temporaryPassword() + "\n");
+                        + escapeCsvField(row.temporaryPassword()) + "\n");
             }
             writer.flush();
             return baos.toByteArray();
