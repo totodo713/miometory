@@ -36,7 +36,7 @@ public class AdminMemberCsvController {
         }
 
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType("text/csv"))
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"member-import-template.csv\"")
                 .body(resource);
     }
@@ -56,11 +56,18 @@ public class AdminMemberCsvController {
     @PostMapping("/import/{sessionId}")
     @PreAuthorize("hasPermission(null, 'member.create')")
     public ResponseEntity<byte[]> executeImport(@PathVariable String sessionId, Authentication authentication) {
+        // Validate UUID format to reject arbitrary strings early
+        try {
+            UUID.fromString(sessionId);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         byte[] resultCsv = csvService.executeImport(sessionId, tenantId);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .contentType(MediaType.parseMediaType("text/csv"))
+                .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"import-result.csv\"")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .body(resultCsv);
     }
 }

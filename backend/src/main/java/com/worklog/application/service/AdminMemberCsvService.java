@@ -36,6 +36,7 @@ public class AdminMemberCsvService {
 
     private static final Logger log = LoggerFactory.getLogger(AdminMemberCsvService.class);
     private static final long SESSION_TTL_MINUTES = 30;
+    private static final long MAX_FILE_SIZE_BYTES = 1_048_576; // 1MB
     private static final byte[] UTF8_BOM = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
 
     private final MemberCsvProcessor csvProcessor;
@@ -58,7 +59,7 @@ public class AdminMemberCsvService {
     public DryRunResult dryRun(MultipartFile file, UUID organizationId, UUID tenantId, UUID invitedBy) {
         validateFile(file);
 
-        if (!organizationExistsInProjection(organizationId)) {
+        if (!organizationExistsInProjection(organizationId, tenantId)) {
             throw new DomainException("ORGANIZATION_NOT_FOUND", "Organization not found");
         }
 
@@ -99,7 +100,8 @@ public class AdminMemberCsvService {
         }
 
         if (!session.tenantId().equals(tenantId)) {
-            throw new DomainException("TENANT_MISMATCH", "Session does not belong to this tenant");
+            // Return same error as not-found to avoid leaking session existence across tenants
+            throw new DomainException("SESSION_NOT_FOUND", "Import session not found or expired");
         }
 
         // Re-validate to catch changes since dry-run
@@ -112,10 +114,17 @@ public class AdminMemberCsvService {
 
         List<ImportedRow> importedRows = new ArrayList<>();
         for (MemberCsvRow row : revalidation.validRows()) {
-            var command = new InviteMemberCommand(
-                    row.email(), row.displayName(), session.organizationId(), null, session.invitedBy());
-            var result = adminMemberService.inviteMember(command, tenantId);
-            importedRows.add(new ImportedRow(row.email(), row.displayName(), result.temporaryPassword()));
+            try {
+                var command = new InviteMemberCommand(
+                        row.email(), row.displayName(), session.organizationId(), null, session.invitedBy());
+                var result = adminMemberService.inviteMember(command, tenantId);
+                importedRows.add(new ImportedRow(row.email(), row.displayName(), result.temporaryPassword()));
+            } catch (DomainException e) {
+                throw new DomainException(
+                        "IMPORT_VALIDATION_CHANGED",
+                        "Failed to import row " + row.rowNumber() + " (" + row.email() + "): " + e.getMessage(),
+                        e);
+            }
         }
 
         // Remove session after transaction commits
@@ -140,15 +149,21 @@ public class AdminMemberCsvService {
         }
     }
 
-    private boolean organizationExistsInProjection(UUID organizationId) {
+    private boolean organizationExistsInProjection(UUID organizationId, UUID tenantId) {
         Integer count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM organization WHERE id = ? AND status = 'ACTIVE'", Integer.class, organizationId);
+                "SELECT COUNT(*) FROM organization WHERE id = ? AND tenant_id = ? AND status = 'ACTIVE'",
+                Integer.class,
+                organizationId,
+                tenantId);
         return count != null && count > 0;
     }
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("CSV file is required and must not be empty");
+        }
+        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
+            throw new IllegalArgumentException("CSV file must not exceed 1MB");
         }
         String filename = file.getOriginalFilename();
         if (filename == null || !filename.toLowerCase().endsWith(".csv")) {
@@ -227,10 +242,18 @@ public class AdminMemberCsvService {
         if (field == null) {
             return "";
         }
-        if (field.contains(",") || field.contains("\"") || field.contains("\n")) {
-            return "\"" + field.replace("\"", "\"\"") + "\"";
+        String sanitized = field;
+        // Prevent CSV formula injection
+        if (!sanitized.isEmpty()) {
+            char first = sanitized.charAt(0);
+            if (first == '=' || first == '+' || first == '-' || first == '@' || first == '\t' || first == '\r') {
+                sanitized = "'" + sanitized;
+            }
         }
-        return field;
+        if (sanitized.contains(",") || sanitized.contains("\"") || sanitized.contains("\n")) {
+            return "\"" + sanitized.replace("\"", "\"\"") + "\"";
+        }
+        return sanitized;
     }
 
     // Inner records

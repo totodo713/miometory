@@ -54,7 +54,7 @@ class AdminMemberCsvControllerTest : AdminIntegrationTestBase() {
                     .with(user(adminEmail)),
             )
                 .andExpect(status().isOk)
-                .andExpect(content().contentType("text/csv"))
+                .andExpect(content().contentType("text/csv;charset=UTF-8"))
                 .andExpect(
                     header().string("Content-Disposition", """attachment; filename="member-import-template.csv""""),
                 )
@@ -221,7 +221,7 @@ class AdminMemberCsvControllerTest : AdminIntegrationTestBase() {
                     .with(user(adminEmail)),
             )
                 .andExpect(status().isCreated)
-                .andExpect(content().contentType("text/csv"))
+                .andExpect(content().contentType("text/csv;charset=UTF-8"))
                 .andExpect(header().string("Content-Disposition", """attachment; filename="import-result.csv""""))
         }
 
