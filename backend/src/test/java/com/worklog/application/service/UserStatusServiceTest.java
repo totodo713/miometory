@@ -126,27 +126,62 @@ class UserStatusServiceTest {
         @Test
         @DisplayName("updates session selected tenant when membership exists")
         void selectValidTenant() {
+            var user = createTestUser();
             TenantId tenantId = TenantId.generate();
             UUID sessionId = UUID.randomUUID();
             var member = Member.createForTenant(tenantId, TEST_EMAIL, "Test");
+            when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
             when(memberRepository.findByEmail(tenantId, TEST_EMAIL)).thenReturn(Optional.of(member));
 
             assertDoesNotThrow(() -> userStatusService.selectTenant(TEST_EMAIL, tenantId.value(), sessionId));
 
-            verify(sessionRepository).updateSelectedTenant(sessionId, tenantId);
+            verify(sessionRepository).updateSelectedTenant(sessionId, tenantId, user.getId());
         }
 
         @Test
         @DisplayName("throws INVALID_TENANT_SELECTION when no membership for tenant")
         void invalidTenantSelection() {
+            var user = createTestUser();
             TenantId tenantId = TenantId.generate();
             UUID sessionId = UUID.randomUUID();
+            when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
             when(memberRepository.findByEmail(tenantId, TEST_EMAIL)).thenReturn(Optional.empty());
 
             var ex = assertThrows(
                     DomainException.class,
                     () -> userStatusService.selectTenant(TEST_EMAIL, tenantId.value(), sessionId));
             assertEquals("INVALID_TENANT_SELECTION", ex.getErrorCode());
+        }
+
+        @Test
+        @DisplayName("throws INVALID_TENANT_SELECTION when membership is inactive")
+        void inactiveMembership() {
+            var user = createTestUser();
+            TenantId tenantId = TenantId.generate();
+            UUID sessionId = UUID.randomUUID();
+            var member = Member.createForTenant(tenantId, TEST_EMAIL, "Test");
+            member.deactivate();
+            when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.of(user));
+            when(memberRepository.findByEmail(tenantId, TEST_EMAIL)).thenReturn(Optional.of(member));
+
+            var ex = assertThrows(
+                    DomainException.class,
+                    () -> userStatusService.selectTenant(TEST_EMAIL, tenantId.value(), sessionId));
+            assertEquals("INVALID_TENANT_SELECTION", ex.getErrorCode());
+            assertTrue(ex.getMessage().contains("not active"));
+        }
+
+        @Test
+        @DisplayName("throws USER_NOT_FOUND when user does not exist")
+        void userNotFoundForSelectTenant() {
+            TenantId tenantId = TenantId.generate();
+            UUID sessionId = UUID.randomUUID();
+            when(userRepository.findByEmail(TEST_EMAIL)).thenReturn(Optional.empty());
+
+            var ex = assertThrows(
+                    DomainException.class,
+                    () -> userStatusService.selectTenant(TEST_EMAIL, tenantId.value(), sessionId));
+            assertEquals("USER_NOT_FOUND", ex.getErrorCode());
         }
     }
 

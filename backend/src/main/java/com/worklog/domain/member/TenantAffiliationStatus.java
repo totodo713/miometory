@@ -1,5 +1,7 @@
 package com.worklog.domain.member;
 
+import java.util.List;
+
 /**
  * Represents a user's tenant affiliation status.
  *
@@ -19,7 +21,7 @@ public enum TenantAffiliationStatus {
      * @param members list of Member entities for the user (can be empty)
      * @return the affiliation status
      */
-    public static TenantAffiliationStatus fromMembers(java.util.List<Member> members) {
+    public static TenantAffiliationStatus fromMembers(List<Member> members) {
         if (members.isEmpty()) {
             return UNAFFILIATED;
         }

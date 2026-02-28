@@ -42,12 +42,12 @@ public class TenantAssignmentService {
     public void assignUserToTenant(UUID userId, UUID tenantId, String displayName) {
         var user = userRepository
                 .findById(UserId.of(userId))
-                .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User not found: " + userId));
+                .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User not found"));
 
         TenantId tid = TenantId.of(tenantId);
 
         if (memberRepository.findByEmail(tid, user.getEmail()).isPresent()) {
-            throw new DomainException("DUPLICATE_TENANT_ASSIGNMENT", "User is already assigned to tenant: " + tenantId);
+            throw new DomainException("DUPLICATE_TENANT_ASSIGNMENT", "User is already assigned to this tenant");
         }
 
         Member member = Member.createForTenant(tid, user.getEmail(), displayName);

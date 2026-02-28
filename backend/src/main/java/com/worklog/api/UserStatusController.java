@@ -48,10 +48,14 @@ public class UserStatusController {
 
         // The sessionId attribute is stored as a String UUID by AuthController
         UUID sessionId;
-        if (sessionIdAttr instanceof UUID uuid) {
-            sessionId = uuid;
-        } else {
-            sessionId = UUID.fromString(sessionIdAttr.toString());
+        try {
+            if (sessionIdAttr instanceof UUID uuid) {
+                sessionId = uuid;
+            } else {
+                sessionId = UUID.fromString(sessionIdAttr.toString());
+            }
+        } catch (IllegalArgumentException e) {
+            throw new DomainException("SESSION_NOT_FOUND", "Invalid session ID format");
         }
 
         userStatusService.selectTenant(authentication.getName(), request.tenantId(), sessionId);

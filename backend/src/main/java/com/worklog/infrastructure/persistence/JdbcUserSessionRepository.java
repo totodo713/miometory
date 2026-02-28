@@ -193,14 +193,15 @@ public class JdbcUserSessionRepository {
     }
 
     /**
-     * Updates only the selected_tenant_id for a session.
+     * Updates only the selected_tenant_id for a session, verifying user ownership.
      *
      * @param sessionId Session UUID (the session_id column value)
      * @param tenantId Tenant to select, or null to clear
+     * @param userId User ID that must own the session
      */
-    public void updateSelectedTenant(UUID sessionId, TenantId tenantId) {
-        String sql = "UPDATE user_sessions SET selected_tenant_id = ? WHERE session_id = ?";
-        jdbcTemplate.update(sql, tenantId != null ? tenantId.value() : null, sessionId.toString());
+    public void updateSelectedTenant(UUID sessionId, TenantId tenantId, UserId userId) {
+        String sql = "UPDATE user_sessions SET selected_tenant_id = ? WHERE session_id = ? AND user_id = ?";
+        jdbcTemplate.update(sql, tenantId != null ? tenantId.value() : null, sessionId.toString(), userId.value());
     }
 
     /**

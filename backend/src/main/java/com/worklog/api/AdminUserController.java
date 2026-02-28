@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for system-wide user management.
- * Accessible only to SYSTEM_ADMIN users.
+ * Accessible to SYSTEM_ADMIN users; search-for-assignment also accessible to TENANT_ADMIN.
  */
 @RestController
 @RequestMapping("/api/v1/admin/users")

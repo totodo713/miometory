@@ -27,8 +27,9 @@ class TenantStatusFilter(private val jdbcTemplate: JdbcTemplate) : OncePerReques
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        // Skip tenant status check for user status endpoints (accessible to UNAFFILIATED users)
-        if (request.requestURI.startsWith("/api/v1/user/")) {
+        // Skip tenant status check only for specific user status endpoints (accessible to UNAFFILIATED users)
+        val tenantCheckExemptPaths = setOf("/api/v1/user/status", "/api/v1/user/select-tenant")
+        if (request.requestURI in tenantCheckExemptPaths) {
             filterChain.doFilter(request, response)
             return
         }

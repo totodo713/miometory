@@ -45,7 +45,7 @@ public class UserStatusService {
     public UserStatusResponse getUserStatus(String email) {
         var user = userRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User not found: " + email));
+                .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User not found"));
 
         List<Member> members = memberRepository.findAllByEmail(email);
         TenantAffiliationStatus state = TenantAffiliationStatus.fromMembers(members);
@@ -75,14 +75,21 @@ public class UserStatusService {
 
     @Transactional
     public void selectTenant(String email, UUID tenantId, UUID sessionId) {
+        var user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User not found"));
+
         TenantId tid = TenantId.of(tenantId);
 
-        memberRepository
+        Member member = memberRepository
                 .findByEmail(tid, email)
-                .orElseThrow(() ->
-                        new DomainException("INVALID_TENANT_SELECTION", "No membership found for tenant: " + tenantId));
+                .orElseThrow(() -> new DomainException(
+                        "INVALID_TENANT_SELECTION", "No membership found for the specified tenant"));
+        if (!member.isActive()) {
+            throw new DomainException("INVALID_TENANT_SELECTION", "Membership is not active for the specified tenant");
+        }
 
-        sessionRepository.updateSelectedTenant(sessionId, tid);
+        sessionRepository.updateSelectedTenant(sessionId, tid, user.getId());
     }
 
     public record UserStatusResponse(

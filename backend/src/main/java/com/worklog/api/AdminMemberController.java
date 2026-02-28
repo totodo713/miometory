@@ -137,7 +137,6 @@ public class AdminMemberController {
 
     @PostMapping("/assign-tenant")
     @PreAuthorize("hasPermission(null, 'member.assign_tenant')")
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<Void> assignTenant(
             @RequestBody @Valid AssignTenantRequest request, Authentication authentication) {
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());

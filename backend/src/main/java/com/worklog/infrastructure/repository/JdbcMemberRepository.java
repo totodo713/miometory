@@ -78,6 +78,9 @@ public class JdbcMemberRepository {
      * Finds all members across all tenants for a given email (case-insensitive).
      * Used for determining a user's tenant affiliation status.
      *
+     * <p>Security note: this query intentionally crosses tenant boundaries to determine
+     * the user's full affiliation status. A LIMIT is applied to prevent abuse.
+     *
      * @param email Email address
      * @return List of members (may span multiple tenants)
      */
@@ -87,6 +90,7 @@ public class JdbcMemberRepository {
                    manager_id, is_active, version, created_at, updated_at
             FROM members
             WHERE LOWER(email) = LOWER(?)
+            LIMIT 50
             """;
 
         return jdbcTemplate.query(sql, new MemberRowMapper(), email);
