@@ -6,8 +6,13 @@ import com.worklog.domain.tenant.*;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -141,5 +146,32 @@ public class TenantRepository {
      */
     public boolean existsById(TenantId tenantId) {
         return eventStore.getCurrentVersion(tenantId.value()) > 0;
+    }
+
+    /**
+     * Batch lookup of tenant names by IDs from the projection table.
+     * Returns a map from TenantId to tenant name.
+     * IDs not found in the projection are omitted from the result.
+     *
+     * @param ids Set of tenant IDs to look up
+     * @return Map from TenantId to tenant name
+     */
+    public Map<TenantId, String> findNamesByIds(Set<TenantId> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+
+        String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String sql = "SELECT id, name FROM tenant WHERE id IN (" + placeholders + ")";
+        Object[] params = ids.stream().map(id -> id.value()).toArray();
+
+        Map<TenantId, String> result = new HashMap<>();
+        jdbcTemplate.query(
+                sql,
+                rs -> {
+                    result.put(TenantId.of(rs.getObject("id", UUID.class)), rs.getString("name"));
+                },
+                params);
+        return result;
     }
 }

@@ -6,6 +6,7 @@ import com.worklog.application.command.TransferMemberCommand;
 import com.worklog.application.command.UpdateMemberCommand;
 import com.worklog.application.service.AdminMemberService;
 import com.worklog.application.service.AdminOrganizationService;
+import com.worklog.application.service.TenantAssignmentService;
 import com.worklog.application.service.UserContextService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -28,14 +29,17 @@ public class AdminMemberController {
 
     private final AdminMemberService adminMemberService;
     private final AdminOrganizationService adminOrganizationService;
+    private final TenantAssignmentService tenantAssignmentService;
     private final UserContextService userContextService;
 
     public AdminMemberController(
             AdminMemberService adminMemberService,
             AdminOrganizationService adminOrganizationService,
+            TenantAssignmentService tenantAssignmentService,
             UserContextService userContextService) {
         this.adminMemberService = adminMemberService;
         this.adminOrganizationService = adminOrganizationService;
+        this.tenantAssignmentService = tenantAssignmentService;
         this.userContextService = userContextService;
     }
 
@@ -131,6 +135,15 @@ public class AdminMemberController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/assign-tenant")
+    @PreAuthorize("hasPermission(null, 'member.assign_tenant')")
+    public ResponseEntity<Void> assignTenant(
+            @RequestBody @Valid AssignTenantRequest request, Authentication authentication) {
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
+        tenantAssignmentService.assignUserToTenant(request.userId(), tenantId, request.displayName());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
     // Request/Response DTOs
 
     public record InviteMemberRequest(
@@ -150,4 +163,7 @@ public class AdminMemberController {
     public record AssignManagerRequest(@NotNull UUID managerId) {}
 
     public record TransferMemberRequest(@NotNull UUID organizationId) {}
+
+    public record AssignTenantRequest(
+            @NotNull UUID userId, @NotBlank @Size(max = 100) String displayName) {}
 }

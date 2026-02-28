@@ -1,5 +1,6 @@
 package com.worklog.domain.session;
 
+import com.worklog.domain.tenant.TenantId;
 import com.worklog.domain.user.UserId;
 import java.time.Instant;
 import java.util.Objects;
@@ -19,17 +20,18 @@ public class UserSession {
     private final Instant createdAt;
     private Instant expiresAt;
     private Instant lastAccessedAt;
+    private TenantId selectedTenantId; // nullable — selected tenant for multi-tenant users
 
     /**
      * Constructor for creating a new UserSession.
      */
     public UserSession(
             UUID sessionId, UserId userId, String ipAddress, String userAgent, Instant createdAt, Instant expiresAt) {
-        this(sessionId, userId, ipAddress, userAgent, createdAt, expiresAt, createdAt);
+        this(sessionId, userId, ipAddress, userAgent, createdAt, expiresAt, createdAt, null);
     }
 
     /**
-     * Rehydration constructor for restoring a UserSession from persistence.
+     * Backward-compatible 7-arg constructor (used by JdbcUserSessionRepository until Task 5).
      */
     public UserSession(
             UUID sessionId,
@@ -39,6 +41,21 @@ public class UserSession {
             Instant createdAt,
             Instant expiresAt,
             Instant lastAccessedAt) {
+        this(sessionId, userId, ipAddress, userAgent, createdAt, expiresAt, lastAccessedAt, null);
+    }
+
+    /**
+     * Full rehydration constructor for restoring a UserSession from persistence.
+     */
+    public UserSession(
+            UUID sessionId,
+            UserId userId,
+            String ipAddress,
+            String userAgent,
+            Instant createdAt,
+            Instant expiresAt,
+            Instant lastAccessedAt,
+            TenantId selectedTenantId) {
         this.sessionId = Objects.requireNonNull(sessionId, "Session ID cannot be null");
         this.userId = Objects.requireNonNull(userId, "User ID cannot be null");
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
@@ -47,6 +64,7 @@ public class UserSession {
 
         this.ipAddress = ipAddress; // Can be null
         this.userAgent = userAgent; // Can be null
+        this.selectedTenantId = selectedTenantId; // nullable
 
         if (expiresAt.isBefore(createdAt)) {
             throw new IllegalArgumentException("Expiration time cannot be before creation time");
@@ -89,6 +107,29 @@ public class UserSession {
      */
     public boolean isValid() {
         return !isExpired();
+    }
+
+    /**
+     * Sets the selected tenant for this session.
+     *
+     * @param tenantId the tenant to select, or null to clear selection
+     */
+    public void selectTenant(TenantId tenantId) {
+        this.selectedTenantId = tenantId;
+    }
+
+    /**
+     * Returns the currently selected tenant ID, or null if none is selected.
+     */
+    public TenantId getSelectedTenantId() {
+        return selectedTenantId;
+    }
+
+    /**
+     * Checks whether a tenant is currently selected for this session.
+     */
+    public boolean hasSelectedTenant() {
+        return selectedTenantId != null;
     }
 
     // Getters

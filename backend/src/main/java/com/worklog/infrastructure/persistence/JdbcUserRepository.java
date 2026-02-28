@@ -231,6 +231,33 @@ public class JdbcUserRepository {
     }
 
     /**
+     * Searches users by email partial match (case-insensitive).
+     * Used by admin tenant assignment search.
+     *
+     * @param emailPartial Partial email string to search for
+     * @return List of matching users (max 20 results)
+     */
+    public List<User> searchByEmailPartial(String emailPartial) {
+        String sql = """
+            SELECT id, email, name, hashed_password, role_id, account_status,
+                   failed_login_attempts, locked_until, created_at, updated_at,
+                   last_login_at, email_verified_at, preferred_locale
+            FROM users
+            WHERE LOWER(email) LIKE LOWER(?) ESCAPE '\\'
+            AND account_status != 'deleted'
+            ORDER BY email
+            LIMIT 20
+            """;
+
+        String pattern = "%" + escapeLike(emailPartial) + "%";
+        return jdbcTemplate.query(sql, new UserRowMapper(), pattern);
+    }
+
+    private static String escapeLike(String input) {
+        return input.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    /**
      * Counts total number of users.
      *
      * @return Total user count

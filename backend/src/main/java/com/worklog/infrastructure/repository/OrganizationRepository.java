@@ -6,8 +6,13 @@ import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
 import java.lang.reflect.Constructor;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -147,5 +152,32 @@ public class OrganizationRepository {
      */
     public boolean existsById(OrganizationId organizationId) {
         return eventStore.getCurrentVersion(organizationId.value()) > 0;
+    }
+
+    /**
+     * Batch lookup of organization names by IDs from the projection table.
+     * Returns a map from OrganizationId to organization name.
+     * IDs not found in the projection are omitted from the result.
+     *
+     * @param ids Set of organization IDs to look up
+     * @return Map from OrganizationId to organization name
+     */
+    public Map<OrganizationId, String> findNamesByIds(Set<OrganizationId> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+
+        String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String sql = "SELECT id, name FROM organization WHERE id IN (" + placeholders + ")";
+        Object[] params = ids.stream().map(id -> id.value()).toArray();
+
+        Map<OrganizationId, String> result = new HashMap<>();
+        jdbcTemplate.query(
+                sql,
+                rs -> {
+                    result.put(OrganizationId.of(rs.getObject("id", UUID.class)), rs.getString("name"));
+                },
+                params);
+        return result;
     }
 }

@@ -1,26 +1,40 @@
 package com.worklog.api;
 
 import com.worklog.application.service.AdminUserService;
+import com.worklog.application.service.TenantAssignmentService;
+import com.worklog.application.service.UserContextService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
  * REST controller for system-wide user management.
- * Accessible only to SYSTEM_ADMIN users.
+ * Accessible to SYSTEM_ADMIN users; search-for-assignment also accessible to TENANT_ADMIN.
  */
 @RestController
 @RequestMapping("/api/v1/admin/users")
+@Validated
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
+    private final TenantAssignmentService tenantAssignmentService;
+    private final UserContextService userContextService;
 
-    public AdminUserController(AdminUserService adminUserService) {
+    public AdminUserController(
+            AdminUserService adminUserService,
+            TenantAssignmentService tenantAssignmentService,
+            UserContextService userContextService) {
         this.adminUserService = adminUserService;
+        this.tenantAssignmentService = tenantAssignmentService;
+        this.userContextService = userContextService;
     }
 
     @GetMapping
@@ -62,6 +76,14 @@ public class AdminUserController {
     public ResponseEntity<ResetPasswordResponse> resetPassword(@PathVariable UUID id) {
         String tempPassword = adminUserService.resetPassword(id);
         return ResponseEntity.ok(new ResetPasswordResponse(tempPassword));
+    }
+
+    @GetMapping("/search-for-assignment")
+    @PreAuthorize("hasPermission(null, 'member.assign_tenant')")
+    public TenantAssignmentService.UserSearchResponse searchForAssignment(
+            @RequestParam @NotBlank @Size(min = 3, max = 100) String email, Authentication authentication) {
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
+        return tenantAssignmentService.searchUsersForAssignment(email, tenantId);
     }
 
     // Request/Response DTOs

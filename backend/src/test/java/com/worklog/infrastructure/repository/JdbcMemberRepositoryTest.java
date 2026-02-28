@@ -230,4 +230,45 @@ class JdbcMemberRepositoryTest extends IntegrationTestBase {
 
         assertFalse(memberRepository.isDirectSubordinateOf(MemberId.of(id1), MemberId.of(id2)));
     }
+
+    @Test
+    @DisplayName("findAllByEmail should return member when found")
+    void findAllByEmail_existingMember_returnsList() {
+        UUID memberId = UUID.randomUUID();
+        String email = "all-email-" + memberId + "@example.com";
+        createTestMember(memberId, email);
+
+        List<Member> results = memberRepository.findAllByEmail(email);
+
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream().anyMatch(m -> m.getId().value().equals(memberId)));
+        assertEquals(
+                email,
+                results.stream()
+                        .filter(m -> m.getId().value().equals(memberId))
+                        .findFirst()
+                        .orElseThrow()
+                        .getEmail());
+    }
+
+    @Test
+    @DisplayName("findAllByEmail should be case-insensitive")
+    void findAllByEmail_caseInsensitive_returnsList() {
+        UUID memberId = UUID.randomUUID();
+        String email = "CasE-Test-" + memberId + "@Example.COM";
+        createTestMember(memberId, email);
+
+        List<Member> results = memberRepository.findAllByEmail(email.toLowerCase());
+
+        assertFalse(results.isEmpty());
+        assertTrue(results.stream().anyMatch(m -> m.getId().value().equals(memberId)));
+    }
+
+    @Test
+    @DisplayName("findAllByEmail should return empty list for unknown email")
+    void findAllByEmail_unknownEmail_returnsEmptyList() {
+        List<Member> results = memberRepository.findAllByEmail("nonexistent-" + UUID.randomUUID() + "@example.com");
+
+        assertTrue(results.isEmpty());
+    }
 }
