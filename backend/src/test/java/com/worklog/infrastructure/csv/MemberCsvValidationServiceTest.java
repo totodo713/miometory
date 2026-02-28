@@ -16,6 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -115,6 +117,26 @@ class MemberCsvValidationServiceTest {
 
             assertTrue(result.validRows().isEmpty());
             assertEquals("displayName", result.errors().get(0).field());
+        }
+
+        @ParameterizedTest
+        @ValueSource(
+                strings = {
+                    "user..name@example.com",
+                    ".user@example.com",
+                    "user.@example.com",
+                    "user@-example.com",
+                    "user@example-.com",
+                    "@example.com"
+                })
+        @DisplayName("should reject emails with invalid format patterns")
+        void invalidEmailEdgeCases(String invalidEmail) {
+            List<MemberCsvRow> rows = List.of(new MemberCsvRow(1, invalidEmail, "Name"));
+
+            MemberCsvResult result = service.validate(rows, TENANT_ID);
+
+            assertTrue(result.validRows().isEmpty());
+            assertEquals("email", result.errors().get(0).field());
         }
 
         @Test

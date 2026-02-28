@@ -112,4 +112,27 @@ class MemberCsvProcessorTest {
         assertEquals("spaced@example.com", rows.get(0).email());
         assertEquals("Spaced Name", rows.get(0).displayName());
     }
+
+    @Test
+    @DisplayName("should throw when CSV exceeds 1000 rows")
+    void parseExceedingMaxRows() {
+        StringBuilder sb = new StringBuilder("email,displayName\n");
+        for (int i = 1; i <= 1001; i++) {
+            sb.append("user").append(i).append("@example.com,User ").append(i).append("\n");
+        }
+        byte[] csv = sb.toString().getBytes(StandardCharsets.UTF_8);
+
+        CsvParseException ex = assertThrows(CsvParseException.class, () -> processor.parse(csv));
+        assertTrue(ex.getMessage().contains("1000"));
+    }
+
+    @Test
+    @DisplayName("should lowercase email addresses")
+    void lowercaseEmails() {
+        byte[] csv = "email,displayName\nTEST@EXAMPLE.COM,Test User\n".getBytes(StandardCharsets.UTF_8);
+
+        List<MemberCsvRow> rows = processor.parse(csv);
+
+        assertEquals("test@example.com", rows.get(0).email());
+    }
 }
