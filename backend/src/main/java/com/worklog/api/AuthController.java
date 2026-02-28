@@ -7,7 +7,7 @@ import com.worklog.application.auth.RegistrationRequest;
 import com.worklog.application.password.PasswordResetConfirmCommand;
 import com.worklog.application.password.PasswordResetRequestCommand;
 import com.worklog.application.password.PasswordResetService;
-import com.worklog.application.service.UserContextService;
+import com.worklog.application.service.UserStatusService;
 import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,13 +35,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
-    private final UserContextService userContextService;
+    private final UserStatusService userStatusService;
 
     public AuthController(
-            AuthService authService, PasswordResetService passwordResetService, UserContextService userContextService) {
+            AuthService authService, PasswordResetService passwordResetService, UserStatusService userStatusService) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
-        this.userContextService = userContextService;
+        this.userStatusService = userStatusService;
     }
 
     /**
@@ -110,9 +110,27 @@ public class AuthController {
         // Calculate session expiration (30 minutes from now)
         Instant sessionExpiresAt = Instant.now().plusSeconds(session.getMaxInactiveInterval());
 
-        // Resolve member ID (null if user has no member record)
-        UUID memberId =
-                userContextService.resolveUserMemberIdOrNull(response.user().getEmail());
+        // Resolve user status (tenant affiliation state and memberships)
+        String email = response.user().getEmail();
+        UserStatusService.UserStatusResponse userStatus = userStatusService.getUserStatus(email);
+
+        // Map domain memberships to API DTOs
+        List<TenantMembershipDto> memberships = userStatus.memberships().stream()
+                .map(m -> new TenantMembershipDto(
+                        m.memberId(), m.tenantId(), m.tenantName(), m.organizationId(), m.organizationName()))
+                .toList();
+
+        // Auto-select tenant if user belongs to exactly one tenant
+        if (memberships.size() == 1) {
+            UUID tenantId = UUID.fromString(memberships.get(0).tenantId());
+            UUID sessionUuid = UUID.fromString(response.sessionId());
+            userStatusService.selectTenant(email, tenantId, sessionUuid);
+        }
+
+        // Derive memberId from first membership (null if no memberships)
+        UUID memberId = memberships.isEmpty()
+                ? null
+                : UUID.fromString(memberships.get(0).memberId());
 
         return new LoginResponseDto(
                 new UserDto(
@@ -124,8 +142,9 @@ public class AuthController {
                         memberId),
                 sessionExpiresAt,
                 response.rememberMeToken(),
-                null // No warning for now
-                );
+                null, // No warning for now
+                userStatus.state().name(),
+                memberships);
     }
 
     /**

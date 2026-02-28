@@ -81,7 +81,7 @@ class AuthControllerSignupTest : IntegrationTestBase() {
     // ============================================================
 
     @Test
-    fun `signup creates member record with correct tenant and organization`() {
+    fun `signup should NOT create member record`() {
         // Given
         val request = signupRequest("member-check@signup-test.example.com", "Member Check", "StrongPass1!")
 
@@ -91,32 +91,13 @@ class AuthControllerSignupTest : IntegrationTestBase() {
         // Then
         assertEquals(HttpStatus.CREATED, response.statusCode)
 
-        // Verify member record exists with correct fields
-        val memberRows = jdbcTemplate.queryForList(
-            """SELECT m.id, m.tenant_id, m.organization_id, m.email, m.display_name
-               FROM members m WHERE m.email = ?""",
+        // Verify NO member record was created
+        val memberCount = jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM members WHERE email = ?",
+            Int::class.java,
             "member-check@signup-test.example.com",
         )
-        assertEquals(1, memberRows.size, "Exactly one member record should be created")
-        val member = memberRows[0]
-        assertEquals("member-check@signup-test.example.com", member["email"])
-        assertEquals("Member Check", member["display_name"])
-        assertEquals(
-            java.util.UUID.fromString("550e8400-e29b-41d4-a716-446655440001"),
-            member["tenant_id"],
-        )
-        assertEquals(
-            java.util.UUID.fromString("880e8400-e29b-41d4-a716-446655440001"),
-            member["organization_id"],
-        )
-
-        // Verify member ID matches user ID
-        val userId = jdbcTemplate.queryForObject(
-            "SELECT id FROM users WHERE email = ?",
-            java.util.UUID::class.java,
-            "member-check@signup-test.example.com",
-        )
-        assertEquals(userId, member["id"], "Member ID should match user ID")
+        assertEquals(0, memberCount, "No member record should be created during signup")
     }
 
     // ============================================================

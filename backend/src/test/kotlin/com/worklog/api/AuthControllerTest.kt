@@ -6,7 +6,7 @@ import com.worklog.application.auth.LoginRequest
 import com.worklog.application.auth.LoginResponse
 import com.worklog.application.auth.RegistrationRequest
 import com.worklog.application.password.PasswordResetService
-import com.worklog.application.service.UserContextService
+import com.worklog.application.service.UserStatusService
 import com.worklog.fixtures.UserFixtures
 import com.worklog.infrastructure.config.LoggingProperties
 import com.worklog.infrastructure.config.RateLimitProperties
@@ -85,7 +85,16 @@ class AuthControllerTest {
 
         @Bean
         @Primary
-        fun userContextService(): UserContextService = mockk(relaxed = true)
+        fun userStatusService(): UserStatusService {
+            val mock = mockk<UserStatusService>(relaxed = true)
+            every { mock.getUserStatus(any()) } returns UserStatusService.UserStatusResponse(
+                "test-user-id",
+                "test@example.com",
+                com.worklog.domain.member.TenantAffiliationStatus.UNAFFILIATED,
+                emptyList(),
+            )
+            return mock
+        }
 
         @Bean
         fun loggingProperties(): LoggingProperties {
@@ -246,6 +255,8 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.user.email").value("user@example.com"))
             .andExpect(jsonPath("$.user.accountStatus").value("ACTIVE"))
             .andExpect(jsonPath("$.sessionExpiresAt").exists())
+            .andExpect(jsonPath("$.tenantAssignmentState").value("UNAFFILIATED"))
+            .andExpect(jsonPath("$.memberships").isArray)
         // Note: JSESSIONID cookie verification skipped - requires full Spring Security context
 
         verify(exactly = 1) { authService.login(any(), any(), any()) }

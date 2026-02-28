@@ -2,7 +2,7 @@ package com.worklog.api
 
 import com.worklog.application.auth.AuthService
 import com.worklog.application.password.PasswordResetService
-import com.worklog.application.service.UserContextService
+import com.worklog.application.service.UserStatusService
 import com.worklog.infrastructure.config.LoggingProperties
 import com.worklog.infrastructure.config.RateLimitProperties
 import io.mockk.every
@@ -80,7 +80,7 @@ class PasswordResetCsrfTest {
 
         @Bean
         @Primary
-        fun userContextService(): UserContextService = mockk(relaxed = true)
+        fun userStatusService(): UserStatusService = mockk(relaxed = true)
 
         @Bean
         fun loggingProperties(): LoggingProperties {
