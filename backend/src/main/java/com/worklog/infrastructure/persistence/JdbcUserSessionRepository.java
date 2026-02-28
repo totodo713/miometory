@@ -1,6 +1,7 @@
 package com.worklog.infrastructure.persistence;
 
 import com.worklog.domain.session.UserSession;
+import com.worklog.domain.tenant.TenantId;
 import com.worklog.domain.user.UserId;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,7 +37,7 @@ public class JdbcUserSessionRepository {
     public Optional<UserSession> findBySessionId(String sessionId) {
         String sql = """
             SELECT id, user_id, session_id, created_at, last_accessed_at,
-                   expires_at, ip_address, user_agent
+                   expires_at, ip_address, user_agent, selected_tenant_id
             FROM user_sessions
             WHERE session_id = ?
             """;
@@ -54,7 +55,7 @@ public class JdbcUserSessionRepository {
     public Optional<UserSession> findById(UUID id) {
         String sql = """
             SELECT id, user_id, session_id, created_at, last_accessed_at,
-                   expires_at, ip_address, user_agent
+                   expires_at, ip_address, user_agent, selected_tenant_id
             FROM user_sessions
             WHERE id = ?
             """;
@@ -72,7 +73,7 @@ public class JdbcUserSessionRepository {
     public List<UserSession> findByUserId(UserId userId) {
         String sql = """
             SELECT id, user_id, session_id, created_at, last_accessed_at,
-                   expires_at, ip_address, user_agent
+                   expires_at, ip_address, user_agent, selected_tenant_id
             FROM user_sessions
             WHERE user_id = ?
             ORDER BY created_at DESC
@@ -90,7 +91,7 @@ public class JdbcUserSessionRepository {
     public List<UserSession> findExpiredSessions(Instant now) {
         String sql = """
             SELECT id, user_id, session_id, created_at, last_accessed_at,
-                   expires_at, ip_address, user_agent
+                   expires_at, ip_address, user_agent, selected_tenant_id
             FROM user_sessions
             WHERE expires_at < ?
             """;
@@ -107,17 +108,15 @@ public class JdbcUserSessionRepository {
     public UserSession save(UserSession session) {
         String upsertSql = """
             INSERT INTO user_sessions (id, user_id, session_id, created_at, last_accessed_at,
-                                      expires_at, ip_address, user_agent)
-            VALUES (?, ?, ?, ?, ?, ?, ?::inet, ?)
+                                      expires_at, ip_address, user_agent, selected_tenant_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?::inet, ?, ?)
             ON CONFLICT (session_id) DO UPDATE SET
                 last_accessed_at = EXCLUDED.last_accessed_at,
-                expires_at = EXCLUDED.expires_at
+                expires_at = EXCLUDED.expires_at,
+                selected_tenant_id = EXCLUDED.selected_tenant_id
             """;
 
-        // Generate a unique ID for the session if it's a new one
-        // The session_id (UUID) is used as the unique identifier
-        UUID dbId = UUID.randomUUID(); // Database internal ID
-
+        UUID dbId = UUID.randomUUID();
         jdbcTemplate.update(
                 upsertSql,
                 dbId,
@@ -127,7 +126,8 @@ public class JdbcUserSessionRepository {
                 Timestamp.from(session.getLastAccessedAt()),
                 Timestamp.from(session.getExpiresAt()),
                 session.getIpAddress(),
-                session.getUserAgent());
+                session.getUserAgent(),
+                session.hasSelectedTenant() ? session.getSelectedTenantId().value() : null);
 
         return session;
     }
@@ -193,11 +193,25 @@ public class JdbcUserSessionRepository {
     }
 
     /**
+     * Updates only the selected_tenant_id for a session.
+     *
+     * @param sessionId Session UUID (the session_id column value)
+     * @param tenantId Tenant to select, or null to clear
+     */
+    public void updateSelectedTenant(UUID sessionId, TenantId tenantId) {
+        String sql = "UPDATE user_sessions SET selected_tenant_id = ? WHERE session_id = ?";
+        jdbcTemplate.update(sql, tenantId != null ? tenantId.value() : null, sessionId.toString());
+    }
+
+    /**
      * RowMapper for UserSession entity.
      */
     private static class UserSessionRowMapper implements RowMapper<UserSession> {
         @Override
         public UserSession mapRow(ResultSet rs, int rowNum) throws SQLException {
+            UUID selectedTenantUuid = rs.getObject("selected_tenant_id", UUID.class);
+            TenantId selectedTenantId = selectedTenantUuid != null ? TenantId.of(selectedTenantUuid) : null;
+
             return new UserSession(
                     UUID.fromString(rs.getString("session_id")),
                     UserId.of(rs.getObject("user_id", UUID.class)),
@@ -205,7 +219,8 @@ public class JdbcUserSessionRepository {
                     rs.getString("user_agent"),
                     rs.getTimestamp("created_at").toInstant(),
                     rs.getTimestamp("expires_at").toInstant(),
-                    rs.getTimestamp("last_accessed_at").toInstant());
+                    rs.getTimestamp("last_accessed_at").toInstant(),
+                    selectedTenantId);
         }
     }
 }
