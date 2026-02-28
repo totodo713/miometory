@@ -115,10 +115,10 @@ describe("DailyEntryForm", () => {
   const mockOnClose = vi.fn();
   const mockOnSave = vi.fn();
 
-  // Helper function to wait for loading to complete
+  // Helper function to wait for loading to complete (skeleton disappears)
   const waitForLoading = async () => {
     await waitFor(() => {
-      expect(screen.queryByText(/読み込み中/i)).not.toBeInTheDocument();
+      expect(screen.queryByTestId("skeleton-line")).not.toBeInTheDocument();
     });
   };
 

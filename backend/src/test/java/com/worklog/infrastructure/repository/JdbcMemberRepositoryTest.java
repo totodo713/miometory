@@ -3,7 +3,9 @@ package com.worklog.infrastructure.repository;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.worklog.IntegrationTestBase;
+import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
+import com.worklog.domain.organization.OrganizationId;
 import com.worklog.domain.tenant.TenantId;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,46 @@ class JdbcMemberRepositoryTest extends IntegrationTestBase {
 
     @Autowired
     private JdbcMemberRepository memberRepository;
+
+    @Test
+    @DisplayName("save and findById should handle null organization_id")
+    void save_nullOrganizationId_roundTrips() {
+        // Arrange — create member with null org via raw SQL
+        UUID memberId = UUID.randomUUID();
+        String email = "no-org-" + memberId + "@example.com";
+        baseJdbcTemplate.update("""
+                INSERT INTO members (id, tenant_id, organization_id, email, display_name, manager_id, is_active, version, created_at, updated_at)
+                VALUES (?, '550e8400-e29b-41d4-a716-446655440001'::UUID, NULL, ?, ?, NULL, true, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)""", memberId, email, "No Org User " + memberId);
+
+        // Act
+        var found = memberRepository.findById(MemberId.of(memberId));
+
+        // Assert
+        assertTrue(found.isPresent());
+        assertNull(found.get().getOrganizationId());
+        assertEquals(email, found.get().getEmail());
+        assertFalse(found.get().hasOrganization());
+    }
+
+    @Test
+    @DisplayName("save should persist null organization_id via domain model")
+    void save_memberWithNullOrg_persists() {
+        // Arrange
+        var member = Member.createForTenant(
+                TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001")),
+                "tenant-only-" + UUID.randomUUID() + "@example.com",
+                "Tenant Only User");
+
+        // Act
+        memberRepository.save(member, 0);
+        var found = memberRepository.findById(member.getId());
+
+        // Assert
+        assertTrue(found.isPresent());
+        assertNull(found.get().getOrganizationId());
+        assertFalse(found.get().hasOrganization());
+        assertEquals(member.getEmail(), found.get().getEmail());
+    }
 
     @Test
     @DisplayName("findDisplayNamesByIds should return empty map for empty input")
@@ -128,5 +170,64 @@ class JdbcMemberRepositoryTest extends IntegrationTestBase {
                 memberRepository.findExistingEmailsInTenant(TenantId.of(UUID.randomUUID()), List.of(email));
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findByEmail should return member when found in tenant")
+    void findByEmail_existingMember_returnsMember() {
+        UUID memberId = UUID.randomUUID();
+        String email = "find-email-" + memberId + "@example.com";
+        createTestMember(memberId, email);
+
+        var found = memberRepository.findByEmail(
+                TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001")), email);
+
+        assertTrue(found.isPresent());
+        assertEquals(email, found.get().getEmail());
+        assertEquals(memberId, found.get().getId().value());
+    }
+
+    @Test
+    @DisplayName("findByEmail should return empty for non-existent email")
+    void findByEmail_nonExistent_returnsEmpty() {
+        var found = memberRepository.findByEmail(
+                TenantId.of(UUID.fromString("550e8400-e29b-41d4-a716-446655440001")), "does-not-exist@example.com");
+
+        assertTrue(found.isEmpty());
+    }
+
+    @Test
+    @DisplayName("findByOrganization should return active members")
+    void findByOrganization_returnsActiveMembers() {
+        UUID memberId = UUID.randomUUID();
+        createTestMember(memberId, "org-member-" + memberId + "@example.com");
+
+        List<Member> members = memberRepository.findByOrganization(
+                OrganizationId.of(UUID.fromString("880e8400-e29b-41d4-a716-446655440001")));
+
+        assertTrue(members.stream().anyMatch(m -> m.getId().value().equals(memberId)));
+    }
+
+    @Test
+    @DisplayName("isDirectSubordinateOf should return true for direct report")
+    void isDirectSubordinateOf_directReport_returnsTrue() {
+        UUID managerId = UUID.randomUUID();
+        UUID subordinateId = UUID.randomUUID();
+        createTestMember(managerId, "mgr-" + managerId + "@example.com");
+        createTestMember(subordinateId, "sub-" + subordinateId + "@example.com");
+        setManagerForMember(subordinateId, managerId);
+
+        assertTrue(memberRepository.isDirectSubordinateOf(MemberId.of(managerId), MemberId.of(subordinateId)));
+    }
+
+    @Test
+    @DisplayName("isDirectSubordinateOf should return false for non-subordinate")
+    void isDirectSubordinateOf_notSubordinate_returnsFalse() {
+        UUID id1 = UUID.randomUUID();
+        UUID id2 = UUID.randomUUID();
+        createTestMember(id1, "peer1-" + id1 + "@example.com");
+        createTestMember(id2, "peer2-" + id2 + "@example.com");
+
+        assertFalse(memberRepository.isDirectSubordinateOf(MemberId.of(id1), MemberId.of(id2)));
     }
 }

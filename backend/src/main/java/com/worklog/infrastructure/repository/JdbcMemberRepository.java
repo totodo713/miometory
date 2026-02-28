@@ -237,7 +237,7 @@ public class JdbcMemberRepository {
                 upsertSql,
                 member.getId().value(),
                 member.getTenantId().value(),
-                member.getOrganizationId().value(),
+                member.getOrganizationId() != null ? member.getOrganizationId().value() : null,
                 member.getEmail(),
                 member.getDisplayName(),
                 member.getManagerId() != null ? member.getManagerId().value() : null,
@@ -351,13 +351,14 @@ public class JdbcMemberRepository {
         @Override
         public Member mapRow(ResultSet rs, int rowNum) throws SQLException {
             UUID managerId = (UUID) rs.getObject("manager_id");
+            UUID orgId = rs.getObject("organization_id", UUID.class);
             Instant createdAt = rs.getTimestamp("created_at").toInstant();
             Instant updatedAt = rs.getTimestamp("updated_at").toInstant();
 
             return new Member(
                     MemberId.of(rs.getObject("id", UUID.class)),
                     TenantId.of(rs.getObject("tenant_id", UUID.class)),
-                    OrganizationId.of(rs.getObject("organization_id", UUID.class)),
+                    orgId != null ? OrganizationId.of(orgId) : null,
                     rs.getString("email"),
                     rs.getString("display_name"),
                     managerId != null ? MemberId.of(managerId) : null,
