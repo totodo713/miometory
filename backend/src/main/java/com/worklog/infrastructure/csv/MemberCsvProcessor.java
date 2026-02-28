@@ -126,9 +126,8 @@ public class MemberCsvProcessor {
     }
 
     private void validateHeaders(List<String> headerNames) {
-        List<String> missing = REQUIRED_HEADERS.stream()
-                .filter(h -> !headerNames.contains(h))
-                .toList();
+        List<String> missing =
+                REQUIRED_HEADERS.stream().filter(h -> !headerNames.contains(h)).toList();
         if (!missing.isEmpty()) {
             throw new CsvParseException(
                     "CSV header must contain columns: " + REQUIRED_HEADERS + ". Missing: " + missing);

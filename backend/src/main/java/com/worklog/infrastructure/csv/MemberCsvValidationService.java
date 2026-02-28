@@ -56,8 +56,9 @@ public class MemberCsvValidationService {
 
         // Phase 2: Batch DB duplicate check
         if (!formatValidRows.isEmpty()) {
-            Set<String> emailsToCheck =
-                    formatValidRows.stream().map(r -> r.email().toLowerCase(Locale.ROOT)).collect(Collectors.toSet());
+            Set<String> emailsToCheck = formatValidRows.stream()
+                    .map(r -> r.email().toLowerCase(Locale.ROOT))
+                    .collect(Collectors.toSet());
 
             Set<String> existingUserEmails = userRepository.findExistingEmails(emailsToCheck);
             Set<String> existingMemberEmails = memberRepository.findExistingEmailsInTenant(tenantId, emailsToCheck);
