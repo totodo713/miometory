@@ -8,6 +8,7 @@ import com.worklog.application.password.PasswordResetConfirmCommand;
 import com.worklog.application.password.PasswordResetRequestCommand;
 import com.worklog.application.password.PasswordResetService;
 import com.worklog.application.service.UserStatusService;
+import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.shared.ServiceConfigurationException;
 import com.worklog.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +18,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +35,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
@@ -114,22 +119,25 @@ public class AuthController {
         String email = response.user().getEmail();
         UserStatusService.UserStatusResponse userStatus = userStatusService.getUserStatus(email);
 
-        // Map domain memberships to API DTOs
+        // Map domain memberships to API DTOs (parse String IDs to UUID at boundary)
         List<TenantMembershipDto> memberships = userStatus.memberships().stream()
                 .map(m -> new TenantMembershipDto(
-                        m.memberId(), m.tenantId(), m.tenantName(), m.organizationId(), m.organizationName()))
+                        UUID.fromString(m.memberId()),
+                        UUID.fromString(m.tenantId()),
+                        m.tenantName(),
+                        m.organizationId() != null ? UUID.fromString(m.organizationId()) : null,
+                        m.organizationName()))
                 .toList();
 
         // Auto-select tenant if user belongs to exactly one tenant (best-effort)
         UUID memberId = null;
         if (memberships.size() == 1) {
             try {
-                UUID tenantId = UUID.fromString(memberships.get(0).tenantId());
                 UUID sessionUuid = UUID.fromString(response.sessionId());
-                userStatusService.selectTenant(email, tenantId, sessionUuid);
-                memberId = UUID.fromString(memberships.get(0).memberId());
-            } catch (Exception e) {
-                // Don't fail login — user can manually select tenant later
+                userStatusService.selectTenant(email, memberships.get(0).tenantId(), sessionUuid);
+                memberId = memberships.get(0).memberId();
+            } catch (IllegalArgumentException | DomainException e) {
+                log.warn("Auto-select tenant failed for user {}: {}", email, e.getMessage());
             }
         }
 

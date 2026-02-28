@@ -1,5 +1,7 @@
 package com.worklog.api;
 
+import java.util.UUID;
+
 /**
  * Tenant membership details for login response.
  *
@@ -10,4 +12,4 @@ package com.worklog.api;
  * @param organizationName Organization display name (null if not assigned)
  */
 public record TenantMembershipDto(
-        String memberId, String tenantId, String tenantName, String organizationId, String organizationName) {}
+        UUID memberId, UUID tenantId, String tenantName, UUID organizationId, String organizationName) {}

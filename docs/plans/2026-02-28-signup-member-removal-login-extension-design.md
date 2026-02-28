@@ -28,7 +28,7 @@ Remove automatic Member record creation from signup flow and extend the login re
 **File**: `backend/src/main/java/com/worklog/api/LoginResponseDto.java`
 
 Add fields:
-- `tenantAssignmentState` (String) — maps from TenantAffiliationStatus enum
+- `tenantAffiliationState` (String) — maps from TenantAffiliationStatus enum
 - `memberships` (List<TenantMembershipDto>)
 
 **New file**: `backend/src/main/java/com/worklog/api/TenantMembershipDto.java`
@@ -66,7 +66,7 @@ public record TenantMembershipDto(
 ### 3-6. Tests
 
 - AuthServiceImpl: verify signup does NOT create Member
-- AuthController: verify login response includes tenantAssignmentState and memberships
+- AuthController: verify login response includes tenantAffiliationState and memberships
 - Update existing tests that assume Member creation during signup
 
 ## Design Decisions
