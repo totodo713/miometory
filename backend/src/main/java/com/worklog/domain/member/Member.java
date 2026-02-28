@@ -54,7 +54,7 @@ public class Member {
             Instant updatedAt) {
         this.id = Objects.requireNonNull(id, "Member ID cannot be null");
         this.tenantId = Objects.requireNonNull(tenantId, "Tenant ID cannot be null");
-        this.organizationId = Objects.requireNonNull(organizationId, "Organization ID cannot be null");
+        this.organizationId = organizationId; // Nullable: null = not yet assigned to organization
         this.email = Objects.requireNonNull(email, "Email cannot be null");
         this.displayName = Objects.requireNonNull(displayName, "Display name cannot be null");
         this.managerId = managerId; // Can be null if no manager
@@ -77,6 +77,22 @@ public class Member {
                 email,
                 displayName,
                 managerId,
+                true, // New members are active by default
+                Instant.now());
+    }
+
+    /**
+     * Factory method for creating a new Member without an organization assignment.
+     * Used during public registration where organization assignment happens later.
+     */
+    public static Member createForTenant(TenantId tenantId, String email, String displayName) {
+        return new Member(
+                MemberId.generate(),
+                tenantId,
+                null, // No organization assigned yet
+                email,
+                displayName,
+                null, // No manager
                 true, // New members are active by default
                 Instant.now());
     }
@@ -141,6 +157,13 @@ public class Member {
      */
     public boolean hasManager() {
         return managerId != null;
+    }
+
+    /**
+     * Checks if this member has been assigned to an organization.
+     */
+    public boolean hasOrganization() {
+        return organizationId != null;
     }
 
     /**

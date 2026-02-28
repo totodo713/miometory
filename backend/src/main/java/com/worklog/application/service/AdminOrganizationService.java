@@ -494,7 +494,7 @@ public class AdminOrganizationService {
         OrganizationId targetOrgId = OrganizationId.of(command.targetOrgId());
 
         // Check that target is different from current
-        if (member.getOrganizationId().equals(targetOrgId)) {
+        if (member.hasOrganization() && member.getOrganizationId().equals(targetOrgId)) {
             throw new DomainException("SAME_ORGANIZATION", "Member already belongs to this organization");
         }
 
