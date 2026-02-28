@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class TenantAssignmentServiceTest {
             UUID tenantId = UUID.randomUUID();
             var user = User.create("test@example.com", "Test", "$2a$10$hashedpw1234567890ab", RoleId.generate());
             when(userRepository.searchByEmailPartial("test")).thenReturn(List.of(user));
-            when(memberRepository.findEmailsExistingInTenant(eq(TenantId.of(tenantId)), any()))
+            when(memberRepository.findExistingEmailsInTenant(eq(TenantId.of(tenantId)), any()))
                     .thenReturn(Set.of("test@example.com"));
 
             var result = service.searchUsersForAssignment("test", tenantId);
@@ -62,7 +63,7 @@ class TenantAssignmentServiceTest {
             UUID tenantId = UUID.randomUUID();
             var user = User.create("new@example.com", "New", "$2a$10$hashedpw1234567890ab", RoleId.generate());
             when(userRepository.searchByEmailPartial("new")).thenReturn(List.of(user));
-            when(memberRepository.findEmailsExistingInTenant(eq(TenantId.of(tenantId)), any()))
+            when(memberRepository.findExistingEmailsInTenant(eq(TenantId.of(tenantId)), any()))
                     .thenReturn(Set.of());
 
             var result = service.searchUsersForAssignment("new", tenantId);
@@ -99,6 +100,23 @@ class TenantAssignmentServiceTest {
             when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
             when(memberRepository.findByEmail(TenantId.of(tenantId), "test@example.com"))
                     .thenReturn(Optional.of(member));
+
+            var ex = assertThrows(
+                    DomainException.class,
+                    () -> service.assignUserToTenant(user.getId().value(), tenantId, "Test"));
+            assertEquals("DUPLICATE_TENANT_ASSIGNMENT", ex.getErrorCode());
+        }
+
+        @Test
+        @DisplayName("throws DUPLICATE_TENANT_ASSIGNMENT on race condition (DataIntegrityViolation)")
+        void assignRaceConditionDuplicate() {
+            UUID tenantId = UUID.randomUUID();
+            var user = User.create("test@example.com", "Test", "$2a$10$hashedpw1234567890ab", RoleId.generate());
+            when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+            when(memberRepository.findByEmail(TenantId.of(tenantId), "test@example.com"))
+                    .thenReturn(Optional.empty());
+            doThrow(new DataIntegrityViolationException("duplicate key"))
+                    .when(memberRepository).save(any(Member.class));
 
             var ex = assertThrows(
                     DomainException.class,

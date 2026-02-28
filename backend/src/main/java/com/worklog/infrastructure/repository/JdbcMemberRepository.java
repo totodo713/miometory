@@ -70,34 +70,11 @@ public class JdbcMemberRepository {
             SELECT id, tenant_id, organization_id, email, display_name,
                    manager_id, is_active, version, created_at, updated_at
             FROM members
-            WHERE tenant_id = ? AND email = ?
+            WHERE tenant_id = ? AND LOWER(email) = LOWER(?)
             """;
 
         List<Member> results = jdbcTemplate.query(sql, new MemberRowMapper(), tenantId.value(), email);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
-    }
-
-    /**
-     * Returns the set of emails (from the given candidates) that already have a member record
-     * in the specified tenant. Used to batch-check tenant membership for multiple users.
-     */
-    public Set<String> findEmailsExistingInTenant(TenantId tenantId, Set<String> emails) {
-        if (emails.isEmpty()) {
-            return Set.of();
-        }
-
-        String placeholders = emails.stream().map(e -> "?").collect(Collectors.joining(", "));
-        String sql = "SELECT LOWER(email) FROM members WHERE tenant_id = ? AND LOWER(email) IN (" + placeholders + ")";
-
-        Object[] params = new Object[emails.size() + 1];
-        params[0] = tenantId.value();
-        int i = 1;
-        for (String email : emails) {
-            params[i++] = email.toLowerCase();
-        }
-
-        List<String> found = jdbcTemplate.queryForList(sql, String.class, params);
-        return new java.util.HashSet<>(found);
     }
 
     /**
@@ -375,6 +352,9 @@ public class JdbcMemberRepository {
     public Set<String> findExistingEmailsInTenant(TenantId tenantId, Collection<String> emails) {
         if (emails.isEmpty()) {
             return Set.of();
+        }
+        if (emails.size() > 1000) {
+            throw new IllegalArgumentException("Too many emails to check: " + emails.size());
         }
 
         String placeholders = emails.stream().map(e -> "?").collect(Collectors.joining(", "));

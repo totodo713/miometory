@@ -7,6 +7,7 @@ import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,14 +33,14 @@ public class TenantAssignmentService {
         var users = userRepository.searchByEmailPartial(emailPartial);
 
         Set<String> emails = users.stream().map(u -> u.getEmail()).collect(Collectors.toSet());
-        Set<String> existingEmails = memberRepository.findEmailsExistingInTenant(tid, emails);
+        Set<String> existingEmails = memberRepository.findExistingEmailsInTenant(tid, emails);
 
         List<UserSearchResult> results = users.stream()
                 .map(user -> new UserSearchResult(
                         user.getId().value().toString(),
                         user.getEmail(),
                         user.getName(),
-                        existingEmails.contains(user.getEmail().toLowerCase())))
+                        existingEmails.contains(user.getEmail().toLowerCase(Locale.ROOT))))
                 .toList();
         return new UserSearchResponse(results);
     }
