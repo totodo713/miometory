@@ -11,7 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,7 +59,7 @@ public class TenantAssignmentService {
         Member member = Member.createForTenant(tid, user.getEmail(), displayName);
         try {
             memberRepository.save(member);
-        } catch (DataIntegrityViolationException ex) {
+        } catch (DuplicateKeyException ex) {
             throw new DomainException("DUPLICATE_TENANT_ASSIGNMENT", "User is already assigned to this tenant");
         }
     }

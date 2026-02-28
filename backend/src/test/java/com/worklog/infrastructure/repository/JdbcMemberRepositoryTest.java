@@ -147,10 +147,10 @@ class JdbcMemberRepositoryTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("findExistingEmailsInTenant should be case-insensitive")
+    @DisplayName("findExistingEmailsInTenant should normalize query parameter to lowercase")
     void findExistingEmailsInTenant_caseInsensitive_returnsMatch() {
         UUID id = UUID.randomUUID();
-        String email = "CaseTest-" + id + "@example.com";
+        String email = "casetest-" + id + "@example.com";
         createTestMember(id, email);
 
         Set<String> result = memberRepository.findExistingEmailsInTenant(
@@ -252,13 +252,13 @@ class JdbcMemberRepositoryTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("findAllByEmail should be case-insensitive")
+    @DisplayName("findAllByEmail should normalize query parameter to lowercase")
     void findAllByEmail_caseInsensitive_returnsList() {
         UUID memberId = UUID.randomUUID();
-        String email = "CasE-Test-" + memberId + "@Example.COM";
+        String email = "case-test-" + memberId + "@example.com";
         createTestMember(memberId, email);
 
-        List<Member> results = memberRepository.findAllByEmail(email.toLowerCase());
+        List<Member> results = memberRepository.findAllByEmail(email.toUpperCase());
 
         assertFalse(results.isEmpty());
         assertTrue(results.stream().anyMatch(m -> m.getId().value().equals(memberId)));

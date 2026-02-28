@@ -104,8 +104,8 @@ class GlobalExceptionHandlerTest {
     fun `handleValidationException returns 400 with field errors`() {
         val bindingResult = BeanPropertyBindingResult(Any(), "request")
         bindingResult.addError(FieldError("request", "name", "must not be blank"))
-        // Use a dummy MethodParameter for the constructor
-        val method = GlobalExceptionHandler::class.java.methods.first()
+        // Use a stable method reference (reflection ordering is not guaranteed across JDKs)
+        val method = Object::class.java.getMethod("toString")
         val param = org.springframework.core.MethodParameter(method, -1)
         val ex = MethodArgumentNotValidException(param, bindingResult)
 
@@ -122,7 +122,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     fun `handleTypeMismatchException returns 400 with type info`() {
-        val method = GlobalExceptionHandler::class.java.methods.first()
+        val method = Object::class.java.getMethod("toString")
         val param = org.springframework.core.MethodParameter(method, -1)
         val ex = MethodArgumentTypeMismatchException(
             "bad-value",

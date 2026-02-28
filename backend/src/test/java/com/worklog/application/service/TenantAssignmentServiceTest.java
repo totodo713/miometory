@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TenantAssignmentService")
@@ -108,15 +108,16 @@ class TenantAssignmentServiceTest {
         }
 
         @Test
-        @DisplayName("throws DUPLICATE_TENANT_ASSIGNMENT on race condition (DataIntegrityViolation)")
+        @DisplayName("throws DUPLICATE_TENANT_ASSIGNMENT on race condition (DuplicateKeyException)")
         void assignRaceConditionDuplicate() {
             UUID tenantId = UUID.randomUUID();
             var user = User.create("test@example.com", "Test", "$2a$10$hashedpw1234567890ab", RoleId.generate());
             when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
             when(memberRepository.findByEmail(TenantId.of(tenantId), "test@example.com"))
                     .thenReturn(Optional.empty());
-            doThrow(new DataIntegrityViolationException("duplicate key"))
-                    .when(memberRepository).save(any(Member.class));
+            doThrow(new DuplicateKeyException("duplicate key"))
+                    .when(memberRepository)
+                    .save(any(Member.class));
 
             var ex = assertThrows(
                     DomainException.class,
