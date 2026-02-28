@@ -42,7 +42,7 @@ public class MemberCsvProcessor {
      * @throws CsvParseException if the CSV structure is invalid
      */
     public List<MemberCsvRow> parse(byte[] data) {
-        if (data.length == 0) {
+        if (data == null || data.length == 0) {
             return List.of();
         }
 
@@ -97,8 +97,8 @@ public class MemberCsvProcessor {
 
             for (CSVRecord record : parser) {
                 if (!record.isConsistent()) {
-                    throw new CsvParseException("Row " + record.getRecordNumber()
-                            + " has missing columns: expected 2 but found " + record.size());
+                    throw new CsvParseException(
+                            "Row " + record.getRecordNumber() + ": expected 2 columns but found " + record.size());
                 }
 
                 int rowNumber = (int) record.getRecordNumber();

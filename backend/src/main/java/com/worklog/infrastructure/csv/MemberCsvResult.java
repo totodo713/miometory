@@ -10,6 +10,11 @@ import java.util.List;
  */
 public record MemberCsvResult(List<MemberCsvRow> validRows, List<CsvValidationError> errors) {
 
+    public MemberCsvResult {
+        validRows = List.copyOf(validRows);
+        errors = List.copyOf(errors);
+    }
+
     public boolean hasErrors() {
         return !errors.isEmpty();
     }
