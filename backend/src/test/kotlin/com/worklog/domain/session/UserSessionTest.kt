@@ -1,5 +1,6 @@
 package com.worklog.domain.session
 
+import com.worklog.domain.tenant.TenantId
 import com.worklog.domain.user.UserId
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -12,6 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class UserSessionTest {
@@ -135,5 +137,33 @@ class UserSessionTest {
         val session = UserSession.create(userId, "127.0.0.1", "agent", 30)
         val str = session.toString()
         assertTrue(str.contains(session.sessionId.toString()), "toString should contain sessionId")
+    }
+
+    @Nested
+    @DisplayName("selectedTenantId")
+    inner class SelectedTenantIdTests {
+        @Test
+        fun `new session has no selected tenant`() {
+            val session = UserSession.create(userId, "127.0.0.1", "TestAgent", 30)
+            assertFalse(session.hasSelectedTenant())
+            assertNull(session.selectedTenantId)
+        }
+
+        @Test
+        fun `selectTenant sets the selected tenant`() {
+            val session = UserSession.create(userId, "127.0.0.1", "TestAgent", 30)
+            val tenantId = TenantId.generate()
+            session.selectTenant(tenantId)
+            assertTrue(session.hasSelectedTenant())
+            assertEquals(tenantId, session.selectedTenantId)
+        }
+
+        @Test
+        fun `selectTenant with null clears selection`() {
+            val session = UserSession.create(userId, "127.0.0.1", "TestAgent", 30)
+            session.selectTenant(TenantId.generate())
+            session.selectTenant(null)
+            assertFalse(session.hasSelectedTenant())
+        }
     }
 }
