@@ -7,9 +7,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -77,6 +82,24 @@ public class JdbcUserRepository {
         String sql = "SELECT COUNT(*) > 0 FROM users WHERE LOWER(email) = LOWER(?)";
         Boolean result = jdbcTemplate.queryForObject(sql, Boolean.class, email);
         return result != null && result;
+    }
+
+    /**
+     * Finds which of the given emails already exist in the users table (case-insensitive).
+     *
+     * @param emails Collection of email addresses to check
+     * @return Set of existing emails (lowercased)
+     */
+    public Set<String> findExistingEmails(Collection<String> emails) {
+        if (emails.isEmpty()) {
+            return Set.of();
+        }
+
+        String placeholders = emails.stream().map(e -> "?").collect(Collectors.joining(", "));
+        String sql = "SELECT LOWER(email) FROM users WHERE LOWER(email) IN (" + placeholders + ")";
+        Object[] params = emails.stream().map(e -> e.toLowerCase(Locale.ROOT)).toArray();
+
+        return new HashSet<>(jdbcTemplate.queryForList(sql, String.class, params));
     }
 
     /**
