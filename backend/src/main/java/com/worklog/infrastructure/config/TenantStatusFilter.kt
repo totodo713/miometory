@@ -27,6 +27,12 @@ class TenantStatusFilter(private val jdbcTemplate: JdbcTemplate) : OncePerReques
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
+        // Skip tenant status check for user status endpoints (accessible to UNAFFILIATED users)
+        if (request.requestURI.startsWith("/api/v1/user/")) {
+            filterChain.doFilter(request, response)
+            return
+        }
+
         val email = request.userPrincipal?.name
         val shouldBlock = email != null && isTenantDeactivated(email)
 
