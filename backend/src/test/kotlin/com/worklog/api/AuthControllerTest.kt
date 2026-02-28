@@ -255,7 +255,7 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.user.email").value("user@example.com"))
             .andExpect(jsonPath("$.user.accountStatus").value("ACTIVE"))
             .andExpect(jsonPath("$.sessionExpiresAt").exists())
-            .andExpect(jsonPath("$.tenantAssignmentState").value("UNAFFILIATED"))
+            .andExpect(jsonPath("$.tenantAffiliationState").value("UNAFFILIATED"))
             .andExpect(jsonPath("$.memberships").isArray)
         // Note: JSESSIONID cookie verification skipped - requires full Spring Security context
 

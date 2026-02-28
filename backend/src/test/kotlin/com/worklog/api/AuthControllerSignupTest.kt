@@ -77,7 +77,7 @@ class AuthControllerSignupTest : IntegrationTestBase() {
     }
 
     // ============================================================
-    // T003b: Signup creates both user and member records
+    // T003b: Signup does NOT create member record
     // ============================================================
 
     @Test

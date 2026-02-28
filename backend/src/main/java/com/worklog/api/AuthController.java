@@ -120,17 +120,18 @@ public class AuthController {
                         m.memberId(), m.tenantId(), m.tenantName(), m.organizationId(), m.organizationName()))
                 .toList();
 
-        // Auto-select tenant if user belongs to exactly one tenant
+        // Auto-select tenant if user belongs to exactly one tenant (best-effort)
+        UUID memberId = null;
         if (memberships.size() == 1) {
-            UUID tenantId = UUID.fromString(memberships.get(0).tenantId());
-            UUID sessionUuid = UUID.fromString(response.sessionId());
-            userStatusService.selectTenant(email, tenantId, sessionUuid);
+            try {
+                UUID tenantId = UUID.fromString(memberships.get(0).tenantId());
+                UUID sessionUuid = UUID.fromString(response.sessionId());
+                userStatusService.selectTenant(email, tenantId, sessionUuid);
+                memberId = UUID.fromString(memberships.get(0).memberId());
+            } catch (Exception e) {
+                // Don't fail login — user can manually select tenant later
+            }
         }
-
-        // Derive memberId from first membership (null if no memberships)
-        UUID memberId = memberships.isEmpty()
-                ? null
-                : UUID.fromString(memberships.get(0).memberId());
 
         return new LoginResponseDto(
                 new UserDto(
