@@ -44,7 +44,9 @@ class UserStatusControllerTest : AdminIntegrationTestBase() {
             .andExpect(jsonPath("$.state").value("FULLY_ASSIGNED"))
             .andExpect(jsonPath("$.memberships").isArray)
             .andExpect(jsonPath("$.memberships[0].tenantId").value(ADM_TEST_TENANT_ID))
+            .andExpect(jsonPath("$.memberships[0].tenantName").isNotEmpty)
             .andExpect(jsonPath("$.memberships[0].organizationId").value(ADM_TEST_ORG_ID))
+            .andExpect(jsonPath("$.memberships[0].organizationName").isNotEmpty)
     }
 
     @Test
@@ -90,15 +92,18 @@ class UserStatusControllerTest : AdminIntegrationTestBase() {
     }
 
     @Test
-    fun `select-tenant returns 400 when no session exists`() {
+    fun `select-tenant returns structured error when no session exists`() {
         // MockMvc doesn't create a real HttpSession with sessionId attribute,
-        // so the controller should return 400 (no session)
+        // so the controller throws DomainException("SESSION_NOT_FOUND", ...)
+        // which maps to 404 via GlobalExceptionHandler._NOT_FOUND pattern
         mockMvc.perform(
             post("/api/v1/user/select-tenant")
                 .with(user(userEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"tenantId":"$ADM_TEST_TENANT_ID"}"""),
         )
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("SESSION_NOT_FOUND"))
+            .andExpect(jsonPath("$.message").isNotEmpty)
     }
 }

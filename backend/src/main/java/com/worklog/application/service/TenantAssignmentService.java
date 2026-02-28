@@ -24,11 +24,11 @@ public class TenantAssignmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserSearchResult> searchUsersForAssignment(String emailPartial, UUID tenantId) {
+    public UserSearchResponse searchUsersForAssignment(String emailPartial, UUID tenantId) {
         TenantId tid = TenantId.of(tenantId);
         var users = userRepository.searchByEmailPartial(emailPartial);
 
-        return users.stream()
+        List<UserSearchResult> results = users.stream()
                 .map(user -> {
                     boolean alreadyInTenant =
                             memberRepository.findByEmail(tid, user.getEmail()).isPresent();
@@ -36,6 +36,7 @@ public class TenantAssignmentService {
                             user.getId().value().toString(), user.getEmail(), user.getName(), alreadyInTenant);
                 })
                 .toList();
+        return new UserSearchResponse(results);
     }
 
     public void assignUserToTenant(UUID userId, UUID tenantId, String displayName) {
@@ -52,6 +53,8 @@ public class TenantAssignmentService {
         Member member = Member.createForTenant(tid, user.getEmail(), displayName);
         memberRepository.save(member);
     }
+
+    public record UserSearchResponse(List<UserSearchResult> users) {}
 
     public record UserSearchResult(String userId, String email, String name, boolean isAlreadyInTenant) {}
 }

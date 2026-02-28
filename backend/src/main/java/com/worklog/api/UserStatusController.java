@@ -1,6 +1,7 @@
 package com.worklog.api;
 
 import com.worklog.application.service.UserStatusService;
+import com.worklog.domain.shared.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -37,12 +38,12 @@ public class UserStatusController {
         // stored as an HttpSession attribute during login (see AuthController.login()).
         HttpSession session = httpRequest.getSession(false);
         if (session == null) {
-            return ResponseEntity.badRequest().build();
+            throw new DomainException("SESSION_NOT_FOUND", "Session not found or session ID missing");
         }
 
         Object sessionIdAttr = session.getAttribute("sessionId");
         if (sessionIdAttr == null) {
-            return ResponseEntity.badRequest().build();
+            throw new DomainException("SESSION_NOT_FOUND", "Session not found or session ID missing");
         }
 
         // The sessionId attribute is stored as a String UUID by AuthController

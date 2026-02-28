@@ -56,41 +56,41 @@ class TenantAssignmentControllerTest : AdminIntegrationTestBase() {
     // ============================================================
 
     @Test
-    fun `search-for-assignment returns 200 with results for system admin`() {
+    fun `search-for-assignment returns 200 with wrapped results for system admin`() {
         mockMvc.perform(
             get("/api/v1/admin/users/search-for-assignment")
                 .with(user(sysAdminEmail))
                 .param("email", "target-ta"),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$").isArray)
-            .andExpect(jsonPath("$[0].userId").isNotEmpty)
-            .andExpect(jsonPath("$[0].email").isNotEmpty)
-            .andExpect(jsonPath("$[0].name").isNotEmpty)
-            .andExpect(jsonPath("$[0].isAlreadyInTenant").isBoolean)
+            .andExpect(jsonPath("$.users").isArray)
+            .andExpect(jsonPath("$.users[0].userId").isNotEmpty)
+            .andExpect(jsonPath("$.users[0].email").isNotEmpty)
+            .andExpect(jsonPath("$.users[0].name").isNotEmpty)
+            .andExpect(jsonPath("$.users[0].isAlreadyInTenant").isBoolean)
     }
 
     @Test
-    fun `search-for-assignment returns 200 with results for tenant admin`() {
+    fun `search-for-assignment returns 200 with wrapped results for tenant admin`() {
         mockMvc.perform(
             get("/api/v1/admin/users/search-for-assignment")
                 .with(user(tenantAdminEmail))
                 .param("email", "target-ta"),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$").isArray)
+            .andExpect(jsonPath("$.users").isArray)
     }
 
     @Test
-    fun `search-for-assignment returns empty array for non-matching email`() {
+    fun `search-for-assignment returns empty users array for non-matching email`() {
         mockMvc.perform(
             get("/api/v1/admin/users/search-for-assignment")
                 .with(user(sysAdminEmail))
                 .param("email", "nonexistent-xyz-99999"),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$").isArray)
-            .andExpect(jsonPath("$").isEmpty)
+            .andExpect(jsonPath("$.users").isArray)
+            .andExpect(jsonPath("$.users").isEmpty)
     }
 
     @Test
@@ -104,7 +104,7 @@ class TenantAssignmentControllerTest : AdminIntegrationTestBase() {
                 .param("email", targetEmail),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$[0].isAlreadyInTenant").value(true))
+            .andExpect(jsonPath("$.users[0].isAlreadyInTenant").value(true))
     }
 
     @Test
@@ -116,7 +116,7 @@ class TenantAssignmentControllerTest : AdminIntegrationTestBase() {
                 .param("email", targetEmail),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$[0].isAlreadyInTenant").value(false))
+            .andExpect(jsonPath("$.users[0].isAlreadyInTenant").value(false))
     }
 
     @Test

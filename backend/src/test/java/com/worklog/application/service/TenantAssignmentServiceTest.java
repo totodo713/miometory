@@ -53,8 +53,8 @@ class TenantAssignmentServiceTest {
 
             var result = service.searchUsersForAssignment("test", tenantId);
 
-            assertEquals(1, result.size());
-            assertTrue(result.get(0).isAlreadyInTenant());
+            assertEquals(1, result.users().size());
+            assertTrue(result.users().get(0).isAlreadyInTenant());
         }
 
         @Test
@@ -68,8 +68,8 @@ class TenantAssignmentServiceTest {
 
             var result = service.searchUsersForAssignment("new", tenantId);
 
-            assertEquals(1, result.size());
-            assertFalse(result.get(0).isAlreadyInTenant());
+            assertEquals(1, result.users().size());
+            assertFalse(result.users().get(0).isAlreadyInTenant());
         }
     }
 

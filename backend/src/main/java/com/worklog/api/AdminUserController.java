@@ -4,13 +4,15 @@ import com.worklog.application.service.AdminUserService;
 import com.worklog.application.service.TenantAssignmentService;
 import com.worklog.application.service.UserContextService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import java.util.List;
+import jakarta.validation.constraints.Size;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/api/v1/admin/users")
+@Validated
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
@@ -77,8 +80,8 @@ public class AdminUserController {
 
     @GetMapping("/search-for-assignment")
     @PreAuthorize("hasPermission(null, 'member.assign_tenant')")
-    public List<TenantAssignmentService.UserSearchResult> searchForAssignment(
-            @RequestParam String email, Authentication authentication) {
+    public TenantAssignmentService.UserSearchResponse searchForAssignment(
+            @RequestParam @NotBlank @Size(min = 3, max = 100) String email, Authentication authentication) {
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
         return tenantAssignmentService.searchUsersForAssignment(email, tenantId);
     }

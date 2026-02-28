@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
@@ -82,7 +83,8 @@ public class GlobalExceptionHandler {
                         || errorCode.contains("CANNOT_APPROVE")
                         || errorCode.contains("CANNOT_REJECT")
                         || errorCode.contains("RECALL_BLOCKED_BY_APPROVAL")
-                        || errorCode.contains("REJECT_BLOCKED_BY_APPROVAL"));
+                        || errorCode.contains("REJECT_BLOCKED_BY_APPROVAL")
+                        || errorCode.contains("INVALID_TENANT_SELECTION"));
     }
 
     /**
@@ -189,6 +191,33 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = ErrorResponse.of(
                 errorCode, message != null ? message : "Invalid request body", Map.of("path", getRequestPath(request)));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handles method-level validation errors from @Validated controllers.
+     * Triggered when @NotBlank, @Size, etc. on @RequestParam fail.
+     * Returns 400 Bad Request.
+     */
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ErrorResponse> handleMethodValidationException(
+            HandlerMethodValidationException ex, WebRequest request) {
+        logger.warn("Method validation failed: {}", ex.getMessage());
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("path", getRequestPath(request));
+
+        Map<String, String> parameterErrors = new HashMap<>();
+        ex.getAllValidationResults().forEach(result -> {
+            String paramName = result.getMethodParameter().getParameterName();
+            result.getResolvableErrors()
+                    .forEach(error ->
+                            parameterErrors.put(paramName != null ? paramName : "unknown", error.getDefaultMessage()));
+        });
+        details.put("parameterErrors", parameterErrors);
+
+        ErrorResponse error = ErrorResponse.of("VALIDATION_FAILED", "Request parameter validation failed", details);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
