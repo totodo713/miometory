@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -82,10 +83,12 @@ public class MemberCsvProcessor {
         }
     }
 
+    private static final List<String> REQUIRED_HEADERS = List.of("email", "displayName");
+
     private List<MemberCsvRow> parseCsv(byte[] content, Charset charset) {
         CSVFormat format = CSVFormat.DEFAULT
                 .builder()
-                .setHeader("email", "displayName")
+                .setHeader()
                 .setSkipHeaderRecord(true)
                 .setIgnoreEmptyLines(true)
                 .setTrim(true)
@@ -95,6 +98,8 @@ public class MemberCsvProcessor {
 
         try (Reader reader = new InputStreamReader(new ByteArrayInputStream(content), charset);
                 CSVParser parser = new CSVParser(reader, format)) {
+
+            validateHeaders(parser.getHeaderNames());
 
             for (CSVRecord record : parser) {
                 if (rows.size() >= MAX_ROWS) {
@@ -106,7 +111,7 @@ public class MemberCsvProcessor {
                 }
 
                 int rowNumber = (int) record.getRecordNumber();
-                String email = record.get("email").toLowerCase();
+                String email = record.get("email").toLowerCase(Locale.ROOT);
                 String displayName = record.get("displayName");
 
                 rows.add(new MemberCsvRow(rowNumber, email, displayName));
@@ -118,5 +123,15 @@ public class MemberCsvProcessor {
         }
 
         return rows;
+    }
+
+    private void validateHeaders(List<String> headerNames) {
+        List<String> missing = REQUIRED_HEADERS.stream()
+                .filter(h -> !headerNames.contains(h))
+                .toList();
+        if (!missing.isEmpty()) {
+            throw new CsvParseException(
+                    "CSV header must contain columns: " + REQUIRED_HEADERS + ". Missing: " + missing);
+        }
     }
 }

@@ -127,6 +127,25 @@ class MemberCsvProcessorTest {
     }
 
     @Test
+    @DisplayName("should throw when CSV has no header row")
+    void parseNoHeader() {
+        byte[] csv = "taro@example.com,山田太郎\n".getBytes(StandardCharsets.UTF_8);
+
+        CsvParseException ex = assertThrows(CsvParseException.class, () -> processor.parse(csv));
+        assertTrue(ex.getMessage().contains("Missing"));
+    }
+
+    @Test
+    @DisplayName("should throw when CSV header is missing required columns")
+    void parseMissingHeaderColumns() {
+        byte[] csv = "name,age\ntaro,30\n".getBytes(StandardCharsets.UTF_8);
+
+        CsvParseException ex = assertThrows(CsvParseException.class, () -> processor.parse(csv));
+        assertTrue(ex.getMessage().contains("email"));
+        assertTrue(ex.getMessage().contains("displayName"));
+    }
+
+    @Test
     @DisplayName("should lowercase email addresses")
     void lowercaseEmails() {
         byte[] csv = "email,displayName\nTEST@EXAMPLE.COM,Test User\n".getBytes(StandardCharsets.UTF_8);

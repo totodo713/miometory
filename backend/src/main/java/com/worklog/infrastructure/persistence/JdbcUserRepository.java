@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -96,7 +97,7 @@ public class JdbcUserRepository {
 
         String placeholders = emails.stream().map(e -> "?").collect(Collectors.joining(", "));
         String sql = "SELECT LOWER(email) FROM users WHERE LOWER(email) IN (" + placeholders + ")";
-        Object[] params = emails.stream().map(String::toLowerCase).toArray();
+        Object[] params = emails.stream().map(e -> e.toLowerCase(Locale.ROOT)).toArray();
 
         return new HashSet<>(jdbcTemplate.queryForList(sql, String.class, params));
     }

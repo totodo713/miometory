@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -338,7 +339,7 @@ public class JdbcMemberRepository {
         params[0] = tenantId.value();
         int i = 1;
         for (String email : emails) {
-            params[i++] = email.toLowerCase();
+            params[i++] = email.toLowerCase(Locale.ROOT);
         }
 
         return new HashSet<>(jdbcTemplate.queryForList(sql, String.class, params));
