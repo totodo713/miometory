@@ -16,8 +16,8 @@ public class MemberCsvValidationService {
 
     private static final int MAX_EMAIL_LENGTH = 255;
     private static final int MAX_DISPLAY_NAME_LENGTH = 100;
-    private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+            "^[a-zA-Z0-9_%+\\-]+(?:\\.[a-zA-Z0-9_%+\\-]+)*@[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?)*\\.[a-zA-Z]{2,}$");
 
     private final JdbcUserRepository userRepository;
     private final JdbcMemberRepository memberRepository;
@@ -41,7 +41,8 @@ public class MemberCsvValidationService {
             if (rowErrors.isEmpty() && !row.email().isBlank()) {
                 String lowerEmail = row.email().toLowerCase();
                 if (!seenEmails.add(lowerEmail)) {
-                    rowErrors.add(new CsvValidationError(row.rowNumber(), "email", "Duplicate email in CSV"));
+                    rowErrors.add(new CsvValidationError(
+                            row.rowNumber(), "email", "Email appears multiple times in this CSV file"));
                 }
             }
 
@@ -87,7 +88,8 @@ public class MemberCsvValidationService {
                 errors.add(new CsvValidationError(
                         row.rowNumber(), "email", "Email must not exceed " + MAX_EMAIL_LENGTH + " characters"));
             } else if (!EMAIL_PATTERN.matcher(row.email()).matches()) {
-                errors.add(new CsvValidationError(row.rowNumber(), "email", "Invalid email format"));
+                errors.add(new CsvValidationError(
+                        row.rowNumber(), "email", "Invalid email format (expected: user@example.com)"));
             }
         }
 

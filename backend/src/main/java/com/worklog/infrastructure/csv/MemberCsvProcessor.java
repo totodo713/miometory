@@ -33,6 +33,7 @@ public class MemberCsvProcessor {
 
     private static final byte[] UTF8_BOM = {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF};
     private static final Charset WINDOWS_31J = Charset.forName("Windows-31J");
+    private static final int MAX_ROWS = 1000;
 
     /**
      * Parses raw CSV bytes into a list of {@link MemberCsvRow}.
@@ -96,13 +97,16 @@ public class MemberCsvProcessor {
                 CSVParser parser = new CSVParser(reader, format)) {
 
             for (CSVRecord record : parser) {
+                if (rows.size() >= MAX_ROWS) {
+                    throw new CsvParseException("CSV exceeds maximum of " + MAX_ROWS + " rows");
+                }
                 if (!record.isConsistent()) {
                     throw new CsvParseException(
                             "Row " + record.getRecordNumber() + ": expected 2 columns but found " + record.size());
                 }
 
                 int rowNumber = (int) record.getRecordNumber();
-                String email = record.get("email");
+                String email = record.get("email").toLowerCase();
                 String displayName = record.get("displayName");
 
                 rows.add(new MemberCsvRow(rowNumber, email, displayName));
