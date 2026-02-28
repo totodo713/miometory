@@ -22,14 +22,16 @@ import org.springframework.web.filter.OncePerRequestFilter
 @Component
 class TenantStatusFilter(private val jdbcTemplate: JdbcTemplate) : OncePerRequestFilter() {
 
+    companion object {
+        private val TENANT_CHECK_EXEMPT_PATHS = setOf("/api/v1/user/status", "/api/v1/user/select-tenant")
+    }
+
     override fun doFilterInternal(
         request: HttpServletRequest,
         response: HttpServletResponse,
         filterChain: FilterChain,
     ) {
-        // Skip tenant status check only for specific user status endpoints (accessible to UNAFFILIATED users)
-        val tenantCheckExemptPaths = setOf("/api/v1/user/status", "/api/v1/user/select-tenant")
-        if (request.requestURI in tenantCheckExemptPaths) {
+        if (request.servletPath in TENANT_CHECK_EXEMPT_PATHS) {
             filterChain.doFilter(request, response)
             return
         }

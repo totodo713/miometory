@@ -1,7 +1,7 @@
 package com.worklog.application.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.worklog.domain.member.Member;
@@ -14,6 +14,7 @@ import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -46,10 +47,8 @@ class TenantAssignmentServiceTest {
             UUID tenantId = UUID.randomUUID();
             var user = User.create("test@example.com", "Test", "$2a$10$hashedpw1234567890ab", RoleId.generate());
             when(userRepository.searchByEmailPartial("test")).thenReturn(List.of(user));
-
-            var member = Member.createForTenant(TenantId.of(tenantId), "test@example.com", "Test");
-            when(memberRepository.findByEmail(TenantId.of(tenantId), "test@example.com"))
-                    .thenReturn(Optional.of(member));
+            when(memberRepository.findEmailsExistingInTenant(eq(TenantId.of(tenantId)), any()))
+                    .thenReturn(Set.of("test@example.com"));
 
             var result = service.searchUsersForAssignment("test", tenantId);
 
@@ -63,8 +62,8 @@ class TenantAssignmentServiceTest {
             UUID tenantId = UUID.randomUUID();
             var user = User.create("new@example.com", "New", "$2a$10$hashedpw1234567890ab", RoleId.generate());
             when(userRepository.searchByEmailPartial("new")).thenReturn(List.of(user));
-            when(memberRepository.findByEmail(TenantId.of(tenantId), "new@example.com"))
-                    .thenReturn(Optional.empty());
+            when(memberRepository.findEmailsExistingInTenant(eq(TenantId.of(tenantId)), any()))
+                    .thenReturn(Set.of());
 
             var result = service.searchUsersForAssignment("new", tenantId);
 

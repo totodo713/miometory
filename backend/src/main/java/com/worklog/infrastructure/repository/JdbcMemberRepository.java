@@ -78,6 +78,29 @@ public class JdbcMemberRepository {
     }
 
     /**
+     * Returns the set of emails (from the given candidates) that already have a member record
+     * in the specified tenant. Used to batch-check tenant membership for multiple users.
+     */
+    public Set<String> findEmailsExistingInTenant(TenantId tenantId, Set<String> emails) {
+        if (emails.isEmpty()) {
+            return Set.of();
+        }
+
+        String placeholders = emails.stream().map(e -> "?").collect(Collectors.joining(", "));
+        String sql = "SELECT LOWER(email) FROM members WHERE tenant_id = ? AND LOWER(email) IN (" + placeholders + ")";
+
+        Object[] params = new Object[emails.size() + 1];
+        params[0] = tenantId.value();
+        int i = 1;
+        for (String email : emails) {
+            params[i++] = email.toLowerCase();
+        }
+
+        List<String> found = jdbcTemplate.queryForList(sql, String.class, params);
+        return new java.util.HashSet<>(found);
+    }
+
+    /**
      * Finds all members across all tenants for a given email (case-insensitive).
      * Used for determining a user's tenant affiliation status.
      *

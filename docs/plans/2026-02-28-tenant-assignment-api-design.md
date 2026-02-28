@@ -149,7 +149,7 @@ Add `/api/v1/user/**` to the filter's excluded paths. This allows UNAFFILIATED u
 
 ```sql
 ALTER TABLE user_sessions ADD COLUMN selected_tenant_id UUID
-    REFERENCES tenants(id);
+    REFERENCES tenant(id);
 ```
 
 ### Repository Changes
@@ -158,7 +158,7 @@ ALTER TABLE user_sessions ADD COLUMN selected_tenant_id UUID
 |-----------|--------|
 | `JdbcUserSessionRepository` | Save/load `selected_tenant_id` column |
 | `JdbcMemberRepository` | Add `findAllByEmail(String email)` — cross-tenant membership lookup |
-| `JdbcUserRepository` | Add `searchByEmail(String emailPartial)` — partial match search |
+| `JdbcUserRepository` | Add `searchByEmailPartial(String emailPartial)` — partial match search |
 
 ## Test Plan
 
