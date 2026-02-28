@@ -57,7 +57,7 @@ class MemberCsvValidationServiceTest {
             MemberCsvResult result = service.validate(rows, TENANT_ID);
 
             assertEquals(2, result.validRows().size());
-            assertTrue(result.errors().isEmpty());
+            assertFalse(result.hasErrors());
         }
 
         @Test
@@ -68,6 +68,7 @@ class MemberCsvValidationServiceTest {
             MemberCsvResult result = service.validate(rows, TENANT_ID);
 
             assertTrue(result.validRows().isEmpty());
+            assertTrue(result.hasErrors());
             assertEquals(1, result.errors().size());
             assertEquals("email", result.errors().get(0).field());
             assertEquals(1, result.errors().get(0).rowNumber());
