@@ -63,7 +63,10 @@ public class GlobalExceptionHandler {
      * Determines if an error code represents a conflict (409) — duplicate resource or already-completed operation.
      */
     private boolean isConflict(String errorCode) {
-        return errorCode != null && (errorCode.contains("DUPLICATE_") || errorCode.contains("ALREADY_BOOTSTRAPPED"));
+        return errorCode != null
+                && (errorCode.contains("DUPLICATE_")
+                        || errorCode.contains("ALREADY_BOOTSTRAPPED")
+                        || errorCode.contains("IMPORT_VALIDATION_CHANGED"));
     }
 
     /**
