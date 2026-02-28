@@ -418,7 +418,6 @@ function StepImporting({
 }) {
   const t = useTranslations("admin.members.csvImport.importingStep");
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: onComplete/onError are stable useCallback refs
   useEffect(() => {
     const controller = new AbortController();
     executeMemberCsvImport(sessionId, controller.signal)
@@ -435,7 +434,7 @@ function StepImporting({
     return () => {
       controller.abort();
     };
-  }, [sessionId]);
+  }, [sessionId, validRows, onComplete, onError]);
 
   return (
     <div className="flex flex-col items-center justify-center py-12">

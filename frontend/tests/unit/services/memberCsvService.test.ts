@@ -9,26 +9,21 @@ vi.mock("@/services/csrf", () => ({
 
 // Mock DOM APIs for Blob download
 const mockClick = vi.fn();
-const mockCreateObjectURL = vi.fn().mockReturnValue("blob:test-url");
-const mockRevokeObjectURL = vi.fn();
-
-vi.stubGlobal("URL", {
-  ...URL,
-  createObjectURL: mockCreateObjectURL,
-  revokeObjectURL: mockRevokeObjectURL,
-});
+const mockCreateObjectURL = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:test-url");
+const mockRevokeObjectURL = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
 
 const mockAppendChild = vi.fn();
 const mockRemoveChild = vi.fn();
 Object.defineProperty(document.body, "appendChild", { value: mockAppendChild, writable: true });
 Object.defineProperty(document.body, "removeChild", { value: mockRemoveChild, writable: true });
 
-// Mock createElement to capture anchor element
+// Mock createElement to capture anchor element — capture original before spying to avoid recursion
+const originalCreateElement = document.createElement.bind(document);
 vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
   if (tag === "a") {
     return { href: "", download: "", click: mockClick } as unknown as HTMLElement;
   }
-  return document.createElement(tag);
+  return originalCreateElement(tag);
 });
 
 import {
