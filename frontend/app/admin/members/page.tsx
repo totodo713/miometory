@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { MemberForm } from "@/components/admin/MemberForm";
@@ -9,6 +10,7 @@ import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
+import { useAdminContext } from "@/providers/AdminProvider";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminMembersPage() {
@@ -16,6 +18,7 @@ export default function AdminMembersPage() {
   const tc = useTranslations("common");
   const tb = useTranslations("breadcrumbs");
   const toast = useToast();
+  const { hasPermission } = useAdminContext();
   const [editingMember, setEditingMember] = useState<MemberRow | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -79,16 +82,26 @@ export default function AdminMembersPage() {
 
       <div className="flex items-center justify-between mb-6 mt-4">
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <button
-          type="button"
-          onClick={() => {
-            setEditingMember(null);
-            setShowForm(true);
-          }}
-          className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
-        >
-          {t("invite")}
-        </button>
+        <div className="flex items-center gap-2">
+          {hasPermission("member.create") && (
+            <Link
+              href="/admin/members/import"
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              {t("csvImport.navButton")}
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setEditingMember(null);
+              setShowForm(true);
+            }}
+            className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            {t("invite")}
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-4">
