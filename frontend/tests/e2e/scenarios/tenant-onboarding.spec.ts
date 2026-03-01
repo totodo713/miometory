@@ -107,14 +107,23 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
   const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
   const year = prevMonth.getFullYear();
   const month = prevMonth.getMonth(); // 0-indexed
+  const monthName = MONTH_NAMES[month];
+
+  // Wait for calendar to be fully loaded before navigating (date buttons rendered)
+  await expect(page.locator("button.calendar-day").first()).toBeVisible({ timeout: 10_000 });
 
   // Navigate to previous month on the calendar
   await page.getByRole("button", { name: "Previous month", exact: true }).click();
+
+  // Wait for calendar heading to show the target month (more reliable than networkidle
+  // alone, which can resolve before React processes the state update and starts the API call)
+  await expect(page.getByRole("heading", { level: 2 })).toContainText(monthName, { timeout: 15_000 });
+  // Wait for date buttons to render after navigation (loading state cleared)
+  await expect(page.locator("button.calendar-day").first()).toBeVisible({ timeout: 10_000 });
   await page.waitForLoadState("networkidle");
 
   for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
     const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
-    const monthName = MONTH_NAMES[month];
 
     // Click the calendar date button
     await page.click(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
