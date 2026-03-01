@@ -138,8 +138,10 @@ describe("MemberCsvImport", () => {
       const user = userEvent.setup();
       renderWithProviders(<MemberCsvImport />);
 
+      // Wait for organizations to be loaded (select becomes enabled)
       await waitFor(() => {
-        expect(screen.getByLabelText("組織")).toBeInTheDocument();
+        const orgSelect = screen.getByLabelText("組織") as HTMLSelectElement;
+        expect(orgSelect).not.toBeDisabled();
       });
 
       // Select an org but no file
@@ -286,7 +288,7 @@ describe("MemberCsvImport", () => {
 
       // Should show importing message briefly then complete
       await waitFor(() => {
-        expect(mockExecute).toHaveBeenCalledWith("session-123", expect.any(AbortSignal));
+        expect(mockExecute).toHaveBeenCalledWith("session-123");
       });
 
       // Should transition to step 4

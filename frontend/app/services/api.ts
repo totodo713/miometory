@@ -237,6 +237,7 @@ class ApiClient {
         return undefined as T;
       }
 
+      // Handle empty response body (e.g., ResponseEntity<Void> returning 200 OK)
       const text = await response.text();
       if (!text) {
         return undefined as T;

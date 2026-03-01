@@ -136,9 +136,7 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
   }
 
   if (pastWeekdayButtons.length < dayCount) {
-    throw new Error(
-      `Not enough past weekday dates on calendar: need ${dayCount}, found ${pastWeekdayButtons.length}`,
-    );
+    throw new Error(`Not enough past weekday dates on calendar: need ${dayCount}, found ${pastWeekdayButtons.length}`);
   }
 
   for (const { ariaLabel } of pastWeekdayButtons) {
