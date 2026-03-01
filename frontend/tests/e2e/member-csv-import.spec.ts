@@ -193,9 +193,9 @@ test.describe
       const resultLines = resultContent.trim().split("\n");
       // Header + 3 data rows
       expect(resultLines.length).toBeGreaterThanOrEqual(4);
-      // Each data row should have SUCCESS status
+      // Each data row should have CREATED status (new members)
       for (const line of resultLines.slice(1)) {
-        expect(line).toContain("SUCCESS");
+        expect(line).toContain("CREATED");
       }
     });
 
