@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { mockGlobalApis } from "./fixtures/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -32,34 +33,6 @@ async function loginAs(page: Page, email: string, password: string): Promise<voi
   await page.addInitScript((user) => {
     window.sessionStorage.setItem("miometry_auth_user", JSON.stringify(user));
   }, authUser);
-}
-
-// --- API Mock Helper (auth.ts pattern) ---
-
-async function mockGlobalApis(page: Page) {
-  await page.route("**/api/v1/notifications**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ content: [], unreadCount: 0, totalElements: 0, totalPages: 0 }),
-    });
-  });
-
-  await page.route("**/api/v1/worklog/approvals/member/**", async (route) => {
-    await route.fulfill({
-      status: 404,
-      contentType: "application/json",
-      body: JSON.stringify({ message: "No approval found" }),
-    });
-  });
-
-  await page.route("**/api/v1/worklog/rejections/daily**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ rejections: [] }),
-    });
-  });
 }
 
 // --- CSV Builders ---
@@ -200,23 +173,21 @@ test.describe
       await expect(proceedButton).toBeVisible();
       await expect(proceedButton).toBeEnabled();
 
-      // Capture download asynchronously (downloadBlob fires before onComplete)
-      let resultDownload: { suggestedFilename(): string; path(): Promise<string | null> } | null = null;
-      page.on("download", (d) => {
-        resultDownload = d;
-      });
+      // Capture download deterministically by waiting for the download event
+      const downloadPromise = page.waitForEvent("download", { timeout: 45_000 });
 
       await proceedButton.click();
+
+      const resultDownload = await downloadPromise;
 
       // 6. Wait for completion message (primary assertion — confirms import + download happened)
       await expect(page.getByText("Import complete. 3 members imported.")).toBeVisible({ timeout: 45_000 });
 
-      // 7. Verify result CSV download (downloadBlob fires before completion callback)
-      expect(resultDownload).not.toBeNull();
-      expect(resultDownload!.suggestedFilename()).toBe("member-import-result.csv");
+      // 7. Verify result CSV download
+      expect(resultDownload.suggestedFilename()).toBe("member-import-result.csv");
 
       // 8. Verify result CSV content
-      const filePath = await resultDownload!.path();
+      const filePath = await resultDownload.path();
       expect(filePath).toBeTruthy();
       const resultContent = fs.readFileSync(filePath!, "utf-8");
       const resultLines = resultContent.trim().split("\n");
