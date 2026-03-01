@@ -105,9 +105,10 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
   const today = new Date();
   let year = today.getFullYear();
   let month = today.getMonth(); // 0-indexed
+  const needsPreviousMonth = today.getDate() <= dayCount + 1;
 
   // If today is early in the month, navigate to previous month to ensure past dates
-  if (today.getDate() <= dayCount + 1) {
+  if (needsPreviousMonth) {
     await page.getByRole("button", { name: "Previous month", exact: true }).click();
     await page.waitForLoadState("networkidle");
     if (month === 0) {
@@ -121,6 +122,13 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
   for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
     const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
     const monthName = MONTH_NAMES[month];
+
+    // After saving an entry, router.push("/worklog") remounts WorkLogPage,
+    // resetting the month state to the current month. Re-navigate to target month.
+    if (needsPreviousMonth && dayOffset > 1) {
+      await page.getByRole("button", { name: "Previous month", exact: true }).click();
+      await page.waitForLoadState("networkidle");
+    }
 
     // Click the calendar date button (wait for it to appear after month navigation)
     const dateButton = page.locator(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
