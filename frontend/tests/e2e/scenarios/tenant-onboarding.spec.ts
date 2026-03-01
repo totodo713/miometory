@@ -695,18 +695,16 @@ test.describe
       // Wait for submission to complete and button text to change
       await expect(page.getByRole("button", { name: "Submitted" })).toBeVisible({ timeout: 15_000 });
 
-      // Verify: clicking a day should show read-only inputs
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
-      const monthName = MONTH_NAMES[month];
-
-      await page.click(`button[aria-label="${monthName} 2, ${year}"]`);
+      // Verify: clicking a day with work log entries should show read-only inputs
+      // Find a date cell that has hours filled (from Step 10) by looking for "8h" text
+      const cellWithHours = page.locator('button.calendar-day:has-text("8h")').first();
+      await expect(cellWithHours).toBeVisible({ timeout: 10_000 });
+      await cellWithHours.click();
       await expect(page.locator('[role="dialog"]')).toBeVisible({
         timeout: 10_000,
       });
 
-      // Hours input should be disabled (read-only)
+      // Hours input should be disabled (read-only after submission)
       await expect(page.locator("#hours-0")).toBeDisabled();
     });
 
