@@ -1,5 +1,6 @@
 package com.worklog.api;
 
+import com.worklog.application.service.TenantAccessValidator;
 import com.worklog.domain.fiscalyear.FiscalYearPattern;
 import com.worklog.domain.fiscalyear.FiscalYearPatternId;
 import com.worklog.domain.tenant.TenantId;
@@ -11,6 +12,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,9 +26,12 @@ import org.springframework.web.bind.annotation.*;
 public class FiscalYearPatternController {
 
     private final FiscalYearPatternRepository fiscalYearPatternRepository;
+    private final TenantAccessValidator tenantAccessValidator;
 
-    public FiscalYearPatternController(FiscalYearPatternRepository fiscalYearPatternRepository) {
+    public FiscalYearPatternController(
+            FiscalYearPatternRepository fiscalYearPatternRepository, TenantAccessValidator tenantAccessValidator) {
         this.fiscalYearPatternRepository = fiscalYearPatternRepository;
+        this.tenantAccessValidator = tenantAccessValidator;
     }
 
     /**
@@ -34,8 +40,11 @@ public class FiscalYearPatternController {
      * POST /api/v1/tenants/{tenantId}/fiscal-year-patterns
      */
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'tenant.update') or hasPermission(null, 'tenant_settings.manage')")
     public ResponseEntity<Map<String, Object>> createPattern(
-            @PathVariable UUID tenantId, @RequestBody CreateFiscalYearPatternRequest request) {
+            @PathVariable UUID tenantId, @RequestBody CreateFiscalYearPatternRequest request, Authentication auth) {
+        tenantAccessValidator.validateAccess(auth, tenantId);
+
         FiscalYearPattern pattern = FiscalYearPattern.create(
                 TenantId.of(tenantId), request.name(), request.startMonth(), request.startDay());
 
@@ -51,7 +60,11 @@ public class FiscalYearPatternController {
      * GET /api/v1/tenants/{tenantId}/fiscal-year-patterns/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getPattern(@PathVariable UUID tenantId, @PathVariable UUID id) {
+    @PreAuthorize("hasPermission(null, 'tenant.view') or hasPermission(null, 'tenant_settings.view')")
+    public ResponseEntity<Map<String, Object>> getPattern(
+            @PathVariable UUID tenantId, @PathVariable UUID id, Authentication auth) {
+        tenantAccessValidator.validateAccess(auth, tenantId);
+
         return fiscalYearPatternRepository
                 .findById(FiscalYearPatternId.of(id))
                 .map(pattern -> ResponseEntity.ok(toMap(pattern)))
@@ -64,7 +77,10 @@ public class FiscalYearPatternController {
      * GET /api/v1/tenants/{tenantId}/fiscal-year-patterns
      */
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> listPatterns(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasPermission(null, 'tenant.view') or hasPermission(null, 'tenant_settings.view')")
+    public ResponseEntity<List<Map<String, Object>>> listPatterns(@PathVariable UUID tenantId, Authentication auth) {
+        tenantAccessValidator.validateAccess(auth, tenantId);
+
         List<Map<String, Object>> patterns = fiscalYearPatternRepository.findByTenantId(tenantId).stream()
                 .map(this::toMap)
                 .collect(Collectors.toList());

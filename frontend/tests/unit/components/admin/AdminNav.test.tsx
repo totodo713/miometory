@@ -86,6 +86,7 @@ describe("AdminNav", () => {
   test("hides nav items when user lacks permission", () => {
     mockHasPermission.mockImplementation((p: string) => {
       if (p === "system_settings.view") return false;
+      if (p === "tenant_settings.view") return false;
       if (p === "tenant.view") return false;
       return true;
     });

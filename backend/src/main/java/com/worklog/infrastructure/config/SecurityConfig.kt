@@ -104,6 +104,11 @@ class SecurityConfig(private val corsConfigurationSource: CorsConfigurationSourc
                     ).permitAll()
                     // Admin endpoints require authentication (permission enforcement via @PreAuthorize)
                     .requestMatchers("/api/v1/admin/**").authenticated()
+                    // Tenant settings endpoints require authentication
+                    .requestMatchers("/api/v1/tenant-settings/**").authenticated()
+                    // Pattern endpoints under tenants require authentication
+                    .requestMatchers("/api/v1/tenants/*/fiscal-year-patterns/**").authenticated()
+                    .requestMatchers("/api/v1/tenants/*/monthly-period-patterns/**").authenticated()
                     // Worklog and notification endpoints require authentication
                     .requestMatchers("/api/v1/worklog/**", "/api/v1/notifications/**").authenticated()
                     // User status endpoints require authentication
