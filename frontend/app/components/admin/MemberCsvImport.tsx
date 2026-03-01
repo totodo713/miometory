@@ -417,23 +417,17 @@ function StepImporting({
   onError: (message: string) => void;
 }) {
   const t = useTranslations("admin.members.csvImport.importingStep");
+  const importCalled = useRef(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-    executeMemberCsvImport(sessionId, controller.signal)
-      .then(() => {
-        if (!controller.signal.aborted) {
-          onComplete(validRows);
-        }
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          onError(err instanceof Error ? err.message : "Import failed");
-        }
-      });
-    return () => {
-      controller.abort();
-    };
+    // Guard against React Strict Mode double-invocation: the backend session
+    // is consumed atomically on the first call and cannot be retried.
+    if (importCalled.current) return;
+    importCalled.current = true;
+
+    executeMemberCsvImport(sessionId)
+      .then(() => onComplete(validRows))
+      .catch((err) => onError(err instanceof Error ? err.message : "Import failed"));
   }, [sessionId, validRows, onComplete, onError]);
 
   return (
