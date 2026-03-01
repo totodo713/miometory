@@ -40,8 +40,8 @@ export function TenantSwitcher() {
     try {
       await selectTenant(tenantId);
       window.location.reload();
-    } catch (error) {
-      console.error("Failed to select tenant", error);
+    } catch {
+      // selectTenant failed — stay on current tenant without reload
     }
   };
 

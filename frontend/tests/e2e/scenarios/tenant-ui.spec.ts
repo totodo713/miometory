@@ -136,7 +136,9 @@ test.describe("Tenant UI: State-based routing", () => {
 
     // Verify waiting page content
     await expect(page.getByRole("heading", { name: "Waiting for Tenant Assignment" })).toBeVisible();
-    await expect(page.getByText("An administrator needs to add you to a tenant before you can use the system.")).toBeVisible();
+    await expect(
+      page.getByText("An administrator needs to add you to a tenant before you can use the system."),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
   });
 
