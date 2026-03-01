@@ -102,31 +102,48 @@ const MONTH_NAMES = [
 ];
 
 async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): Promise<void> {
-  // Use previous month to guarantee all dates are in the past (avoids DATE_IN_FUTURE rejection)
-  const today = new Date();
-  const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const year = prevMonth.getFullYear();
-  const month = prevMonth.getMonth(); // 0-indexed
-  const monthName = MONTH_NAMES[month];
+  // The fiscal-period calendar shows dates from ~21st of prev month to ~20th of current month.
+  // Instead of navigating to a previous month (which can be reverted by component re-mounts),
+  // we pick past weekday dates that are already visible on the current calendar view.
 
-  // Wait for calendar to be fully loaded before navigating (date buttons rendered)
-  await expect(page.locator("button.calendar-day").first()).toBeVisible({ timeout: 10_000 });
-
-  // Navigate to previous month on the calendar
-  await page.getByRole("button", { name: "Previous month", exact: true }).click();
-
-  // Wait for calendar heading to show the target month (more reliable than networkidle
-  // alone, which can resolve before React processes the state update and starts the API call)
-  await expect(page.getByRole("heading", { level: 2 }).first()).toContainText(monthName, { timeout: 15_000 });
-  // Wait for date buttons to render after navigation (loading state cleared)
-  await expect(page.locator("button.calendar-day").first()).toBeVisible({ timeout: 10_000 });
+  // Wait for calendar to be fully loaded (date buttons rendered)
+  const dateButtons = page.locator("button.calendar-day");
+  await expect(dateButtons.first()).toBeVisible({ timeout: 10_000 });
   await page.waitForLoadState("networkidle");
 
-  for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
-    const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
+  // Collect past weekday date buttons from the current calendar
+  const pastWeekdayButtons: { index: number; ariaLabel: string }[] = [];
+  const count = await dateButtons.count();
+  for (let i = 0; i < count; i++) {
+    const ariaLabel = await dateButtons.nth(i).getAttribute("aria-label");
+    if (!ariaLabel) continue;
+
+    const match = ariaLabel.match(/^(\w+)\s+(\d+),\s+(\d+)$/);
+    if (!match) continue;
+
+    const monthIdx = MONTH_NAMES.indexOf(match[1]);
+    if (monthIdx === -1) continue;
+
+    const dateObj = new Date(Number(match[3]), monthIdx, Number(match[2]));
+    if (dateObj >= today) continue; // skip today and future
+    if (dateObj.getDay() === 0 || dateObj.getDay() === 6) continue; // skip weekends
+
+    pastWeekdayButtons.push({ index: i, ariaLabel });
+    if (pastWeekdayButtons.length >= dayCount) break;
+  }
+
+  if (pastWeekdayButtons.length < dayCount) {
+    throw new Error(
+      `Not enough past weekday dates on calendar: need ${dayCount}, found ${pastWeekdayButtons.length}`,
+    );
+  }
+
+  for (const { ariaLabel } of pastWeekdayButtons) {
     // Click the calendar date button
-    await page.click(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
+    await page.click(`button[aria-label="${ariaLabel}"]`);
     await page.waitForLoadState("networkidle");
 
     // Wait for daily entry form dialog to appear
