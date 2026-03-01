@@ -11,7 +11,7 @@ interface NavItem {
   href: string;
   labelKey: string;
   shortLabel: string;
-  permission?: string;
+  permission?: string | string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -23,7 +23,12 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/assignments", labelKey: "assignments", shortLabel: "A", permission: "assignment.view" },
   { href: "/admin/master-data", labelKey: "masterData", shortLabel: "MD", permission: "master_data.view" },
   { href: "/admin/organizations", labelKey: "organizations", shortLabel: "O", permission: "organization.view" },
-  { href: "/admin/settings", labelKey: "settings", shortLabel: "S", permission: "system_settings.view" },
+  {
+    href: "/admin/settings",
+    labelKey: "settings",
+    shortLabel: "S",
+    permission: ["system_settings.view", "tenant_settings.view"],
+  },
 ];
 
 export function AdminNav() {
@@ -71,7 +76,11 @@ export function AdminNav() {
     return () => document.removeEventListener("keydown", handler);
   }, [isOpen, closeDrawer]);
 
-  const visibleItems = NAV_ITEMS.filter((item) => !item.permission || hasPermission(item.permission));
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (!item.permission) return true;
+    if (Array.isArray(item.permission)) return item.permission.some((p) => hasPermission(p));
+    return hasPermission(item.permission);
+  });
 
   const navContent = (collapsed: boolean) => (
     <>

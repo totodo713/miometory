@@ -2,6 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
+import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
 import { TenantForm } from "@/components/admin/TenantForm";
 import type { TenantRow } from "@/components/admin/TenantList";
 import { TenantList } from "@/components/admin/TenantList";
@@ -30,6 +32,8 @@ export default function AdminTenantsPage() {
   const [defaultMpPatternId, setDefaultMpPatternId] = useState<string>("");
   const [isPatternsLoading, setIsPatternsLoading] = useState(false);
   const [isPatternSaving, setIsPatternSaving] = useState(false);
+  const [showFyForm, setShowFyForm] = useState(false);
+  const [showMpForm, setShowMpForm] = useState(false);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
@@ -120,6 +124,22 @@ export default function AdminTenantsPage() {
       cancelled = true;
     };
   }, [selectedTenant]);
+
+  const handleFyPatternCreated = useCallback(
+    (pattern: { id: string; name: string; startMonth: number; startDay: number }) => {
+      setFiscalYearPatterns((prev) => [...prev, { ...pattern, tenantId: selectedTenant?.id ?? "" }]);
+      setShowFyForm(false);
+    },
+    [selectedTenant],
+  );
+
+  const handleMpPatternCreated = useCallback(
+    (pattern: { id: string; name: string; startDay: number }) => {
+      setMonthlyPeriodPatterns((prev) => [...prev, { ...pattern, tenantId: selectedTenant?.id ?? "" }]);
+      setShowMpForm(false);
+    },
+    [selectedTenant],
+  );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: td/tc from useTranslations are stable
   const handleDefaultPatternSave = useCallback(async () => {
@@ -241,10 +261,84 @@ export default function AdminTenantsPage() {
               </div>
             )}
           </div>
+
+          {/* Pattern creation section */}
+          {!isPatternsLoading && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-md font-semibold text-gray-900">
+                    {t("form.fiscalYearPattern")}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowFyForm(true)}
+                    className="px-3 py-1.5 text-xs text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50"
+                  >
+                    {tc("create")}
+                  </button>
+                </div>
+                {fiscalYearPatterns.length === 0 ? (
+                  <p className="text-sm text-gray-500">{tc("noData")}</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {fiscalYearPatterns.map((p) => (
+                      <li key={p.id} className="text-sm text-gray-700 py-1 border-b border-gray-100 last:border-0">
+                        {p.name} ({p.startMonth}/{p.startDay})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-md font-semibold text-gray-900">
+                    {t("form.monthlyPeriodPattern")}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowMpForm(true)}
+                    className="px-3 py-1.5 text-xs text-blue-600 border border-blue-300 rounded-md hover:bg-blue-50"
+                  >
+                    {tc("create")}
+                  </button>
+                </div>
+                {monthlyPeriodPatterns.length === 0 ? (
+                  <p className="text-sm text-gray-500">{tc("noData")}</p>
+                ) : (
+                  <ul className="space-y-1">
+                    {monthlyPeriodPatterns.map((p) => (
+                      <li key={p.id} className="text-sm text-gray-700 py-1 border-b border-gray-100 last:border-0">
+                        {p.name} ({p.startDay})
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {showForm && <TenantForm tenant={editingTenant} onClose={handleClose} onSaved={handleSaved} />}
+
+      {selectedTenant && (
+        <>
+          <FiscalYearPatternForm
+            tenantId={selectedTenant.id}
+            open={showFyForm}
+            onClose={() => setShowFyForm(false)}
+            onCreated={handleFyPatternCreated}
+          />
+          <MonthlyPeriodPatternForm
+            tenantId={selectedTenant.id}
+            open={showMpForm}
+            onClose={() => setShowMpForm(false)}
+            onCreated={handleMpPatternCreated}
+          />
+        </>
+      )}
 
       <ConfirmDialog
         open={confirmTarget !== null}

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -247,6 +248,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthorizationDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
             AuthorizationDeniedException ex, WebRequest request) {
+        logger.warn("Access denied: {} for path {}", ex.getMessage(), getRequestPath(request));
+
+        ErrorResponse error = ErrorResponse.of(
+                "ACCESS_DENIED",
+                "You do not have permission to perform this action.",
+                Map.of("path", getRequestPath(request)));
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    /**
+     * Handles access denied exceptions from runtime authorization checks (e.g. TenantAccessValidator).
+     * Returns 403 Forbidden.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
         logger.warn("Access denied: {} for path {}", ex.getMessage(), getRequestPath(request));
 
         ErrorResponse error = ErrorResponse.of(

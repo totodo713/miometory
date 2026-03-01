@@ -1092,6 +1092,18 @@ export const api = {
         apiClient.put<void>("/api/v1/admin/system/settings/patterns", data),
     },
 
+    tenantSettings: {
+      getDefaultPatterns: () =>
+        apiClient.get<{
+          defaultFiscalYearPatternId: string | null;
+          defaultMonthlyPeriodPatternId: string | null;
+        }>("/api/v1/tenant-settings/default-patterns"),
+      updateDefaultPatterns: (data: {
+        defaultFiscalYearPatternId: string | null;
+        defaultMonthlyPeriodPatternId: string | null;
+      }) => apiClient.put<void>("/api/v1/tenant-settings/default-patterns", data),
+    },
+
     /**
      * Pattern list endpoints (tenant-scoped)
      */

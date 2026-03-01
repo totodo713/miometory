@@ -1,5 +1,6 @@
 package com.worklog.api;
 
+import com.worklog.application.service.TenantAccessValidator;
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
 import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
 import com.worklog.domain.tenant.TenantId;
@@ -11,6 +12,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -23,9 +26,13 @@ import org.springframework.web.bind.annotation.*;
 public class MonthlyPeriodPatternController {
 
     private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private final TenantAccessValidator tenantAccessValidator;
 
-    public MonthlyPeriodPatternController(MonthlyPeriodPatternRepository monthlyPeriodPatternRepository) {
+    public MonthlyPeriodPatternController(
+            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository,
+            TenantAccessValidator tenantAccessValidator) {
         this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
+        this.tenantAccessValidator = tenantAccessValidator;
     }
 
     /**
@@ -34,8 +41,11 @@ public class MonthlyPeriodPatternController {
      * POST /api/v1/tenants/{tenantId}/monthly-period-patterns
      */
     @PostMapping
+    @PreAuthorize("hasPermission(null, 'tenant.update') or hasPermission(null, 'tenant_settings.manage')")
     public ResponseEntity<Map<String, Object>> createPattern(
-            @PathVariable UUID tenantId, @RequestBody CreateMonthlyPeriodPatternRequest request) {
+            @PathVariable UUID tenantId, @RequestBody CreateMonthlyPeriodPatternRequest request, Authentication auth) {
+        tenantAccessValidator.validateAccess(auth, tenantId);
+
         MonthlyPeriodPattern pattern =
                 MonthlyPeriodPattern.create(TenantId.of(tenantId), request.name(), request.startDay());
 
@@ -51,7 +61,11 @@ public class MonthlyPeriodPatternController {
      * GET /api/v1/tenants/{tenantId}/monthly-period-patterns/{id}
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Map<String, Object>> getPattern(@PathVariable UUID tenantId, @PathVariable UUID id) {
+    @PreAuthorize("hasPermission(null, 'tenant.view') or hasPermission(null, 'tenant_settings.view')")
+    public ResponseEntity<Map<String, Object>> getPattern(
+            @PathVariable UUID tenantId, @PathVariable UUID id, Authentication auth) {
+        tenantAccessValidator.validateAccess(auth, tenantId);
+
         return monthlyPeriodPatternRepository
                 .findById(MonthlyPeriodPatternId.of(id))
                 .map(pattern -> ResponseEntity.ok(toMap(pattern)))
@@ -64,7 +78,10 @@ public class MonthlyPeriodPatternController {
      * GET /api/v1/tenants/{tenantId}/monthly-period-patterns
      */
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> listPatterns(@PathVariable UUID tenantId) {
+    @PreAuthorize("hasPermission(null, 'tenant.view') or hasPermission(null, 'tenant_settings.view')")
+    public ResponseEntity<List<Map<String, Object>>> listPatterns(@PathVariable UUID tenantId, Authentication auth) {
+        tenantAccessValidator.validateAccess(auth, tenantId);
+
         List<Map<String, Object>> patterns = monthlyPeriodPatternRepository.findByTenantId(tenantId).stream()
                 .map(this::toMap)
                 .collect(Collectors.toList());

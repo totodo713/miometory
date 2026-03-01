@@ -768,6 +768,35 @@
       "saved": "Default patterns saved",
       "saveError": "Failed to save default patterns"
     },
+    "tenantSettings": {
+      "title": "Tenant Settings",
+      "description": "Manage your tenant's default patterns and create custom patterns.",
+      "defaultPatterns": {
+        "title": "Default Patterns",
+        "description": "Set default patterns for your tenant. Organizations without their own patterns will inherit these.",
+        "fiscalYearPattern": "Default Fiscal Year Pattern",
+        "monthlyPeriodPattern": "Default Monthly Period Pattern",
+        "noPattern": "None (use system default)",
+        "saved": "Default patterns saved",
+        "saveError": "Failed to save default patterns"
+      },
+      "patterns": {
+        "fiscalYear": {
+          "title": "Fiscal Year Patterns",
+          "empty": "No fiscal year patterns",
+          "createNew": "Create New",
+          "created": "Fiscal year pattern created",
+          "createError": "Failed to create fiscal year pattern"
+        },
+        "monthlyPeriod": {
+          "title": "Monthly Period Patterns",
+          "empty": "No monthly period patterns",
+          "createNew": "Create New",
+          "created": "Monthly period pattern created",
+          "createError": "Failed to create monthly period pattern"
+        }
+      }
+    },
     "users": {
       "title": "Users",
       "table": {

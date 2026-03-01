@@ -768,6 +768,35 @@
       "saved": "デフォルトパターンを保存しました",
       "saveError": "デフォルトパターンの保存に失敗しました"
     },
+    "tenantSettings": {
+      "title": "テナント設定",
+      "description": "自テナントのデフォルトパターンの管理やカスタムパターンの作成ができます。",
+      "defaultPatterns": {
+        "title": "デフォルトパターン",
+        "description": "テナントのデフォルトパターンを設定します。パターンが未設定の組織はこの設定を継承します。",
+        "fiscalYearPattern": "デフォルト会計年度パターン",
+        "monthlyPeriodPattern": "デフォルト月次期間パターン",
+        "noPattern": "なし（システムデフォルトを使用）",
+        "saved": "デフォルトパターンを保存しました",
+        "saveError": "デフォルトパターンの保存に失敗しました"
+      },
+      "patterns": {
+        "fiscalYear": {
+          "title": "会計年度パターン",
+          "empty": "会計年度パターンがありません",
+          "createNew": "新規作成",
+          "created": "会計年度パターンを作成しました",
+          "createError": "会計年度パターンの作成に失敗しました"
+        },
+        "monthlyPeriod": {
+          "title": "月次期間パターン",
+          "empty": "月次期間パターンがありません",
+          "createNew": "新規作成",
+          "created": "月次期間パターンを作成しました",
+          "createError": "月次期間パターンの作成に失敗しました"
+        }
+      }
+    },
     "users": {
       "title": "ユーザー管理",
       "table": {
