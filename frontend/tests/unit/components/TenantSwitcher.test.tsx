@@ -47,6 +47,7 @@ import { TenantSwitcher } from "@/components/shared/TenantSwitcher";
 // --- Helpers ---
 
 const reloadMock = vi.fn();
+const originalLocation = window.location;
 
 function setupLocationMock() {
   Object.defineProperty(window, "location", {
@@ -74,6 +75,13 @@ describe("TenantSwitcher", () => {
     mockMemberships = [];
     mockSelectedTenantId = null;
     mockSelectedTenantName = null;
+  });
+
+  afterAll(() => {
+    Object.defineProperty(window, "location", {
+      value: originalLocation,
+      writable: true,
+    });
   });
 
   it("returns null when user has 0 memberships", () => {
@@ -188,6 +196,38 @@ describe("TenantSwitcher", () => {
     await user.click(document.body);
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  });
+
+  it("has correct aria attributes on trigger button", async () => {
+    const user = userEvent.setup();
+    mockMemberships = makeMemberships(3);
+    mockSelectedTenantId = "tenant-1";
+    mockSelectedTenantName = "Tenant 1";
+    render(<TenantSwitcher />);
+
+    const button = screen.getByRole("button", { name: "Switch Tenant" });
+    expect(button).toHaveAttribute("aria-haspopup", "menu");
+    expect(button).toHaveAttribute("aria-expanded", "false");
+
+    await user.click(button);
+    expect(button).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("does not reload on selectTenant error", async () => {
+    mockSelectTenant.mockRejectedValueOnce(new Error("API error"));
+    const user = userEvent.setup();
+    mockMemberships = makeMemberships(3);
+    mockSelectedTenantId = "tenant-1";
+    mockSelectedTenantName = "Tenant 1";
+    render(<TenantSwitcher />);
+
+    await user.click(screen.getByRole("button", { name: "Switch Tenant" }));
+    await user.click(screen.getByRole("menuitem", { name: "Tenant 2" }));
+
+    await waitFor(() => {
+      expect(mockSelectTenant).toHaveBeenCalledWith("tenant-2");
+    });
+    expect(reloadMock).not.toHaveBeenCalled();
   });
 
   it("closes dropdown on Escape key", async () => {

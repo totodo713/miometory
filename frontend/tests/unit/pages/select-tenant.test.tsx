@@ -56,6 +56,7 @@ const defaultTenantContext = {
   selectedTenantId: null,
   selectedTenantName: null,
   isLoading: false,
+  error: false,
   selectTenant: mockSelectTenant,
   refreshStatus: vi.fn(),
 };

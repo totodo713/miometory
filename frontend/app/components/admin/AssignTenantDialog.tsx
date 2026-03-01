@@ -27,16 +27,17 @@ export function AssignTenantDialog({ onClose, onAssigned }: AssignTenantDialogPr
   const [searched, setSearched] = useState(false);
 
   const handleSearch = async () => {
-    if (!searchEmail.trim()) return;
+    const trimmedEmail = searchEmail.trim();
+    if (!trimmedEmail) return;
     setSearching(true);
     setSelectedUser(null);
     try {
-      const response = await api.admin.users.searchForAssignment(searchEmail);
+      const response = await api.admin.users.searchForAssignment(trimmedEmail);
       setResults(response.users);
-      setSearched(true);
     } catch {
       setResults([]);
     } finally {
+      setSearched(true);
       setSearching(false);
     }
   };
@@ -54,6 +55,8 @@ export function AssignTenantDialog({ onClose, onAssigned }: AssignTenantDialogPr
       await api.admin.members.assignTenant(selectedUser.userId, displayName.trim());
       onAssigned();
     } catch {
+      window.alert(t("error"));
+    } finally {
       setAssigning(false);
     }
   };

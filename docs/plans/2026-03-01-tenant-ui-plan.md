@@ -1,7 +1,5 @@
 # Tenant UI Implementation Plan — Issue #50
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** Add tenant waiting screens, multi-tenant selection, header tenant switching, and admin assignment UI.
 
 **Architecture:** Separate `TenantProvider` manages tenant state (affiliation, memberships, selected tenant). `AuthGuard` extended to route based on tenant state. Header gains tenant switcher dropdown for multi-tenant users.

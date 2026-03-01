@@ -33,6 +33,7 @@ vi.mock("@/providers/TenantProvider", () => ({
     selectedTenantId: null,
     selectedTenantName: null,
     isLoading: false,
+    error: false,
     selectTenant: vi.fn(),
     refreshStatus: vi.fn(),
   }),

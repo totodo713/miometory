@@ -37,8 +37,12 @@ export function TenantSwitcher() {
   const handleSelect = async (tenantId: string) => {
     setIsOpen(false);
     if (tenantId === selectedTenantId) return;
-    await selectTenant(tenantId);
-    window.location.reload();
+    try {
+      await selectTenant(tenantId);
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to select tenant", error);
+    }
   };
 
   return (
@@ -48,6 +52,8 @@ export function TenantSwitcher() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1 rounded-md px-2 py-1 text-sm text-gray-700 hover:bg-gray-100"
         aria-label={t("switchTenant")}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
       >
         <span className="max-w-[120px] truncate">{selectedTenantName}</span>
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
