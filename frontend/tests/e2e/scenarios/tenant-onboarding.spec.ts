@@ -108,7 +108,7 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
 
   // If today is early in the month, navigate to previous month to ensure past dates
   if (today.getDate() <= dayCount + 1) {
-    await page.getByRole("button", { name: "Previous month" }).click();
+    await page.getByRole("button", { name: "Previous month", exact: true }).click();
     await page.waitForLoadState("networkidle");
     if (month === 0) {
       month = 11;
