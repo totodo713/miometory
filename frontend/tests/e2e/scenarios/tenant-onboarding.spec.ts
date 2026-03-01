@@ -683,6 +683,23 @@ test.describe
       await page.goto("/worklog");
       await page.waitForLoadState("networkidle");
 
+      // If entries were saved in the previous month (early in the month),
+      // navigate there before submitting
+      const today = new Date();
+      let year = today.getFullYear();
+      let month = today.getMonth(); // 0-indexed
+      const needsPreviousMonth = today.getDate() <= 4; // matches fillWorkLogEntries dayCount=3
+      if (needsPreviousMonth) {
+        await page.getByRole("button", { name: "Previous month", exact: true }).click();
+        await page.waitForLoadState("networkidle");
+        if (month === 0) {
+          month = 11;
+          year -= 1;
+        } else {
+          month -= 1;
+        }
+      }
+
       // Click "Submit Monthly" button (directly submits, no confirmation dialog)
       const submitButton = page.getByRole("button", { name: "Submit Monthly" });
       await expect(submitButton).toBeVisible({ timeout: 10_000 });
@@ -693,10 +710,13 @@ test.describe
       await expect(page.getByRole("button", { name: "Submitted" })).toBeVisible({ timeout: 15_000 });
 
       // Verify: clicking a day should show read-only inputs
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
       const monthName = MONTH_NAMES[month];
+
+      // After submit, the page may have re-rendered; re-navigate if needed
+      if (needsPreviousMonth) {
+        await page.getByRole("button", { name: "Previous month", exact: true }).click();
+        await page.waitForLoadState("networkidle");
+      }
 
       await page.click(`button[aria-label="${monthName} 2, ${year}"]`);
       await expect(page.locator('[role="dialog"]')).toBeVisible({
@@ -757,6 +777,13 @@ test.describe
       await expect(page.getByText(/Entering for:/i).first()).toBeVisible({
         timeout: 10_000,
       });
+
+      // If entries were saved in the previous month, navigate there before submitting
+      const today = new Date();
+      if (today.getDate() <= 4) {
+        await page.getByRole("button", { name: "Previous month", exact: true }).click();
+        await page.waitForLoadState("networkidle");
+      }
 
       // Click "Submit Monthly" (proxy submit, no confirmation dialog)
       const submitButton = page.getByRole("button", { name: /Submit Monthly/ });
