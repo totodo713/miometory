@@ -164,6 +164,13 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
     await expect(dialog).toBeHidden({ timeout: 10_000 });
     await page.waitForLoadState("networkidle");
   }
+
+  // After the last save, the calendar resets to the current month.
+  // Navigate back to the target month so the caller can verify entries.
+  if (needsPreviousMonth) {
+    await page.getByRole("button", { name: "Previous month", exact: true }).click();
+    await page.waitForLoadState("networkidle");
+  }
 }
 
 // --- GUI Helper: Assign manager via organization page ---
