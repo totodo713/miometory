@@ -388,5 +388,55 @@ class AdminMemberCsvControllerTest : AdminIntegrationTestBase() {
             )
             assertEquals(2L, memberCount, "Expected 2 members in DB, got $memberCount")
         }
+
+        @Test
+        fun `import marks existing user as EXISTING and new user as CREATED in result CSV`() {
+            val suffix = UUID.randomUUID().toString().take(8)
+            val existingEmail = "existing-$suffix@example.com"
+            val newEmail = "new-$suffix@example.com"
+
+            // Pre-create user (simulates user registered in another tenant)
+            createUser(existingEmail, USER_ROLE_ID, "Existing User")
+
+            val csv = csvFile(validCsvContent(existingEmail, newEmail))
+
+            // Dry-run
+            val dryRunResult = mockMvc.perform(
+                multipart("/api/v1/admin/members/csv/dry-run")
+                    .file(csv)
+                    .param("organizationId", ADM_TEST_ORG_ID)
+                    .with(user(adminEmail)),
+            )
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.validRows").value(2))
+                .andReturn()
+
+            val sessionId = com.fasterxml.jackson.databind.ObjectMapper()
+                .readTree(dryRunResult.response.contentAsString)
+                .get("sessionId").asText()
+
+            // Import
+            val importResult = mockMvc.perform(
+                post("/api/v1/admin/members/csv/import/$sessionId")
+                    .with(user(adminEmail)),
+            )
+                .andExpect(status().isCreated)
+                .andReturn()
+
+            val resultCsv = String(importResult.response.contentAsByteArray.drop(3).toByteArray())
+            val lines = resultCsv.lines().filter { it.isNotBlank() }
+
+            // Header + 2 data rows
+            assertEquals(3, lines.size, "Expected header + 2 data rows")
+
+            val existingLine = lines.first { it.contains(existingEmail) }
+            val newLine = lines.first { it.contains(newEmail) }
+
+            assertTrue(existingLine.contains("EXISTING")) { "Existing user should have EXISTING status" }
+            assertTrue(newLine.contains("CREATED")) { "New user should have CREATED status" }
+
+            // EXISTING user should have empty temporaryPassword (last field)
+            assertTrue(existingLine.endsWith(",")) { "Existing user should have empty temporaryPassword" }
+        }
     }
 }

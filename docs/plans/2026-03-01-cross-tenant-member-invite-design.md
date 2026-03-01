@@ -45,11 +45,11 @@ DB 設計（`members` テーブルの `(tenant_id, email)` UNIQUE 制約）は�
 
 ```csv
 email,displayName,status,temporaryPassword
-alice@example.com,Alice,created,abc123xyz789
-bob@example.com,Bob,existing,
+alice@example.com,Alice,CREATED,abc123xyz789
+bob@example.com,Bob,EXISTING,
 ```
 
-- `status`: `created`（新規ユーザー） / `existing`（既存ユーザー）
+- `status`: `CREATED`（新規ユーザー） / `EXISTING`（既存ユーザー）
 - `temporaryPassword`: 既存ユーザーは空
 
 ### セキュリティ考慮事項
