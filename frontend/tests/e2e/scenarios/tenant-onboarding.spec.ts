@@ -710,15 +710,11 @@ test.describe
       await expect(page.getByRole("button", { name: "Submitted" })).toBeVisible({ timeout: 15_000 });
 
       // Verify: clicking a day should show read-only inputs
+      // The calendar remains on the submitted month (submit doesn't cause navigation)
       const monthName = MONTH_NAMES[month];
-
-      // After submit, the page may have re-rendered; re-navigate if needed
-      if (needsPreviousMonth) {
-        await page.getByRole("button", { name: "Previous month", exact: true }).click();
-        await page.waitForLoadState("networkidle");
-      }
-
-      await page.click(`button[aria-label="${monthName} 2, ${year}"]`);
+      const dateButton = page.locator(`button[aria-label="${monthName} 2, ${year}"]`);
+      await expect(dateButton).toBeVisible({ timeout: 10_000 });
+      await dateButton.click();
       await expect(page.locator('[role="dialog"]')).toBeVisible({
         timeout: 10_000,
       });
