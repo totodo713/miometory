@@ -122,8 +122,10 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
     const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
     const monthName = MONTH_NAMES[month];
 
-    // Click the calendar date button
-    await page.click(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
+    // Click the calendar date button (wait for it to appear after month navigation)
+    const dateButton = page.locator(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
+    await expect(dateButton).toBeVisible({ timeout: 10_000 });
+    await dateButton.click();
     await page.waitForLoadState("networkidle");
 
     // Wait for daily entry form dialog to appear
