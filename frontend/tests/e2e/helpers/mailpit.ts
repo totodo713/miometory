@@ -79,5 +79,16 @@ export function extractLinkFromHtml(html: string, pathPattern: RegExp): string |
  * Delete all messages in Mailpit. Call in test setup to ensure clean state.
  */
 export async function clearMailbox(): Promise<void> {
-  await fetch(`${MAILPIT_API}/messages`, { method: "DELETE" });
+  try {
+    const response = await fetch(`${MAILPIT_API}/messages`, { method: "DELETE" });
+    if (!response.ok) {
+      throw new Error(`Mailpit clear mailbox failed: ${response.status} ${response.statusText}`);
+    }
+  } catch (error) {
+    throw new Error(
+      `Failed to clear Mailpit mailbox at ${MAILPIT_API}. ` +
+        "Ensure Mailpit is running and MAILPIT_API_URL is correctly configured. " +
+        `Original error: ${String(error)}`,
+    );
+  }
 }

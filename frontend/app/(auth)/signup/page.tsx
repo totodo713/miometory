@@ -32,6 +32,12 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error(t("errors.nameRequired"));
+      return;
+    }
+
     if (password !== passwordConfirm) {
       setPasswordMismatch(true);
       return;
@@ -39,7 +45,7 @@ export default function SignupPage() {
 
     setIsSubmitting(true);
     try {
-      await api.auth.signup(email, name, password);
+      await api.auth.signup(email, trimmedName, password);
       toast.success(t("confirm.title"));
       router.push("/signup/confirm");
     } catch (err: unknown) {
