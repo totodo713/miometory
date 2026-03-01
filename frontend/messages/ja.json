@@ -66,7 +66,9 @@
     "menu": "メニュー",
     "worklog": "勤怠",
     "admin": "管理",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "switchTenant": "テナント切替",
+    "currentTenant": "現在のテナント"
   },
   "breadcrumbs": {
     "home": "ホーム",
@@ -546,7 +548,20 @@
       "deactivated": "メンバーを無効化しました",
       "createError": "メンバーの作成に失敗しました",
       "updateError": "メンバーの更新に失敗しました",
-      "noMembers": "メンバーが登録されていません"
+      "noMembers": "メンバーが登録されていません",
+      "assignTenant": {
+        "button": "ユーザーをテナントにアサイン",
+        "title": "ユーザーをテナントにアサイン",
+        "searchPlaceholder": "メールアドレスで検索",
+        "search": "検索",
+        "noResults": "ユーザーが見つかりません",
+        "alreadyAssigned": "テナント所属済み",
+        "displayName": "表示名",
+        "assign": "アサイン",
+        "cancel": "キャンセル",
+        "success": "ユーザーをテナントにアサインしました",
+        "error": "テナントへのアサインに失敗しました"
+      }
     },
     "tenants": {
       "title": "テナント管理",
@@ -1098,5 +1113,24 @@
     "message": "予期しないエラーが発生しました。ページを再読み込みしてください。",
     "retry": "再試行",
     "retryAriaLabel": "コンテンツの再読み込みを試行"
+  },
+  "waiting": {
+    "title": "テナント割り当て待ち",
+    "message": "管理者があなたをテナントに追加するまでお待ちください。",
+    "checking": "状態を確認中...",
+    "logout": "ログアウト"
+  },
+  "pendingOrganization": {
+    "title": "組織割り当て待ち",
+    "message": "テナントに追加されました。管理者が組織に配属するまでお待ちください。",
+    "checking": "状態を確認中...",
+    "logout": "ログアウト"
+  },
+  "selectTenant": {
+    "title": "テナントを選択",
+    "message": "複数のテナントに所属しています。使用するテナントを選択してください。",
+    "select": "選択",
+    "organization": "組織",
+    "noOrganization": "組織未配属"
   }
 }
