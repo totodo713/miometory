@@ -776,8 +776,8 @@ export const api = {
     confirmPasswordReset: (data: { token: string; newPassword: string }) =>
       apiClient.post<{ message: string }>("/api/v1/auth/password-reset/confirm", data, { skipAuth: true }),
 
-    signup: (email: string, password: string) =>
-      apiClient.post<void>("/api/v1/auth/signup", { email, password }, { skipAuth: true }),
+    signup: (email: string, name: string, password: string) =>
+      apiClient.post<void>("/api/v1/auth/signup", { email, name, password }, { skipAuth: true }),
 
     verifyEmail: (token: string) => apiClient.post<void>("/api/v1/auth/verify-email", { token }, { skipAuth: true }),
   },

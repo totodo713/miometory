@@ -53,11 +53,6 @@ const MIOMETRY_TENANT = {
   name: "Miometry Corporation",
 };
 
-const ENGINEERING_ORG = {
-  id: "880e8400-e29b-41d4-a716-446655440001",
-  name: "Engineering Department",
-};
-
 const ACME_TENANT = {
   id: "550e8400-e29b-41d4-a716-446655440002",
   name: "ACME Corporation",
@@ -129,6 +124,7 @@ test.describe
       await page.waitForLoadState("networkidle");
 
       // Fill in the signup form
+      await page.fill("#name", newUser.name);
       await page.fill("#email", newUser.email);
       await page.fill("#password", newUser.password);
       await page.fill("#passwordConfirm", newUser.password);
@@ -240,14 +236,45 @@ test.describe
     });
 
     test("Step 5: Admin assigns organization → user redirected to /worklog", async ({ page }) => {
-      // Login as sysadmin
-      await loginAs(page, ADMIN.email, ADMIN.password);
+      // Login as Miometry TENANT_ADMIN (organization.create + organization.update permissions)
+      await loginAs(page, "david.independent@miometry.example.com", "Password1");
 
-      // Assign the new user to the Engineering Department organization
-      const orgResponse = await page.request.put(`${API_BASE_URL}/api/v1/admin/members/${memberId}/organization`, {
-        data: { organizationId: ENGINEERING_ORG.id },
+      // Create organization via API (seed data orgs exist only in projection table, not event_store)
+      const createOrgResponse = await page.request.post(`${API_BASE_URL}/api/v1/admin/organizations`, {
+        data: { code: `E2E_ORG_${runId}`, name: `E2E Test Org ${runId}` },
       });
-      expect(orgResponse.ok()).toBe(true);
+      if (!createOrgResponse.ok()) {
+        const body = await createOrgResponse.text();
+        throw new Error(`Org creation failed: ${createOrgResponse.status()} - ${body}`);
+      }
+      const { id: organizationId } = await createOrgResponse.json();
+
+      // Assign the new user to the created organization
+      const orgResponse = await page.request.put(`${API_BASE_URL}/api/v1/admin/members/${memberId}/organization`, {
+        data: { organizationId },
+      });
+      if (!orgResponse.ok()) {
+        const body = await orgResponse.text();
+        throw new Error(`Org assignment failed: ${orgResponse.status()} - ${body}`);
+      }
+
+      // Create a project and assign to the member (needed for worklog entry form)
+      const projResponse = await page.request.post(`${API_BASE_URL}/api/v1/admin/projects`, {
+        data: { code: `PRJ_${runId}`, name: `E2E Project ${runId}` },
+      });
+      if (!projResponse.ok()) {
+        const body = await projResponse.text();
+        throw new Error(`Project creation failed: ${projResponse.status()} - ${body}`);
+      }
+      const { id: projectId } = await projResponse.json();
+
+      const assignResponse = await page.request.post(`${API_BASE_URL}/api/v1/admin/assignments`, {
+        data: { memberId, projectId },
+      });
+      if (!assignResponse.ok()) {
+        const body = await assignResponse.text();
+        throw new Error(`Project assignment failed: ${assignResponse.status()} - ${body}`);
+      }
 
       // Login as the new user and verify redirect to /worklog
       await loginAs(page, newUser.email, newUser.password);
@@ -316,6 +343,7 @@ test.describe
       await loginAs(page, "jack.admin@acme.example.com", "Password1");
 
       // Invite the new user as a member of ACME with Sales org assignment
+      // (inviteMember does not validate org via event_store, so seed data org ID works)
       const inviteResponse = await page.request.post(`${API_BASE_URL}/api/v1/admin/members`, {
         data: {
           email: newUser.email,
