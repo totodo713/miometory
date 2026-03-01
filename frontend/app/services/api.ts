@@ -232,14 +232,19 @@ class ApiClient {
         throw new ApiError(errorData.message || "API request failed", response.status, errorData.code);
       }
 
-      // Handle 204 No Content
+      // Handle 204 No Content or empty body (e.g., 200 from ResponseEntity.ok().build())
       if (response.status === 204) {
+        return undefined as T;
+      }
+
+      const text = await response.text();
+      if (!text) {
         return undefined as T;
       }
 
       // Extract version from ETag header if present
       const etag = response.headers.get("ETag");
-      const data = await response.json();
+      const data = JSON.parse(text);
 
       // Attach version to response if ETag is present
       if (etag && typeof data === "object" && data !== null) {

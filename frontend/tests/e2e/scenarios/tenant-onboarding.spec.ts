@@ -102,9 +102,15 @@ const MONTH_NAMES = [
 ];
 
 async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): Promise<void> {
+  // Use previous month to guarantee all dates are in the past (avoids DATE_IN_FUTURE rejection)
   const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth(); // 0-indexed
+  const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+  const year = prevMonth.getFullYear();
+  const month = prevMonth.getMonth(); // 0-indexed
+
+  // Navigate to previous month on the calendar
+  await page.getByRole("button", { name: "Previous month" }).click();
+  await page.waitForLoadState("networkidle");
 
   for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
     const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
