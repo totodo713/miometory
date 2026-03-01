@@ -19,6 +19,7 @@ import type {
   MonthlyPeriodPresetRow,
   PresetPage,
 } from "@/types/masterData";
+import type { UserStatusResponse } from "@/types/tenant";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 import { getCsrfToken } from "./csrf";
 
@@ -231,7 +232,7 @@ class ApiClient {
         throw new ApiError(errorData.message || "API request failed", response.status, errorData.code);
       }
 
-      // Handle 204 No Content
+      // Handle 204 No Content or empty body (e.g., 200 from ResponseEntity.ok().build())
       if (response.status === 204) {
         return undefined as T;
       }
@@ -747,6 +748,14 @@ export const api = {
         sessionExpiresAt: string;
         rememberMeToken: string | null;
         warning: string | null;
+        tenantAffiliationState: string;
+        memberships: Array<{
+          memberId: string;
+          tenantId: string;
+          tenantName: string;
+          organizationId: string | null;
+          organizationName: string | null;
+        }>;
       }>("/api/v1/auth/login", data, { skipAuth: true }),
 
     /**
@@ -885,6 +894,8 @@ export const api = {
       removeManager: (memberId: string) => apiClient.delete<void>(`/api/v1/admin/members/${memberId}/manager`),
       transferMember: (memberId: string, organizationId: string) =>
         apiClient.put<void>(`/api/v1/admin/members/${memberId}/organization`, { organizationId }),
+      assignTenant: (userId: string, displayName: string) =>
+        apiClient.post<void>("/api/v1/admin/members/assign-tenant", { userId, displayName }),
     },
 
     projects: {
@@ -1022,6 +1033,10 @@ export const api = {
         apiClient.patch<void>(`/api/v1/admin/users/${id}/lock`, data),
       unlock: (id: string) => apiClient.patch<void>(`/api/v1/admin/users/${id}/unlock`, {}),
       resetPassword: (id: string) => apiClient.post<void>(`/api/v1/admin/users/${id}/password-reset`, {}),
+      searchForAssignment: (email: string) =>
+        apiClient.get<{
+          users: Array<{ userId: string; email: string; name: string; isAlreadyInTenant: boolean }>;
+        }>(`/api/v1/admin/users/search-for-assignment?email=${encodeURIComponent(email)}`),
     },
 
     organizations: {
@@ -1255,6 +1270,15 @@ export const api = {
     },
     markRead: (id: string) => apiClient.patch<void>(`/api/v1/notifications/${id}/read`, {}),
     markAllRead: () => apiClient.patch<void>("/api/v1/notifications/read-all", {}),
+  },
+
+  userStatus: {
+    async getStatus(): Promise<UserStatusResponse> {
+      return apiClient.get("/api/v1/user/status");
+    },
+    async selectTenant(tenantId: string): Promise<void> {
+      return apiClient.post("/api/v1/user/select-tenant", { tenantId });
+    },
   },
 
   user: {

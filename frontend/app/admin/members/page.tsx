@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
+import { AssignTenantDialog } from "@/components/admin/AssignTenantDialog";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
 import { MemberList } from "@/components/admin/MemberList";
@@ -21,6 +22,7 @@ export default function AdminMembersPage() {
   const { hasPermission } = useAdminContext();
   const [editingMember, setEditingMember] = useState<MemberRow | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [confirmTarget, setConfirmTarget] = useState<{ id: string; action: "deactivate" | "activate" } | null>(null);
   const [isForbidden, setIsForbidden] = useState(false);
@@ -83,6 +85,15 @@ export default function AdminMembersPage() {
       <div className="flex items-center justify-between mb-6 mt-4">
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         <div className="flex items-center gap-2">
+          {hasPermission("member.assign_tenant") && (
+            <button
+              type="button"
+              onClick={() => setShowAssignDialog(true)}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              {t("assignTenant.button")}
+            </button>
+          )}
           {hasPermission("member.create") && (
             <Link
               href="/admin/members/import"
@@ -128,6 +139,16 @@ export default function AdminMembersPage() {
         }}
         onCancel={() => setConfirmTarget(null)}
       />
+
+      {showAssignDialog && (
+        <AssignTenantDialog
+          onClose={() => setShowAssignDialog(false)}
+          onAssigned={() => {
+            setShowAssignDialog(false);
+            setRefreshKey((k) => k + 1);
+          }}
+        />
+      )}
     </div>
   );
 }

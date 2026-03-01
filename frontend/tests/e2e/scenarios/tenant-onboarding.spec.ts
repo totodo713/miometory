@@ -102,38 +102,46 @@ const MONTH_NAMES = [
 ];
 
 async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): Promise<void> {
-  const today = new Date();
-  let year = today.getFullYear();
-  let month = today.getMonth(); // 0-indexed
-  const needsPreviousMonth = today.getDate() <= dayCount + 1;
+  // The fiscal-period calendar shows dates from ~21st of prev month to ~20th of current month.
+  // Instead of navigating to a previous month (which can be reverted by component re-mounts),
+  // we pick past weekday dates that are already visible on the current calendar view.
 
-  // If today is early in the month, navigate to previous month to ensure past dates
-  if (needsPreviousMonth) {
-    await page.getByRole("button", { name: "Previous month", exact: true }).click();
-    await page.waitForLoadState("networkidle");
-    if (month === 0) {
-      month = 11;
-      year -= 1;
-    } else {
-      month -= 1;
-    }
+  // Wait for calendar to be fully loaded (date buttons rendered)
+  const dateButtons = page.locator("button.calendar-day");
+  await expect(dateButtons.first()).toBeVisible({ timeout: 10_000 });
+  await page.waitForLoadState("networkidle");
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Collect past weekday date buttons from the current calendar
+  const pastWeekdayButtons: { index: number; ariaLabel: string }[] = [];
+  const count = await dateButtons.count();
+  for (let i = 0; i < count; i++) {
+    const ariaLabel = await dateButtons.nth(i).getAttribute("aria-label");
+    if (!ariaLabel) continue;
+
+    const match = ariaLabel.match(/^(\w+)\s+(\d+),\s+(\d+)$/);
+    if (!match) continue;
+
+    const monthIdx = MONTH_NAMES.indexOf(match[1]);
+    if (monthIdx === -1) continue;
+
+    const dateObj = new Date(Number(match[3]), monthIdx, Number(match[2]));
+    if (dateObj >= today) continue; // skip today and future
+    if (dateObj.getDay() === 0 || dateObj.getDay() === 6) continue; // skip weekends
+
+    pastWeekdayButtons.push({ index: i, ariaLabel });
+    if (pastWeekdayButtons.length >= dayCount) break;
   }
 
-  for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
-    const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
-    const monthName = MONTH_NAMES[month];
+  if (pastWeekdayButtons.length < dayCount) {
+    throw new Error(`Not enough past weekday dates on calendar: need ${dayCount}, found ${pastWeekdayButtons.length}`);
+  }
 
-    // After saving an entry, router.push("/worklog") remounts WorkLogPage,
-    // resetting the month state to the current month. Re-navigate to target month.
-    if (needsPreviousMonth && dayOffset > 1) {
-      await page.getByRole("button", { name: "Previous month", exact: true }).click();
-      await page.waitForLoadState("networkidle");
-    }
-
-    // Click the calendar date button (wait for it to appear after month navigation)
-    const dateButton = page.locator(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
-    await expect(dateButton).toBeVisible({ timeout: 10_000 });
-    await dateButton.click();
+  for (const { ariaLabel } of pastWeekdayButtons) {
+    // Click the calendar date button
+    await page.click(`button[aria-label="${ariaLabel}"]`);
     await page.waitForLoadState("networkidle");
 
     // Wait for daily entry form dialog to appear
@@ -162,13 +170,6 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
 
     // Wait for dialog to close (navigation back to calendar)
     await expect(dialog).toBeHidden({ timeout: 10_000 });
-    await page.waitForLoadState("networkidle");
-  }
-
-  // After the last save, the calendar resets to the current month.
-  // Navigate back to the target month so the caller can verify entries.
-  if (needsPreviousMonth) {
-    await page.getByRole("button", { name: "Previous month", exact: true }).click();
     await page.waitForLoadState("networkidle");
   }
 }
@@ -683,23 +684,6 @@ test.describe
       await page.goto("/worklog");
       await page.waitForLoadState("networkidle");
 
-      // If entries were saved in the previous month (early in the month),
-      // navigate there before submitting
-      const today = new Date();
-      let year = today.getFullYear();
-      let month = today.getMonth(); // 0-indexed
-      const needsPreviousMonth = today.getDate() <= 4; // matches fillWorkLogEntries dayCount=3
-      if (needsPreviousMonth) {
-        await page.getByRole("button", { name: "Previous month", exact: true }).click();
-        await page.waitForLoadState("networkidle");
-        if (month === 0) {
-          month = 11;
-          year -= 1;
-        } else {
-          month -= 1;
-        }
-      }
-
       // Click "Submit Monthly" button (directly submits, no confirmation dialog)
       const submitButton = page.getByRole("button", { name: "Submit Monthly" });
       await expect(submitButton).toBeVisible({ timeout: 10_000 });
@@ -709,17 +693,16 @@ test.describe
       // Wait for submission to complete and button text to change
       await expect(page.getByRole("button", { name: "Submitted" })).toBeVisible({ timeout: 15_000 });
 
-      // Verify: clicking a day should show read-only inputs
-      // The calendar remains on the submitted month (submit doesn't cause navigation)
-      const monthName = MONTH_NAMES[month];
-      const dateButton = page.locator(`button[aria-label="${monthName} 2, ${year}"]`);
-      await expect(dateButton).toBeVisible({ timeout: 10_000 });
-      await dateButton.click();
+      // Verify: clicking a day with work log entries should show read-only inputs
+      // Find a date cell that has hours filled (from Step 10) by looking for "8h" text
+      const cellWithHours = page.locator('button.calendar-day:has-text("8h")').first();
+      await expect(cellWithHours).toBeVisible({ timeout: 10_000 });
+      await cellWithHours.click();
       await expect(page.locator('[role="dialog"]')).toBeVisible({
         timeout: 10_000,
       });
 
-      // Hours input should be disabled (read-only)
+      // Hours input should be disabled (read-only after submission)
       await expect(page.locator("#hours-0")).toBeDisabled();
     });
 
@@ -773,13 +756,6 @@ test.describe
       await expect(page.getByText(/Entering for:/i).first()).toBeVisible({
         timeout: 10_000,
       });
-
-      // If entries were saved in the previous month, navigate there before submitting
-      const today = new Date();
-      if (today.getDate() <= 4) {
-        await page.getByRole("button", { name: "Previous month", exact: true }).click();
-        await page.waitForLoadState("networkidle");
-      }
 
       // Click "Submit Monthly" (proxy submit, no confirmation dialog)
       const submitButton = page.getByRole("button", { name: /Submit Monthly/ });

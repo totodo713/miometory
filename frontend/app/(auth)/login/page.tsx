@@ -56,7 +56,7 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (!isLoading && user) {
-      router.replace("/worklog");
+      router.replace("/");
     }
   }, [user, isLoading, router]);
 
@@ -72,7 +72,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       await login(email.toLowerCase(), password, remember);
-      router.replace("/worklog");
+      router.replace("/");
     } catch (err: unknown) {
       setError(getErrorMessage(err));
     } finally {

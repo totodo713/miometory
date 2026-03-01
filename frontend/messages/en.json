@@ -66,7 +66,9 @@
     "menu": "Menu",
     "worklog": "Worklog",
     "admin": "Admin",
-    "logout": "Logout"
+    "logout": "Logout",
+    "switchTenant": "Switch Tenant",
+    "currentTenant": "Current Tenant"
   },
   "breadcrumbs": {
     "home": "Home",
@@ -548,6 +550,19 @@
       "createError": "Failed to create member",
       "updateError": "Failed to update member",
       "noMembers": "No members registered",
+      "assignTenant": {
+        "button": "Assign User to Tenant",
+        "title": "Assign User to Tenant",
+        "searchPlaceholder": "Search by email address",
+        "search": "Search",
+        "noResults": "No users found",
+        "alreadyAssigned": "Already in tenant",
+        "displayName": "Display Name",
+        "assign": "Assign",
+        "cancel": "Cancel",
+        "success": "User assigned to tenant successfully",
+        "error": "Failed to assign user to tenant"
+      },
       "csvImport": {
         "title": "Member CSV Import",
         "navButton": "CSV Import",
@@ -1146,5 +1161,24 @@
     "message": "An unexpected error occurred. Please reload the page.",
     "retry": "Retry",
     "retryAriaLabel": "Retry loading the content"
+  },
+  "waiting": {
+    "title": "Waiting for Tenant Assignment",
+    "message": "An administrator needs to add you to a tenant before you can use the system.",
+    "checking": "Checking status...",
+    "logout": "Log Out"
+  },
+  "pendingOrganization": {
+    "title": "Waiting for Organization Assignment",
+    "message": "You have been added to a tenant. An administrator needs to assign you to an organization before you can start working.",
+    "checking": "Checking status...",
+    "logout": "Log Out"
+  },
+  "selectTenant": {
+    "title": "Select a Tenant",
+    "message": "You belong to multiple tenants. Please select which one to use.",
+    "select": "Select",
+    "organization": "Organization",
+    "noOrganization": "No organization assigned"
   }
 }

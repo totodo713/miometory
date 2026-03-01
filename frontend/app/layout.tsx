@@ -7,6 +7,7 @@ import { Header } from "./components/shared/Header";
 import { ToastProvider } from "./components/shared/ToastProvider";
 import { AuthProvider } from "./providers/AuthProvider";
 import { SessionProvider } from "./providers/SessionProvider";
+import { TenantProvider } from "./providers/TenantProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,12 +37,14 @@ export default async function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
-            <SessionProvider>
-              <ToastProvider>
-                <Header />
-                {children}
-              </ToastProvider>
-            </SessionProvider>
+            <TenantProvider>
+              <SessionProvider>
+                <ToastProvider>
+                  <Header />
+                  {children}
+                </ToastProvider>
+              </SessionProvider>
+            </TenantProvider>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

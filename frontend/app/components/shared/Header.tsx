@@ -9,6 +9,7 @@ import { useAuthContext } from "@/providers/AuthProvider";
 import { api } from "@/services/api";
 import { LocaleToggle } from "./LocaleToggle";
 import { NotificationBell } from "./NotificationBell";
+import { TenantSwitcher } from "./TenantSwitcher";
 
 export function Header() {
   const { user, logout } = useAuthContext();
@@ -142,6 +143,7 @@ export function Header() {
                 )}
               </nav>
               <div className="px-4 py-4 border-t border-gray-200 space-y-3">
+                <TenantSwitcher />
                 <LocaleToggle />
                 <p className="text-sm text-gray-700">{user.displayName}</p>
                 <button
@@ -190,6 +192,7 @@ export function Header() {
         </nav>
       </div>
       <div className="flex items-center gap-4">
+        <TenantSwitcher />
         <NotificationBell />
         <LocaleToggle />
         <span className="text-sm text-gray-700">{user.displayName}</span>

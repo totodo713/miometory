@@ -41,6 +41,18 @@ async function setupMockedPage(page: Page) {
     });
   });
 
+  // Mock user status — TenantProvider requires this for AuthGuard to pass
+  await page.route("**/api/v1/user/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        state: "FULLY_ASSIGNED",
+        memberships: [{ tenantId: "tenant-001", tenantName: "Test Tenant" }],
+      }),
+    });
+  });
+
   // Mock admin context — SYSTEM_ADMIN with full permissions
   await page.route("**/api/v1/admin/context", async (route) => {
     await route.fulfill({
