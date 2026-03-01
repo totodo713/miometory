@@ -13,6 +13,8 @@ import com.worklog.infrastructure.persistence.RoleRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.shared.AdminRole;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -127,6 +129,13 @@ public class AdminMemberService {
      * User and a Member are created.
      */
     public InviteMemberResult inviteMember(InviteMemberCommand command, UUID tenantId) {
+        // Check for existing member in same tenant
+        Set<String> existingMembers = memberRepository.findExistingEmailsInTenant(
+                TenantId.of(tenantId), Set.of(command.email().toLowerCase(Locale.ROOT)));
+        if (!existingMembers.isEmpty()) {
+            throw new DomainException("DUPLICATE_MEMBER", "A member with this email already exists in this tenant");
+        }
+
         var existingUser = userRepository.findByEmail(command.email());
 
         if (existingUser.isPresent()) {
