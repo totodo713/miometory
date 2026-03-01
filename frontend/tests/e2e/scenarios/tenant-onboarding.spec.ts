@@ -103,15 +103,37 @@ const MONTH_NAMES = [
 
 async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): Promise<void> {
   const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth(); // 0-indexed
+  let year = today.getFullYear();
+  let month = today.getMonth(); // 0-indexed
+  const needsPreviousMonth = today.getDate() <= dayCount + 1;
+
+  // If today is early in the month, navigate to previous month to ensure past dates
+  if (needsPreviousMonth) {
+    await page.getByRole("button", { name: "Previous month", exact: true }).click();
+    await page.waitForLoadState("networkidle");
+    if (month === 0) {
+      month = 11;
+      year -= 1;
+    } else {
+      month -= 1;
+    }
+  }
 
   for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
     const dayNum = dayOffset + 1; // 2nd, 3rd, 4th, ...
     const monthName = MONTH_NAMES[month];
 
-    // Click the calendar date button
-    await page.click(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
+    // After saving an entry, router.push("/worklog") remounts WorkLogPage,
+    // resetting the month state to the current month. Re-navigate to target month.
+    if (needsPreviousMonth && dayOffset > 1) {
+      await page.getByRole("button", { name: "Previous month", exact: true }).click();
+      await page.waitForLoadState("networkidle");
+    }
+
+    // Click the calendar date button (wait for it to appear after month navigation)
+    const dateButton = page.locator(`button[aria-label="${monthName} ${dayNum}, ${year}"]`);
+    await expect(dateButton).toBeVisible({ timeout: 10_000 });
+    await dateButton.click();
     await page.waitForLoadState("networkidle");
 
     // Wait for daily entry form dialog to appear
@@ -140,6 +162,13 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
 
     // Wait for dialog to close (navigation back to calendar)
     await expect(dialog).toBeHidden({ timeout: 10_000 });
+    await page.waitForLoadState("networkidle");
+  }
+
+  // After the last save, the calendar resets to the current month.
+  // Navigate back to the target month so the caller can verify entries.
+  if (needsPreviousMonth) {
+    await page.getByRole("button", { name: "Previous month", exact: true }).click();
     await page.waitForLoadState("networkidle");
   }
 }
@@ -654,6 +683,23 @@ test.describe
       await page.goto("/worklog");
       await page.waitForLoadState("networkidle");
 
+      // If entries were saved in the previous month (early in the month),
+      // navigate there before submitting
+      const today = new Date();
+      let year = today.getFullYear();
+      let month = today.getMonth(); // 0-indexed
+      const needsPreviousMonth = today.getDate() <= 4; // matches fillWorkLogEntries dayCount=3
+      if (needsPreviousMonth) {
+        await page.getByRole("button", { name: "Previous month", exact: true }).click();
+        await page.waitForLoadState("networkidle");
+        if (month === 0) {
+          month = 11;
+          year -= 1;
+        } else {
+          month -= 1;
+        }
+      }
+
       // Click "Submit Monthly" button (directly submits, no confirmation dialog)
       const submitButton = page.getByRole("button", { name: "Submit Monthly" });
       await expect(submitButton).toBeVisible({ timeout: 10_000 });
@@ -664,12 +710,11 @@ test.describe
       await expect(page.getByRole("button", { name: "Submitted" })).toBeVisible({ timeout: 15_000 });
 
       // Verify: clicking a day should show read-only inputs
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth();
+      // The calendar remains on the submitted month (submit doesn't cause navigation)
       const monthName = MONTH_NAMES[month];
-
-      await page.click(`button[aria-label="${monthName} 2, ${year}"]`);
+      const dateButton = page.locator(`button[aria-label="${monthName} 2, ${year}"]`);
+      await expect(dateButton).toBeVisible({ timeout: 10_000 });
+      await dateButton.click();
       await expect(page.locator('[role="dialog"]')).toBeVisible({
         timeout: 10_000,
       });
@@ -728,6 +773,13 @@ test.describe
       await expect(page.getByText(/Entering for:/i).first()).toBeVisible({
         timeout: 10_000,
       });
+
+      // If entries were saved in the previous month, navigate there before submitting
+      const today = new Date();
+      if (today.getDate() <= 4) {
+        await page.getByRole("button", { name: "Previous month", exact: true }).click();
+        await page.waitForLoadState("networkidle");
+      }
 
       // Click "Submit Monthly" (proxy submit, no confirmation dialog)
       const submitButton = page.getByRole("button", { name: /Submit Monthly/ });

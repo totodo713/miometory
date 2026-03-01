@@ -236,9 +236,15 @@ class ApiClient {
         return undefined as T;
       }
 
+      // Handle empty response body (e.g., ResponseEntity<Void> returning 200 OK)
+      const text = await response.text();
+      if (!text) {
+        return undefined as T;
+      }
+
       // Extract version from ETag header if present
       const etag = response.headers.get("ETag");
-      const data = await response.json();
+      const data = JSON.parse(text);
 
       // Attach version to response if ETag is present
       if (etag && typeof data === "object" && data !== null) {
