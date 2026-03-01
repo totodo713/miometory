@@ -117,7 +117,7 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
 
   // Wait for calendar heading to show the target month (more reliable than networkidle
   // alone, which can resolve before React processes the state update and starts the API call)
-  await expect(page.getByRole("heading", { level: 2 })).toContainText(monthName, { timeout: 15_000 });
+  await expect(page.getByRole("heading", { level: 2 }).first()).toContainText(monthName, { timeout: 15_000 });
   // Wait for date buttons to render after navigation (loading state cleared)
   await expect(page.locator("button.calendar-day").first()).toBeVisible({ timeout: 10_000 });
   await page.waitForLoadState("networkidle");
