@@ -286,7 +286,7 @@ describe("MemberCsvImport", () => {
 
       // Should show importing message briefly then complete
       await waitFor(() => {
-        expect(mockExecute).toHaveBeenCalledWith("session-123", expect.any(AbortSignal));
+        expect(mockExecute).toHaveBeenCalledWith("session-123");
       });
 
       // Should transition to step 4
