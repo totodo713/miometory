@@ -172,4 +172,77 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
         )
             .andExpect(status().isBadRequest)
     }
+
+    @Test
+    fun `PUT with valid monthly period pattern updates default`() {
+        // Create a monthly period pattern for this tenant
+        val patternResult = mockMvc.perform(
+            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+                .with(user(systemAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"15th Cutoff","startDay":15}"""),
+        )
+            .andExpect(status().isCreated)
+            .andReturn()
+
+        val patternId = objectMapper.readTree(patternResult.response.contentAsString).get("id").asText()
+
+        // Update default monthly period pattern
+        mockMvc.perform(
+            put("/api/v1/tenant-settings/default-patterns")
+                .with(user(tenantAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"defaultFiscalYearPatternId":null,"defaultMonthlyPeriodPatternId":"$patternId"}""",
+                ),
+        )
+            .andExpect(status().isNoContent)
+
+        // Verify change via GET
+        mockMvc.perform(
+            get("/api/v1/tenant-settings/default-patterns")
+                .with(user(tenantAdminEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.defaultMonthlyPeriodPatternId").value(patternId))
+    }
+
+    @Test
+    fun `PUT with monthly period pattern from other tenant returns 400`() {
+        // Create a second tenant
+        val code2 = "TS3${UUID.randomUUID().toString().take(4).replace("-", "")}"
+        val result2 = mockMvc.perform(
+            post("/api/v1/admin/tenants")
+                .with(user(systemAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"code":"$code2","name":"Other Tenant MP"}"""),
+        )
+            .andExpect(status().isCreated)
+            .andReturn()
+
+        val otherTenantId = objectMapper.readTree(result2.response.contentAsString).get("id").asText()
+
+        // Create monthly period pattern for the other tenant
+        val patternResult = mockMvc.perform(
+            post("/api/v1/tenants/$otherTenantId/monthly-period-patterns")
+                .with(user(systemAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"name":"Other MP","startDay":1}"""),
+        )
+            .andExpect(status().isCreated)
+            .andReturn()
+
+        val otherPatternId = objectMapper.readTree(patternResult.response.contentAsString).get("id").asText()
+
+        // Try to set other tenant's monthly pattern as default → should fail
+        mockMvc.perform(
+            put("/api/v1/tenant-settings/default-patterns")
+                .with(user(tenantAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"defaultFiscalYearPatternId":null,"defaultMonthlyPeriodPatternId":"$otherPatternId"}""",
+                ),
+        )
+            .andExpect(status().isBadRequest)
+    }
 }

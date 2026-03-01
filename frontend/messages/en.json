@@ -771,6 +771,8 @@
     "tenantSettings": {
       "title": "Tenant Settings",
       "description": "Manage your tenant's default patterns and create custom patterns.",
+      "loadError": "Failed to load tenant settings",
+      "loadForbidden": "You do not have permission to access tenant settings",
       "defaultPatterns": {
         "title": "Default Patterns",
         "description": "Set default patterns for your tenant. Organizations without their own patterns will inherit these.",

@@ -25,7 +25,6 @@ export function TenantSettingsSection() {
   const [showFyForm, setShowFyForm] = useState(false);
   const [showMpForm, setShowMpForm] = useState(false);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: load once when tenantId is available
   useEffect(() => {
     if (!tenantId) return;
     let cancelled = false;
@@ -43,8 +42,13 @@ export function TenantSettingsSection() {
         setMonthlyPeriodPatterns(mpPatterns);
         setDefaultFyPatternId(defaults.defaultFiscalYearPatternId ?? "");
         setDefaultMpPatternId(defaults.defaultMonthlyPeriodPatternId ?? "");
-      } catch {
-        // patterns may not exist yet
+      } catch (err: unknown) {
+        if (cancelled) return;
+        if (err instanceof ApiError && err.status === 403) {
+          toast.error(t("loadForbidden"));
+        } else {
+          toast.error(t("loadError"));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -54,7 +58,7 @@ export function TenantSettingsSection() {
     return () => {
       cancelled = true;
     };
-  }, [tenantId]);
+  }, [tenantId, toast, t]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: t from useTranslations is stable
   const handleSave = useCallback(async () => {

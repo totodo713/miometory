@@ -267,9 +267,7 @@ export default function AdminTenantsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-semibold text-gray-900">
-                    {t("form.fiscalYearPattern")}
-                  </h3>
+                  <h3 className="text-md font-semibold text-gray-900">{t("form.fiscalYearPattern")}</h3>
                   <button
                     type="button"
                     onClick={() => setShowFyForm(true)}
@@ -293,9 +291,7 @@ export default function AdminTenantsPage() {
 
               <div className="bg-white rounded-lg border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-md font-semibold text-gray-900">
-                    {t("form.monthlyPeriodPattern")}
-                  </h3>
+                  <h3 className="text-md font-semibold text-gray-900">{t("form.monthlyPeriodPattern")}</h3>
                   <button
                     type="button"
                     onClick={() => setShowMpForm(true)}
