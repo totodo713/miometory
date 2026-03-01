@@ -1,29 +1,46 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { useEffect } from "react";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/providers/AuthProvider";
+import { useTenantContext } from "@/providers/TenantProvider";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 export default function Home() {
-  const { user, isLoading } = useAuthContext();
   const router = useRouter();
-  const t = useTranslations("common");
+  const { user, isLoading: authLoading } = useAuthContext();
+  const { affiliationState, memberships, selectedTenantId, isLoading: tenantLoading } = useTenantContext();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        router.replace("/worklog");
-      } else {
-        router.replace("/login");
-      }
+    if (authLoading || tenantLoading) return;
+
+    if (!user) {
+      router.replace("/login");
+      return;
     }
-  }, [user, isLoading, router]);
+
+    switch (affiliationState) {
+      case "UNAFFILIATED":
+        router.replace("/waiting");
+        break;
+      case "AFFILIATED_NO_ORG":
+        router.replace("/pending-organization");
+        break;
+      case "FULLY_ASSIGNED":
+        if (memberships.length > 1 && !selectedTenantId) {
+          router.replace("/select-tenant");
+        } else {
+          router.replace("/worklog");
+        }
+        break;
+      default:
+        break;
+    }
+  }, [user, authLoading, tenantLoading, affiliationState, memberships, selectedTenantId, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <LoadingSpinner size="lg" label={t("loading")} />
+    <div className="flex min-h-screen items-center justify-center">
+      <LoadingSpinner />
     </div>
   );
 }
