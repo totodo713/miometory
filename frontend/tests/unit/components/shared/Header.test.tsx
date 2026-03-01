@@ -26,6 +26,18 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
+vi.mock("@/providers/TenantProvider", () => ({
+  useTenantContext: vi.fn().mockReturnValue({
+    affiliationState: "FULLY_ASSIGNED",
+    memberships: [],
+    selectedTenantId: null,
+    selectedTenantName: null,
+    isLoading: false,
+    selectTenant: vi.fn(),
+    refreshStatus: vi.fn(),
+  }),
+}));
+
 vi.mock("@/components/shared/NotificationBell", () => ({
   NotificationBell: () => <div data-testid="notification-bell" />,
 }));

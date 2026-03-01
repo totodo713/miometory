@@ -85,7 +85,7 @@ describe("Login page", () => {
   });
 
   describe("Login submission", () => {
-    test("redirects to /worklog on successful login", async () => {
+    test("redirects to / on successful login", async () => {
       mockLogin.mockResolvedValueOnce(undefined);
       render(
         <IntlWrapper>
@@ -93,7 +93,7 @@ describe("Login page", () => {
         </IntlWrapper>,
       );
       await fillAndSubmit();
-      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/worklog"));
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/"));
     });
 
     test("shows credential error on 401", async () => {
@@ -150,7 +150,7 @@ describe("Login page", () => {
       expect(screen.getByLabelText("メールアドレス")).toBeDisabled();
       expect(screen.getByLabelText("パスワード")).toBeDisabled();
       resolveLogin?.();
-      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/worklog"));
+      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/"));
     });
   });
 });
