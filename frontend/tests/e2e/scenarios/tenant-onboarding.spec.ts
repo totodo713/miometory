@@ -109,7 +109,7 @@ async function fillWorkLogEntries(page: Page, hours: string, dayCount: number): 
   const month = prevMonth.getMonth(); // 0-indexed
 
   // Navigate to previous month on the calendar
-  await page.getByRole("button", { name: "Previous month" }).click();
+  await page.getByRole("button", { name: "Previous month", exact: true }).click();
   await page.waitForLoadState("networkidle");
 
   for (let dayOffset = 1; dayOffset <= dayCount; dayOffset++) {
