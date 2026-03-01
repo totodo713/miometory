@@ -1,7 +1,6 @@
 package com.worklog.infrastructure.csv;
 
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,11 +19,9 @@ public class MemberCsvValidationService {
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
             "^[a-zA-Z0-9_%+\\-]+(?:\\.[a-zA-Z0-9_%+\\-]+)*@[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9\\-]*[a-zA-Z0-9])?)*\\.[a-zA-Z]{2,}$");
 
-    private final JdbcUserRepository userRepository;
     private final JdbcMemberRepository memberRepository;
 
-    public MemberCsvValidationService(JdbcUserRepository userRepository, JdbcMemberRepository memberRepository) {
-        this.userRepository = userRepository;
+    public MemberCsvValidationService(JdbcMemberRepository memberRepository) {
         this.memberRepository = memberRepository;
     }
 
@@ -54,21 +51,17 @@ public class MemberCsvValidationService {
             }
         }
 
-        // Phase 2: Batch DB duplicate check
+        // Phase 2: Batch DB duplicate check (same-tenant members only)
         if (!formatValidRows.isEmpty()) {
             Set<String> emailsToCheck = formatValidRows.stream()
                     .map(r -> r.email().toLowerCase(Locale.ROOT))
                     .collect(Collectors.toSet());
 
-            Set<String> existingUserEmails = userRepository.findExistingEmails(emailsToCheck);
             Set<String> existingMemberEmails = memberRepository.findExistingEmailsInTenant(tenantId, emailsToCheck);
 
             for (MemberCsvRow row : formatValidRows) {
                 String lowerEmail = row.email().toLowerCase(Locale.ROOT);
-                if (existingUserEmails.contains(lowerEmail)) {
-                    errors.add(
-                            new CsvValidationError(row.rowNumber(), "email", "Email already exists as a user account"));
-                } else if (existingMemberEmails.contains(lowerEmail)) {
+                if (existingMemberEmails.contains(lowerEmail)) {
                     errors.add(new CsvValidationError(
                             row.rowNumber(), "email", "Email already exists as a member in this tenant"));
                 } else {

@@ -67,7 +67,8 @@ public class AdminMemberController {
         var command = new InviteMemberCommand(
                 request.email(), request.displayName(), request.organizationId(), request.managerId(), memberId);
         var result = adminMemberService.inviteMember(command, tenantId);
-        return new CreateMemberResponse(result.memberId().toString(), result.temporaryPassword());
+        return new CreateMemberResponse(
+                result.memberId().toString(), result.temporaryPassword(), result.isExistingUser());
     }
 
     @PutMapping("/{id}")
@@ -158,7 +159,7 @@ public class AdminMemberController {
             UUID organizationId,
             UUID managerId) {}
 
-    public record CreateMemberResponse(String id, String temporaryPassword) {}
+    public record CreateMemberResponse(String id, String temporaryPassword, boolean isExistingUser) {}
 
     public record AssignManagerRequest(@NotNull UUID managerId) {}
 

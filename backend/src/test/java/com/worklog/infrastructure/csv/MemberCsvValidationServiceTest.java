@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.when;
 
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.util.List;
 import java.util.Set;
@@ -26,9 +25,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class MemberCsvValidationServiceTest {
 
     @Mock
-    private JdbcUserRepository userRepository;
-
-    @Mock
     private JdbcMemberRepository memberRepository;
 
     private MemberCsvValidationService service;
@@ -37,7 +33,7 @@ class MemberCsvValidationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new MemberCsvValidationService(userRepository, memberRepository);
+        service = new MemberCsvValidationService(memberRepository);
     }
 
     @Nested
@@ -50,7 +46,6 @@ class MemberCsvValidationServiceTest {
             List<MemberCsvRow> rows = List.of(
                     new MemberCsvRow(1, "alice@example.com", "Alice"), new MemberCsvRow(2, "bob@example.com", "Bob"));
 
-            when(userRepository.findExistingEmails(anyCollection())).thenReturn(Set.of());
             when(memberRepository.findExistingEmailsInTenant(any(), anyCollection()))
                     .thenReturn(Set.of());
 
@@ -162,7 +157,6 @@ class MemberCsvValidationServiceTest {
             List<MemberCsvRow> rows = List.of(
                     new MemberCsvRow(1, "same@example.com", "First"),
                     new MemberCsvRow(2, "same@example.com", "Second"));
-            when(userRepository.findExistingEmails(anyCollection())).thenReturn(Set.of());
             when(memberRepository.findExistingEmailsInTenant(any(), anyCollection()))
                     .thenReturn(Set.of());
 
@@ -180,7 +174,6 @@ class MemberCsvValidationServiceTest {
             List<MemberCsvRow> rows = List.of(
                     new MemberCsvRow(1, "Test@Example.com", "First"),
                     new MemberCsvRow(2, "test@example.com", "Second"));
-            when(userRepository.findExistingEmails(anyCollection())).thenReturn(Set.of());
             when(memberRepository.findExistingEmailsInTenant(any(), anyCollection()))
                     .thenReturn(Set.of());
 
@@ -197,25 +190,22 @@ class MemberCsvValidationServiceTest {
     class DbDuplicateCheck {
 
         @Test
-        @DisplayName("should reject emails that exist in users table")
-        void duplicateInUsersTable() {
+        @DisplayName("should accept emails that exist in users table (cross-tenant invite)")
+        void existingUserEmailIsValid() {
             List<MemberCsvRow> rows = List.of(new MemberCsvRow(1, "existing@example.com", "Exists"));
-            when(userRepository.findExistingEmails(anyCollection())).thenReturn(Set.of("existing@example.com"));
             when(memberRepository.findExistingEmailsInTenant(any(), anyCollection()))
                     .thenReturn(Set.of());
 
             MemberCsvResult result = service.validate(rows, TENANT_ID);
 
-            assertTrue(result.validRows().isEmpty());
-            assertEquals(1, result.errors().size());
-            assertEquals("email", result.errors().get(0).field());
+            assertEquals(1, result.validRows().size());
+            assertFalse(result.hasErrors());
         }
 
         @Test
         @DisplayName("should reject emails that exist in members table for the same tenant")
         void duplicateInMembersTable() {
             List<MemberCsvRow> rows = List.of(new MemberCsvRow(1, "member@example.com", "Member"));
-            when(userRepository.findExistingEmails(anyCollection())).thenReturn(Set.of());
             when(memberRepository.findExistingEmailsInTenant(any(), anyCollection()))
                     .thenReturn(Set.of("member@example.com"));
 
