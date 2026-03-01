@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { AssignTenantDialog } from "@/components/admin/AssignTenantDialog";
@@ -92,6 +93,14 @@ export default function AdminMembersPage() {
             >
               {t("assignTenant.button")}
             </button>
+          )}
+          {hasPermission("member.create") && (
+            <Link
+              href="/admin/members/import"
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              {t("csvImport.navButton")}
+            </Link>
           )}
           <button
             type="button"

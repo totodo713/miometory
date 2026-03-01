@@ -13,6 +13,8 @@ import com.worklog.infrastructure.persistence.RoleRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import com.worklog.shared.AdminRole;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,24 +124,42 @@ public class AdminMemberService {
     }
 
     /**
-     * Invites a new member: creates both User (UNVERIFIED) and Member records.
-     * Returns both the member ID and a temporary password for the invited user.
+     * Invites a member to the tenant. If a user with the given email already exists
+     * (e.g. in another tenant), only a Member record is created. Otherwise, both a
+     * User and a Member are created.
      */
     public InviteMemberResult inviteMember(InviteMemberCommand command, UUID tenantId) {
-        if (userRepository.existsByEmail(command.email())) {
-            throw new DomainException("DUPLICATE_EMAIL", "A user with this email already exists");
+        // Check for existing member in same tenant
+        Set<String> existingMembers = memberRepository.findExistingEmailsInTenant(
+                TenantId.of(tenantId), Set.of(command.email().toLowerCase(Locale.ROOT)));
+        if (!existingMembers.isEmpty()) {
+            throw new DomainException("DUPLICATE_MEMBER", "A member with this email already exists in this tenant");
         }
 
+        var existingUser = userRepository.findByEmail(command.email());
+
+        if (existingUser.isPresent()) {
+            // Existing user: skip user creation, create member only
+            var member = Member.create(
+                    TenantId.of(tenantId),
+                    OrganizationId.of(command.organizationId()),
+                    command.email(),
+                    command.displayName(),
+                    command.managerId() != null ? MemberId.of(command.managerId()) : null);
+            memberRepository.save(member);
+
+            return new InviteMemberResult(member.getId().value(), null, true);
+        }
+
+        // New user: create both user and member
         var userRole = roleRepository
                 .findByName("USER")
                 .orElseThrow(() -> new DomainException("ROLE_NOT_FOUND", "USER role not found"));
 
-        // Generate a real temporary password and encode it
         String tempPassword = UUID.randomUUID().toString().substring(0, 12);
         String hashedPassword = passwordEncoder.encode(tempPassword);
 
         var user = User.create(command.email(), command.displayName(), hashedPassword, userRole.getId());
-        // Admin-provisioned users are pre-verified (no email confirmation needed)
         user.verifyEmail();
         userRepository.save(user);
 
@@ -151,10 +171,10 @@ public class AdminMemberService {
                 command.managerId() != null ? MemberId.of(command.managerId()) : null);
         memberRepository.save(member);
 
-        return new InviteMemberResult(member.getId().value(), tempPassword);
+        return new InviteMemberResult(member.getId().value(), tempPassword, false);
     }
 
-    public record InviteMemberResult(UUID memberId, String temporaryPassword) {}
+    public record InviteMemberResult(UUID memberId, String temporaryPassword, boolean isExistingUser) {}
 
     /**
      * Updates an existing member's details.

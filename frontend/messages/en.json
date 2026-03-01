@@ -80,7 +80,8 @@
     "projects": "Projects",
     "assignments": "Assignments",
     "masterData": "Master Data",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "csvImport": "CSV Import"
   },
   "auth": {
     "login": {
@@ -561,6 +562,53 @@
         "cancel": "Cancel",
         "success": "User assigned to tenant successfully",
         "error": "Failed to assign user to tenant"
+      },
+      "csvImport": {
+        "title": "Member CSV Import",
+        "navButton": "CSV Import",
+        "steps": {
+          "upload": "Upload",
+          "dryRun": "Verify",
+          "importing": "Importing",
+          "complete": "Complete"
+        },
+        "uploadStep": {
+          "selectFile": "Select CSV File",
+          "dropzone": "Drop a CSV file here, or click to select",
+          "fileSelected": "{name} ({size} KB)",
+          "organization": "Organization",
+          "selectOrganization": "Select organization",
+          "downloadTemplate": "Download Template",
+          "downloadTemplateError": "Failed to download template",
+          "runDryRun": "Validate (Dry-run)",
+          "orgRequired": "Please select an organization",
+          "fileRequired": "Please select a CSV file",
+          "formatError": "Please select a valid CSV file"
+        },
+        "dryRunStep": {
+          "summary": "Total: {total} rows — Valid: {valid}, Errors: {errors}",
+          "errorTableCaption": "Rows with errors",
+          "colRow": "Row",
+          "colEmail": "Email",
+          "colName": "Display Name",
+          "colErrors": "Errors",
+          "noErrors": "No errors found. All rows are valid.",
+          "proceedButton": "Proceed to Import ({count} rows)",
+          "cancelButton": "Start Over",
+          "noValidRows": "No valid rows to import"
+        },
+        "importingStep": {
+          "message": "Importing members, please wait..."
+        },
+        "completeStep": {
+          "success": "Import complete. {count} members imported.",
+          "importAnother": "Import Another File"
+        },
+        "error": {
+          "dryRunFailed": "Validation failed: {message}",
+          "importFailed": "Import failed: {message}",
+          "resetButton": "Start Over"
+        }
       }
     },
     "tenants": {

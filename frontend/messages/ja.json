@@ -80,7 +80,8 @@
     "projects": "プロジェクト管理",
     "assignments": "アサイン管理",
     "masterData": "マスタデータ",
-    "notifications": "通知"
+    "notifications": "通知",
+    "csvImport": "CSV一括取込"
   },
   "auth": {
     "login": {
@@ -561,6 +562,53 @@
         "cancel": "キャンセル",
         "success": "ユーザーをテナントにアサインしました",
         "error": "テナントへのアサインに失敗しました"
+      },
+      "csvImport": {
+        "title": "メンバーCSV一括取込",
+        "navButton": "CSV取込",
+        "steps": {
+          "upload": "アップロード",
+          "dryRun": "検証結果",
+          "importing": "取込中",
+          "complete": "完了"
+        },
+        "uploadStep": {
+          "selectFile": "CSVファイルを選択",
+          "dropzone": "ここにCSVファイルをドロップするか、クリックして選択",
+          "fileSelected": "{name}（{size} KB）",
+          "organization": "組織",
+          "selectOrganization": "組織を選択してください",
+          "downloadTemplate": "テンプレートをダウンロード",
+          "downloadTemplateError": "テンプレートのダウンロードに失敗しました",
+          "runDryRun": "検証（ドライラン）",
+          "orgRequired": "組織を選択してください",
+          "fileRequired": "CSVファイルを選択してください",
+          "formatError": "有効なCSVファイルを選択してください"
+        },
+        "dryRunStep": {
+          "summary": "合計: {total}行 — 有効: {valid}件、エラー: {errors}件",
+          "errorTableCaption": "エラーのある行",
+          "colRow": "行番号",
+          "colEmail": "メールアドレス",
+          "colName": "表示名",
+          "colErrors": "エラー内容",
+          "noErrors": "エラーはありません。すべての行が有効です。",
+          "proceedButton": "取込を実行（{count}件）",
+          "cancelButton": "最初からやり直す",
+          "noValidRows": "取込可能な有効行がありません"
+        },
+        "importingStep": {
+          "message": "メンバーを取込中です。しばらくお待ちください..."
+        },
+        "completeStep": {
+          "success": "取込が完了しました。{count}名のメンバーを取込みました。",
+          "importAnother": "別のファイルを取込む"
+        },
+        "error": {
+          "dryRunFailed": "検証に失敗しました: {message}",
+          "importFailed": "取込に失敗しました: {message}",
+          "resetButton": "最初からやり直す"
+        }
       }
     },
     "tenants": {
