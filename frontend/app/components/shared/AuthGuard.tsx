@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { useTenantContext } from "@/providers/TenantProvider";
 import { LoadingSpinner } from "./LoadingSpinner";

@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { AuthGuard } from "@/components/shared/AuthGuard";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { useTenantContext } from "@/providers/TenantProvider";
-import { AuthGuard } from "@/components/shared/AuthGuard";
 
 const mockReplace = vi.fn();
 
