@@ -1,28 +1,50 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
 import { useEffect } from "react";
-import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { useRouter } from "next/navigation";
 import { useAuthContext } from "@/providers/AuthProvider";
+import { useTenantContext } from "@/providers/TenantProvider";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuthContext();
   const router = useRouter();
-  const t = useTranslations("common");
+  const { user, isLoading: authLoading } = useAuthContext();
+  const { affiliationState, memberships, selectedTenantId, isLoading: tenantLoading } = useTenantContext();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.replace("/login");
-    }
-  }, [user, isLoading, router]);
+    if (authLoading || tenantLoading) return;
 
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" label={t("loading")} />
-      </div>
-    );
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    if (affiliationState === "UNAFFILIATED") {
+      router.replace("/waiting");
+      return;
+    }
+
+    if (affiliationState === "AFFILIATED_NO_ORG") {
+      router.replace("/pending-organization");
+      return;
+    }
+
+    if (affiliationState === "FULLY_ASSIGNED" && memberships.length > 1 && !selectedTenantId) {
+      router.replace("/select-tenant");
+      return;
+    }
+  }, [user, authLoading, tenantLoading, affiliationState, memberships, selectedTenantId, router]);
+
+  if (authLoading || tenantLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user || affiliationState !== "FULLY_ASSIGNED") {
+    return <LoadingSpinner />;
+  }
+
+  if (memberships.length > 1 && !selectedTenantId) {
+    return <LoadingSpinner />;
   }
 
   return <>{children}</>;
