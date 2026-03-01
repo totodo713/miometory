@@ -114,7 +114,8 @@ public class AdminMemberCsvService {
                 var command = new InviteMemberCommand(
                         row.email(), row.displayName(), session.organizationId(), null, session.invitedBy());
                 var result = adminMemberService.inviteMember(command, tenantId);
-                importedRows.add(new ImportedRow(row.email(), row.displayName(), result.temporaryPassword()));
+                importedRows.add(new ImportedRow(
+                        row.email(), row.displayName(), result.temporaryPassword(), result.isExistingUser()));
             } catch (DomainException e) {
                 throw new DomainException(
                         "IMPORT_VALIDATION_CHANGED",
@@ -211,9 +212,10 @@ public class AdminMemberCsvService {
             baos.write(UTF8_BOM);
             writer.write("email,displayName,status,temporaryPassword\n");
             for (ImportedRow row : rows) {
+                String status = row.isExistingUser() ? "EXISTING" : "CREATED";
                 writer.write(escapeCsvField(row.email()) + ","
                         + escapeCsvField(row.displayName()) + ","
-                        + "SUCCESS,"
+                        + status + ","
                         + escapeCsvField(row.temporaryPassword()) + "\n");
             }
             writer.flush();
@@ -268,5 +270,5 @@ public class AdminMemberCsvService {
     public record DryRunRowResult(
             int rowNumber, String email, String displayName, String status, List<String> errors) {}
 
-    private record ImportedRow(String email, String displayName, String temporaryPassword) {}
+    private record ImportedRow(String email, String displayName, String temporaryPassword, boolean isExistingUser) {}
 }
