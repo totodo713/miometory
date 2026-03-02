@@ -1,3 +1,5 @@
+**Note**: Development now uses devcontainer. See [QUICKSTART.md](/QUICKSTART.md) for current setup instructions.
+
 # Quickstart: Submit Work Log Entries
 
 **Feature Branch**: `013-submit-worklog-entry`

@@ -1,3 +1,5 @@
+**Note**: Development now uses devcontainer. See [QUICKSTART.md](/QUICKSTART.md) for current setup instructions.
+
 # Quickstart: Foundation Infrastructure
 
 **Feature Branch**: `001-foundation`  

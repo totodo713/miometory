@@ -32,9 +32,8 @@ Flyway migrations for the Miometry database schema.
 # Applied automatically on bootRun
 cd backend && ./gradlew bootRun
 
-# Reset database (delete all data, re-apply all migrations)
-cd infra/docker
-docker compose -f docker-compose.dev.yml down -v
-docker compose -f docker-compose.dev.yml up -d
+# Reset database (delete all data, re-apply all migrations) — inside devcontainer:
+docker compose -f .devcontainer/docker-compose.yml down -v db
+docker compose -f .devcontainer/docker-compose.yml up -d db
 cd backend && ./gradlew bootRun
 ```
