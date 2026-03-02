@@ -22,9 +22,11 @@ print(tool_input.get('file_path', ''))
 # Exit if file doesn't exist
 [[ ! -f "$FILE_PATH" ]] && exit 0
 
+EXEC="$PROJECT_ROOT/.claude/hooks/devcontainer-exec.sh"
+
 case "$FILE_PATH" in
   */frontend/*.test.ts | */frontend/*.test.tsx)
-    OUTPUT=$(cd "$PROJECT_ROOT/frontend" && timeout 30 npx vitest run "$FILE_PATH" 2>&1) || echo "$OUTPUT" >&2
+    OUTPUT=$("$EXEC" --workdir "$PROJECT_ROOT/frontend" -- timeout 30 npx vitest run "$FILE_PATH" 2>&1) || echo "$OUTPUT" >&2
     ;;
   */backend/*Test.kt)
     TEST_CLASS=$(basename "$FILE_PATH" .kt)

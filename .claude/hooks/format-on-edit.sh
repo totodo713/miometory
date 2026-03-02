@@ -22,18 +22,20 @@ print(tool_input.get('file_path', ''))
 # Exit if file doesn't exist (e.g. was deleted)
 [[ ! -f "$FILE_PATH" ]] && exit 0
 
+EXEC="$PROJECT_ROOT/.claude/hooks/devcontainer-exec.sh"
+
 case "$FILE_PATH" in
   */frontend/*.ts | */frontend/*.tsx | */frontend/*.js | */frontend/*.jsx | */frontend/*.css | */frontend/*.json)
-    cd "$PROJECT_ROOT/frontend" && npx biome format --write "$FILE_PATH" >/dev/null 2>&1 || true
+    "$EXEC" --workdir "$PROJECT_ROOT/frontend" -- npx biome format --write "$FILE_PATH" >/dev/null 2>&1 || true
     ;;
   */backend/*.java)
-    cd "$PROJECT_ROOT/backend" && ./gradlew spotlessJavaApply >/dev/null 2>&1 &
+    "$EXEC" --workdir "$PROJECT_ROOT/backend" --background -- ./gradlew spotlessJavaApply >/dev/null 2>&1
     ;;
   */backend/*.kt)
-    cd "$PROJECT_ROOT/backend" && ./gradlew spotlessKotlinApply >/dev/null 2>&1 &
+    "$EXEC" --workdir "$PROJECT_ROOT/backend" --background -- ./gradlew spotlessKotlinApply >/dev/null 2>&1
     ;;
   */backend/*.gradle.kts)
-    cd "$PROJECT_ROOT/backend" && ./gradlew spotlessKotlinGradleApply >/dev/null 2>&1 &
+    "$EXEC" --workdir "$PROJECT_ROOT/backend" --background -- ./gradlew spotlessKotlinGradleApply >/dev/null 2>&1
     ;;
 esac
 
