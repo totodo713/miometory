@@ -40,6 +40,7 @@ describe("Signup page", () => {
         <SignupPage />
       </IntlWrapper>,
     );
+    expect(screen.getByLabelText(/名前/)).toBeInTheDocument();
     expect(screen.getByLabelText(/メールアドレス/)).toBeInTheDocument();
     expect(screen.getByLabelText(/^パスワード$/)).toBeInTheDocument();
     expect(screen.getByLabelText(/パスワードの確認/)).toBeInTheDocument();
@@ -66,12 +67,13 @@ describe("Signup page", () => {
         <SignupPage />
       </IntlWrapper>,
     );
+    await user.type(screen.getByLabelText(/名前/), "Test User");
     await user.type(screen.getByLabelText(/メールアドレス/), "a@b.com");
     await user.type(screen.getByLabelText(/^パスワード$/), "Password1!");
     await user.type(screen.getByLabelText(/パスワードの確認/), "Password1!");
     await user.click(screen.getByRole("button", { name: /登録/ }));
     await waitFor(() => {
-      expect(api.auth.signup).toHaveBeenCalledWith("a@b.com", "Password1!");
+      expect(api.auth.signup).toHaveBeenCalledWith("a@b.com", "Test User", "Password1!");
     });
   });
 
@@ -82,6 +84,7 @@ describe("Signup page", () => {
         <SignupPage />
       </IntlWrapper>,
     );
+    await user.type(screen.getByLabelText(/名前/), "Test User");
     await user.type(screen.getByLabelText(/メールアドレス/), "a@b.com");
     await user.type(screen.getByLabelText(/^パスワード$/), "Password1!");
     await user.type(screen.getByLabelText(/パスワードの確認/), "Password1!");

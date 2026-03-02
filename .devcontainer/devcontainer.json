@@ -16,7 +16,7 @@
       "dockerDashComposeVersion": "none"
     }
   },
-  "forwardPorts": [8080, 3000, 5432, 6379],
+  "forwardPorts": [8080, 3000, 5432, 6379, 8025, 1025],
   // Intentional: bash -c with set -e ensures fail-fast — if any step fails, subsequent steps are skipped.
   "postCreateCommand": "bash -c 'set -e && mkdir -p ~/.gradle && cd backend && ./gradlew dependencies --no-daemon && cd ../frontend && npm install'",
   "customizations": {

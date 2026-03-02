@@ -12,11 +12,15 @@ services:
       SPRING_DATASOURCE_USERNAME: worklog
       SPRING_DATASOURCE_PASSWORD: worklog
       REDIS_HOST: redis
+      MAIL_HOST: mailpit
+      MAILPIT_API_URL: http://mailpit:8025/api/v1
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   frontend:
     build:
@@ -59,6 +63,15 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+
+  mailpit:
+    image: axllent/mailpit:v1.29
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
 volumes:
   postgres-data:

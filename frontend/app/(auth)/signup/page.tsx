@@ -14,6 +14,7 @@ export default function SignupPage() {
   const toast = useToast();
   const t = useTranslations("auth.signup");
   const ta = useTranslations("auth");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -31,6 +32,12 @@ export default function SignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      toast.error(t("errors.nameRequired"));
+      return;
+    }
+
     if (password !== passwordConfirm) {
       setPasswordMismatch(true);
       return;
@@ -38,7 +45,7 @@ export default function SignupPage() {
 
     setIsSubmitting(true);
     try {
-      await api.auth.signup(email, password);
+      await api.auth.signup(email, trimmedName, password);
       toast.success(t("confirm.title"));
       router.push("/signup/confirm");
     } catch (err: unknown) {
@@ -66,6 +73,22 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              {t("nameLabel")}
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder={t("namePlaceholder")}
+              disabled={isSubmitting}
+              required
+            />
+          </div>
+
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
               {t("emailLabel")}

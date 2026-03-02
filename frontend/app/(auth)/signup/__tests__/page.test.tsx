@@ -30,6 +30,7 @@ describe("Signup page", () => {
         <SignupPage />
       </IntlWrapper>,
     );
+    expect(screen.getByLabelText(/名前/)).toBeInTheDocument();
     expect(screen.getByLabelText(/メールアドレス/)).toBeInTheDocument();
     expect(screen.getByLabelText(/^パスワード$/)).toBeInTheDocument();
     expect(screen.getByLabelText(/パスワード確認/)).toBeInTheDocument();
