@@ -1148,6 +1148,10 @@
         "collapseEntries": "Hide entries",
         "nthWeekdayFormat": "{nth} {weekday} of {month}"
       }
+    },
+    "permission": {
+      "edit": "Edit",
+      "view": "View"
     }
   },
   "notifications": {

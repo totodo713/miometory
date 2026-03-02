@@ -34,6 +34,20 @@ vi.mock("@/hooks/useToast", () => ({
   useToast: () => mockToast,
 }));
 
+vi.mock("@/providers/AdminProvider", () => ({
+  useAdminContext: () => ({
+    adminContext: {
+      role: "SYSTEM_ADMIN",
+      permissions: [],
+      tenantId: "t1",
+      tenantName: "Test Tenant",
+      memberId: "m1",
+    },
+    isLoading: false,
+    hasPermission: () => true,
+  }),
+}));
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({

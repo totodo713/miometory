@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
 import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { useToast } from "@/hooks/useToast";
 import { useAdminContext } from "@/providers/AdminProvider";
 import type { FiscalYearPatternOption, MonthlyPeriodPatternOption } from "@/services/api";
@@ -100,7 +101,10 @@ export function TenantSettingsSection() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-gray-900 mt-4 mb-2">{t("title")}</h1>
+      <div className="flex items-center gap-2 mt-4 mb-2">
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <PermissionBadge editPermission="tenant_settings.update" />
+      </div>
       <p className="text-sm text-gray-600 mb-6">{t("description")}</p>
 
       <div className="space-y-6">
