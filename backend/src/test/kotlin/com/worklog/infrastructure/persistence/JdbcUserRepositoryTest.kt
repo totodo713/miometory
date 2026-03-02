@@ -38,7 +38,7 @@ class JdbcUserRepositoryTest {
         @Container
         @JvmStatic
         val postgresContainer: PostgreSQLContainer<*> =
-            PostgreSQLContainer("postgres:16-alpine")
+            PostgreSQLContainer("postgres:17-alpine")
                 .withDatabaseName("worklog_test")
                 .withUsername("test")
                 .withPassword("test")

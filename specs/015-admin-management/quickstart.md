@@ -1,3 +1,5 @@
+**Note**: Development now uses devcontainer. See [QUICKSTART.md](/QUICKSTART.md) for current setup instructions.
+
 # Quickstart: Admin Management
 
 **Feature**: 015-admin-management

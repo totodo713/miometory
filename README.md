@@ -31,8 +31,7 @@ work-log/
 │   │   └── resources/ # Configuration and migrations
 │   └── src/test/      # Test suite (Kotlin + JUnit)
 ├── frontend/          # Next.js frontend (TypeScript + React)
-├── infra/            # Infrastructure configurations
-│   └── docker/       # Docker Compose for local/production
+├── .devcontainer/    # Devcontainer configuration
 ├── specs/            # Feature specifications and tasks
 └── docs/             # User documentation
 ```
@@ -95,12 +94,12 @@ All domain aggregates use event sourcing:
 
 ## 🚀 Getting Started
 
-### Quick Start (Docker)
+### Quick Start (Devcontainer)
+
+Open the repository in VS Code and select **"Reopen in Container"**. The devcontainer sets up Java 21, Node 20, PostgreSQL 17, Redis 7, and Mailpit automatically.
 
 ```bash
-# Start all services
-cd infra/docker
-docker-compose -f docker-compose.dev.yml up -d
+# Inside devcontainer:
 
 # Backend (with seed data)
 cd backend
@@ -114,21 +113,18 @@ npm install && npm run dev
 The application will be available at:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8080
+- Mailpit (email): http://localhost:8025
 
 ### Development Setup with Seed Data
 
-For reviewers and new developers, we provide a complete seed data setup:
+For reviewers and new developers, we provide a complete seed data setup. Open the devcontainer, then:
 
 ```bash
-# 1. Start Docker containers (PostgreSQL + Redis)
-cd infra/docker
-docker-compose -f docker-compose.dev.yml up -d
-
-# 2. Start backend with dev profile (loads seed data automatically)
+# 1. Start backend with dev profile (loads seed data automatically)
 cd backend
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 
-# 3. Start frontend
+# 2. Start frontend
 cd frontend
 npm install && npm run dev
 ```
@@ -167,9 +163,11 @@ The seed data is idempotent. To reset to a clean state:
 # Option 1: Re-run with dev profile (updates existing data)
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 
-# Option 2: Full database reset
-docker-compose -f docker-compose.dev.yml down -v
-docker-compose -f docker-compose.dev.yml up -d
+# Option 2: Full database reset (run from host terminal, outside devcontainer)
+docker compose -f .devcontainer/docker-compose.yml stop db
+docker compose -f .devcontainer/docker-compose.yml rm -f -v db
+docker compose -f .devcontainer/docker-compose.yml up -d db
+# Then inside devcontainer:
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
@@ -272,26 +270,17 @@ Full API documentation available at `/api-docs.html` when running the backend.
 - Password reset via email
 - Rate limiting for auth endpoints
 
-## 🐳 Docker Support
+## 🐳 Development Environment
 
-### Development Environment
+Development uses devcontainer exclusively. Open the repository in VS Code and select "Reopen in Container".
 
-```bash
-cd infra/docker
-docker-compose -f docker-compose.dev.yml up -d
-```
+The devcontainer provides:
+- Single container with Java 21 + Node 20
+- PostgreSQL 17 and Redis 7 sidecars
+- Mailpit for email testing
+- Playwright dependencies pre-installed
 
-### Production Environment
-
-```bash
-cd infra/docker
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-Services:
-- `miometry-db` - PostgreSQL database
-- `miometry-backend` - Spring Boot API
-- `miometry-frontend` - Next.js application
+Production environment is TBD.
 
 ## 📈 Performance Targets
 
@@ -321,6 +310,6 @@ This project is licensed under the [Apache License 2.0](LICENSE).
 
 ---
 
-**Last Updated**: 2026-02-25
+**Last Updated**: 2026-03-02
 **Version**: 0.3.0
 **Product**: Miometry (ミオメトリー)

@@ -1,3 +1,5 @@
+**Note**: Development now uses devcontainer. See [QUICKSTART.md](/QUICKSTART.md) for current setup instructions.
+
 # Quickstart: Login Page Design, Auth Integration & Logout
 
 **Feature**: 012-login-auth-ui | **Date**: 2026-02-18

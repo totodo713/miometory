@@ -176,7 +176,8 @@ describe("MemberCsvImport", () => {
       renderWithProviders(<MemberCsvImport />);
 
       await waitFor(() => {
-        expect(screen.getByLabelText("組織")).toBeInTheDocument();
+        const orgSelect = screen.getByLabelText("組織") as HTMLSelectElement;
+        expect(orgSelect).not.toBeDisabled();
       });
 
       // Select org and upload file
@@ -216,7 +217,8 @@ describe("MemberCsvImport", () => {
       renderWithProviders(<MemberCsvImport />);
 
       await waitFor(() => {
-        expect(screen.getByLabelText("組織")).toBeInTheDocument();
+        const orgSelect = screen.getByLabelText("組織") as HTMLSelectElement;
+        expect(orgSelect).not.toBeDisabled();
       });
 
       await user.selectOptions(screen.getByLabelText("組織"), "org-1");
@@ -271,7 +273,8 @@ describe("MemberCsvImport", () => {
 
       // Go through step 1
       await waitFor(() => {
-        expect(screen.getByLabelText("組織")).toBeInTheDocument();
+        const orgSelect = screen.getByLabelText("組織") as HTMLSelectElement;
+        expect(orgSelect).not.toBeDisabled();
       });
       await user.selectOptions(screen.getByLabelText("組織"), "org-1");
       const file = new File(["csv"], "test.csv", { type: "text/csv" });
@@ -304,7 +307,8 @@ describe("MemberCsvImport", () => {
       renderWithProviders(<MemberCsvImport />);
 
       await waitFor(() => {
-        expect(screen.getByLabelText("組織")).toBeInTheDocument();
+        const orgSelect = screen.getByLabelText("組織") as HTMLSelectElement;
+        expect(orgSelect).not.toBeDisabled();
       });
       await user.selectOptions(screen.getByLabelText("組織"), "org-1");
       const file = new File(["csv"], "test.csv", { type: "text/csv" });
@@ -336,7 +340,8 @@ describe("MemberCsvImport", () => {
 
       // Go through all steps
       await waitFor(() => {
-        expect(screen.getByLabelText("組織")).toBeInTheDocument();
+        const orgSelect = screen.getByLabelText("組織") as HTMLSelectElement;
+        expect(orgSelect).not.toBeDisabled();
       });
       await user.selectOptions(screen.getByLabelText("組織"), "org-1");
       const file = new File(["csv"], "test.csv", { type: "text/csv" });

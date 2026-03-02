@@ -16,14 +16,16 @@ Miometry — a time entry management system with event sourcing, multi-tenant su
 
 - **Frontend**: `frontend/` — Next.js 16.x, React 19.x, TypeScript, Tailwind CSS, Biome
 - **Backend**: `backend/` — Spring Boot 3.5.9, Kotlin 2.3.0 + Java 21, PostgreSQL, Flyway
-- **Infra**: `infra/docker/` — Docker Compose (dev + prod)
+- **Dev Environment**: `.devcontainer/` — Single container (Java 21 + Node 20) with PostgreSQL, Redis, Mailpit sidecars
 
 ## Commands
 
 ### Development Environment
 
+Development uses devcontainer. Open the repository in VS Code and select "Reopen in Container".
+
 ```bash
-cd infra/docker && docker compose -f docker-compose.dev.yml up -d
+# Inside devcontainer:
 cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev'
 cd frontend && npm install && npm run dev
 ```
@@ -188,7 +190,6 @@ When responding to PR review comments:
 - **CSRF Protection**: Cookie-based for SPA (`SecurityConfig.kt`)
 - **Rate Limiting**: Token bucket algorithm (`RateLimitConfig.kt`)
 - **Request Logging**: With sensitive data masking (`LoggingConfig.kt`)
-- **TLS/HTTPS**: Nginx reverse proxy with modern cipher suites
 - **Session Management**: 30-minute timeout with secure cookies
 
 ## Accessibility (WCAG 2.1 AA)
@@ -200,17 +201,4 @@ When responding to PR review comments:
 
 ## Infrastructure
 
-**Production:**
-```bash
-cd infra/docker && docker compose -f docker-compose.prod.yml --env-file prod.env up -d
-```
-
-**Production Environment Variables:**
-| Variable | Description | Default |
-|----------|-------------|---------|
-| POSTGRES_PASSWORD | Database password | (required) |
-| REDIS_PASSWORD | Redis password | (optional) |
-| CACHE_ENABLED | Enable Redis caching | true |
-| RATE_LIMIT_ENABLED | Enable API rate limiting | true |
-| RATE_LIMIT_RPS | Requests per second | 20 |
-| RATE_LIMIT_BURST | Burst size | 50 |
+Development uses devcontainer exclusively. Production environment is TBD.

@@ -1,3 +1,5 @@
+**Note**: Development now uses devcontainer. See [QUICKSTART.md](/QUICKSTART.md) for current setup instructions.
+
 # Quickstart: Edit Rejected Work Log Entries
 
 **Feature Branch**: `014-edit-rejected-entry`

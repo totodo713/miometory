@@ -1,8 +1,8 @@
 services:
-  backend:
+  app:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: Dockerfile
     volumes:
       - ..:/workspaces/miometory:cached
     command: sleep infinity
@@ -14,6 +14,7 @@ services:
       REDIS_HOST: redis
       MAIL_HOST: mailpit
       MAILPIT_API_URL: http://mailpit:8025/api/v1
+      NODE_ENV: development
     depends_on:
       db:
         condition: service_healthy
@@ -21,18 +22,6 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
-
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    volumes:
-      - ..:/workspaces/miometory:cached
-    command: sleep infinity
-    environment:
-      NODE_ENV: development
-    depends_on:
-      - backend
 
   db:
     image: postgres:17-alpine

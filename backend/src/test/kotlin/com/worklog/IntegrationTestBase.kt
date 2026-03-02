@@ -18,7 +18,7 @@ import java.util.UUID
  * Base class for integration tests using Testcontainers PostgreSQL.
  *
  * Features:
- * - PostgreSQL 16 container with reuse enabled for faster test execution
+ * - PostgreSQL 17 container with reuse enabled for faster test execution
  * - Spring Boot test context with web environment
  * - Active "test" profile
  * - Dynamic property source for database connection
@@ -50,7 +50,7 @@ abstract class IntegrationTestBase {
 
         @JvmStatic
         private val postgres: PostgreSQLContainer<*> =
-            PostgreSQLContainer("postgres:16-alpine")
+            PostgreSQLContainer("postgres:17-alpine")
                 .withDatabaseName("worklog_test")
                 .withUsername("test")
                 .withPassword("test")

@@ -1,37 +1,23 @@
 # Quick Start Guide - Miometry Development
 
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-03-02
 
-## 5-Minute Setup
+## 5-Minute Setup (Devcontainer)
 
-### 1. Start Infrastructure
+### 1. Open in Devcontainer
 
-```bash
-cd /home/devman/repos/work-log/infra/docker
-docker compose -f docker-compose.dev.yml up -d
+Open the repository in VS Code and select **"Reopen in Container"** (or use the command palette: `Dev Containers: Reopen in Container`).
 
-# Verify services are running
-docker compose -f docker-compose.dev.yml ps
-```
-
-Expected output:
-```
-NAME                    IMAGE           STATUS    PORTS
-miometry-postgres       postgres:16     Up        0.0.0.0:5432->5432
-miometry-redis          redis:7-alpine  Up        0.0.0.0:6379->6379
-```
-
-> **MailHog (Optional)**: For testing email features (signup verification, password reset), start MailHog:
-> ```bash
-> docker run -d -p 1025:1025 -p 8025:8025 mailhog/mailhog
-> ```
-> MailHog UI: http://localhost:8025 — All outgoing emails are captured here in development.
+The devcontainer automatically:
+- Sets up Java 21, Node 20, and Playwright dependencies
+- Starts PostgreSQL 17, Redis 7, and Mailpit (email testing)
+- Installs Gradle and npm dependencies via `postCreateCommand`
 
 ### 2. Start Backend (Spring Boot)
 
 ```bash
-cd /home/devman/repos/work-log/backend
-./gradlew bootRun
+cd backend
+./gradlew bootRun --args='--spring.profiles.active=dev'
 
 # Wait for: "Started BackendApplication in X.xxx seconds"
 # Backend runs on: http://localhost:8080
@@ -40,7 +26,7 @@ cd /home/devman/repos/work-log/backend
 ### 3. Start Frontend (Next.js)
 
 ```bash
-cd /home/devman/repos/work-log/frontend
+cd frontend
 npm install  # First time only
 npm run dev
 
@@ -53,6 +39,7 @@ npm run dev
 - **Main URL**: http://localhost:3000/worklog
 - **Calendar View**: Monthly fiscal period (21st to 20th)
 - **Daily Entry**: Click any date to log hours
+- **Mailpit UI**: http://localhost:8025 (captures all outgoing emails)
 
 ---
 
@@ -91,7 +78,7 @@ curl -X POST http://localhost:8080/api/v1/worklog/entries \
 
 ## Test Password Reset Flow
 
-After starting the backend with MailHog running:
+After starting the backend (Mailpit is already running in devcontainer):
 
 ### 1. Create a Test Account
 
@@ -111,7 +98,7 @@ curl -X POST http://localhost:8080/api/v1/auth/password-reset/request \
 # Expected: HTTP 200 (always returns 200 for anti-enumeration)
 ```
 
-### 3. Get Reset Token from MailHog
+### 3. Get Reset Token from Mailpit
 
 Open http://localhost:8025 and find the password reset email. Copy the token from the reset link.
 
@@ -173,10 +160,10 @@ NEXT_PUBLIC_MOCK_AUTH=true
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MAIL_HOST` | `localhost` | SMTP server host (use MailHog for dev) |
+| `MAIL_HOST` | `mailpit` | SMTP server host (Mailpit in devcontainer) |
 | `MAIL_PORT` | `1025` | SMTP server port |
-| `MAIL_USERNAME` | *(empty)* | SMTP username (not needed for MailHog) |
-| `MAIL_PASSWORD` | *(empty)* | SMTP password (not needed for MailHog) |
+| `MAIL_USERNAME` | *(empty)* | SMTP username (not needed for Mailpit) |
+| `MAIL_PASSWORD` | *(empty)* | SMTP password (not needed for Mailpit) |
 | `MAIL_SMTP_AUTH` | `false` | Enable SMTP authentication |
 | `MAIL_SMTP_STARTTLS` | `false` | Enable STARTTLS |
 | `FRONTEND_BASE_URL` | `http://localhost:3000` | Base URL for links in emails (password reset, email verification) |
@@ -329,16 +316,21 @@ lsof -ti:8080 | xargs kill -9
 ```
 
 #### Database connection refused
+
+Verify the devcontainer is running and the `db` service is healthy:
 ```bash
-cd infra/docker
-docker compose -f docker-compose.dev.yml up -d postgres
+docker compose -f .devcontainer/docker-compose.yml ps
 ```
 
 #### Flyway migration errors
 ```bash
-# Reset database (deletes all data)
-docker compose -f infra/docker/docker-compose.dev.yml down -v
-docker compose -f infra/docker/docker-compose.dev.yml up -d
+# Reset database (delete all data, re-apply all migrations)
+# Run from host terminal (outside devcontainer):
+docker compose -f .devcontainer/docker-compose.yml stop db
+docker compose -f .devcontainer/docker-compose.yml rm -f -v db
+docker compose -f .devcontainer/docker-compose.yml up -d db
+# Then inside devcontainer:
+./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 
 ### Frontend Issues
@@ -355,34 +347,6 @@ npm run dev
 1. Check backend is running: `curl http://localhost:8080/api/v1/health`
 2. Open DevTools (F12) > Network tab
 3. Look for failed API calls
-
----
-
-## Production Deployment
-
-### Using Production Docker Compose
-
-```bash
-cd infra/docker
-
-# Start with TLS/nginx (requires SSL certificates)
-docker compose -f docker-compose.prod.yml up -d
-```
-
-Production includes:
-- nginx reverse proxy with TLS termination
-- HSTS and security headers
-- Rate limiting
-- CSRF protection enabled
-- 30-minute session timeout
-
-### Health Check Verification
-
-```bash
-# Check all services healthy
-curl -k https://localhost/api/v1/health
-curl -k https://localhost/ready
-```
 
 ---
 
@@ -404,7 +368,7 @@ work-log/
       services/               # API client, stores
     tests/                    # Vitest unit tests
     e2e/                      # Playwright E2E tests
-  infra/docker/               # Docker Compose configurations
+  .devcontainer/              # Devcontainer configuration
   specs/                      # Feature specifications
 ```
 
@@ -427,13 +391,6 @@ npm test                  # Unit tests
 npm run test:e2e          # E2E tests
 npm run lint              # Lint check
 npm run format            # Auto-format
-
-# Docker
-cd infra/docker
-docker compose -f docker-compose.dev.yml up -d     # Start services
-docker compose -f docker-compose.dev.yml down      # Stop services
-docker compose -f docker-compose.dev.yml down -v   # Reset (delete data)
-docker compose -f docker-compose.dev.yml logs -f   # View logs
 ```
 
 ---
