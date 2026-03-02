@@ -27,22 +27,16 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
         calendarId = UUID.randomUUID();
 
         // Create tenant
-        baseJdbcTemplate.update(
-                """
+        baseJdbcTemplate.update("""
                 INSERT INTO tenant (id, code, name, status)
                 VALUES (?, ?, 'Test Tenant', 'ACTIVE')
-                """,
-                tenantId,
-                "t-" + tenantId.toString().substring(0, 8));
+                """, tenantId, "t-" + tenantId.toString().substring(0, 8));
 
         // Create active holiday calendar
-        baseJdbcTemplate.update(
-                """
+        baseJdbcTemplate.update("""
                 INSERT INTO holiday_calendar (id, tenant_id, name, country, is_active)
                 VALUES (?, ?, 'Test Calendar', 'JP', true)
-                """,
-                calendarId,
-                tenantId);
+                """, calendarId, tenantId);
     }
 
     @Test
@@ -94,13 +88,10 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
     @DisplayName("should not return entries from inactive calendar")
     void shouldNotReturnEntriesFromInactiveCalendar() {
         UUID inactiveCalendarId = UUID.randomUUID();
-        baseJdbcTemplate.update(
-                """
+        baseJdbcTemplate.update("""
                 INSERT INTO holiday_calendar (id, tenant_id, name, country, is_active)
                 VALUES (?, ?, 'Inactive Calendar', 'JP', false)
-                """,
-                inactiveCalendarId,
-                tenantId);
+                """, inactiveCalendarId, tenantId);
         baseJdbcTemplate.update("""
                 INSERT INTO holiday_calendar_entry (holiday_calendar_id, name, name_ja, entry_type, month, day)
                 VALUES (?, 'Hidden Holiday', '非表示', 'FIXED', 3, 15)
