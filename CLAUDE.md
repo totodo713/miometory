@@ -66,7 +66,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - **Start**: `docker compose -f .devcontainer/docker-compose.yml up -d`
 - **Stop**: `docker compose -f .devcontainer/docker-compose.yml down`
-- **Path conversion**: Host `/home/devman/repos/miometory/...` → Container `/workspaces/miometory/...` (automatic)
+- **Path conversion**: Host `$PROJECT_ROOT/...` → Container `/workspaces/miometory/...` (automatic)
 - **Fallback**: If the container is not running, hooks execute commands locally (same as before)
 - **Manual exec**: `.claude/hooks/devcontainer-exec.sh --workdir DIR -- COMMAND`
 
