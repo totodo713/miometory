@@ -11,42 +11,19 @@
 - `git-safety-check.sh` (PreToolUse): Blocks dangerous git patterns (force push, --no-verify, branch -D, checkout ., reset --hard, clean, config)
 - `sensitive-file-guard.sh` (PreToolUse): Blocks Write/Edit to sensitive files (.env, credentials, secrets)
 - `pre-pr-test-gate.sh` (PreToolUse): Blocks PR creation until lint, format, tests, and coverage pass
+- `migration-safety-check.sh` (PreToolUse): Warns/blocks destructive Flyway migration operations (DROP without IF EXISTS, TRUNCATE, column type changes)
+- `auto-generated-file-guard.sh` (PreToolUse): Blocks Write/Edit on auto-generated files (package-lock.json, gradlew, .next/*, tsconfig.tsbuildinfo)
 - Hook pattern: read JSON from stdin → parse with `python3` → exit 0 (allow) or exit 2 (block)
 - New hooks should follow fail-open principle (exit 0 on parse errors)
 
 ## Plan Review Workflow
 
-`docs/plan/` 配下のplanファイルのレビューには `/review-plan` コマンド（またはreview-planスキル）を使用する:
-
-1. `/review-plan docs/plan/feature-x.md` でレビュー対象を指定して実行（引数省略で最新ファイルを対象）
-2. 3つのレビューエージェントが **並列** で起動される:
-   - `chief-product-officer` — product feasibility, spec alignment, feature completeness
-   - `security-reviewer` — security risks, auth/authz, tenant isolation, injection
-   - `ux-design-advisor` — UX quality, accessibility, user flow, responsive design
-3. 全員 APPROVED → 実装に進んで良い。1つでも REJECTED → plan修正後、REJECTEDのレビューアーのみ再実行
-4. planファイル編集時にreview-planスキルが自動提案されることもある
+Plan review は `/review-plan` スキルに委譲。3エージェント並列レビュー（CPO, Security, UX）→ 全員 APPROVED で実装可。
 
 ## Pre-PR Verification (MANDATORY)
 
-Before creating a PR (`gh pr create` or MCP `create_pull_request`):
-1. The `pre-pr-test-gate.sh` PreToolUse hook will **block** PR creation until all checks pass
-2. You MUST complete these steps before retrying:
-   - Identify changed files with `git diff main...HEAD --name-only`
-   - Run lint/format: backend `./gradlew checkFormat && ./gradlew detekt`, frontend `npx biome ci`
-   - Verify corresponding test files exist for each changed source file
-   - Run backend tests: `cd backend && ./gradlew test jacocoTestReport` (if backend files changed)
-   - Run frontend tests: `cd frontend && npm test -- --run` (if frontend files changed)
-   - Check coverage: 80%+ LINE coverage per changed package (JaCoCo for backend)
-   - Report results to user with lint/format + test pass/fail summary and coverage metrics
-3. After all checks pass, invoke three review agents **in parallel**:
-   - `build-integrity-verifier` — build configuration, dependency changes, structural impacts
-   - `qa-ux-guardian` — UI quality, UX consistency, information architecture, accessibility
-   - `security-reviewer` — authentication, authorization, tenant isolation, injection, data exposure
-   - ALL three must APPROVE. If ANY rejects, fix issues and re-run only the rejected reviewers
-4. After step 3 passes, invoke `e2e-test-engineer` to review E2E test coverage
-   - If APPROVED → proceed. If REJECTED → implement recommended E2E tests, then proceed
-5. After all checks and reviews pass: `touch .claude/.pr-tests-verified` then retry PR creation
-4. The verification flag expires after 30 minutes and is single-use (removed after PR creation)
+`pre-pr-test-gate.sh` hook が PR 作成をブロック。lint/format + test + coverage (80%+) をパスした後、`touch .claude/.pr-tests-verified` で解除（30分有効・single-use）。
+Review agents: `build-integrity-verifier`, `qa-ux-guardian`, `security-reviewer` を並列実行 → 全員 APPROVE 後に `e2e-test-engineer` を実行。
 
 ## Git Safety
 
