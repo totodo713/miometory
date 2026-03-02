@@ -10,6 +10,7 @@ import com.worklog.infrastructure.repository.JdbcMemberRepository;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,7 @@ public class ProfileService {
                 SELECT m.id, m.email, m.display_name, o.name AS organization_name,
                        mgr.display_name AS manager_name, m.is_active
                 FROM members m
-                LEFT JOIN organizations o ON m.organization_id = o.id
+                LEFT JOIN organization o ON m.organization_id = o.id
                 LEFT JOIN members mgr ON m.manager_id = mgr.id
                 WHERE m.tenant_id = ? AND LOWER(m.email) = LOWER(?)
                 LIMIT 1
@@ -97,7 +98,11 @@ public class ProfileService {
 
         // Update member (keeps existing managerId via member.update)
         member.update(normalizedEmail, newDisplayName, member.getManagerId());
-        memberRepository.save(member);
+        try {
+            memberRepository.save(member);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DomainException("DUPLICATE_EMAIL", "A member with this email already exists in this tenant");
+        }
 
         if (emailChanged) {
             // Sync users table
@@ -105,7 +110,11 @@ public class ProfileService {
                     .findByEmail(currentEmail)
                     .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User account not found"));
             user.updateEmail(normalizedEmail);
-            userRepository.save(user);
+            try {
+                userRepository.save(user);
+            } catch (DataIntegrityViolationException ex) {
+                throw new DomainException("DUPLICATE_EMAIL", "A user with this email already exists");
+            }
         }
 
         return new UpdateProfileResponse(emailChanged);

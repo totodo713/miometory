@@ -18,7 +18,7 @@ Backend API for the "My Page" feature. Authenticated users can view and update t
 
 | File | Layer | Purpose |
 |------|-------|---------|
-| `ProfileController.java` | api | REST controller, no `@PreAuthorize` (self-only, `authenticated()` suffices) |
+| `ProfileController.java` | api | REST controller with `@PreAuthorize("isAuthenticated()")` for defense-in-depth |
 | `ProfileResponse.java` | api/dto | `id, email, displayName, organizationName, managerName, isActive` |
 | `UpdateProfileRequest.java` | api/dto | `@NotBlank @Email email`, `@NotBlank @Size(max=100) displayName` |
 | `ProfileService.java` | application/service | Business logic: JOIN query for GET, validation + dual-table update for PUT |
@@ -34,7 +34,7 @@ Backend API for the "My Page" feature. Authenticated users can view and update t
 ### GET /api/v1/profile
 
 1. Extract email from `Authentication.getName()`
-2. Single JOIN query: `members` LEFT JOIN `organizations` (name) LEFT JOIN `members` (manager display_name)
+2. Single JOIN query: `members` LEFT JOIN `organization` (name) LEFT JOIN `members` (manager display_name)
 3. Return `ProfileResponse`
 
 ### PUT /api/v1/profile
@@ -43,7 +43,7 @@ Backend API for the "My Page" feature. Authenticated users can view and update t
 2. Validate email uniqueness: tenant-scoped (members) + global (users)
 3. Update `members` table (display name + email)
 4. If email changed: update `users` table in same transaction + invalidate session via `SecurityContextLogoutHandler`
-5. Response: `204 No Content` (no email change) or `200 OK` with `{ "emailChanged": true }` (email changed)
+5. Response: `200 OK` with `{ "emailChanged": false }` (no email change) or `{ "emailChanged": true }` (email changed)
 
 ## Response DTOs
 
@@ -53,7 +53,7 @@ public record ProfileResponse(
     String organizationName, String managerName, boolean isActive) {}
 
 public record UpdateProfileRequest(
-    @NotBlank @Email String email,
+    @NotBlank @Email @Size(max = 254) String email,
     @NotBlank @Size(max = 100) String displayName) {}
 
 public record UpdateProfileResponse(boolean emailChanged) {}
@@ -71,7 +71,7 @@ public record UpdateProfileResponse(boolean emailChanged) {}
 ## Security
 
 - No URL-embedded ID (IDOR prevention): member resolved from authentication context
-- Email uniqueness enforced at both tenant (members) and global (users) level
+- Email uniqueness enforced at both tenant (members) and global (users) level, with TOCTOU-safe `DataIntegrityViolationException` catch on save
 - Session invalidation on email change via `SecurityContextLogoutHandler` (cookie cleanup included)
 - `SecurityConfig.kt`: `/api/v1/profile/**` added to `.authenticated()` block
 

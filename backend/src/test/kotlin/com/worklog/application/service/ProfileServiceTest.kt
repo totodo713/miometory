@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import java.time.Instant
@@ -161,6 +162,70 @@ class ProfileServiceTest {
                 profileService.updateProfile(testEmail, "User", newEmail)
             }
             assertEquals("DUPLICATE_EMAIL", ex.errorCode)
+        }
+
+        @Test
+        fun `throws DUPLICATE_EMAIL on concurrent member save conflict`() {
+            every { userContextService.resolveUserMemberId(testEmail) } returns testMemberId
+            every { userContextService.resolveUserTenantId(testEmail) } returns testTenantId
+            val member = createTestMember(testEmail, "User")
+            every { memberRepository.findById(MemberId.of(testMemberId)) } returns Optional.of(member)
+            every { memberRepository.save(any()) } throws DataIntegrityViolationException("unique constraint")
+
+            val ex = assertThrows(DomainException::class.java) {
+                profileService.updateProfile(testEmail, "New Name", testEmail)
+            }
+            assertEquals("DUPLICATE_EMAIL", ex.errorCode)
+        }
+
+        @Test
+        fun `throws DUPLICATE_EMAIL on concurrent user save conflict`() {
+            val newEmail = "new@example.com"
+            every { userContextService.resolveUserMemberId(testEmail) } returns testMemberId
+            every { userContextService.resolveUserTenantId(testEmail) } returns testTenantId
+            val member = createTestMember(testEmail, "User")
+            every { memberRepository.findById(MemberId.of(testMemberId)) } returns Optional.of(member)
+            every { memberRepository.findByEmail(TenantId.of(testTenantId), newEmail) } returns Optional.empty()
+            every { userRepository.findByEmail(newEmail) } returns Optional.empty()
+            every { memberRepository.save(any()) } just Runs
+            val user = mockk<com.worklog.domain.user.User>(relaxed = true)
+            every { userRepository.findByEmail(testEmail) } returns Optional.of(user)
+            every { userRepository.save(any()) } throws DataIntegrityViolationException("unique constraint")
+
+            val ex = assertThrows(DomainException::class.java) {
+                profileService.updateProfile(testEmail, "User", newEmail)
+            }
+            assertEquals("DUPLICATE_EMAIL", ex.errorCode)
+        }
+
+        @Test
+        fun `throws USER_NOT_FOUND when user account missing during email sync`() {
+            val newEmail = "new@example.com"
+            every { userContextService.resolveUserMemberId(testEmail) } returns testMemberId
+            every { userContextService.resolveUserTenantId(testEmail) } returns testTenantId
+            val member = createTestMember(testEmail, "User")
+            every { memberRepository.findById(MemberId.of(testMemberId)) } returns Optional.of(member)
+            every { memberRepository.findByEmail(TenantId.of(testTenantId), newEmail) } returns Optional.empty()
+            every { userRepository.findByEmail(newEmail) } returns Optional.empty()
+            every { memberRepository.save(any()) } just Runs
+            every { userRepository.findByEmail(testEmail) } returns Optional.empty()
+
+            val ex = assertThrows(DomainException::class.java) {
+                profileService.updateProfile(testEmail, "User", newEmail)
+            }
+            assertEquals("USER_NOT_FOUND", ex.errorCode)
+        }
+
+        @Test
+        fun `throws MEMBER_NOT_FOUND when member does not exist`() {
+            every { userContextService.resolveUserMemberId(testEmail) } returns testMemberId
+            every { userContextService.resolveUserTenantId(testEmail) } returns testTenantId
+            every { memberRepository.findById(MemberId.of(testMemberId)) } returns Optional.empty()
+
+            val ex = assertThrows(DomainException::class.java) {
+                profileService.updateProfile(testEmail, "New Name", testEmail)
+            }
+            assertEquals("MEMBER_NOT_FOUND", ex.errorCode)
         }
     }
 
