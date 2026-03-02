@@ -45,7 +45,7 @@ abstract class IntegrationTestBase {
     private lateinit var transactionManager: PlatformTransactionManager
 
     companion object {
-        private const val TEST_TENANT_ID = "550e8400-e29b-41d4-a716-446655440001"
+        protected const val TEST_TENANT_ID = "550e8400-e29b-41d4-a716-446655440001"
         private const val TEST_ORG_ID = "880e8400-e29b-41d4-a716-446655440001"
 
         @JvmStatic

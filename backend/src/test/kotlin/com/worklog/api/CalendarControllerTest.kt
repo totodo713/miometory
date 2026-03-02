@@ -30,12 +30,10 @@ class CalendarControllerTest : IntegrationTestBase() {
 
     private fun cleanupTestHolidayData() {
         executeInNewTransaction {
+            // CASCADE on holiday_calendar_entry handles child row cleanup
             baseJdbcTemplate.update(
-                """DELETE FROM holiday_calendar_entry WHERE holiday_calendar_id IN
-                   (SELECT id FROM holiday_calendar WHERE tenant_id = '550e8400-e29b-41d4-a716-446655440001'::UUID)""",
-            )
-            baseJdbcTemplate.update(
-                "DELETE FROM holiday_calendar WHERE tenant_id = '550e8400-e29b-41d4-a716-446655440001'::UUID",
+                "DELETE FROM holiday_calendar WHERE tenant_id = ?::UUID",
+                TEST_TENANT_ID,
             )
         }
     }
@@ -212,7 +210,10 @@ class CalendarControllerTest : IntegrationTestBase() {
         @Suppress("UNCHECKED_CAST")
         val dates = body["dates"] as List<Map<String, Any?>>
 
-        // All entries should have isHoliday = false when no holidays configured
+        // Verify every entry contains isHoliday field and none are true
+        dates.forEach { entry ->
+            assertTrue(entry.containsKey("isHoliday"), "Each entry should include isHoliday")
+        }
         val anyHoliday = dates.any { it["isHoliday"] == true }
         assertEquals(false, anyHoliday, "No entries should be marked as holidays")
     }
@@ -322,9 +323,10 @@ class CalendarControllerTest : IntegrationTestBase() {
             baseJdbcTemplate.update(
                 """INSERT INTO holiday_calendar
                    (id, tenant_id, name, description, country, is_active)
-                   VALUES (?::UUID, '550e8400-e29b-41d4-a716-446655440001'::UUID,
+                   VALUES (?::UUID, ?::UUID,
                    'Test Holidays', 'Test', 'JP', true)""",
                 calendarId.toString(),
+                TEST_TENANT_ID,
             )
         }
     }
