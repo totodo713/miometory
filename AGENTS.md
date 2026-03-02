@@ -155,7 +155,10 @@ Test templates and patterns → use `/gen-test` skill. Below are non-obvious got
 - **Seeded role IDs**: USER=`00000000-...-000000000002`, ADMIN=`00000000-...-000000000001` (V18 migration)
 - **Test data uniqueness**: Use UUID-based unique values (not hardcoded strings) to prevent constraint violations with Testcontainers container reuse
 - **Mockito + Kotlin varargs**: `contains()`/`eq()` matchers don't work with Java varargs methods (e.g. `JdbcTemplate.queryForObject`). Use `defaultAnswer` with SQL routing instead
+- **MockK + Java varargs**: `jdbcTemplate.query(sql, mapper, arg1, arg2)` requires `any(), any()` — one `any()` per vararg. Single `any()` won't match multiple varargs
+- **Kotlin `assertThrows`**: Some test files import `org.junit.jupiter.api.assertThrows` (reified: `assertThrows<Type> { }`), others use `Assertions.assertThrows(Type::class.java) { }`. Check imports before writing tests
 - **Coverage target**: 80%+ LINE coverage per package. Run `./gradlew test jacocoTestReport` to generate reports
+- **TOCTOU on unique constraints**: Catch `DataIntegrityViolationException` on save and translate to `DomainException`. See `AdminMasterDataService` for pattern
 - **Fake timers + waitFor**: `vi.useFakeTimers()` breaks `waitFor()`. Use `act(() => vi.advanceTimersByTime(ms))` then assert synchronously
 - **Fake timers + userEvent**: `userEvent.setup({ advanceTimers })` can still timeout. Use `fireEvent` for click/input in fake timer tests
 
