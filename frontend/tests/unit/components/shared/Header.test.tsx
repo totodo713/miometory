@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Header } from "@/components/shared/Header";
 import { IntlWrapper } from "../../../helpers/intl";
 

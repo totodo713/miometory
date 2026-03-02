@@ -2,9 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/hooks/useToast";
 import { useAuthContext } from "@/providers/AuthProvider";
 import { api } from "@/services/api";
-import { useToast } from "@/hooks/useToast";
 
 interface ProfileData {
   id: string;
@@ -133,11 +133,7 @@ export default function MypagePage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">{t("profile.title")}</h2>
-          <button
-            type="button"
-            onClick={openEditModal}
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
+          <button type="button" onClick={openEditModal} className="text-sm text-blue-600 hover:text-blue-800">
             {t("profile.edit")}
           </button>
         </div>
@@ -152,15 +148,11 @@ export default function MypagePage() {
           </div>
           <div className="flex">
             <dt className="w-40 text-sm text-gray-500">{t("profile.organization")}</dt>
-            <dd className="text-sm text-gray-900">
-              {profile?.organizationName ?? t("profile.noOrganization")}
-            </dd>
+            <dd className="text-sm text-gray-900">{profile?.organizationName ?? t("profile.noOrganization")}</dd>
           </div>
           <div className="flex">
             <dt className="w-40 text-sm text-gray-500">{t("profile.manager")}</dt>
-            <dd className="text-sm text-gray-900">
-              {profile?.managerName ?? t("profile.noManager")}
-            </dd>
+            <dd className="text-sm text-gray-900">{profile?.managerName ?? t("profile.noManager")}</dd>
           </div>
         </dl>
       </div>
@@ -212,9 +204,7 @@ export default function MypagePage() {
                     editErrors.displayName ? "border-red-500" : "border-gray-300"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
-                {editErrors.displayName && (
-                  <p className="text-xs text-red-500 mt-1">{editErrors.displayName}</p>
-                )}
+                {editErrors.displayName && <p className="text-xs text-red-500 mt-1">{editErrors.displayName}</p>}
               </div>
               <div>
                 <label htmlFor="edit-email" className="block text-sm font-medium text-gray-700 mb-1">
@@ -229,9 +219,7 @@ export default function MypagePage() {
                     editErrors.email ? "border-red-500" : "border-gray-300"
                   } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                 />
-                {editErrors.email && (
-                  <p className="text-xs text-red-500 mt-1">{editErrors.email}</p>
-                )}
+                {editErrors.email && <p className="text-xs text-red-500 mt-1">{editErrors.email}</p>}
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
