@@ -162,5 +162,29 @@ class HolidayResolutionServiceTest {
 
             assertTrue(result.isEmpty());
         }
+
+        @Test
+        @DisplayName("should skip entry with unknown entry_type")
+        void shouldSkipUnknownEntryType() {
+            var entry = new HolidayCalendarEntryRow("Unknown", "不明", "CUSTOM", 1, 1, null, null, null);
+            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+
+            Map<LocalDate, HolidayInfo> result =
+                    service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("should skip FIXED entry with invalid date (e.g. Feb 30)")
+        void shouldSkipFixedEntryWithInvalidDate() {
+            var entry = new HolidayCalendarEntryRow("Invalid", "無効", "FIXED", 2, 30, null, null, null);
+            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+
+            Map<LocalDate, HolidayInfo> result =
+                    service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
+
+            assertTrue(result.isEmpty());
+        }
     }
 }
