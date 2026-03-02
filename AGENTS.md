@@ -154,6 +154,8 @@ Test templates and patterns → use `/gen-test` skill. Below are non-obvious got
 - **Integration tests**: Extend `IntegrationTestBase` (Testcontainers, `@BeforeEach` で FK 用ユーザー作成)
 - **Seeded role IDs**: USER=`00000000-...-000000000002`, ADMIN=`00000000-...-000000000001` (V18 migration)
 - **Test data uniqueness**: Use UUID-based unique values (not hardcoded strings) to prevent constraint violations with Testcontainers container reuse
+- **Testcontainer reuse stale data**: Tenant-scoped data (holidays, calendars) persists across runs with `withReuse(true)`. Add `@BeforeEach` cleanup that `DELETE`s by `tenant_id`. Leverage `ON DELETE CASCADE` FKs — only delete parent rows. Use `IntegrationTestBase.TEST_TENANT_ID` (protected) in cleanup SQL
+- **GlobalExceptionHandler error code mapping**: Error codes ending with `_NOT_FOUND` automatically return HTTP 404 (not 400). Test assertions must match: e.g. `MEMBER_NOT_FOUND` → `HttpStatus.NOT_FOUND`
 - **Mockito + Kotlin varargs**: `contains()`/`eq()` matchers don't work with Java varargs methods (e.g. `JdbcTemplate.queryForObject`). Use `defaultAnswer` with SQL routing instead
 - **MockK + Java varargs**: `jdbcTemplate.query(sql, mapper, arg1, arg2)` requires `any(), any()` — one `any()` per vararg. Single `any()` won't match multiple varargs
 - **Kotlin `assertThrows`**: Some test files import `org.junit.jupiter.api.assertThrows` (reified: `assertThrows<Type> { }`), others use `Assertions.assertThrows(Type::class.java) { }`. Check imports before writing tests
