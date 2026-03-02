@@ -43,6 +43,8 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - **Start**: `docker compose -f .devcontainer/docker-compose.yml up -d`
 - **Stop**: `docker compose -f .devcontainer/docker-compose.yml down`
+- **Port forwarding** (on-demand): `docker compose -f .devcontainer/docker-compose.yml -f .devcontainer/docker-compose.ports.yml up -d app` — exposes FE:3000, BE:8080 to host
+- **Start servers**: `exec -d app bash -c "cd /workspaces/miometory/backend && ./gradlew bootRun > /tmp/backend.log 2>&1"` / `exec -d app bash -c "cd /workspaces/miometory/frontend && npm run dev > /tmp/frontend.log 2>&1"`
 - **Path conversion**: Host `$PROJECT_ROOT/...` → Container `/workspaces/miometory/...` (automatic)
 - **Fallback**: If the container is not running, hooks execute commands locally (same as before)
 - **Manual exec**: `.claude/hooks/devcontainer-exec.sh --workdir DIR -- COMMAND`
@@ -56,3 +58,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - UI text source of truth: `frontend/messages/en.json` (next-intl) — always verify against this file, not guesses
 - `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
+
+## Troubleshooting
+
+- **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
