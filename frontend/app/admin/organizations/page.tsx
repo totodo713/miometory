@@ -8,6 +8,7 @@ import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatter
 import { OrganizationForm } from "@/components/admin/OrganizationForm";
 import { OrganizationList } from "@/components/admin/OrganizationList";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
@@ -364,6 +365,7 @@ export default function AdminOrganizationsPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             {selectedOrg ? t("orgMembers", { name: selectedOrg.name }) : t("title")}
           </h1>
+          {!selectedOrg && <PermissionBadge editPermission="organization.create" />}
         </div>
         {!selectedOrg ? (
           <button

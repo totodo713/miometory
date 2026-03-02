@@ -7,6 +7,7 @@ import { AssignTenantDialog } from "@/components/admin/AssignTenantDialog";
 import { MemberForm } from "@/components/admin/MemberForm";
 import type { MemberRow } from "@/components/admin/MemberList";
 import { MemberList } from "@/components/admin/MemberList";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -83,7 +84,10 @@ export default function AdminMembersPage() {
       <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("members") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <PermissionBadge editPermission="member.create" />
+        </div>
         <div className="flex items-center gap-2">
           {hasPermission("member.assign_tenant") && (
             <button

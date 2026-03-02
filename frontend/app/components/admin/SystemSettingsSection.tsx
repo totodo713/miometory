@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
 
@@ -58,7 +59,10 @@ export function SystemSettingsSection() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-gray-900 mt-4 mb-2">{t("title")}</h1>
+      <div className="flex items-center gap-2 mt-4 mb-2">
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <PermissionBadge editPermission="system_settings.update" />
+      </div>
       <p className="text-sm text-gray-600 mb-6">{t("description")}</p>
 
       <div className="space-y-6">

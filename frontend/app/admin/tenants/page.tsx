@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
 import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { TenantForm } from "@/components/admin/TenantForm";
 import type { TenantRow } from "@/components/admin/TenantList";
 import { TenantList } from "@/components/admin/TenantList";
@@ -174,6 +175,7 @@ export default function AdminTenantsPage() {
             </button>
           )}
           <h1 className="text-2xl font-bold text-gray-900">{selectedTenant ? selectedTenant.name : t("title")}</h1>
+          {!selectedTenant && <PermissionBadge editPermission="tenant.update" />}
         </div>
         {!selectedTenant && (
           <button

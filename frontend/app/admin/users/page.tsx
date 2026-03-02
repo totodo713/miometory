@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import type { UserRow } from "@/components/admin/UserList";
 import { UserList } from "@/components/admin/UserList";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
@@ -119,7 +120,10 @@ export default function AdminUsersPage() {
       <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("users") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <PermissionBadge editPermission="user.update_role" />
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-4">

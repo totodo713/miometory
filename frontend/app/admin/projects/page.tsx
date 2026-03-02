@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { ProjectForm } from "@/components/admin/ProjectForm";
 import type { ProjectRow } from "@/components/admin/ProjectList";
 import { ProjectList } from "@/components/admin/ProjectList";
@@ -76,7 +77,10 @@ export default function AdminProjectsPage() {
       <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("projects") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <PermissionBadge editPermission="project.create" />
+        </div>
         <button
           type="button"
           onClick={() => {

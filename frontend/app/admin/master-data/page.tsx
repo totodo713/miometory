@@ -11,6 +11,7 @@ import type { TabType } from "@/components/admin/MasterDataTabs";
 import { MasterDataTabs } from "@/components/admin/MasterDataTabs";
 import { MonthlyPeriodPresetForm } from "@/components/admin/MonthlyPeriodPresetForm";
 import { MonthlyPeriodPresetList } from "@/components/admin/MonthlyPeriodPresetList";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { AccessDenied } from "@/components/shared/AccessDenied";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -152,7 +153,10 @@ export default function AdminMasterDataPage() {
       <Breadcrumbs items={[{ label: tb("admin"), href: "/admin" }, { label: tb("masterData") }]} />
 
       <div className="flex items-center justify-between mb-6 mt-4">
-        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+          <PermissionBadge editPermission="master_data.create" />
+        </div>
         <button
           type="button"
           onClick={() => {
