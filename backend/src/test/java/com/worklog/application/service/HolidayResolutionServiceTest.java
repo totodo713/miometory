@@ -55,13 +55,26 @@ class HolidayResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("should exclude FIXED holiday outside date range")
-        void shouldExcludeFixedHolidayOutsideRange() {
+        @DisplayName("should exclude FIXED holiday before date range")
+        void shouldExcludeFixedHolidayBeforeRange() {
             var entry = new HolidayCalendarEntryRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
             when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 2, 28));
+
+            assertTrue(result.isEmpty());
+        }
+
+        @Test
+        @DisplayName("should exclude FIXED holiday after date range")
+        void shouldExcludeFixedHolidayAfterRange() {
+            var entry = new HolidayCalendarEntryRow(
+                    "Christmas", "\u30af\u30ea\u30b9\u30de\u30b9", "FIXED", 12, 25, null, null, null);
+            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+
+            Map<LocalDate, HolidayInfo> result =
+                    service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30));
 
             assertTrue(result.isEmpty());
         }
