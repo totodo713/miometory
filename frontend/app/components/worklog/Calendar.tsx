@@ -14,7 +14,7 @@
  */
 
 import { useRouter } from "next/navigation";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useDateInfo } from "@/hooks/useDateInfo";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -40,6 +40,7 @@ const STATUS_COLORS = {
 export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: CalendarProps) {
   const router = useRouter();
   const format = useFormatter();
+  const locale = useLocale();
   const t = useTranslations("worklog.calendar");
   const { data: dateInfo, isLoading: dateInfoLoading } = useDateInfo(tenantId, orgId, year, month);
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -126,6 +127,10 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
             const date = new Date(dateEntry.date);
             const dayNum = date.getDate();
             const dayName = DAY_NAMES[date.getDay()];
+            const isSunday = date.getDay() === 0;
+            const displayHolidayName = dateEntry.isHoliday
+              ? ((locale === "ja" ? dateEntry.holidayNameJa : dateEntry.holidayName) ?? dateEntry.holidayName)
+              : null;
             const hasWorkHours = dateEntry.totalWorkHours > 0;
             const hasAbsenceHours = dateEntry.totalAbsenceHours > 0;
             const hasAnyHours = hasWorkHours || hasAbsenceHours;
@@ -133,7 +138,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
             const monthName = format.dateTime(date, { month: "long" });
             const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;
 
-            const backgroundClass = dateEntry.isHoliday
+            const backgroundClass = (dateEntry.isHoliday || isSunday)
               ? "bg-holiday-100"
               : hasAbsenceHours
                 ? "bg-blue-50"
@@ -157,13 +162,17 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                 {/* Left: date and day */}
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`text-base font-semibold w-8 text-center ${dateEntry.isWeekend ? "text-gray-500" : "text-gray-900"}`}
+                    className={`text-base font-semibold w-8 text-center ${(dateEntry.isHoliday || isSunday) ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}`}
                   >
                     {dayNum}
                   </span>
                   <span className="text-sm text-gray-500 w-10">{dayName}</span>
                   <div className="flex items-center gap-1">
-                    {dateEntry.isHoliday && <span className="text-xs text-holiday-600">H</span>}
+                    {displayHolidayName && (
+                      <span className="text-xs text-holiday-600 truncate max-w-[100px]" title={displayHolidayName}>
+                        {displayHolidayName}
+                      </span>
+                    )}
                     {dateEntry.hasProxyEntries && (
                       <span className="text-xs text-amber-600" title={t("proxyEntryTitle")} role="img">
                         👤<span className="sr-only">{t("proxyEntryLabel")}</span>
@@ -209,8 +218,10 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
         <>
           {/* Day of week headers */}
           <div className="grid grid-cols-7 gap-px bg-gray-200 border-b">
-            {DAY_NAMES.map((day) => (
-              <div key={day} className="bg-gray-50 px-2 py-2 text-center text-sm font-medium text-gray-700">
+            {DAY_NAMES.map((day, idx) => (
+              <div key={day} className={`bg-gray-50 px-2 py-2 text-center text-sm font-medium ${
+                idx === 0 ? "text-holiday-600" : idx === 6 ? "text-blue-600" : "text-gray-700"
+              }`}>
                 {day}
               </div>
             ))}
@@ -229,6 +240,10 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
 
                 const date = new Date(dateEntry.date);
                 const dayNum = date.getDate();
+                const isSunday = date.getDay() === 0;
+                const displayHolidayName = dateEntry.isHoliday
+                  ? ((locale === "ja" ? dateEntry.holidayNameJa : dateEntry.holidayName) ?? dateEntry.holidayName)
+                  : null;
                 const hasWorkHours = dateEntry.totalWorkHours > 0;
                 const hasAbsenceHours = dateEntry.totalAbsenceHours > 0;
                 const hasAnyHours = hasWorkHours || hasAbsenceHours;
@@ -239,8 +254,8 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                 });
                 const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;
 
-                // Determine background color (priority: holiday > absence > weekend > white)
-                const backgroundClass = dateEntry.isHoliday
+                // Determine background color (priority: holiday/sunday > absence > weekend > white)
+                const backgroundClass = (dateEntry.isHoliday || isSunday)
                   ? "bg-holiday-100"
                   : hasAbsenceHours
                     ? "bg-blue-50"
@@ -265,7 +280,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                       <span
                         className={`
                         text-sm font-medium
-                        ${dateEntry.isWeekend ? "text-gray-600" : "text-gray-900"}
+                        ${(dateEntry.isHoliday || isSunday) ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}
                       `}
                       >
                         {dayNum}
@@ -281,7 +296,11 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                             👤<span className="sr-only">{t("proxyEntryLabel")}</span>
                           </span>
                         )}
-                        {dateEntry.isHoliday && <span className="text-xs text-holiday-600">H</span>}
+                        {displayHolidayName && (
+                          <span className="text-xs text-holiday-600 truncate max-w-[80px]" title={displayHolidayName}>
+                            {displayHolidayName}
+                          </span>
+                        )}
                       </div>
                     </div>
 
