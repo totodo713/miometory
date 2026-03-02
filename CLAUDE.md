@@ -25,6 +25,11 @@ Plan review は `/review-plan` スキルに委譲。3エージェント並列レ
 `pre-pr-test-gate.sh` hook が PR 作成をブロック。lint/format + test + coverage (80%+) をパスした後、`touch .claude/.pr-tests-verified` で解除（30分有効・single-use）。
 Review agents: `build-integrity-verifier`, `qa-ux-guardian`, `security-reviewer` を並列実行 → 全員 APPROVE 後に `e2e-test-engineer` を実行。
 
+## Backend Format Before Commit
+
+- **Always run `./gradlew spotlessApply` before committing backend changes** — Java (palantir-java-format) and Kotlin (ktlint) are checked separately in CI
+- Common pitfall: multi-argument `this()` calls and constructor invocations get reformatted to one-arg-per-line; the auto-format hook may miss files not directly edited (e.g. test files created via Write tool)
+
 ## Git Safety
 
 Permissions in `settings.local.json` use granular git command patterns (not `Bash(git *)`).
