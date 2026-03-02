@@ -120,7 +120,7 @@ describe("SettingsPage", () => {
       );
 
       await waitFor(() => {
-        expect(api.admin.system.getPatterns).toHaveBeenCalled();
+        expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
       const monthSelect = screen.getByLabelText("開始月") as HTMLSelectElement;
