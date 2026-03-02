@@ -1148,6 +1148,10 @@
         "collapseEntries": "エントリを非表示",
         "nthWeekdayFormat": "{month} {nth}{weekday}"
       }
+    },
+    "permission": {
+      "edit": "編集",
+      "view": "閲覧"
     }
   },
   "notifications": {

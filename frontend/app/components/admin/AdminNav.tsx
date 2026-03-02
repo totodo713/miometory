@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useAdminContext } from "@/providers/AdminProvider";
 
@@ -12,22 +13,66 @@ interface NavItem {
   labelKey: string;
   shortLabel: string;
   permission?: string | string[];
+  editPermission?: string | string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/admin", labelKey: "dashboard", shortLabel: "D" },
-  { href: "/admin/tenants", labelKey: "tenants", shortLabel: "T", permission: "tenant.view" },
-  { href: "/admin/users", labelKey: "users", shortLabel: "U", permission: "user.view" },
-  { href: "/admin/members", labelKey: "members", shortLabel: "M", permission: "member.view" },
-  { href: "/admin/projects", labelKey: "projects", shortLabel: "P", permission: "project.view" },
-  { href: "/admin/assignments", labelKey: "assignments", shortLabel: "A", permission: "assignment.view" },
-  { href: "/admin/master-data", labelKey: "masterData", shortLabel: "MD", permission: "master_data.view" },
-  { href: "/admin/organizations", labelKey: "organizations", shortLabel: "O", permission: "organization.view" },
+  {
+    href: "/admin/tenants",
+    labelKey: "tenants",
+    shortLabel: "T",
+    permission: "tenant.view",
+    editPermission: "tenant.update",
+  },
+  {
+    href: "/admin/users",
+    labelKey: "users",
+    shortLabel: "U",
+    permission: "user.view",
+    editPermission: "user.update_role",
+  },
+  {
+    href: "/admin/members",
+    labelKey: "members",
+    shortLabel: "M",
+    permission: "member.view",
+    editPermission: "member.create",
+  },
+  {
+    href: "/admin/projects",
+    labelKey: "projects",
+    shortLabel: "P",
+    permission: "project.view",
+    editPermission: "project.create",
+  },
+  {
+    href: "/admin/assignments",
+    labelKey: "assignments",
+    shortLabel: "A",
+    permission: "assignment.view",
+    editPermission: "assignment.create",
+  },
+  {
+    href: "/admin/master-data",
+    labelKey: "masterData",
+    shortLabel: "MD",
+    permission: "master_data.view",
+    editPermission: "master_data.create",
+  },
+  {
+    href: "/admin/organizations",
+    labelKey: "organizations",
+    shortLabel: "O",
+    permission: "organization.view",
+    editPermission: "organization.create",
+  },
   {
     href: "/admin/settings",
     labelKey: "settings",
     shortLabel: "S",
     permission: ["system_settings.view", "tenant_settings.view"],
+    editPermission: ["system_settings.update", "tenant_settings.manage"],
   },
 ];
 
@@ -119,7 +164,10 @@ export function AdminNav() {
                 {collapsed ? (
                   <span className="flex items-center justify-center w-8 h-5 text-xs font-bold">{item.shortLabel}</span>
                 ) : (
-                  t(item.labelKey)
+                  <span className="flex items-center justify-between w-full">
+                    <span>{t(item.labelKey)}</span>
+                    {item.editPermission && <PermissionBadge editPermission={item.editPermission} />}
+                  </span>
                 )}
               </Link>
             </li>
@@ -201,7 +249,10 @@ export function AdminNav() {
                             : "text-gray-700 hover:bg-gray-50"
                         }`}
                       >
-                        {t(item.labelKey)}
+                        <span className="flex items-center justify-between w-full">
+                          <span>{t(item.labelKey)}</span>
+                          {item.editPermission && <PermissionBadge editPermission={item.editPermission} />}
+                        </span>
                       </Link>
                     </li>
                   );
