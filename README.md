@@ -163,9 +163,11 @@ The seed data is idempotent. To reset to a clean state:
 # Option 1: Re-run with dev profile (updates existing data)
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 
-# Option 2: Full database reset (inside devcontainer)
-docker compose -f .devcontainer/docker-compose.yml down -v db
+# Option 2: Full database reset (run from host terminal, outside devcontainer)
+docker compose -f .devcontainer/docker-compose.yml stop db
+docker compose -f .devcontainer/docker-compose.yml rm -f -v db
 docker compose -f .devcontainer/docker-compose.yml up -d db
+# Then inside devcontainer:
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 

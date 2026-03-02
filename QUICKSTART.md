@@ -325,9 +325,11 @@ docker compose -f .devcontainer/docker-compose.yml ps
 #### Flyway migration errors
 ```bash
 # Reset database (delete all data, re-apply all migrations)
-# Stop and restart the devcontainer, or run:
-docker compose -f .devcontainer/docker-compose.yml down -v db
+# Run from host terminal (outside devcontainer):
+docker compose -f .devcontainer/docker-compose.yml stop db
+docker compose -f .devcontainer/docker-compose.yml rm -f -v db
 docker compose -f .devcontainer/docker-compose.yml up -d db
+# Then inside devcontainer:
 ./gradlew bootRun --args='--spring.profiles.active=dev'
 ```
 

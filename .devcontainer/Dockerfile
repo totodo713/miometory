@@ -12,4 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get update && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-RUN npx playwright install-deps chromium
+# Pin version to match frontend/package-lock.json for reproducible builds
+ARG PLAYWRIGHT_VERSION=1.57.0
+RUN npx @playwright/test@${PLAYWRIGHT_VERSION} install-deps chromium
