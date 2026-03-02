@@ -222,6 +222,14 @@ public class User {
     }
 
     /**
+     * Updates only the user's email address.
+     */
+    public void updateEmail(String email) {
+        validateAndSetEmail(Objects.requireNonNull(email, "Email cannot be null"));
+        this.updatedAt = Instant.now();
+    }
+
+    /**
      * Changes the user's role.
      */
     public void changeRole(RoleId newRoleId) {

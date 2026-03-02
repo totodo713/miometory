@@ -673,4 +673,38 @@ class UserTest {
             assertTrue(user.lockedUntil!!.isAfter(Instant.now().plus(364, ChronoUnit.DAYS)))
         }
     }
+
+    @Nested
+    @DisplayName("Email Update")
+    inner class EmailUpdate {
+        @Test
+        fun `updateEmail should update email and updatedAt`() {
+            val user = UserFixtures.createActiveUser(email = "old@example.com")
+            val before = user.updatedAt
+
+            user.updateEmail("new@example.com")
+
+            assertEquals("new@example.com", user.email)
+            assertTrue(user.updatedAt >= before)
+        }
+
+        @Test
+        fun `updateEmail should normalize email to lowercase`() {
+            val user = UserFixtures.createActiveUser(email = "old@example.com")
+
+            user.updateEmail("NEW@EXAMPLE.COM")
+
+            assertEquals("new@example.com", user.email)
+        }
+
+        @Test
+        fun `updateEmail should reject null email`() {
+            val user = UserFixtures.createActiveUser()
+
+            assertThrows<NullPointerException> {
+                @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+                user.updateEmail(null)
+            }
+        }
+    }
 }
