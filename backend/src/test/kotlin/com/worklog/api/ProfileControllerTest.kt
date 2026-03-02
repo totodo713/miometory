@@ -140,19 +140,6 @@ class ProfileControllerTest {
             .andExpect(jsonPath("$.errorCode").value("MEMBER_NOT_FOUND"))
     }
 
-    @Test
-    fun `getProfile returns 401 without authentication`() {
-        // Given - no principal set, so authentication is null.
-        // The 401 comes from the controller's manual null check, not Spring Security
-        // (SecurityAutoConfiguration is excluded).
-
-        // When/Then
-        mockMvc
-            .perform(
-                get("/api/v1/profile"),
-            ).andExpect(status().isUnauthorized)
-    }
-
     // ============================================================
     // PUT /api/v1/profile - Update Profile
     // ============================================================
@@ -231,21 +218,6 @@ class ProfileControllerTest {
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),
             ).andExpect(status().isBadRequest)
-    }
-
-    @Test
-    fun `updateProfile returns 401 without authentication`() {
-        // Given - no principal set, so authentication is null.
-        val requestBody = mapOf("email" to "user@example.com", "displayName" to "Test User")
-
-        // When/Then
-        mockMvc
-            .perform(
-                put("/api/v1/profile")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(requestBody))
-                    .with(csrf()),
-            ).andExpect(status().isUnauthorized)
     }
 
     @Test

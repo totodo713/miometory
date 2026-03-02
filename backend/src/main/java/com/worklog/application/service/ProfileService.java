@@ -77,24 +77,23 @@ public class ProfileService {
                 .findById(MemberId.of(memberId))
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
-        boolean emailChanged = !currentEmail.equalsIgnoreCase(newEmail);
+        // Normalize email to lowercase before any comparisons or lookups
+        String normalizedEmail = newEmail.toLowerCase(Locale.ROOT);
+        boolean emailChanged = !currentEmail.equalsIgnoreCase(normalizedEmail);
 
         if (emailChanged) {
             // Check tenant-scoped uniqueness
-            var existingMember = memberRepository.findByEmail(TenantId.of(tenantId), newEmail);
+            var existingMember = memberRepository.findByEmail(TenantId.of(tenantId), normalizedEmail);
             if (existingMember.isPresent()) {
                 throw new DomainException("DUPLICATE_EMAIL", "A member with this email already exists in this tenant");
             }
 
             // Check global uniqueness
-            var existingUser = userRepository.findByEmail(newEmail);
+            var existingUser = userRepository.findByEmail(normalizedEmail);
             if (existingUser.isPresent()) {
                 throw new DomainException("DUPLICATE_EMAIL", "A user with this email already exists");
             }
         }
-
-        // Normalize email to lowercase for consistent storage
-        String normalizedEmail = newEmail.toLowerCase(Locale.ROOT);
 
         // Update member (keeps existing managerId via member.update)
         member.update(normalizedEmail, newDisplayName, member.getManagerId());

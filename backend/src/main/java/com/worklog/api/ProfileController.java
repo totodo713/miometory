@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.*;
@@ -23,25 +24,19 @@ public class ProfileController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ProfileResponse> getProfile(Authentication authentication) {
-        if (authentication == null) {
-            return ResponseEntity.status(401).build();
-        }
-
         ProfileResponse profile = profileService.getProfile(authentication.getName());
         return ResponseEntity.ok(profile);
     }
 
     @PutMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UpdateProfileResponse> updateProfile(
             @RequestBody @Valid UpdateProfileRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
-        if (authentication == null) {
-            return ResponseEntity.status(401).build();
-        }
-
         UpdateProfileResponse result =
                 profileService.updateProfile(authentication.getName(), request.displayName(), request.email());
 
