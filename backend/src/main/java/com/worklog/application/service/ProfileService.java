@@ -34,8 +34,7 @@ public class ProfileService {
     }
 
     public ProfileResponse getProfile(String email) {
-        String sql =
-                """
+        String sql = """
                 SELECT m.id, m.email, m.display_name, o.name AS organization_name,
                        mgr.display_name AS manager_name, m.is_active
                 FROM members m
@@ -80,8 +79,7 @@ public class ProfileService {
             // Check tenant-scoped uniqueness
             var existingMember = memberRepository.findByEmail(TenantId.of(tenantId), newEmail);
             if (existingMember.isPresent()) {
-                throw new DomainException(
-                        "DUPLICATE_EMAIL", "A member with this email already exists in this tenant");
+                throw new DomainException("DUPLICATE_EMAIL", "A member with this email already exists in this tenant");
             }
 
             // Check global uniqueness

@@ -7,15 +7,25 @@ import com.worklog.domain.shared.DomainException
 import com.worklog.domain.tenant.TenantId
 import com.worklog.infrastructure.persistence.JdbcUserRepository
 import com.worklog.infrastructure.repository.JdbcMemberRepository
-import io.mockk.*
-import org.junit.jupiter.api.Assertions.*
+import io.mockk.Runs
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import java.time.Instant
-import java.util.*
+import java.util.Optional
+import java.util.UUID
 
 class ProfileServiceTest {
     private val jdbcTemplate = mockk<JdbcTemplate>(relaxed = true)
@@ -44,8 +54,12 @@ class ProfileServiceTest {
             every { jdbcTemplate.query(any<String>(), any<RowMapper<ProfileService.ProfileRow>>(), any()) } returns
                 listOf(
                     ProfileService.ProfileRow(
-                        testMemberId, testEmail, "Test User",
-                        "Engineering Org", "Manager Name", true,
+                        testMemberId,
+                        testEmail,
+                        "Test User",
+                        "Engineering Org",
+                        "Manager Name",
+                        true,
                     ),
                 )
 
@@ -144,16 +158,14 @@ class ProfileServiceTest {
         }
     }
 
-    private fun createTestMember(email: String, displayName: String): Member {
-        return Member(
-            MemberId.of(testMemberId),
-            TenantId.of(testTenantId),
-            OrganizationId.of(testOrgId),
-            email,
-            displayName,
-            MemberId.of(testManagerId),
-            true,
-            Instant.now(),
-        )
-    }
+    private fun createTestMember(email: String, displayName: String): Member = Member(
+        MemberId.of(testMemberId),
+        TenantId.of(testTenantId),
+        OrganizationId.of(testOrgId),
+        email,
+        displayName,
+        MemberId.of(testManagerId),
+        true,
+        Instant.now(),
+    )
 }
