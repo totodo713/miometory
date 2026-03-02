@@ -68,7 +68,40 @@
     "admin": "管理",
     "logout": "ログアウト",
     "switchTenant": "テナント切替",
-    "currentTenant": "現在のテナント"
+    "currentTenant": "現在のテナント",
+    "myPage": "マイページ",
+    "userMenu": "ユーザーメニュー"
+  },
+  "mypage": {
+    "title": "マイページ",
+    "profile": {
+      "title": "プロフィール",
+      "displayName": "表示名",
+      "email": "メールアドレス",
+      "organization": "所属組織",
+      "manager": "マネージャー",
+      "noOrganization": "未割当",
+      "noManager": "未割当",
+      "edit": "プロフィールを編集",
+      "editTitle": "プロフィール編集",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "updated": "プロフィールを更新しました",
+      "updateError": "プロフィールの更新に失敗しました",
+      "displayNameRequired": "表示名を入力してください",
+      "emailRequired": "メールアドレスを入力してください",
+      "emailInvalid": "有効なメールアドレスを入力してください",
+      "loadError": "プロフィールの読み込みに失敗しました",
+      "emailChangedTitle": "メールアドレスが変更されました",
+      "emailChangedMessage": "メールアドレスが変更されました。新しいメールアドレスで再度ログインしてください。",
+      "emailChangedConfirm": "ログアウト"
+    },
+    "projects": {
+      "title": "担当プロジェクト",
+      "code": "コード",
+      "name": "プロジェクト名",
+      "noProjects": "プロジェクトが割り当てられていません"
+    }
   },
   "breadcrumbs": {
     "home": "ホーム",

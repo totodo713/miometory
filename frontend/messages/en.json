@@ -68,7 +68,40 @@
     "admin": "Admin",
     "logout": "Logout",
     "switchTenant": "Switch Tenant",
-    "currentTenant": "Current Tenant"
+    "currentTenant": "Current Tenant",
+    "myPage": "My Page",
+    "userMenu": "User menu"
+  },
+  "mypage": {
+    "title": "My Page",
+    "profile": {
+      "title": "Profile",
+      "displayName": "Display Name",
+      "email": "Email",
+      "organization": "Organization",
+      "manager": "Manager",
+      "noOrganization": "Not assigned",
+      "noManager": "Not assigned",
+      "edit": "Edit Profile",
+      "editTitle": "Edit Profile",
+      "save": "Save",
+      "cancel": "Cancel",
+      "updated": "Profile updated",
+      "updateError": "Failed to update profile",
+      "displayNameRequired": "Display name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "loadError": "Failed to load profile",
+      "emailChangedTitle": "Email Changed",
+      "emailChangedMessage": "Your email has been changed. Please log in again with your new email.",
+      "emailChangedConfirm": "Log out"
+    },
+    "projects": {
+      "title": "Assigned Projects",
+      "code": "Code",
+      "name": "Project Name",
+      "noProjects": "No projects assigned"
+    }
   },
   "breadcrumbs": {
     "home": "Home",
