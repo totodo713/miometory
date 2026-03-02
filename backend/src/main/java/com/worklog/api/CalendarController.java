@@ -2,9 +2,11 @@ package com.worklog.api;
 
 import com.worklog.api.dto.DailyCalendarEntry;
 import com.worklog.api.dto.MonthlyCalendarResponse;
+import com.worklog.application.service.HolidayResolutionService;
 import com.worklog.domain.approval.MonthlyApproval;
 import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
+import com.worklog.domain.model.HolidayInfo;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.shared.FiscalMonthPeriod;
 import com.worklog.infrastructure.projection.DailyEntryProjection;
@@ -39,18 +41,21 @@ public class CalendarController {
     private final JdbcApprovalRepository approvalRepository;
     private final JdbcDailyRejectionLogRepository dailyRejectionLogRepository;
     private final JdbcMemberRepository memberRepository;
+    private final HolidayResolutionService holidayResolutionService;
 
     public CalendarController(
             MonthlyCalendarProjection calendarProjection,
             MonthlySummaryProjection summaryProjection,
             JdbcApprovalRepository approvalRepository,
             JdbcDailyRejectionLogRepository dailyRejectionLogRepository,
-            JdbcMemberRepository memberRepository) {
+            JdbcMemberRepository memberRepository,
+            HolidayResolutionService holidayResolutionService) {
         this.calendarProjection = calendarProjection;
         this.summaryProjection = summaryProjection;
         this.approvalRepository = approvalRepository;
         this.dailyRejectionLogRepository = dailyRejectionLogRepository;
         this.memberRepository = memberRepository;
+        this.holidayResolutionService = holidayResolutionService;
     }
 
     /**
@@ -84,10 +89,20 @@ public class CalendarController {
             throw new DomainException("MEMBER_ID_REQUIRED", "memberId parameter is required");
         }
 
+        // Look up member to get tenantId for holiday resolution
+        Member member = memberRepository
+                .findById(MemberId.of(memberId))
+                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
+        UUID tenantId = member.getTenantId().value();
+
         // Calculate fiscal month period (21st of previous month to 20th of current month)
         LocalDate periodStart =
                 YearMonth.of(year, month).atDay(1).minusMonths(1).withDayOfMonth(21);
         LocalDate periodEnd = YearMonth.of(year, month).atDay(20);
+
+        // Resolve holidays for this tenant and period
+        Map<LocalDate, HolidayInfo> holidayMap =
+                holidayResolutionService.resolveHolidays(tenantId, periodStart, periodEnd);
 
         // Get daily entries from projection
         List<DailyEntryProjection> projections = calendarProjection.getDailyEntries(memberId, periodStart, periodEnd);
@@ -121,7 +136,7 @@ public class CalendarController {
         // Determine if the month is currently in REJECTED status
         boolean isMonthlyRejected = approvalSummary != null && "REJECTED".equals(approvalSummary.status());
 
-        // Convert to response DTOs with rejection enrichment
+        // Convert to response DTOs with holiday and rejection enrichment
         List<DailyCalendarEntry> entries = projections.stream()
                 .map(p -> {
                     String rejectionSource = null;
@@ -137,13 +152,19 @@ public class CalendarController {
                         rejectionReason = approvalSummary.rejectionReason();
                     }
 
+                    // Merge holiday info from resolved holidays
+                    HolidayInfo holiday = holidayMap.get(p.date());
+                    boolean isHoliday = holiday != null;
+
                     return new DailyCalendarEntry(
                             p.date(),
                             p.totalWorkHours(),
                             p.totalAbsenceHours(),
                             p.status(),
                             p.isWeekend(),
-                            p.isHoliday(),
+                            isHoliday,
+                            holiday != null ? holiday.name() : null,
+                            holiday != null ? holiday.nameJa() : null,
                             p.hasProxyEntries(),
                             rejectionSource,
                             rejectionReason);
@@ -151,15 +172,7 @@ public class CalendarController {
                 .collect(Collectors.toList());
 
         MonthlyCalendarResponse response = new MonthlyCalendarResponse(
-                memberId,
-                memberRepository
-                        .findById(MemberId.of(memberId))
-                        .map(Member::getDisplayName)
-                        .orElse(null),
-                periodStart,
-                periodEnd,
-                entries,
-                approvalSummary);
+                memberId, member.getDisplayName(), periodStart, periodEnd, entries, approvalSummary);
 
         return ResponseEntity.ok(response);
     }

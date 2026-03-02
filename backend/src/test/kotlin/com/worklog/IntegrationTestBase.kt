@@ -96,7 +96,7 @@ abstract class IntegrationTestBase {
      * Executes the given block in a new, independent transaction that commits immediately.
      * This ensures data is visible to HTTP requests running in separate transactions.
      */
-    private fun executeInNewTransaction(block: () -> Unit) {
+    protected fun executeInNewTransaction(block: () -> Unit) {
         val txTemplate = TransactionTemplate(transactionManager)
         txTemplate.propagationBehavior = TransactionDefinition.PROPAGATION_REQUIRES_NEW
         txTemplate.executeWithoutResult { block() }
