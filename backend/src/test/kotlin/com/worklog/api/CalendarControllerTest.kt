@@ -320,8 +320,10 @@ class CalendarControllerTest : IntegrationTestBase() {
     private fun createHolidayCalendar(calendarId: UUID) {
         executeInNewTransaction {
             baseJdbcTemplate.update(
-                """INSERT INTO holiday_calendar (id, tenant_id, name, description, country, is_active)
-                   VALUES (?::UUID, '550e8400-e29b-41d4-a716-446655440001'::UUID, 'Test Holidays', 'Test', 'JP', true)""",
+                """INSERT INTO holiday_calendar
+                   (id, tenant_id, name, description, country, is_active)
+                   VALUES (?::UUID, '550e8400-e29b-41d4-a716-446655440001'::UUID,
+                   'Test Holidays', 'Test', 'JP', true)""",
                 calendarId.toString(),
             )
         }
