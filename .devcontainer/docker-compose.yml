@@ -12,6 +12,8 @@ services:
       SPRING_DATASOURCE_USERNAME: worklog
       SPRING_DATASOURCE_PASSWORD: worklog
       REDIS_HOST: redis
+      MAIL_HOST: mailpit
+      MAILPIT_API_URL: http://mailpit:8025/api/v1
     depends_on:
       db:
         condition: service_healthy
