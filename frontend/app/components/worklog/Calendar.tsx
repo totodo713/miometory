@@ -138,13 +138,14 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
             const monthName = format.dateTime(date, { month: "long" });
             const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;
 
-            const backgroundClass = (dateEntry.isHoliday || isSunday)
-              ? "bg-holiday-100"
-              : hasAbsenceHours
-                ? "bg-blue-50"
-                : dateEntry.isWeekend
-                  ? "bg-weekend-100"
-                  : "bg-white";
+            const backgroundClass =
+              dateEntry.isHoliday || isSunday
+                ? "bg-holiday-100"
+                : hasAbsenceHours
+                  ? "bg-blue-50"
+                  : dateEntry.isWeekend
+                    ? "bg-weekend-100"
+                    : "bg-white";
 
             return (
               <button
@@ -162,7 +163,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                 {/* Left: date and day */}
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`text-base font-semibold w-8 text-center ${(dateEntry.isHoliday || isSunday) ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}`}
+                    className={`text-base font-semibold w-8 text-center ${dateEntry.isHoliday || isSunday ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}`}
                   >
                     {dayNum}
                   </span>
@@ -219,9 +220,12 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
           {/* Day of week headers */}
           <div className="grid grid-cols-7 gap-px bg-gray-200 border-b">
             {DAY_NAMES.map((day, idx) => (
-              <div key={day} className={`bg-gray-50 px-2 py-2 text-center text-sm font-medium ${
-                idx === 0 ? "text-holiday-600" : idx === 6 ? "text-blue-600" : "text-gray-700"
-              }`}>
+              <div
+                key={day}
+                className={`bg-gray-50 px-2 py-2 text-center text-sm font-medium ${
+                  idx === 0 ? "text-holiday-600" : idx === 6 ? "text-blue-600" : "text-gray-700"
+                }`}
+              >
                 {day}
               </div>
             ))}
@@ -255,13 +259,14 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                 const ariaLabel = `${monthName} ${dayNum}, ${date.getFullYear()}`;
 
                 // Determine background color (priority: holiday/sunday > absence > weekend > white)
-                const backgroundClass = (dateEntry.isHoliday || isSunday)
-                  ? "bg-holiday-100"
-                  : hasAbsenceHours
-                    ? "bg-blue-50"
-                    : dateEntry.isWeekend
-                      ? "bg-weekend-100"
-                      : "bg-white";
+                const backgroundClass =
+                  dateEntry.isHoliday || isSunday
+                    ? "bg-holiday-100"
+                    : hasAbsenceHours
+                      ? "bg-blue-50"
+                      : dateEntry.isWeekend
+                        ? "bg-weekend-100"
+                        : "bg-white";
 
                 return (
                   <button
@@ -280,7 +285,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                       <span
                         className={`
                         text-sm font-medium
-                        ${(dateEntry.isHoliday || isSunday) ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}
+                        ${dateEntry.isHoliday || isSunday ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}
                       `}
                       >
                         {dayNum}
