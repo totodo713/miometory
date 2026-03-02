@@ -60,4 +60,28 @@ describe("PermissionBadge", () => {
 
     expect(mockHasPermission).toHaveBeenCalledWith("project.create");
   });
+
+  test("displays Edit badge when any permission in array matches", () => {
+    mockHasPermission.mockImplementation((p: string) => p === "tenant_settings.manage");
+
+    render(
+      <IntlWrapper>
+        <PermissionBadge editPermission={["system_settings.update", "tenant_settings.manage"]} />
+      </IntlWrapper>,
+    );
+
+    expect(screen.getByText("編集")).toBeInTheDocument();
+  });
+
+  test("displays View badge when no permission in array matches", () => {
+    mockHasPermission.mockReturnValue(false);
+
+    render(
+      <IntlWrapper>
+        <PermissionBadge editPermission={["system_settings.update", "tenant_settings.manage"]} />
+      </IntlWrapper>,
+    );
+
+    expect(screen.getByText("閲覧")).toBeInTheDocument();
+  });
 });

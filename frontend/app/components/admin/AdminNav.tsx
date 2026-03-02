@@ -13,7 +13,7 @@ interface NavItem {
   labelKey: string;
   shortLabel: string;
   permission?: string | string[];
-  editPermission?: string;
+  editPermission?: string | string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -72,7 +72,7 @@ const NAV_ITEMS: NavItem[] = [
     labelKey: "settings",
     shortLabel: "S",
     permission: ["system_settings.view", "tenant_settings.view"],
-    editPermission: "system_settings.update",
+    editPermission: ["system_settings.update", "tenant_settings.manage"],
   },
 ];
 

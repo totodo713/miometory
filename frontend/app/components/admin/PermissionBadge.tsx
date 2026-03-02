@@ -4,13 +4,15 @@ import { useTranslations } from "next-intl";
 import { useAdminContext } from "@/providers/AdminProvider";
 
 interface PermissionBadgeProps {
-  editPermission: string;
+  editPermission: string | string[];
 }
 
 export function PermissionBadge({ editPermission }: PermissionBadgeProps) {
   const t = useTranslations("admin.permission");
   const { hasPermission } = useAdminContext();
-  const canEdit = hasPermission(editPermission);
+  const canEdit = Array.isArray(editPermission)
+    ? editPermission.some((p) => hasPermission(p))
+    : hasPermission(editPermission);
 
   return (
     <span

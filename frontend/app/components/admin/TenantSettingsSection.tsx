@@ -103,7 +103,7 @@ export function TenantSettingsSection() {
     <>
       <div className="flex items-center gap-2 mt-4 mb-2">
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <PermissionBadge editPermission="tenant_settings.update" />
+        <PermissionBadge editPermission="tenant_settings.manage" />
       </div>
       <p className="text-sm text-gray-600 mb-6">{t("description")}</p>
 
