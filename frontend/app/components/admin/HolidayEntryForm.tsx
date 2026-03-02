@@ -56,6 +56,7 @@ export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: Holida
   }, [onClose]);
 
   const [name, setName] = useState(entry?.name ?? "");
+  const [nameJa, setNameJa] = useState(entry?.nameJa ?? "");
   const [entryType, setEntryType] = useState<"FIXED" | "NTH_WEEKDAY">(entry?.entryType ?? "FIXED");
   const [month, setMonth] = useState(entry?.month ?? 1);
   const [day, setDay] = useState(entry?.day ?? 1);
@@ -78,6 +79,7 @@ export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: Holida
     try {
       const data = {
         name,
+        nameJa: nameJa.trim() || null,
         entryType,
         month,
         ...(entryType === "FIXED" ? { day } : { nthOccurrence, dayOfWeek }),
@@ -127,6 +129,19 @@ export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: Holida
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="he-name-ja" className="block text-sm font-medium text-gray-700 mb-1">
+              {t("holidayCalendar.entryNameJa")}
+            </label>
+            <input
+              id="he-name-ja"
+              type="text"
+              value={nameJa}
+              onChange={(e) => setNameJa(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
