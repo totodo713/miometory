@@ -47,9 +47,8 @@ public class ProfileController {
 
         if (result.emailChanged()) {
             new SecurityContextLogoutHandler().logout(httpRequest, httpResponse, authentication);
-            return ResponseEntity.ok(result);
         }
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(result);
     }
 }

@@ -158,7 +158,7 @@ class ProfileControllerTest {
     // ============================================================
 
     @Test
-    fun `updateProfile returns 204 when no email change`() {
+    fun `updateProfile returns 200 with emailChanged false when no email change`() {
         // Given
         val requestBody = mapOf("email" to "user@example.com", "displayName" to "Updated Name")
         every {
@@ -173,7 +173,8 @@ class ProfileControllerTest {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(requestBody))
                     .with(csrf()),
-            ).andExpect(status().isNoContent)
+            ).andExpect(status().isOk)
+            .andExpect(jsonPath("$.emailChanged").value(false))
     }
 
     @Test

@@ -51,7 +51,10 @@ class ProfileServiceTest {
     inner class GetProfile {
         @Test
         fun `returns profile with organization and manager names`() {
-            every { jdbcTemplate.query(any<String>(), any<RowMapper<ProfileService.ProfileRow>>(), any()) } returns
+            every { userContextService.resolveUserTenantId(testEmail) } returns testTenantId
+            every {
+                jdbcTemplate.query(any<String>(), any<RowMapper<ProfileService.ProfileRow>>(), any(), any())
+            } returns
                 listOf(
                     ProfileService.ProfileRow(
                         testMemberId,
@@ -76,7 +79,10 @@ class ProfileServiceTest {
 
         @Test
         fun `throws MEMBER_NOT_FOUND when no member exists`() {
-            every { jdbcTemplate.query(any<String>(), any<RowMapper<ProfileService.ProfileRow>>(), any()) } returns
+            every { userContextService.resolveUserTenantId(testEmail) } returns testTenantId
+            every {
+                jdbcTemplate.query(any<String>(), any<RowMapper<ProfileService.ProfileRow>>(), any(), any())
+            } returns
                 emptyList()
 
             val ex = assertThrows(DomainException::class.java) {
