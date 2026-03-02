@@ -7,8 +7,8 @@ import java.time.DateTimeException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ public class HolidayResolutionService {
     @Transactional(readOnly = true)
     public Map<LocalDate, HolidayInfo> resolveHolidays(UUID tenantId, LocalDate start, LocalDate end) {
         var entries = repository.findActiveEntriesByTenantId(tenantId);
-        Map<LocalDate, HolidayInfo> holidays = new LinkedHashMap<>();
+        Map<LocalDate, HolidayInfo> holidays = new TreeMap<>();
 
         for (var entry : entries) {
             resolveEntry(entry, start, end, holidays);
@@ -75,7 +75,15 @@ public class HolidayResolutionService {
                     };
 
             if (resolved != null && !resolved.isBefore(start) && !resolved.isAfter(end)) {
-                holidays.put(resolved, new HolidayInfo(entry.name(), entry.nameJa(), resolved));
+                HolidayInfo newHoliday = new HolidayInfo(entry.name(), entry.nameJa(), resolved);
+                HolidayInfo existingHoliday = holidays.put(resolved, newHoliday);
+                if (existingHoliday != null) {
+                    log.warn(
+                            "Duplicate holiday resolved for date {}. Replacing '{}' with '{}'.",
+                            resolved,
+                            existingHoliday.name(),
+                            entry.name());
+                }
             }
         }
     }

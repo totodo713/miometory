@@ -186,5 +186,39 @@ class HolidayResolutionServiceTest {
 
             assertTrue(result.isEmpty());
         }
+
+        @Test
+        @DisplayName("should keep last entry when duplicate holidays resolve to same date")
+        void shouldKeepLastEntryWhenDuplicateHolidays() {
+            var entry1 = new HolidayCalendarEntryRow("Holiday A", "祝日A", "FIXED", 1, 1, null, null, null);
+            var entry2 = new HolidayCalendarEntryRow("Holiday B", "祝日B", "FIXED", 1, 1, null, null, null);
+            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry1, entry2));
+
+            Map<LocalDate, HolidayInfo> result =
+                    service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
+
+            assertEquals(1, result.size());
+            HolidayInfo holiday = result.get(LocalDate.of(2026, 1, 1));
+            assertNotNull(holiday);
+            assertEquals("Holiday B", holiday.name());
+        }
+
+        @Test
+        @DisplayName("should return holidays ordered by date using TreeMap")
+        void shouldReturnHolidaysOrderedByDate() {
+            var feb = new HolidayCalendarEntryRow(
+                    "Foundation Day", "建国記念の日", "FIXED", 2, 11, null, null, null);
+            var jan = new HolidayCalendarEntryRow("New Year's Day", "元日", "FIXED", 1, 1, null, null, null);
+            // Entries ordered: Feb first, Jan second (reversed chronological order)
+            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(feb, jan));
+
+            Map<LocalDate, HolidayInfo> result =
+                    service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31));
+
+            // TreeMap ensures date-ordered iteration regardless of insertion order
+            var dates = result.keySet().stream().toList();
+            assertEquals(LocalDate.of(2026, 1, 1), dates.get(0));
+            assertEquals(LocalDate.of(2026, 2, 11), dates.get(1));
+        }
     }
 }
