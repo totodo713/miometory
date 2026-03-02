@@ -21,6 +21,17 @@ export function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isOpen]);
+
   if (!user) return null;
 
   return (
@@ -45,8 +56,12 @@ export function UserMenu() {
         </svg>
       </button>
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1">
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 py-1"
+        >
           <Link
+            role="menuitem"
             href="/mypage"
             onClick={() => setIsOpen(false)}
             className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
@@ -54,6 +69,7 @@ export function UserMenu() {
             {t("myPage")}
           </Link>
           <button
+            role="menuitem"
             type="button"
             onClick={() => {
               setIsOpen(false);

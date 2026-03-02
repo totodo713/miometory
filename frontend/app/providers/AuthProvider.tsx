@@ -20,7 +20,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (email: string, password: string, rememberMe: boolean) => Promise<void>;
   logout: () => Promise<void>;
-  updateUser: (updates: Partial<AuthUser>) => void;
+  updateUser: (updates: Pick<AuthUser, "displayName" | "email">) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.replace("/login");
   }, [router]);
 
-  const updateUser = useCallback((updates: Partial<AuthUser>) => {
+  const updateUser = useCallback((updates: Pick<AuthUser, "displayName" | "email">) => {
     setUser((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, ...updates };
