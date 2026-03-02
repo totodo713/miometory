@@ -192,6 +192,7 @@ public class AdminMasterDataController {
         UUID entryId = adminMasterDataService.addHolidayEntry(
                 id,
                 request.name(),
+                request.nameJa(),
                 request.entryType(),
                 request.month(),
                 request.day(),
@@ -209,6 +210,7 @@ public class AdminMasterDataController {
                 id,
                 entryId,
                 request.name(),
+                request.nameJa(),
                 request.entryType(),
                 request.month(),
                 request.day(),
@@ -247,6 +249,7 @@ public class AdminMasterDataController {
 
     public record CreateHolidayEntryRequest(
             @NotBlank @Size(max = 128) String name,
+            @Size(max = 128) String nameJa,
             @NotBlank @Size(max = 16) String entryType,
             @Min(1) @Max(12) int month,
             @Min(1) @Max(31) Integer day,

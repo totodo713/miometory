@@ -360,7 +360,7 @@ public class AdminMasterDataService {
 
         return jdbcTemplate.query(
                 """
-                SELECT id, name, entry_type, month, day, nth_occurrence, day_of_week, specific_year
+                SELECT id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year
                 FROM holiday_calendar_entry_preset
                 WHERE holiday_calendar_id = ?
                 ORDER BY month, day NULLS LAST, name
@@ -368,6 +368,7 @@ public class AdminMasterDataService {
                 (rs, rowNum) -> new HolidayEntryRow(
                         rs.getObject("id", UUID.class).toString(),
                         rs.getString("name"),
+                        rs.getString("name_ja"),
                         rs.getString("entry_type"),
                         rs.getInt("month"),
                         rs.getObject("day") != null ? rs.getInt("day") : null,
@@ -380,6 +381,7 @@ public class AdminMasterDataService {
     public UUID addHolidayEntry(
             UUID calendarId,
             String name,
+            String nameJa,
             String entryType,
             int month,
             Integer day,
@@ -396,10 +398,11 @@ public class AdminMasterDataService {
         }
 
         UUID id = UUID.randomUUID();
-        jdbcTemplate.update("""
-                INSERT INTO holiday_calendar_entry_preset (id, holiday_calendar_id, name, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, id, calendarId, name, entryType, month, day, nthOccurrence, dayOfWeek, specificYear);
+        jdbcTemplate.update(
+                """
+                INSERT INTO holiday_calendar_entry_preset (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, id, calendarId, name, nameJa, entryType, month, day, nthOccurrence, dayOfWeek, specificYear);
         return id;
     }
 
@@ -407,6 +410,7 @@ public class AdminMasterDataService {
             UUID calendarId,
             UUID entryId,
             String name,
+            String nameJa,
             String entryType,
             int month,
             Integer day,
@@ -418,9 +422,9 @@ public class AdminMasterDataService {
         int rows = jdbcTemplate.update(
                 """
                 UPDATE holiday_calendar_entry_preset
-                SET name = ?, entry_type = ?, month = ?, day = ?, nth_occurrence = ?, day_of_week = ?, specific_year = ?
+                SET name = ?, name_ja = ?, entry_type = ?, month = ?, day = ?, nth_occurrence = ?, day_of_week = ?, specific_year = ?
                 WHERE id = ? AND holiday_calendar_id = ?
-                """, name, entryType, month, day, nthOccurrence, dayOfWeek, specificYear, entryId, calendarId);
+                """, name, nameJa, entryType, month, day, nthOccurrence, dayOfWeek, specificYear, entryId, calendarId);
         if (rows == 0) {
             throw new DomainException("ENTRY_NOT_FOUND", "Holiday entry not found");
         }
@@ -508,18 +512,19 @@ public class AdminMasterDataService {
 
                     // Copy all entries from the preset calendar
                     jdbcTemplate.query(
-                            "SELECT name, entry_type, month, day, nth_occurrence, day_of_week, specific_year "
+                            "SELECT name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year "
                                     + "FROM holiday_calendar_entry_preset WHERE holiday_calendar_id = ?",
                             (entryRs) -> {
                                 UUID entryId = UUID.randomUUID();
                                 jdbcTemplate.update(
                                         """
-                                        INSERT INTO holiday_calendar_entry (id, holiday_calendar_id, name, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                        INSERT INTO holiday_calendar_entry (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                         """,
                                         entryId,
                                         tenantCalendarId,
                                         entryRs.getString("name"),
+                                        entryRs.getString("name_ja"),
                                         entryRs.getString("entry_type"),
                                         entryRs.getInt("month"),
                                         entryRs.getObject("day") != null ? entryRs.getInt("day") : null,
@@ -577,6 +582,7 @@ public class AdminMasterDataService {
     public record HolidayEntryRow(
             String id,
             String name,
+            String nameJa,
             String entryType,
             int month,
             Integer day,
