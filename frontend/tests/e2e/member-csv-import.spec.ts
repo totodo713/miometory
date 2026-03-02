@@ -123,8 +123,10 @@ test.describe
 
       // Verify content contains the expected header
       const filePath = await download.path();
-      expect(filePath).toBeTruthy();
-      const content = fs.readFileSync(filePath!, "utf-8");
+      if (!filePath) {
+        throw new Error("Expected download path to be non-null");
+      }
+      const content = fs.readFileSync(filePath, "utf-8");
       expect(content).toContain("email");
       expect(content).toContain("displayName");
     });
@@ -144,8 +146,10 @@ test.describe
       // Select the first real option (index 1, skipping placeholder)
       const firstOption = orgSelect.locator("option").nth(1);
       const firstOptionValue = await firstOption.getAttribute("value");
-      expect(firstOptionValue).toBeTruthy();
-      await orgSelect.selectOption(firstOptionValue!);
+      if (!firstOptionValue) {
+        throw new Error("Expected organization option to have a non-null value attribute");
+      }
+      await orgSelect.selectOption(firstOptionValue);
 
       // 2. Upload a valid CSV with 3 rows
       const csvContent = buildValidCsv(runId, 3);
@@ -188,8 +192,10 @@ test.describe
 
       // 8. Verify result CSV content
       const filePath = await resultDownload.path();
-      expect(filePath).toBeTruthy();
-      const resultContent = fs.readFileSync(filePath!, "utf-8");
+      if (!filePath) {
+        throw new Error("Expected result download path to be non-null");
+      }
+      const resultContent = fs.readFileSync(filePath, "utf-8");
       const resultLines = resultContent.trim().split("\n");
       // Header + 3 data rows
       expect(resultLines.length).toBeGreaterThanOrEqual(4);
@@ -233,7 +239,10 @@ test.describe
       await expect(orgSelect.locator("option")).not.toHaveCount(1, { timeout: 10_000 });
       const firstOption = orgSelect.locator("option").nth(1);
       const firstOptionValue = await firstOption.getAttribute("value");
-      await orgSelect.selectOption(firstOptionValue!);
+      if (!firstOptionValue) {
+        throw new Error("Expected organization option to have a non-null value attribute");
+      }
+      await orgSelect.selectOption(firstOptionValue);
 
       // Upload invalid CSV
       const csvContent = buildInvalidCsv(runId);
@@ -271,7 +280,10 @@ test.describe
       await expect(orgSelect.locator("option")).not.toHaveCount(1, { timeout: 10_000 });
       const firstOption = orgSelect.locator("option").nth(1);
       const firstOptionValue = await firstOption.getAttribute("value");
-      await orgSelect.selectOption(firstOptionValue!);
+      if (!firstOptionValue) {
+        throw new Error("Expected organization option to have a non-null value attribute");
+      }
+      await orgSelect.selectOption(firstOptionValue);
 
       // Upload mixed CSV (2 valid + 1 invalid)
       const csvContent = buildMixedCsv(runId);

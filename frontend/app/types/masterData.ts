@@ -32,6 +32,7 @@ export interface HolidayCalendarPresetRow {
 export interface HolidayEntryRow {
   id: string;
   name: string;
+  nameJa: string | null;
   entryType: "FIXED" | "NTH_WEEKDAY";
   month: number;
   day: number | null;

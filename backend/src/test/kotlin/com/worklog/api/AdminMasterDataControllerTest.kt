@@ -209,6 +209,9 @@ class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
                     .with(user(adminEmail)),
             ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.length()").value(16))
+                .andExpect(jsonPath("$[0].nameJa").isNotEmpty)
+                .andExpect(jsonPath("$[?(@.name == 'New Year\\'s Day')].nameJa").value("元日"))
+                .andExpect(jsonPath("$[?(@.name == 'Sports Day')].nameJa").value("スポーツの日"))
         }
 
         @Test
