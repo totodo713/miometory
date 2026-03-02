@@ -50,8 +50,13 @@ class DailyCalendarEntryTest {
     @Test
     fun `7-arg constructor should default holiday names and rejection to null`() {
         val entry = DailyCalendarEntry(
-            date, workHours, absenceHours, "DRAFT",
-            true, false, false,
+            date,
+            workHours,
+            absenceHours,
+            "DRAFT",
+            true,
+            false,
+            false,
         )
 
         assertEquals(false, entry.isHoliday())
