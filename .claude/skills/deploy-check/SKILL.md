@@ -68,15 +68,7 @@ cd frontend && npm run build 2>&1
 - **Pass**: Exit code 0
 - **Fail**: Show error output
 
-### 6. Docker Compose Config Validation
-
-```bash
-cd infra/docker && docker compose -f docker-compose.prod.yml config --quiet 2>&1
-```
-- **Pass**: No errors
-- **Fail**: Show config errors
-
-### 7. Summary Report
+### 6. Summary Report
 
 Format the final report:
 
@@ -90,7 +82,6 @@ Format the final report:
 | Seed Data Coverage | ✅ Complete / ⚠️ Missing tables |
 | Backend Build | ✅ Pass / ❌ Fail |
 | Frontend Build | ✅ Pass / ❌ Fail |
-| Docker Config | ✅ Valid / ❌ Invalid |
 
 ### Overall: ✅ Ready / ⚠️ Warnings / ❌ Not Ready
 ```

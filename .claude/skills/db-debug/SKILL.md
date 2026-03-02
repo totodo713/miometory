@@ -16,7 +16,7 @@ Debug aggregate state, event history, and projection consistency using the Postg
 
 ## Prerequisites
 
-The PostgreSQL MCP server (`postgres-mcp`) must be configured and the dev database must be running (`cd infra/docker && docker compose -f docker-compose.dev.yml up -d`).
+The PostgreSQL MCP server (`postgres-mcp`) must be configured and the dev database must be running (via devcontainer).
 
 ## Workflow
 

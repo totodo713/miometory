@@ -1,16 +1,13 @@
 {
   "name": "Miometry Dev",
   "dockerComposeFile": "docker-compose.yml",
-  "service": "backend",
+  "service": "app",
   "workspaceFolder": "/workspaces/miometory",
   "remoteUser": "vscode",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "installZsh": false,
       "username": "vscode"
-    },
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "20"
     },
     "ghcr.io/devcontainers/features/docker-in-docker:2": {
       "dockerDashComposeVersion": "none"

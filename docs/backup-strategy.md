@@ -197,7 +197,7 @@ Use WAL archiving to recover to a specific timestamp:
 
 ```bash
 # Stop the database
-docker compose -f docker-compose.prod.yml stop backend
+docker compose stop backend  # Production compose file TBD
 
 # Configure recovery target
 cat > /var/lib/postgresql/data/recovery.conf << EOF
@@ -207,7 +207,7 @@ recovery_target_action = 'promote'
 EOF
 
 # Restart and recover
-docker compose -f docker-compose.prod.yml start postgres
+docker compose start postgres  # Production compose file TBD
 ```
 
 ### Scenario 2: Daily Backup Restore
@@ -340,4 +340,8 @@ exit 0
 
 ---
 
-*Last Updated: January 2026*
+> **Note**: Backup scripts (`infra/scripts/backup-db.sh`, `restore-db.sh`, `verify-health.sh`) were removed as part of the devcontainer migration (March 2026). Backup strategy will be revisited when production environment is defined.
+
+---
+
+*Last Updated: March 2026*

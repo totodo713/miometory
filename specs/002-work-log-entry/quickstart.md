@@ -1,3 +1,5 @@
+**Note**: Development now uses devcontainer. See [QUICKSTART.md](/QUICKSTART.md) for current setup instructions.
+
 # Quickstart Guide: Work-Log Entry System
 
 **Feature**: 002-work-log-entry  

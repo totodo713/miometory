@@ -1,3 +1,5 @@
+**Note**: Development now uses devcontainer. See [QUICKSTART.md](/QUICKSTART.md) for current setup instructions.
+
 # Quickstart: AuditLog Persistence Bug Fix
 
 **Feature Branch**: `010-fix-auditlog-persistence`
