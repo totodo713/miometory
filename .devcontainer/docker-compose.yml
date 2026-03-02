@@ -5,6 +5,9 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ..:/workspaces/miometory:cached
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     command: sleep infinity
     environment:
       SPRING_PROFILES_ACTIVE: dev
