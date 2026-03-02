@@ -141,46 +141,27 @@ PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/reso
 - Spotless: palantir-java-format (Java), ktlint intellij_idea style (Kotlin). 4 spaces, 120-char lines
 - Detekt for Kotlin static analysis. Baseline file suppresses existing violations
 - No wildcard imports. Run `./gradlew formatAll` before committing
-- New entities require: domain model + migration + seed data in same PR (see checklist below)
 
 ## Testing Stack
 
 - **Frontend**: Vitest, React Testing Library, Playwright (E2E), @axe-core/playwright (a11y)
 - **Backend**: JUnit 5, Spring Boot Test, Testcontainers 1.21.1, spring-security-test, MockK
 
-### Backend Testing Guidelines
+### Testing Gotchas
+
+Test templates and patterns → use `/gen-test` skill. Below are non-obvious gotchas only:
 
 - **Integration tests**: Extend `IntegrationTestBase` (Testcontainers, `@BeforeEach` で FK 用ユーザー作成)
 - **Seeded role IDs**: USER=`00000000-...-000000000002`, ADMIN=`00000000-...-000000000001` (V18 migration)
 - **Test data uniqueness**: Use UUID-based unique values (not hardcoded strings) to prevent constraint violations with Testcontainers container reuse
 - **Mockito + Kotlin varargs**: `contains()`/`eq()` matchers don't work with Java varargs methods (e.g. `JdbcTemplate.queryForObject`). Use `defaultAnswer` with SQL routing instead
 - **Coverage target**: 80%+ LINE coverage per package. Run `./gradlew test jacocoTestReport` to generate reports
-- **JaCoCo reports**: `build/reports/jacoco/<package>/index.html` — tfoot cells[7]=missed lines, cells[8]=total lines
-
-### Frontend Testing Guidelines
-
-- **Vitest config**: `frontend/vitest.config.mts` — jsdom environment, `globals: true`, tests in `tests/unit/**/*.{test,spec}.{ts,tsx}`
-- **Path alias**: `@` resolves to `frontend/app/` (configured in vitest.config.mts and tsconfig.json)
-- **Fake timers + waitFor**: `vi.useFakeTimers()` breaks `waitFor()` (internally uses `setTimeout` polling). Use `act(() => vi.advanceTimersByTime(ms))` then assert synchronously
+- **Fake timers + waitFor**: `vi.useFakeTimers()` breaks `waitFor()`. Use `act(() => vi.advanceTimersByTime(ms))` then assert synchronously
 - **Fake timers + userEvent**: `userEvent.setup({ advanceTimers })` can still timeout. Use `fireEvent` for click/input in fake timer tests
-- **afterEach cleanup**: Always call `vi.useRealTimers()` in `afterEach` when using `vi.useFakeTimers()` in any test
-- **Mock pattern**: `vi.mock("@/services/api", () => ({ api: { ... } }))` — place before imports that use the module
 
 ## Database Implementation Rules
 
-When adding new domain entities, always create both the domain model and database migration together in the same commit/PR.
-
-**Required Checklist:**
-- [ ] Domain model: `domain/xxx/Xxx.java`
-- [ ] ID value object: `domain/xxx/XxxId.java`
-- [ ] Migration file: `db/migration/Vxx__xxx_table.sql`
-- [ ] Seed data: Add test data to `data-dev.sql` (dev profile only, `@@` separator)
-- [ ] Repository (if needed): `infrastructure/repository/XxxRepository.java`
-
-**Foreign Key Rules:**
-- Always add FK constraints for `*_id` columns referencing other tables
-- Referenced tables must be created before referencing tables
-- Use `ON CONFLICT` clauses in seed data for idempotency
+New entities require: domain model + migration + seed data in same PR. Use `/create-migration` skill for scaffolding with full checklist and conventions.
 
 ## PR Review Response Rules
 
