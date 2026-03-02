@@ -10,6 +10,7 @@ import { api } from "@/services/api";
 import { LocaleToggle } from "./LocaleToggle";
 import { NotificationBell } from "./NotificationBell";
 import { TenantSwitcher } from "./TenantSwitcher";
+import { UserMenu } from "./UserMenu";
 
 export function Header() {
   const { user, logout } = useAuthContext();
@@ -141,6 +142,15 @@ export function Header() {
                     {t("admin")}
                   </Link>
                 )}
+                <Link
+                  href="/mypage"
+                  onClick={closeDrawer}
+                  className={`block px-3 py-2 text-sm rounded-md ${
+                    pathname === "/mypage" ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {t("myPage")}
+                </Link>
               </nav>
               <div className="px-4 py-4 border-t border-gray-200 space-y-3">
                 <TenantSwitcher />
@@ -195,10 +205,7 @@ export function Header() {
         <TenantSwitcher />
         <NotificationBell />
         <LocaleToggle />
-        <span className="text-sm text-gray-700">{user.displayName}</span>
-        <button type="button" onClick={logout} className="text-sm text-gray-500 hover:text-gray-700">
-          {t("logout")}
-        </button>
+        <UserMenu />
       </div>
     </header>
   );
