@@ -206,8 +206,7 @@ class HolidayResolutionServiceTest {
         @Test
         @DisplayName("should return holidays ordered by date using TreeMap")
         void shouldReturnHolidaysOrderedByDate() {
-            var feb = new HolidayCalendarEntryRow(
-                    "Foundation Day", "建国記念の日", "FIXED", 2, 11, null, null, null);
+            var feb = new HolidayCalendarEntryRow("Foundation Day", "建国記念の日", "FIXED", 2, 11, null, null, null);
             var jan = new HolidayCalendarEntryRow("New Year's Day", "元日", "FIXED", 1, 1, null, null, null);
             // Entries ordered: Feb first, Jan second (reversed chronological order)
             when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(feb, jan));
