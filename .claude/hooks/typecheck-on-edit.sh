@@ -20,9 +20,11 @@ print(tool_input.get('file_path', ''))
 # Exit if file doesn't exist (e.g. was deleted)
 [[ ! -f "$FILE_PATH" ]] && exit 0
 
+EXEC="$PROJECT_ROOT/.claude/hooks/devcontainer-exec.sh"
+
 case "$FILE_PATH" in
   */frontend/*.ts | */frontend/*.tsx)
-    OUTPUT=$(cd "$PROJECT_ROOT/frontend" && timeout 30 npx tsc --noEmit --pretty 2>&1)
+    OUTPUT=$("$EXEC" --workdir "$PROJECT_ROOT/frontend" -- timeout 30 npx tsc --noEmit --pretty 2>&1)
     EXIT_CODE=$?
     if [[ $EXIT_CODE -eq 124 ]]; then
       echo "TypeCheck: timed out after 30s" >&2

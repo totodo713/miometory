@@ -22,13 +22,18 @@ Miometry — a time entry management system with event sourcing, multi-tenant su
 
 ### Development Environment
 
-Development uses devcontainer. Open the repository in VS Code and select "Reopen in Container".
+Development uses devcontainer. Open the repository in VS Code and select "Reopen in Container", or start from CLI:
 
 ```bash
+# Start devcontainer services (PostgreSQL, Redis, Mailpit + app container)
+docker compose -f .devcontainer/docker-compose.yml up -d
+
 # Inside devcontainer:
 cd backend && ./gradlew bootRun --args='--spring.profiles.active=dev'
 cd frontend && npm install && npm run dev
 ```
+
+Claude Code hooks (`format-on-edit.sh`, `auto-test-on-edit.sh`, `typecheck-on-edit.sh`) automatically delegate build/test/lint commands to the devcontainer via `.claude/hooks/devcontainer-exec.sh`. If the container is not running, commands fall back to local execution.
 
 Frontend: http://localhost:3000 | Backend API: http://localhost:8080
 
