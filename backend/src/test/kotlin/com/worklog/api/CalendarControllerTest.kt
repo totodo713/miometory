@@ -1,6 +1,7 @@
 package com.worklog.api
 
 import com.worklog.IntegrationTestBase
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -20,6 +21,22 @@ class CalendarControllerTest : IntegrationTestBase() {
     private lateinit var restTemplate: TestRestTemplate
 
     private val testMemberId = UUID.randomUUID()
+
+    @BeforeEach
+    fun setUp() {
+        createTestMember(testMemberId)
+        cleanupTestHolidayData()
+    }
+
+    private fun cleanupTestHolidayData() {
+        executeInNewTransaction {
+            // CASCADE on holiday_calendar_entry handles child row cleanup
+            baseJdbcTemplate.update(
+                "DELETE FROM holiday_calendar WHERE tenant_id = ?::UUID",
+                TEST_TENANT_ID,
+            )
+        }
+    }
 
     @Test
     fun `GET calendar should return 400 for invalid year below range`() {
@@ -97,6 +114,22 @@ class CalendarControllerTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `GET calendar should return 404 for non-existent member`() {
+        // Act
+        val nonExistentMemberId = UUID.randomUUID()
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1?memberId=$nonExistentMemberId",
+                Map::class.java,
+            )
+
+        // Assert
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+        val body = response.body as Map<*, *>
+        assertEquals("MEMBER_NOT_FOUND", body["errorCode"])
+    }
+
+    @Test
     fun `GET calendar should return 200 for valid request`() {
         // Act
         val response =
@@ -124,6 +157,65 @@ class CalendarControllerTest : IntegrationTestBase() {
         val body = response.body as Map<*, *>
         assertEquals("2023-12-21", body["periodStart"])
         assertEquals("2024-01-20", body["periodEnd"])
+    }
+
+    @Test
+    fun `GET calendar should include holiday info in response`() {
+        // Arrange - Create holiday calendar for test tenant
+        val calendarId = UUID.randomUUID()
+        createHolidayCalendar(calendarId)
+        createHolidayCalendarEntry(
+            calendarId = calendarId,
+            name = "New Year's Day",
+            nameJa = "元日",
+            entryType = "FIXED",
+            month = 1,
+            day = 1,
+        )
+
+        // Act - Request January 2024 (fiscal period: 2023-12-21 to 2024-01-20)
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
+                Map::class.java,
+            )
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val body = response.body as Map<*, *>
+
+        @Suppress("UNCHECKED_CAST")
+        val entries = body["dates"] as List<Map<String, Any?>>
+
+        val jan1 = entries.find { it["date"] == "2024-01-01" }
+        assertNotNull(jan1, "Expected entry for 2024-01-01")
+        assertEquals(true, jan1["isHoliday"])
+        assertEquals("New Year's Day", jan1["holidayName"])
+        assertEquals("元日", jan1["holidayNameJa"])
+    }
+
+    @Test
+    fun `GET calendar should return isHoliday false for non-holiday dates`() {
+        // Act - Request January 2024 (no holidays configured)
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/calendar/2024/1?memberId=$testMemberId",
+                Map::class.java,
+            )
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val body = response.body as Map<*, *>
+
+        @Suppress("UNCHECKED_CAST")
+        val dates = body["dates"] as List<Map<String, Any?>>
+
+        // Verify every entry contains isHoliday field and none are true
+        dates.forEach { entry ->
+            assertTrue(entry.containsKey("isHoliday"), "Each entry should include isHoliday")
+        }
+        val anyHoliday = dates.any { it["isHoliday"] == true }
+        assertEquals(false, anyHoliday, "No entries should be marked as holidays")
     }
 
     @Test
@@ -224,5 +316,46 @@ class CalendarControllerTest : IntegrationTestBase() {
                 Map::class.java,
             )
         assertEquals(HttpStatus.OK, decResponse.statusCode)
+    }
+
+    private fun createHolidayCalendar(calendarId: UUID) {
+        executeInNewTransaction {
+            baseJdbcTemplate.update(
+                """INSERT INTO holiday_calendar
+                   (id, tenant_id, name, description, country, is_active)
+                   VALUES (?::UUID, ?::UUID,
+                   'Test Holidays', 'Test', 'JP', true)""",
+                calendarId.toString(),
+                TEST_TENANT_ID,
+            )
+        }
+    }
+
+    private fun createHolidayCalendarEntry(
+        calendarId: UUID,
+        name: String,
+        nameJa: String,
+        entryType: String,
+        month: Int,
+        day: Int? = null,
+        nthOccurrence: Int? = null,
+        dayOfWeek: Int? = null,
+    ) {
+        executeInNewTransaction {
+            baseJdbcTemplate.update(
+                """INSERT INTO holiday_calendar_entry
+                   (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week)
+                   VALUES (?::UUID, ?::UUID, ?, ?, ?, ?, ?, ?, ?)""",
+                UUID.randomUUID().toString(),
+                calendarId.toString(),
+                name,
+                nameJa,
+                entryType,
+                month,
+                day,
+                nthOccurrence,
+                dayOfWeek,
+            )
+        }
     }
 }
