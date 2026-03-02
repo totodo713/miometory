@@ -37,8 +37,18 @@ public record DailyCalendarEntry(
             boolean hasProxyEntries,
             String rejectionSource,
             String rejectionReason) {
-        this(date, totalWorkHours, totalAbsenceHours, status, isWeekend, isHoliday, null, null,
-                hasProxyEntries, rejectionSource, rejectionReason);
+        this(
+                date,
+                totalWorkHours,
+                totalAbsenceHours,
+                status,
+                isWeekend,
+                isHoliday,
+                null,
+                null,
+                hasProxyEntries,
+                rejectionSource,
+                rejectionReason);
     }
 
     /**
@@ -52,7 +62,17 @@ public record DailyCalendarEntry(
             boolean isWeekend,
             boolean isHoliday,
             boolean hasProxyEntries) {
-        this(date, totalWorkHours, totalAbsenceHours, status, isWeekend, isHoliday, null, null,
-                hasProxyEntries, null, null);
+        this(
+                date,
+                totalWorkHours,
+                totalAbsenceHours,
+                status,
+                isWeekend,
+                isHoliday,
+                null,
+                null,
+                hasProxyEntries,
+                null,
+                null);
     }
 }
