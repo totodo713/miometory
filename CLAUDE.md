@@ -52,6 +52,7 @@ PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `check
 - CI uses `biome ci` (= `biome check` + format check); locally use `npx biome check` or `npx biome ci` to match
 - Biome version is pinned in `frontend/package.json` (`@biomejs/biome`); always use the project-local binary
 - After adding JSX attributes (role, aria-*), run `npx biome check --write <file>` — long attribute lines get reformatted to multi-line
+- After adding keys to i18n JSON files (`messages/en.json`, `messages/ja.json`), run `npx biome check --write` — indentation mismatches fail CI
 
 ## Devcontainer Workflow
 
@@ -75,6 +76,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - Before writing E2E text assertions, read the exact value from `en.json` with `node -e "..."` — do not guess translated strings
 - `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
+- Explicit `role` attribute overrides implicit HTML role — `<Link role="menuitem">` needs `getByRole("menuitem")`, not `getByRole("link")`
 
 ## Troubleshooting
 
