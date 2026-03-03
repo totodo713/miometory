@@ -139,7 +139,7 @@ test.describe("Tenant UI: State-based routing", () => {
     await expect(
       page.getByText("An administrator needs to add you to a tenant before you can use the system."),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Log Out" })).toBeVisible();
   });
 
   test("AFFILIATED_NO_ORG user is redirected to /pending-organization", async ({ page }) => {
@@ -157,7 +157,7 @@ test.describe("Tenant UI: State-based routing", () => {
         "You have been added to a tenant. An administrator needs to assign you to an organization before you can start working.",
       ),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Log Out" })).toBeVisible();
   });
 
   test("FULLY_ASSIGNED user with multiple tenants and no selection is redirected to /select-tenant", async ({
@@ -314,7 +314,7 @@ test.describe("Tenant UI: Waiting page", () => {
     await page.goto("/waiting");
     await page.waitForLoadState("networkidle");
 
-    await page.getByRole("button", { name: "Logout" }).click();
+    await page.getByRole("button", { name: "Log Out" }).click();
 
     await page.waitForURL("**/login", { timeout: 10_000 });
   });
