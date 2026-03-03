@@ -70,6 +70,7 @@
     "switchTenant": "テナント切替",
     "currentTenant": "現在のテナント",
     "myPage": "マイページ",
+    "timesheet": "勤務表",
     "userMenu": "ユーザーメニュー"
   },
   "mypage": {
@@ -1250,5 +1251,38 @@
     "select": "選択",
     "organization": "組織",
     "noOrganization": "組織未配属"
+  },
+  "timesheet": {
+    "title": "月次勤務表",
+    "loadError": "勤務表の読み込みに失敗しました",
+    "prevMonth": "前月",
+    "nextMonth": "翌月",
+    "yearSuffix": "年",
+    "monthSuffix": "月",
+    "calendarPeriod": "暦月",
+    "fiscalPeriod": "締月",
+    "periodType": "期間タイプ",
+    "selectProjectPrompt": "プロジェクトを選択して勤務表を表示してください。",
+    "save": "保存",
+    "saving": "保存中...",
+    "saveError": "保存に失敗しました",
+    "startTimeLabel": "{date}の始業時間",
+    "endTimeLabel": "{date}の終業時間",
+    "remarksLabel": "{date}の備考",
+    "remarksPlaceholder": "備考",
+    "table": {
+      "date": "日付",
+      "dayOfWeek": "曜日",
+      "startTime": "始業",
+      "endTime": "終業",
+      "workingHours": "稼働",
+      "remarks": "備考",
+      "actions": "操作"
+    },
+    "summary": {
+      "totalHours": "合計稼働時間",
+      "workingDays": "稼働日数",
+      "businessDays": "営業日数"
+    }
   }
 }

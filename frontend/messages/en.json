@@ -70,6 +70,7 @@
     "switchTenant": "Switch Tenant",
     "currentTenant": "Current Tenant",
     "myPage": "My Page",
+    "timesheet": "Timesheet",
     "userMenu": "User menu"
   },
   "mypage": {
@@ -1250,5 +1251,38 @@
     "select": "Select",
     "organization": "Organization",
     "noOrganization": "No organization assigned"
+  },
+  "timesheet": {
+    "title": "Monthly Timesheet",
+    "loadError": "Failed to load timesheet",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "yearSuffix": " ",
+    "monthSuffix": "",
+    "calendarPeriod": "Calendar",
+    "fiscalPeriod": "Fiscal",
+    "periodType": "Period type",
+    "selectProjectPrompt": "Select a project to view the timesheet.",
+    "save": "Save",
+    "saving": "Saving...",
+    "saveError": "Failed to save",
+    "startTimeLabel": "Start time for {date}",
+    "endTimeLabel": "End time for {date}",
+    "remarksLabel": "Remarks for {date}",
+    "remarksPlaceholder": "Remarks",
+    "table": {
+      "date": "Date",
+      "dayOfWeek": "Day",
+      "startTime": "Start",
+      "endTime": "End",
+      "workingHours": "Hours",
+      "remarks": "Remarks",
+      "actions": "Actions"
+    },
+    "summary": {
+      "totalHours": "Total Hours",
+      "workingDays": "Working Days",
+      "businessDays": "Business Days"
+    }
   }
 }

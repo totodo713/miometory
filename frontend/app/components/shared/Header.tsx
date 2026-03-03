@@ -72,6 +72,7 @@ export function Header() {
   }
 
   const isAdminPage = pathname.startsWith("/admin");
+  const isTimesheetPage = pathname.startsWith("/worklog/timesheet");
 
   if (isMobile) {
     return (
@@ -126,10 +127,21 @@ export function Header() {
                   href="/worklog"
                   onClick={closeDrawer}
                   className={`block px-3 py-2 text-sm rounded-md ${
-                    !isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
+                    !isAdminPage && !isTimesheetPage
+                      ? "bg-gray-100 text-gray-900 font-medium"
+                      : "text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   {t("worklog")}
+                </Link>
+                <Link
+                  href="/worklog/timesheet"
+                  onClick={closeDrawer}
+                  className={`block px-3 py-2 text-sm rounded-md ${
+                    isTimesheetPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {t("timesheet")}
                 </Link>
                 {hasAdminAccess && (
                   <Link
@@ -184,10 +196,20 @@ export function Header() {
           <Link
             href="/worklog"
             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-              !isAdminPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
+              !isAdminPage && !isTimesheetPage
+                ? "bg-gray-100 text-gray-900 font-medium"
+                : "text-gray-600 hover:bg-gray-50"
             }`}
           >
             {t("worklog")}
+          </Link>
+          <Link
+            href="/worklog/timesheet"
+            className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              isTimesheetPage ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            {t("timesheet")}
           </Link>
           {hasAdminAccess && (
             <Link
