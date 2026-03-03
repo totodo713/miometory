@@ -153,4 +153,33 @@ test.describe("MyPage Feature", () => {
     await expect(page.getByText("Display name is required")).toBeVisible();
     await expect(page.getByText("Email is required")).toBeVisible();
   });
+
+  test("shows email changed dialog and logs out when email is updated", async ({ page }) => {
+    await page.goto("/mypage");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByText("Bob Engineer")).toBeVisible();
+
+    // Open edit modal
+    await page.getByText("Edit Profile").click();
+
+    // Change email to a different address
+    const emailInput = page.locator("#edit-email");
+    await emailInput.clear();
+    await emailInput.fill("new@example.com");
+
+    // Save
+    await page.getByRole("button", { name: "Save" }).click();
+
+    // Email changed alert dialog should appear
+    await expect(page.getByRole("alertdialog")).toBeVisible();
+    await expect(page.getByText("Email Changed")).toBeVisible();
+    await expect(page.getByText("log in again")).toBeVisible();
+
+    // Click logout button
+    await page.getByRole("button", { name: "Log out" }).click();
+
+    // Should navigate to login page
+    await expect(page).toHaveURL(/\/login/);
+  });
 });
