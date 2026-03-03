@@ -58,6 +58,7 @@ PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `check
 - Biome version is pinned in `frontend/package.json` (`@biomejs/biome`); always use the project-local binary
 - After adding JSX attributes (role, aria-*), run `npx biome check --write <file>` — long attribute lines get reformatted to multi-line
 - After adding keys to i18n JSON files (`messages/en.json`, `messages/ja.json`), run `npx biome check --write` — indentation mismatches fail CI
+- **i18n key-parity test**: `key-parity.test.ts` enforces no empty translation values — if a key is semantically empty in one language (e.g. English suffix), use `" "` (space) instead of `""`
 
 ## Devcontainer Workflow
 
@@ -69,6 +70,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **Start servers**: `exec -d app bash -c "cd /workspaces/miometory/backend && ./gradlew bootRun > /tmp/backend.log 2>&1"` / `exec -d app bash -c "cd /workspaces/miometory/frontend && npm run dev > /tmp/frontend.log 2>&1"`
 - **Path conversion**: Host `$PROJECT_ROOT/...` → Container `/workspaces/miometory/...` (automatic)
 - **Fallback**: If the container is not running, hooks execute commands locally (same as before)
+- **Worktree gotcha**: git worktree ではdevcontainerが起動していないことが多い。手動で `devcontainer-exec.sh` を呼ぶ場合、`--workdir` にコンテナパス (`/workspaces/...`) を使わず、ホストの絶対パスを使うか、直接 `cd` + コマンド実行する
 - **Manual exec**: `.claude/hooks/devcontainer-exec.sh --workdir DIR -- COMMAND`
 
 ## E2E Tests (Playwright)
@@ -92,3 +94,4 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## Troubleshooting
 
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
+- **Flyway checksum mismatch in tests** ("Migration checksum mismatch for migration version N"): Testcontainers の `.withReuse(true)` がキャッシュした旧DBと migration file の内容が不一致 → `docker ps -a --filter "label=org.testcontainers"` で対象 PostgreSQL コンテナを特定し `docker stop/rm` で削除、再テスト
