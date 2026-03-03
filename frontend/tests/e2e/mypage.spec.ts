@@ -78,8 +78,8 @@ test.describe("MyPage Feature", () => {
     const userMenuButton = page.getByRole("button", { name: /User menu/ });
     await userMenuButton.click();
 
-    // Verify dropdown shows "My Page" link
-    const myPageLink = page.getByRole("link", { name: "My Page" });
+    // Verify dropdown shows "My Page" menu item (Link has role="menuitem")
+    const myPageLink = page.getByRole("menuitem", { name: "My Page" });
     await expect(myPageLink).toBeVisible();
 
     // Click "My Page"
@@ -91,8 +91,8 @@ test.describe("MyPage Feature", () => {
     await page.goto("/mypage");
     await page.waitForLoadState("networkidle");
 
-    // Verify profile fields
-    await expect(page.getByText("Bob Engineer")).toBeVisible();
+    // Verify profile fields (.first() avoids strict-mode: name appears in UserMenu + profile card)
+    await expect(page.getByText("Bob Engineer").first()).toBeVisible();
     await expect(page.getByText("bob.engineer@miometry.example.com")).toBeVisible();
     await expect(page.getByText("Engineering")).toBeVisible();
     await expect(page.getByText("Alice Manager")).toBeVisible();
@@ -113,7 +113,7 @@ test.describe("MyPage Feature", () => {
     await page.waitForLoadState("networkidle");
 
     // Wait for profile to load
-    await expect(page.getByText("Bob Engineer")).toBeVisible();
+    await expect(page.getByText("Bob Engineer").first()).toBeVisible();
 
     // Click edit button
     await page.getByText("Edit Profile").click();
@@ -137,7 +137,7 @@ test.describe("MyPage Feature", () => {
     await page.goto("/mypage");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Bob Engineer")).toBeVisible();
+    await expect(page.getByText("Bob Engineer").first()).toBeVisible();
     await page.getByText("Edit Profile").click();
 
     // Clear both fields
@@ -158,7 +158,7 @@ test.describe("MyPage Feature", () => {
     await page.goto("/mypage");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Bob Engineer")).toBeVisible();
+    await expect(page.getByText("Bob Engineer").first()).toBeVisible();
 
     // Open edit modal
     await page.getByText("Edit Profile").click();
