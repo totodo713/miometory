@@ -75,10 +75,12 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - Devcontainer: `npx playwright test --project=chromium` — only the `chromium` Playwright project is configured and run in CI
 - Playwright strict mode: locators matching multiple elements fail; use `.first()` or `{ exact: true }`
+- Verifying modal open: use `getByRole("heading", { name })` not `getByText()` — button text and modal title often match, causing strict-mode violation
 - Button selectors: `has-text("Assign")` also matches `"Assign Manager"` — use `getByRole("button", { name: "Assign", exact: true })` for modals
 - ProjectSelector is a combobox (`role="combobox"` + `role="option"`), not a plain input; use `selectProject()` helper in `frontend/tests/e2e/fixtures/auth.ts`
 - UI text source of truth: `frontend/messages/en.json` (next-intl) — always verify against this file, not guesses
 - Before writing E2E text assertions, read the exact value from `en.json` with `node -e "..."` — do not guess translated strings
+- Same i18n key name can differ across namespaces (`header.logout` = "Logout" vs `waiting.logout` = "Log Out") — always check the correct namespace
 - `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
 - Explicit `role` attribute overrides implicit HTML role — `<Link role="menuitem">` needs `getByRole("menuitem")`, not `getByRole("link")`
