@@ -369,10 +369,8 @@ describe("Calendar Component", () => {
         </IntlWrapper>,
       );
 
-      // Find the button for date 2026-01-24 (Saturday, weekend)
-      const buttons = screen.getAllByRole("button");
-      const weekendButton = buttons.find((btn) => btn.textContent?.includes("24"));
-
+      // Find the button for date 2026-01-24 (Saturday, weekend) by aria-label
+      const weekendButton = screen.getByRole("button", { name: /24, 2026/ });
       expect(weekendButton).toHaveClass("bg-weekend-100");
     });
 
@@ -396,10 +394,8 @@ describe("Calendar Component", () => {
         </IntlWrapper>,
       );
 
-      // Find the button for date 2026-01-28 (holiday)
-      const buttons = screen.getAllByRole("button");
-      const holidayButton = buttons.find((btn) => btn.textContent?.includes("28"));
-
+      // Find the button for date 2026-01-28 (holiday) by aria-label
+      const holidayButton = screen.getByRole("button", { name: /28, 2026/ });
       expect(holidayButton).toHaveClass("bg-holiday-100");
     });
 
@@ -427,8 +423,8 @@ describe("Calendar Component", () => {
         </IntlWrapper>,
       );
 
-      const buttons = screen.getAllByRole("button");
-      const sundayButton = buttons.find((btn) => btn.textContent?.includes("25"));
+      // Find the Sunday button by aria-label
+      const sundayButton = screen.getByRole("button", { name: /25, 2026/ });
       expect(sundayButton).toHaveClass("bg-holiday-100");
     });
 

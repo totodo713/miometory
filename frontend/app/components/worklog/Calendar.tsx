@@ -29,6 +29,12 @@ interface CalendarProps {
   orgId?: string;
 }
 
+/** Parse YYYY-MM-DD as local date to avoid UTC timezone shifting in getDay()/getDate() */
+function parseLocalDate(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
 const STATUS_COLORS = {
   DRAFT: "bg-gray-100 text-gray-800",
   SUBMITTED: "bg-blue-100 text-blue-800",
@@ -58,7 +64,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
   let currentWeek: (DailyCalendarEntry | null)[] = [];
 
   for (const dateEntry of dates) {
-    const date = new Date(dateEntry.date);
+    const date = parseLocalDate(dateEntry.date);
     const dayOfWeek = date.getDay();
 
     // Start a new week on Sunday (day 0)
@@ -124,7 +130,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
         /* Mobile list view */
         <div className="divide-y divide-gray-200" data-testid="mobile-calendar-list">
           {dates.map((dateEntry) => {
-            const date = new Date(dateEntry.date);
+            const date = parseLocalDate(dateEntry.date);
             const dayNum = date.getDate();
             const dayName = DAY_NAMES[date.getDay()];
             const isSunday = date.getDay() === 0;
@@ -242,7 +248,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                   return <div key={cellKey} className="bg-gray-50 min-h-24" />;
                 }
 
-                const date = new Date(dateEntry.date);
+                const date = parseLocalDate(dateEntry.date);
                 const dayNum = date.getDate();
                 const isSunday = date.getDay() === 0;
                 const displayHolidayName = dateEntry.isHoliday
