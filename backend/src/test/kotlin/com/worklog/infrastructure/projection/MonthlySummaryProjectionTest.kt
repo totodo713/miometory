@@ -1,5 +1,7 @@
 package com.worklog.infrastructure.projection
 
+import com.worklog.application.service.StandardHoursResolution
+import com.worklog.application.service.StandardWorkingHoursService
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -23,13 +25,18 @@ class MonthlySummaryProjectionTest {
     @Mock
     private lateinit var jdbcTemplate: JdbcTemplate
 
+    @Mock
+    private lateinit var standardWorkingHoursService: StandardWorkingHoursService
+
     private lateinit var projection: MonthlySummaryProjection
 
     private val memberId = UUID.randomUUID()
 
     @BeforeEach
     fun setUp() {
-        projection = MonthlySummaryProjection(jdbcTemplate)
+        `when`(standardWorkingHoursService.resolveStandardDailyHours(any()))
+            .thenReturn(StandardHoursResolution(BigDecimal("8.0"), "system"))
+        projection = MonthlySummaryProjection(jdbcTemplate, standardWorkingHoursService)
     }
 
     @Test
@@ -74,6 +81,9 @@ class MonthlySummaryProjectionTest {
         // First call returns project summaries
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(projectResults)
+        // Daily work totals for overtime calculation
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
         // Second call returns absence hours
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -106,6 +116,8 @@ class MonthlySummaryProjectionTest {
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(projectResults)
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("MonthlyApproval"), any(), any(), any()))
@@ -136,6 +148,8 @@ class MonthlySummaryProjectionTest {
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(projectResults)
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("MonthlyApproval"), any(), any(), any()))
@@ -160,6 +174,8 @@ class MonthlySummaryProjectionTest {
             )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(absenceResults)
@@ -186,6 +202,8 @@ class MonthlySummaryProjectionTest {
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(absenceResults)
         `when`(jdbcTemplate.queryForList(contains("MonthlyApproval"), any(), any(), any()))
@@ -208,6 +226,8 @@ class MonthlySummaryProjectionTest {
             )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -232,6 +252,8 @@ class MonthlySummaryProjectionTest {
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("MonthlyApproval"), any(), any(), any()))
@@ -253,6 +275,8 @@ class MonthlySummaryProjectionTest {
             )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -276,6 +300,8 @@ class MonthlySummaryProjectionTest {
             )
 
         `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
         `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
@@ -309,5 +335,71 @@ class MonthlySummaryProjectionTest {
 
         // February 2025 has 20 business days (28 days - 8 weekend days)
         assertEquals(20, result.totalBusinessDays())
+    }
+
+    @Test
+    fun `getMonthlySummary should calculate overtime hours correctly`() {
+        // Configure daily work totals: 2 days with overtime
+        val dailyWorkTotals =
+            listOf(
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 6)),
+                    "total_hours" to BigDecimal("10.00"), // 2h overtime
+                ),
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 7)),
+                    "total_hours" to BigDecimal("9.50"), // 1.5h overtime
+                ),
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 8)),
+                    "total_hours" to BigDecimal("7.00"), // no overtime (under 8h)
+                ),
+            )
+
+        `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
+            .thenReturn(dailyWorkTotals)
+        `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("MonthlyApproval"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+
+        val result = projection.getMonthlySummary(memberId, 2025, 1)
+
+        // Overtime: (10 - 8) + (9.5 - 8) + max(0, 7 - 8) = 2.0 + 1.5 + 0 = 3.5
+        assertEquals(0, BigDecimal("3.50").compareTo(result.overtimeHours()))
+        assertEquals(BigDecimal("8.0"), result.standardDailyHours())
+        // 23 business days * 8h = 184h
+        assertEquals(0, BigDecimal("184.0").compareTo(result.standardMonthlyHours()))
+        assertEquals("system", result.standardHoursSource())
+    }
+
+    @Test
+    fun `getMonthlySummary should return zero overtime when no work exceeds standard hours`() {
+        val dailyWorkTotals =
+            listOf(
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 6)),
+                    "total_hours" to BigDecimal("7.50"),
+                ),
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 7)),
+                    "total_hours" to BigDecimal("8.00"), // exactly standard, no overtime
+                ),
+            )
+
+        `when`(jdbcTemplate.queryForList(contains("WITH project_hours"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("GROUP BY work_date"), any(), any(), any()))
+            .thenReturn(dailyWorkTotals)
+        `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("MonthlyApproval"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+
+        val result = projection.getMonthlySummary(memberId, 2025, 1)
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.overtimeHours()))
     }
 }

@@ -14,11 +14,22 @@ public record DailyEntryProjection(
         String status,
         boolean isWeekend,
         boolean isHoliday,
-        boolean hasProxyEntries) {
+        boolean hasProxyEntries,
+        BigDecimal standardDailyHours,
+        BigDecimal overtimeHours) {
     /**
      * Creates a projection with default values.
      */
     public static DailyEntryProjection empty(LocalDate date, boolean isWeekend) {
-        return new DailyEntryProjection(date, BigDecimal.ZERO, BigDecimal.ZERO, "DRAFT", isWeekend, false, false);
+        return new DailyEntryProjection(
+                date,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                "DRAFT",
+                isWeekend,
+                false,
+                false,
+                BigDecimal.ZERO,
+                BigDecimal.ZERO);
     }
 }

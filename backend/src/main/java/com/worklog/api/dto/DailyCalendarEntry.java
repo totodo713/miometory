@@ -10,6 +10,8 @@ import java.time.LocalDate;
  * @param rejectionReason The rejection reason (from monthly approval or daily rejection log), null if not rejected
  * @param holidayName The holiday name in English (nullable, only set when isHoliday is true)
  * @param holidayNameJa The holiday name in Japanese (nullable, only set when isHoliday is true)
+ * @param standardDailyHours The standard daily working hours for this member (nullable)
+ * @param overtimeHours The overtime hours for this day (nullable)
  */
 public record DailyCalendarEntry(
         LocalDate date,
@@ -22,7 +24,9 @@ public record DailyCalendarEntry(
         String holidayNameJa,
         boolean hasProxyEntries,
         String rejectionSource,
-        String rejectionReason) {
+        String rejectionReason,
+        BigDecimal standardDailyHours,
+        BigDecimal overtimeHours) {
 
     /**
      * Backward-compatible constructor without holiday name fields.
@@ -48,7 +52,9 @@ public record DailyCalendarEntry(
                 null,
                 hasProxyEntries,
                 rejectionSource,
-                rejectionReason);
+                rejectionReason,
+                null,
+                null);
     }
 
     /**
@@ -72,6 +78,8 @@ public record DailyCalendarEntry(
                 null,
                 null,
                 hasProxyEntries,
+                null,
+                null,
                 null,
                 null);
     }

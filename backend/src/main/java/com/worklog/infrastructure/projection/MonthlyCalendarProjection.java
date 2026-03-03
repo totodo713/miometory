@@ -1,5 +1,7 @@
 package com.worklog.infrastructure.projection;
 
+import com.worklog.application.service.StandardHoursResolution;
+import com.worklog.application.service.StandardWorkingHoursService;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -29,9 +31,12 @@ import org.springframework.stereotype.Component;
 public class MonthlyCalendarProjection {
 
     private final JdbcTemplate jdbcTemplate;
+    private final StandardWorkingHoursService standardWorkingHoursService;
 
-    public MonthlyCalendarProjection(JdbcTemplate jdbcTemplate) {
+    public MonthlyCalendarProjection(
+            JdbcTemplate jdbcTemplate, StandardWorkingHoursService standardWorkingHoursService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.standardWorkingHoursService = standardWorkingHoursService;
     }
 
     /**
@@ -184,6 +189,10 @@ public class MonthlyCalendarProjection {
         Map<LocalDate, String> dailyStatuses = getDailyStatuses(memberId, startDate, endDate);
         Set<LocalDate> proxyDates = getProxyEntryDates(memberId, startDate, endDate);
 
+        // Resolve standard daily hours once for this member
+        StandardHoursResolution resolution = standardWorkingHoursService.resolveStandardDailyHours(memberId);
+        BigDecimal standardDailyHours = resolution.hours();
+
         List<DailyEntryProjection> entries = new ArrayList<>();
         LocalDate current = startDate;
 
@@ -196,6 +205,9 @@ public class MonthlyCalendarProjection {
             String status = dailyStatuses.getOrDefault(current, "DRAFT");
             boolean hasProxyEntries = proxyDates.contains(current);
 
+            // Calculate overtime: max(0, totalHours - standardDailyHours)
+            BigDecimal overtimeHours = totalHours.subtract(standardDailyHours).max(BigDecimal.ZERO);
+
             entries.add(new DailyEntryProjection(
                     current,
                     totalHours,
@@ -203,7 +215,9 @@ public class MonthlyCalendarProjection {
                     status,
                     isWeekend,
                     false, // Holiday detection - not implemented yet
-                    hasProxyEntries));
+                    hasProxyEntries,
+                    standardDailyHours,
+                    overtimeHours));
 
             current = current.plusDays(1);
         }
