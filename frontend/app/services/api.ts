@@ -783,6 +783,23 @@ export const api = {
   },
 
   /**
+   * Profile endpoints (current user)
+   */
+  profile: {
+    get: () =>
+      apiClient.get<{
+        id: string;
+        email: string;
+        displayName: string;
+        organizationName: string | null;
+        managerName: string | null;
+        isActive: boolean;
+      }>("/api/v1/profile"),
+    update: (data: { email: string; displayName: string }) =>
+      apiClient.put<{ emailChanged: boolean }>("/api/v1/profile", data),
+  },
+
+  /**
    * Member endpoints (for proxy entry feature)
    */
   members: {

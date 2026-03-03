@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Header } from "@/components/shared/Header";
 import { IntlWrapper } from "../../../helpers/intl";
 
@@ -43,6 +43,10 @@ vi.mock("@/components/shared/NotificationBell", () => ({
   NotificationBell: () => <div data-testid="notification-bell" />,
 }));
 
+vi.mock("@/components/shared/UserMenu", () => ({
+  UserMenu: () => <div data-testid="user-menu">UserMenu</div>,
+}));
+
 vi.mock("@/hooks/useMediaQuery", () => ({
   useMediaQuery: () => false,
 }));
@@ -62,7 +66,7 @@ describe("Header", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  test("shows display name and logout button when user is present", () => {
+  test("shows UserMenu when user is present", () => {
     mockUseAuthContext.mockReturnValue({
       user: { id: "1", email: "a@b.com", displayName: "Yamada Taro" },
       logout: mockLogout,
@@ -72,11 +76,10 @@ describe("Header", () => {
         <Header />
       </IntlWrapper>,
     );
-    expect(screen.getByText("Yamada Taro")).toBeInTheDocument();
-    expect(screen.getByText("ログアウト")).toBeInTheDocument();
+    expect(screen.getByTestId("user-menu")).toBeInTheDocument();
   });
 
-  test("calls logout when logout button is clicked", () => {
+  test("UserMenu component is rendered for desktop", () => {
     mockUseAuthContext.mockReturnValue({
       user: { id: "1", email: "a@b.com", displayName: "Yamada Taro" },
       logout: mockLogout,
@@ -86,7 +89,6 @@ describe("Header", () => {
         <Header />
       </IntlWrapper>,
     );
-    fireEvent.click(screen.getByText("ログアウト"));
-    expect(mockLogout).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("user-menu")).toBeInTheDocument();
   });
 });
