@@ -69,6 +69,10 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
 
+## Frontend Patterns
+
+- **Loading skeleton ↔ content layout parity**: Skeleton grids (column count, card count) must match the actual content layout to prevent CLS (Cumulative Layout Shift)
+
 ## Troubleshooting
 
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
