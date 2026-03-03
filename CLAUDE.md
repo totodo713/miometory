@@ -89,6 +89,10 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - **Loading skeleton ↔ content layout parity**: Skeleton grids (column count, card count) must match the actual content layout to prevent CLS (Cumulative Layout Shift)
 
+## GitHub Issue Management
+
+- PR description に `Closes #xx` を含めて issue の自動クローズ漏れを防ぐ
+
 ## Troubleshooting
 
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
