@@ -85,6 +85,10 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
 - Explicit `role` attribute overrides implicit HTML role — `<Link role="menuitem">` needs `getByRole("menuitem")`, not `getByRole("link")`
 
+## Frontend Patterns
+
+- **Loading skeleton ↔ content layout parity**: Skeleton grids (column count, card count) must match the actual content layout to prevent CLS (Cumulative Layout Shift)
+
 ## Troubleshooting
 
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除

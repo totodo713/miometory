@@ -174,6 +174,7 @@ Test templates and patterns → use `/gen-test` skill. Below are non-obvious got
 - **IntlWrapper default locale**: `frontend/tests/helpers/intl.tsx` defaults to `locale="ja"`. Tests asserting locale-dependent text (e.g. holiday names) must account for this or pass `locale="en"` explicitly
 - **E2E mock data and new nullable fields**: When adding `string | null` fields to interfaces (e.g. `DailyCalendarEntry`), existing E2E mocks without the new fields still work — `undefined` is falsy in conditional checks. No E2E mock update needed for display-only nullable additions
 - **Testing Library element queries**: Prefer `getByRole("button", { name: /pattern/ })` over `getAllByRole().find(btn => ...)`. `find()` can return `undefined`, causing confusing matcher errors instead of clear "element not found" messages
+- **Event-sourced repository coverage**: When adding new events/fields to `OrganizationRepository`/`TenantRepository`, create integration tests with save→findById round-trip to cover event deserialization and projection UPDATE paths. Test both non-null and null (inheritance) values
 
 ## Database Implementation Rules
 
