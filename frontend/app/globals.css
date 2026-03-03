@@ -40,7 +40,7 @@
   --color-holiday-100: oklch(0.93 0.06 350);
   --color-holiday-200: oklch(0.88 0.1 350);
   --color-holiday-500: oklch(0.65 0.2 350);
-  --color-holiday-600: oklch(0.55 0.22 350);
+  --color-holiday-600: oklch(0.48 0.22 350);
 
   /* Status colors for entry states */
   --color-status-draft: oklch(0.95 0.01 250);

@@ -463,7 +463,7 @@ describe("Calendar Component", () => {
       );
 
       const dayNum = screen.getByText("24");
-      expect(dayNum).toHaveClass("text-blue-600");
+      expect(dayNum).toHaveClass("text-blue-700");
     });
 
     it("should display English holiday name for en locale", () => {

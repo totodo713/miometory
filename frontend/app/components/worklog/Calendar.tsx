@@ -169,7 +169,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                 {/* Left: date and day */}
                 <div className="flex items-center gap-3 min-w-0">
                   <span
-                    className={`text-base font-semibold w-8 text-center ${dateEntry.isHoliday || isSunday ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}`}
+                    className={`text-base font-semibold w-8 text-center ${dateEntry.isHoliday || isSunday ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-700" : "text-gray-900"}`}
                   >
                     {dayNum}
                   </span>
@@ -229,7 +229,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
               <div
                 key={day}
                 className={`bg-gray-50 px-2 py-2 text-center text-sm font-medium ${
-                  idx === 0 ? "text-holiday-600" : idx === 6 ? "text-blue-600" : "text-gray-700"
+                  idx === 0 ? "text-holiday-600" : idx === 6 ? "text-blue-700" : "text-gray-700"
                 }`}
               >
                 {day}
@@ -291,7 +291,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
                       <span
                         className={`
                         text-sm font-medium
-                        ${dateEntry.isHoliday || isSunday ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-600" : "text-gray-900"}
+                        ${dateEntry.isHoliday || isSunday ? "text-holiday-600" : dateEntry.isWeekend ? "text-blue-700" : "text-gray-900"}
                       `}
                       >
                         {dayNum}
