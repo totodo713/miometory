@@ -41,6 +41,7 @@ PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `check
 - **Modals/Dialogs**: Must follow `ConfirmDialog.tsx` pattern — `role="dialog"` or `role="alertdialog"`, `aria-modal="true"`, `aria-labelledby` with `useId()`, Escape key handler, focus trap (Tab cycling), initial focus on first interactive element
 - **Form validation**: Use `aria-invalid`, `aria-describedby` pointing to error `<p>` with `role="alert"` — see login page for reference
 - **Dropdown menus**: Use `role="menu"` on container, `role="menuitem"` on items, `aria-expanded`/`aria-haspopup` on trigger, Escape key to close — see `UserMenu.tsx`
+- **Accessible names**: Prefer `sr-only` span over `aria-label` when the button has dynamic visible text (e.g. user name) — `aria-label` overrides visible text entirely
 - **Loading states**: Use `LoadingSpinner` component (not custom text) — provides `aria-live="polite"` and sr-only label
 - **Focus visible**: All interactive elements need `focus:outline-none focus:ring-2 focus:ring-blue-500` (WCAG 2.4.7)
 - **Type safety for state updaters**: Prefer `Pick<T, 'field1' | 'field2'>` over `Partial<T>` when only specific fields should be mutable
