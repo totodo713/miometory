@@ -25,8 +25,8 @@
 
 ## Backend Changes
 
-### Migration V31: `daily_attendance` テーブル
-**File:** `backend/src/main/resources/db/migration/V31__daily_attendance.sql`
+### Migration V32: `daily_attendance` テーブル
+**File:** `backend/src/main/resources/db/migration/V32__daily_attendance.sql`
 
 ```sql
 CREATE TABLE IF NOT EXISTS daily_attendance (
@@ -47,8 +47,8 @@ CREATE INDEX idx_daily_attendance_member_date ON daily_attendance(member_id, att
 CREATE INDEX idx_daily_attendance_tenant ON daily_attendance(tenant_id);
 ```
 
-### Migration V32: `member_project_assignments` にデフォルト時間カラム追加
-**File:** `backend/src/main/resources/db/migration/V32__assignment_default_times.sql`
+### Migration V33: `member_project_assignments` にデフォルト時間カラム追加
+**File:** `backend/src/main/resources/db/migration/V33__assignment_default_times.sql`
 
 ```sql
 ALTER TABLE member_project_assignments
@@ -233,7 +233,7 @@ ALTER TABLE member_project_assignments
 
 ## Implementation Sequence
 
-1. **Backend DB:** V31 (daily_attendance) + V32 (assignment defaults) migrations
+1. **Backend DB:** V32 (daily_attendance) + V33 (assignment defaults) migrations
 2. **Backend Domain:** DailyAttendance entity + repository + service
 3. **Backend API:** TimesheetController + DTOs + MemberProjectAssignment変更
 4. **Backend Tests:** Integration tests
@@ -247,8 +247,8 @@ ALTER TABLE member_project_assignments
 ## Key Files to Modify/Create
 
 ### Create
-- `backend/src/main/resources/db/migration/V31__daily_attendance.sql`
-- `backend/src/main/resources/db/migration/V32__assignment_default_times.sql`
+- `backend/src/main/resources/db/migration/V32__daily_attendance.sql`
+- `backend/src/main/resources/db/migration/V33__assignment_default_times.sql`
 - `backend/src/main/java/com/worklog/domain/attendance/DailyAttendance.java`
 - `backend/src/main/java/com/worklog/domain/attendance/DailyAttendanceId.java`
 - `backend/src/main/java/com/worklog/infrastructure/repository/JdbcDailyAttendanceRepository.java`
