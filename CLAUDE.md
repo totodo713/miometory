@@ -20,6 +20,11 @@
 
 Plan review は `/review-plan` スキルに委譲。3エージェント並列レビュー（CPO, Security, UX）→ 全員 APPROVED で実装可。
 
+## Plan Files
+
+- Plan ドキュメントは `docs/plans/YYYY-MM-DD-<topic>-plan.md` に保存（`.claude/plans/` ではない）
+- Design ドキュメントは `docs/plans/YYYY-MM-DD-<topic>-design.md`
+
 ## Pre-PR Verification (MANDATORY)
 
 `pre-pr-test-gate.sh` hook が PR 作成をブロック。lint/format + test + coverage (80%+) をパスした後、`touch .claude/.pr-tests-verified` で解除（30分有効・single-use）。
