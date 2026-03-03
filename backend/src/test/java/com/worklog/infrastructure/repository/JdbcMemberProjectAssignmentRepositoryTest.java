@@ -275,6 +275,8 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             eq(projectId.value()),
                             any(), // Timestamp
                             eq(assignedBy.value()),
+                            isNull(), // defaultStartTime
+                            isNull(), // defaultEndTime
                             eq(true));
         }
 
@@ -303,6 +305,8 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             any(),
                             any(),
                             isNull(), // assignedBy should be null
+                            isNull(), // defaultStartTime
+                            isNull(), // defaultEndTime
                             any());
         }
 
