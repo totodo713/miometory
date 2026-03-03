@@ -36,11 +36,21 @@ Permissions in `settings.local.json` use granular git command patterns (not `Bas
 Intentionally excluded (require user confirmation): `git reset`, `git clean`, `git restore`, `git config`
 PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `checkout .`, `stash drop/clear`, `rebase -i` within allowed commands
 
+## Frontend UI Patterns
+
+- **Modals/Dialogs**: Must follow `ConfirmDialog.tsx` pattern — `role="dialog"` or `role="alertdialog"`, `aria-modal="true"`, `aria-labelledby` with `useId()`, Escape key handler, focus trap (Tab cycling), initial focus on first interactive element
+- **Form validation**: Use `aria-invalid`, `aria-describedby` pointing to error `<p>` with `role="alert"` — see login page for reference
+- **Dropdown menus**: Use `role="menu"` on container, `role="menuitem"` on items, `aria-expanded`/`aria-haspopup` on trigger, Escape key to close — see `UserMenu.tsx`
+- **Loading states**: Use `LoadingSpinner` component (not custom text) — provides `aria-live="polite"` and sr-only label
+- **Focus visible**: All interactive elements need `focus:outline-none focus:ring-2 focus:ring-blue-500` (WCAG 2.4.7)
+- **Type safety for state updaters**: Prefer `Pick<T, 'field1' | 'field2'>` over `Partial<T>` when only specific fields should be mutable
+
 ## Frontend Lint/Format
 
 - Run `npm ci` in `frontend/` before using `npx biome` — without it, `npx` may resolve a wrong global version
 - CI uses `biome ci` (= `biome check` + format check); locally use `npx biome check` or `npx biome ci` to match
 - Biome version is pinned in `frontend/package.json` (`@biomejs/biome`); always use the project-local binary
+- After adding JSX attributes (role, aria-*), run `npx biome check --write <file>` — long attribute lines get reformatted to multi-line
 
 ## Devcontainer Workflow
 
@@ -61,6 +71,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - Button selectors: `has-text("Assign")` also matches `"Assign Manager"` — use `getByRole("button", { name: "Assign", exact: true })` for modals
 - ProjectSelector is a combobox (`role="combobox"` + `role="option"`), not a plain input; use `selectProject()` helper in `frontend/tests/e2e/fixtures/auth.ts`
 - UI text source of truth: `frontend/messages/en.json` (next-intl) — always verify against this file, not guesses
+- Before writing E2E text assertions, read the exact value from `en.json` with `node -e "..."` — do not guess translated strings
 - `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
 
