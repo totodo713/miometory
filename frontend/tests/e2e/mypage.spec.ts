@@ -118,8 +118,8 @@ test.describe("MyPage Feature", () => {
     // Click edit button
     await page.getByText("Edit Profile").click();
 
-    // Verify modal is open
-    await expect(page.getByText("Edit Profile", { exact: false })).toBeVisible();
+    // Verify modal is open (use heading to avoid strict-mode: button + modal title both say "Edit Profile")
+    await expect(page.getByRole("heading", { name: "Edit Profile" })).toBeVisible();
 
     // Change display name
     const nameInput = page.locator("#edit-displayName");
