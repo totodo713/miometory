@@ -24,6 +24,10 @@ export interface MonthlySummaryData {
   projects: ProjectSummary[];
   approvalStatus: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | null;
   rejectionReason: string | null;
+  standardDailyHours: number;
+  standardMonthlyHours: number;
+  overtimeHours: number;
+  standardHoursSource: string;
 }
 
 export interface MonthlySummaryProps {
@@ -75,7 +79,8 @@ export function MonthlySummary({ year, month, memberId, fiscalMonthStart, fiscal
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <Skeleton.Text lines={2} />
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+          <Skeleton.Card />
           <Skeleton.Card />
           <Skeleton.Card />
           <Skeleton.Card />
@@ -156,7 +161,7 @@ export function MonthlySummary({ year, month, memberId, fiscalMonthStart, fiscal
       </div>
 
       {/* Overall Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
           <div className="text-sm text-blue-600 font-medium">{t("totalHours")}</div>
           <div className="text-2xl font-bold text-blue-900 mt-1">{summary.totalWorkHours}h</div>
@@ -177,6 +182,14 @@ export function MonthlySummary({ year, month, memberId, fiscalMonthStart, fiscal
           <div className="text-sm text-green-700 font-medium">{t("workingDays")}</div>
           <div className="text-2xl font-bold text-green-900 mt-1">{summary.totalBusinessDays}</div>
           <div className="text-xs text-green-700 mt-1">In this period</div>
+        </div>
+        {/* Overtime Hours Card */}
+        <div className="rounded-lg border border-orange-100 bg-orange-50 p-4">
+          <div className="text-sm font-medium text-orange-600">{t("overtimeHours")}</div>
+          <div className="mt-1 text-2xl font-bold text-orange-900">{summary.overtimeHours}h</div>
+          <div className="mt-1 text-xs text-orange-600">
+            {t("requiredHours")}: {summary.standardMonthlyHours}h
+          </div>
         </div>
       </div>
 

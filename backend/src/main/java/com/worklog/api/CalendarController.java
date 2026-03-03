@@ -167,7 +167,9 @@ public class CalendarController {
                             holiday != null ? holiday.nameJa() : null,
                             p.hasProxyEntries(),
                             rejectionSource,
-                            rejectionReason);
+                            rejectionReason,
+                            p.standardDailyHours(),
+                            p.overtimeHours());
                 })
                 .collect(Collectors.toList());
 

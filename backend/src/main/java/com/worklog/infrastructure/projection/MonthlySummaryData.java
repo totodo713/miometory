@@ -17,8 +17,11 @@ public record MonthlySummaryData(
         int totalBusinessDays,
         List<ProjectSummary> projects,
         String approvalStatus, // PENDING, SUBMITTED, APPROVED, REJECTED, or null if no approval record
-        String rejectionReason // Reason if status is REJECTED, null otherwise
-        ) {
+        String rejectionReason, // Reason if status is REJECTED, null otherwise
+        BigDecimal standardDailyHours,
+        BigDecimal standardMonthlyHours,
+        BigDecimal overtimeHours,
+        String standardHoursSource) {
     /**
      * Individual project summary within a month.
      */

@@ -33,7 +33,7 @@ Member individual → Organization hierarchy walk (子→親→...→root) → T
 
 ## 実装ステップ
 
-### Step 1: DB マイグレーション (`V29__standard_working_hours.sql`)
+### Step 1: DB マイグレーション (`V31__standard_working_hours.sql`)
 
 ```sql
 ALTER TABLE members ADD COLUMN standard_daily_hours DECIMAL(4,2)
@@ -50,7 +50,7 @@ INSERT INTO system_default_settings (setting_key, setting_value) VALUES
 ON CONFLICT (setting_key) DO NOTHING;
 ```
 
-**ファイル**: `backend/src/main/resources/db/migration/V29__standard_working_hours.sql`
+**ファイル**: `backend/src/main/resources/db/migration/V31__standard_working_hours.sql`
 
 ### Step 2: ドメインモデル変更
 
@@ -175,7 +175,7 @@ standardHoursSource: string;
 
 | ファイル | 変更種別 |
 |---------|---------|
-| `backend/src/main/resources/db/migration/V29__standard_working_hours.sql` | 新規 |
+| `backend/src/main/resources/db/migration/V31__standard_working_hours.sql` | 新規 |
 | `backend/src/main/java/com/worklog/domain/member/Member.java` | 修正 |
 | `backend/src/main/java/com/worklog/domain/organization/Organization.java` | 修正 |
 | `backend/src/main/java/com/worklog/domain/tenant/Tenant.java` | 修正 |

@@ -19,6 +19,7 @@ interface DailyEntryFormProps {
   enteredBy?: string;
   rejectionSource?: "monthly" | "daily" | null;
   rejectionReason?: string | null;
+  standardDailyHours?: number;
   onClose: () => void;
   onSave: () => void;
 }
@@ -82,6 +83,7 @@ export function DailyEntryForm({
   enteredBy,
   rejectionSource,
   rejectionReason,
+  standardDailyHours,
   onClose,
   onSave,
 }: DailyEntryFormProps) {
@@ -503,6 +505,18 @@ export function DailyEntryForm({
                   <div className="flex justify-between">
                     <span>{ta("title")}:</span>
                     <span className="font-medium text-blue-600">{absenceHours.toFixed(2)}h</span>
+                  </div>
+                )}
+                {standardDailyHours != null && totalWorkHours > standardDailyHours && (
+                  <div className="flex justify-between text-orange-600">
+                    <span>{t("overtime")}:</span>
+                    <span className="font-medium">{(totalWorkHours - standardDailyHours).toFixed(2)}h</span>
+                  </div>
+                )}
+                {standardDailyHours != null && (
+                  <div className="flex justify-between text-xs text-gray-400">
+                    <span>{t("requiredHours")}:</span>
+                    <span>{standardDailyHours}h</span>
                   </div>
                 )}
               </div>

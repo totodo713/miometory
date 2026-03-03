@@ -1,5 +1,7 @@
 package com.worklog.infrastructure.projection;
 
+import com.worklog.application.service.StandardHoursResolution;
+import com.worklog.application.service.StandardWorkingHoursService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
@@ -7,6 +9,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,9 +28,12 @@ import org.springframework.stereotype.Component;
 public class MonthlySummaryProjection {
 
     private final JdbcTemplate jdbcTemplate;
+    private final StandardWorkingHoursService standardWorkingHoursService;
 
-    public MonthlySummaryProjection(JdbcTemplate jdbcTemplate) {
+    public MonthlySummaryProjection(
+            JdbcTemplate jdbcTemplate, StandardWorkingHoursService standardWorkingHoursService) {
         this.jdbcTemplate = jdbcTemplate;
+        this.standardWorkingHoursService = standardWorkingHoursService;
     }
 
     /**
@@ -60,6 +66,24 @@ public class MonthlySummaryProjection {
         // Get approval status for the month
         ApprovalStatusData approvalStatus = getApprovalStatus(memberId, year, month);
 
+        // Resolve standard daily hours for this member
+        StandardHoursResolution resolution = standardWorkingHoursService.resolveStandardDailyHours(memberId);
+        BigDecimal standardDailyHours = resolution.hours();
+        String standardHoursSource = resolution.source();
+
+        // Calculate standard monthly hours = standardDailyHours * totalBusinessDays
+        BigDecimal standardMonthlyHours = standardDailyHours.multiply(BigDecimal.valueOf(totalBusinessDays));
+
+        // Calculate overtime: for each day, max(0, dailyTotal - standardDailyHours), sum all
+        Map<LocalDate, BigDecimal> dailyWorkTotals = getDailyWorkTotals(memberId, startDate, endDate);
+        BigDecimal overtimeHours = BigDecimal.ZERO;
+        for (BigDecimal dailyTotal : dailyWorkTotals.values()) {
+            BigDecimal overtime = dailyTotal.subtract(standardDailyHours);
+            if (overtime.compareTo(BigDecimal.ZERO) > 0) {
+                overtimeHours = overtimeHours.add(overtime);
+            }
+        }
+
         return new MonthlySummaryData(
                 year,
                 month,
@@ -68,7 +92,11 @@ public class MonthlySummaryProjection {
                 totalBusinessDays,
                 projects,
                 approvalStatus.status(),
-                approvalStatus.rejectionReason());
+                approvalStatus.rejectionReason(),
+                standardDailyHours,
+                standardMonthlyHours,
+                overtimeHours,
+                standardHoursSource);
     }
 
     /**
@@ -135,6 +163,31 @@ public class MonthlySummaryProjection {
         }
 
         return summaries;
+    }
+
+    /**
+     * Gets daily work hour totals for overtime calculation.
+     *
+     * @param memberId Member ID
+     * @param startDate Start date (inclusive)
+     * @param endDate End date (inclusive)
+     * @return Map of date to total work hours
+     */
+    private Map<LocalDate, BigDecimal> getDailyWorkTotals(UUID memberId, LocalDate startDate, LocalDate endDate) {
+        String sql = """
+            SELECT work_date, SUM(hours) as total_hours
+            FROM work_log_entries_projection
+            WHERE member_id = ? AND work_date BETWEEN ? AND ?
+            GROUP BY work_date
+            """;
+        List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, memberId, startDate, endDate);
+        Map<LocalDate, BigDecimal> dailyTotals = new HashMap<>();
+        for (Map<String, Object> row : results) {
+            LocalDate date = ((java.sql.Date) row.get("work_date")).toLocalDate();
+            BigDecimal hours = (BigDecimal) row.get("total_hours");
+            dailyTotals.put(date, hours);
+        }
+        return dailyTotals;
     }
 
     /**

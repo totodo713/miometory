@@ -450,6 +450,10 @@ export const api = {
         }>;
         approvalStatus: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | null;
         rejectionReason: string | null;
+        standardDailyHours: number;
+        standardMonthlyHours: number;
+        overtimeHours: number;
+        standardHoursSource: string;
       }>(`/api/v1/worklog/calendar/${params.year}/${params.month}/summary?${query}`);
     },
 

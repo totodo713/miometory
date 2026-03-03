@@ -75,6 +75,8 @@ All domain state changes are stored as immutable events in a `domain_events` tab
 
 Key aggregates: `WorkLogEntry`, `Absence`, `ApprovalWorkflow`, `Member`, `Tenant`, `Organization`, `FiscalYearPattern`, `MonthlyPeriodPattern`
 
+**Member is NOT event-sourced**: `Member` does not extend `AggregateRoot` — it is a plain POJO with direct field mutation. All other aggregates listed above use event sourcing (raiseEvent/apply pattern).
+
 ### Backend Layers (`com.worklog`)
 
 ```
@@ -94,6 +96,8 @@ shared/           # Cross-cutting: types, exceptions
 ```
 
 Domain logic is in Java; infrastructure/config is in Kotlin.
+
+**Key class locations**: `DomainEvent` interface → `com.worklog.domain.shared.DomainEvent`. `DomainException` → `com.worklog.domain.shared.DomainException`. No domain-layer repository interfaces — all repositories are concrete classes in `infrastructure/repository/` (`JdbcMemberRepository`, `OrganizationRepository`, `TenantRepository`).
 
 ### Frontend Structure (`frontend/app/`)
 
@@ -162,6 +166,7 @@ Test templates and patterns → use `/gen-test` skill. Below are non-obvious got
 - **Mockito + Kotlin varargs**: `contains()`/`eq()` matchers don't work with Java varargs methods (e.g. `JdbcTemplate.queryForObject`). Use `defaultAnswer` with SQL routing instead
 - **MockK + Java varargs**: `jdbcTemplate.query(sql, mapper, arg1, arg2)` requires `any(), any()` — one `any()` per vararg. Single `any()` won't match multiple varargs
 - **Kotlin `assertThrows`**: Some test files import `org.junit.jupiter.api.assertThrows` (reified: `assertThrows<Type> { }`), others use `Assertions.assertThrows(Type::class.java) { }`. Check imports before writing tests
+- **Mockito strict stubbing in shared helpers**: `@ExtendWith(MockitoExtension::class)` enables strict stubbing by default. Shared test factory methods that stub multiple getters cause `UnnecessaryStubbingException` when not all stubs are used. Use `lenient().when(...)` in shared helper methods
 - **Coverage target**: 80%+ LINE coverage per package. Run `./gradlew test jacocoTestReport` to generate reports
 - **TOCTOU on unique constraints**: Catch `DataIntegrityViolationException` on save and translate to `DomainException`. See `AdminMasterDataService` for pattern
 - **Fake timers + waitFor**: `vi.useFakeTimers()` breaks `waitFor()`. Use `act(() => vi.advanceTimersByTime(ms))` then assert synchronously

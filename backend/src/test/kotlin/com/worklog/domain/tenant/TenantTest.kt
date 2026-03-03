@@ -2,9 +2,11 @@ package com.worklog.domain.tenant
 
 import com.worklog.domain.shared.DomainException
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -221,5 +223,55 @@ class TenantTest {
 
         // Total events: Created, Updated, Deactivated, Activated, Updated
         assertEquals(5, tenant.uncommittedEvents.size)
+    }
+
+    @Test
+    fun `assignStandardDailyHours should raise event and update field`() {
+        val tenant = Tenant.create("CODE", "Name")
+        tenant.clearUncommittedEvents()
+        val hours = BigDecimal("8.00")
+
+        tenant.assignStandardDailyHours(hours)
+
+        assertEquals(hours, tenant.standardDailyHours)
+
+        val events = tenant.uncommittedEvents
+        assertEquals(1, events.size)
+        assertTrue(events[0] is TenantStandardDailyHoursAssigned)
+
+        val event = events[0] as TenantStandardDailyHoursAssigned
+        assertEquals(tenant.id.value(), event.aggregateId())
+        assertEquals(hours, event.standardDailyHours())
+    }
+
+    @Test
+    fun `assignStandardDailyHours should fail when tenant is inactive`() {
+        val tenant = Tenant.create("CODE", "Name")
+        tenant.deactivate()
+        tenant.clearUncommittedEvents()
+
+        val exception =
+            assertFailsWith<DomainException> {
+                tenant.assignStandardDailyHours(BigDecimal("8.00"))
+            }
+        assertEquals("TENANT_INACTIVE", exception.errorCode)
+    }
+
+    @Test
+    fun `assignStandardDailyHours should accept null hours for inheritance`() {
+        val tenant = Tenant.create("CODE", "Name")
+        // First set a value
+        tenant.assignStandardDailyHours(BigDecimal("8.00"))
+        tenant.clearUncommittedEvents()
+
+        // Then set to null (inherit from parent)
+        tenant.assignStandardDailyHours(null)
+
+        assertNull(tenant.standardDailyHours)
+
+        val events = tenant.uncommittedEvents
+        assertEquals(1, events.size)
+        val event = events[0] as TenantStandardDailyHoursAssigned
+        assertNull(event.standardDailyHours())
     }
 }

@@ -1,5 +1,7 @@
 package com.worklog.infrastructure.projection
 
+import com.worklog.application.service.StandardHoursResolution
+import com.worklog.application.service.StandardWorkingHoursService
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -24,6 +26,9 @@ class MonthlyCalendarProjectionTest {
     @Mock
     private lateinit var jdbcTemplate: JdbcTemplate
 
+    @Mock
+    private lateinit var standardWorkingHoursService: StandardWorkingHoursService
+
     private lateinit var projection: MonthlyCalendarProjection
 
     private val memberId = UUID.randomUUID()
@@ -32,7 +37,7 @@ class MonthlyCalendarProjectionTest {
 
     @BeforeEach
     fun setUp() {
-        projection = MonthlyCalendarProjection(jdbcTemplate)
+        projection = MonthlyCalendarProjection(jdbcTemplate, standardWorkingHoursService)
     }
 
     @Test
@@ -187,6 +192,8 @@ class MonthlyCalendarProjectionTest {
         // Mock all the underlying calls
         `when`(jdbcTemplate.queryForList(anyString(), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
+        `when`(standardWorkingHoursService.resolveStandardDailyHours(any()))
+            .thenReturn(StandardHoursResolution(BigDecimal("8.0"), "system"))
 
         val result = projection.getDailyEntries(memberId, startDate, endDate)
 
@@ -200,6 +207,8 @@ class MonthlyCalendarProjectionTest {
     fun `getDailyEntries should mark weekends correctly`() {
         `when`(jdbcTemplate.queryForList(anyString(), any(), any(), any()))
             .thenReturn(emptyList<Map<String, Any>>())
+        `when`(standardWorkingHoursService.resolveStandardDailyHours(any()))
+            .thenReturn(StandardHoursResolution(BigDecimal("8.0"), "system"))
 
         val result = projection.getDailyEntries(memberId, startDate, endDate)
 
@@ -262,6 +271,8 @@ class MonthlyCalendarProjectionTest {
             .thenReturn(proxyResults)
         `when`(jdbcTemplate.queryForList(contains("DISTINCT status"), any(), any(), any()))
             .thenReturn(statusResults)
+        `when`(standardWorkingHoursService.resolveStandardDailyHours(any()))
+            .thenReturn(StandardHoursResolution(BigDecimal("8.0"), "system"))
 
         val result = projection.getDailyEntries(memberId, startDate, endDate)
 
@@ -272,6 +283,45 @@ class MonthlyCalendarProjectionTest {
 
         val jan26 = result.find { it.date() == LocalDate.of(2025, 1, 26) }
         assertEquals(BigDecimal("4.00"), jan26?.totalAbsenceHours())
+    }
+
+    @Test
+    fun `getDailyEntries should calculate overtime for days exceeding standard hours`() {
+        val workResults =
+            listOf(
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 22)),
+                    "total_hours" to BigDecimal("10.00"), // 2h overtime
+                ),
+                mapOf(
+                    "work_date" to Date.valueOf(LocalDate.of(2025, 1, 23)),
+                    "total_hours" to BigDecimal("7.50"), // no overtime
+                ),
+            )
+
+        `when`(jdbcTemplate.queryForList(contains("SUM(hours)"), any(), any(), any()))
+            .thenReturn(workResults)
+        `when`(jdbcTemplate.queryForList(contains("hours_per_day"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("entered_by"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(jdbcTemplate.queryForList(contains("DISTINCT status"), any(), any(), any()))
+            .thenReturn(emptyList<Map<String, Any>>())
+        `when`(standardWorkingHoursService.resolveStandardDailyHours(any()))
+            .thenReturn(StandardHoursResolution(BigDecimal("8.0"), "system"))
+
+        val result = projection.getDailyEntries(memberId, startDate, endDate)
+
+        val jan22 = result.find { it.date() == LocalDate.of(2025, 1, 22) }
+        assertEquals(BigDecimal("8.0"), jan22?.standardDailyHours())
+        assertEquals(0, BigDecimal("2.00").compareTo(jan22?.overtimeHours()))
+
+        val jan23 = result.find { it.date() == LocalDate.of(2025, 1, 23) }
+        assertEquals(0, BigDecimal.ZERO.compareTo(jan23?.overtimeHours()))
+
+        // Day with no work entries should have zero overtime
+        val jan24 = result.find { it.date() == LocalDate.of(2025, 1, 24) }
+        assertEquals(0, BigDecimal.ZERO.compareTo(jan24?.overtimeHours()))
     }
 
     @Test

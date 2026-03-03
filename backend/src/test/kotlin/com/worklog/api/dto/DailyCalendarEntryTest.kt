@@ -17,6 +17,7 @@ class DailyCalendarEntryTest {
             date, workHours, absenceHours, "SUBMITTED",
             false, true, "New Year's Day", "元日",
             false, "daily", "Incorrect hours",
+            BigDecimal("8.0"), BigDecimal("0.0"),
         )
 
         assertEquals(date, entry.date())
@@ -30,10 +31,12 @@ class DailyCalendarEntryTest {
         assertEquals(false, entry.hasProxyEntries())
         assertEquals("daily", entry.rejectionSource())
         assertEquals("Incorrect hours", entry.rejectionReason())
+        assertEquals(BigDecimal("8.0"), entry.standardDailyHours())
+        assertEquals(BigDecimal("0.0"), entry.overtimeHours())
     }
 
     @Test
-    fun `9-arg constructor should default holiday names to null`() {
+    fun `9-arg constructor should default holiday names and overtime to null`() {
         val entry = DailyCalendarEntry(
             date, workHours, absenceHours, "DRAFT",
             false, true,
@@ -45,10 +48,12 @@ class DailyCalendarEntryTest {
         assertNull(entry.holidayNameJa())
         assertEquals("monthly", entry.rejectionSource())
         assertEquals("Needs revision", entry.rejectionReason())
+        assertNull(entry.standardDailyHours())
+        assertNull(entry.overtimeHours())
     }
 
     @Test
-    fun `7-arg constructor should default holiday names and rejection to null`() {
+    fun `7-arg constructor should default holiday names rejection and overtime to null`() {
         val entry = DailyCalendarEntry(
             date,
             workHours,
@@ -64,5 +69,7 @@ class DailyCalendarEntryTest {
         assertNull(entry.holidayNameJa())
         assertNull(entry.rejectionSource())
         assertNull(entry.rejectionReason())
+        assertNull(entry.standardDailyHours())
+        assertNull(entry.overtimeHours())
     }
 }

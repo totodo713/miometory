@@ -3,6 +3,7 @@ package com.worklog.domain.member
 import com.worklog.domain.organization.OrganizationId
 import com.worklog.domain.tenant.TenantId
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 import kotlin.test.assertEquals
@@ -410,5 +411,97 @@ class MemberTest {
             )
 
         assertEquals(member1.hashCode(), member2.hashCode())
+    }
+
+    @Test
+    fun `updateStandardDailyHours should update field and updatedAt`() {
+        val member =
+            Member.create(
+                tenantId,
+                organizationId,
+                "user@example.com",
+                "John Doe",
+                null,
+            )
+        val createdAt = member.createdAt
+
+        Thread.sleep(10) // Ensure time passes
+
+        val hours = BigDecimal("7.50")
+        member.updateStandardDailyHours(hours)
+
+        assertEquals(hours, member.standardDailyHours)
+        assertTrue(member.updatedAt.isAfter(createdAt))
+    }
+
+    @Test
+    fun `updateStandardDailyHours should accept null for inheritance`() {
+        val member =
+            Member.create(
+                tenantId,
+                organizationId,
+                "user@example.com",
+                "John Doe",
+                null,
+            )
+        member.updateStandardDailyHours(BigDecimal("8.00"))
+
+        member.updateStandardDailyHours(null)
+
+        assertNull(member.standardDailyHours)
+    }
+
+    @Test
+    fun `full rehydration constructor should set all fields including standardDailyHours`() {
+        val id = MemberId.generate()
+        val managerId = MemberId.generate()
+        val hours = BigDecimal("7.50")
+        val createdAt = Instant.now().minusSeconds(3600)
+        val updatedAt = Instant.now()
+
+        val member = Member(
+            id,
+            tenantId,
+            organizationId,
+            "user@example.com",
+            "John Doe",
+            managerId,
+            hours,
+            true,
+            createdAt,
+            updatedAt,
+        )
+
+        assertEquals(id, member.id)
+        assertEquals(tenantId, member.tenantId)
+        assertEquals(organizationId, member.organizationId)
+        assertEquals("user@example.com", member.email)
+        assertEquals("John Doe", member.displayName)
+        assertEquals(managerId, member.managerId)
+        assertEquals(hours, member.standardDailyHours)
+        assertTrue(member.isActive)
+        assertEquals(createdAt, member.createdAt)
+        assertEquals(updatedAt, member.updatedAt)
+    }
+
+    @Test
+    fun `full rehydration constructor should accept null standardDailyHours`() {
+        val id = MemberId.generate()
+        val now = Instant.now()
+
+        val member = Member(
+            id,
+            tenantId,
+            organizationId,
+            "user@example.com",
+            "John Doe",
+            null,
+            null,
+            true,
+            now,
+            now,
+        )
+
+        assertNull(member.standardDailyHours)
     }
 }

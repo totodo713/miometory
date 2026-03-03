@@ -5,6 +5,7 @@ import com.worklog.domain.shared.Code;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.tenant.TenantId;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -39,6 +40,7 @@ public class Organization extends AggregateRoot<OrganizationId> {
     private int level;
     private UUID fiscalYearPatternId;
     private UUID monthlyPeriodPatternId;
+    private BigDecimal standardDailyHours;
     private Status status;
 
     // Private constructor for factory method
@@ -141,6 +143,18 @@ public class Organization extends AggregateRoot<OrganizationId> {
         raiseEvent(event);
     }
 
+    /**
+     * Assigns standard daily working hours to this organization.
+     * NULL means "inherit from parent level" in the resolution chain.
+     *
+     * @param standardDailyHours The standard daily hours, or null to inherit
+     */
+    public void assignStandardDailyHours(BigDecimal standardDailyHours) {
+        OrganizationStandardDailyHoursAssigned event =
+                OrganizationStandardDailyHoursAssigned.create(this.id.value(), standardDailyHours);
+        raiseEvent(event);
+    }
+
     @Override
     protected void apply(DomainEvent event) {
         switch (event) {
@@ -165,6 +179,9 @@ public class Organization extends AggregateRoot<OrganizationId> {
             case OrganizationPatternAssigned e -> {
                 this.fiscalYearPatternId = e.fiscalYearPatternId();
                 this.monthlyPeriodPatternId = e.monthlyPeriodPatternId();
+            }
+            case OrganizationStandardDailyHoursAssigned e -> {
+                this.standardDailyHours = e.standardDailyHours();
             }
             default ->
                 throw new IllegalArgumentException(
@@ -237,6 +254,10 @@ public class Organization extends AggregateRoot<OrganizationId> {
 
     public UUID getMonthlyPeriodPatternId() {
         return monthlyPeriodPatternId;
+    }
+
+    public BigDecimal getStandardDailyHours() {
+        return standardDailyHours;
     }
 
     public Status getStatus() {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.worklog.domain.settings.SystemDefaultFiscalYearPattern;
 import com.worklog.domain.settings.SystemDefaultMonthlyPeriodPattern;
+import java.math.BigDecimal;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,7 @@ public class SystemDefaultSettingsRepository {
 
     private static final String KEY_FISCAL_YEAR = "default_fiscal_year_pattern";
     private static final String KEY_MONTHLY_PERIOD = "default_monthly_period_pattern";
+    private static final String KEY_STANDARD_DAILY_HOURS = "standard_daily_hours";
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
@@ -73,6 +75,24 @@ public class SystemDefaultSettingsRepository {
                 KEY_MONTHLY_PERIOD,
                 json,
                 updatedBy);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getDefaultStandardDailyHours() {
+        String json = jdbcTemplate.queryForObject(
+                "SELECT setting_value::text FROM system_default_settings WHERE setting_key = ?",
+                String.class,
+                KEY_STANDARD_DAILY_HOURS);
+        return parseStandardDailyHours(json);
+    }
+
+    private BigDecimal parseStandardDailyHours(String json) {
+        try {
+            JsonNode node = objectMapper.readTree(json);
+            return BigDecimal.valueOf(node.get("hours").asDouble());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse default standard daily hours", e);
+        }
     }
 
     private SystemDefaultFiscalYearPattern parseFiscalYearPattern(String json) {

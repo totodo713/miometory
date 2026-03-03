@@ -8,10 +8,11 @@
  */
 
 import { useRouter } from "next/navigation";
-import { use, useMemo } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { DailyEntryForm } from "@/components/worklog/DailyEntryForm";
 import { useAuth } from "@/hooks/useAuth";
 import { useRejectionStatus } from "@/hooks/useRejectionStatus";
+import { api } from "@/services/api";
 import { useCalendarRefresh, useProxyMode } from "@/services/worklogStore";
 
 interface PageProps {
@@ -67,6 +68,26 @@ export default function DailyEntryPage({ params }: PageProps) {
     };
   }, [parsedDate]);
 
+  // Derive fiscal year/month from the fiscal period end date (20th of the fiscal month)
+  const [standardDailyHours, setStandardDailyHours] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (!memberId || !fiscalMonthEnd) return;
+
+    const endParts = fiscalMonthEnd.split("-");
+    const fiscalYear = Number.parseInt(endParts[0], 10);
+    const fiscalMonth = Number.parseInt(endParts[1], 10);
+
+    api.worklog
+      .getMonthlySummary({ year: fiscalYear, month: fiscalMonth, memberId })
+      .then((data) => {
+        setStandardDailyHours(data.standardDailyHours);
+      })
+      .catch(() => {
+        // Non-critical feature — silently ignore errors
+      });
+  }, [memberId, fiscalMonthEnd]);
+
   // Load rejection status for the fiscal month
   const { getRejectionForDate } = useRejectionStatus(memberId, fiscalMonthStart, fiscalMonthEnd);
 
@@ -97,6 +118,7 @@ export default function DailyEntryPage({ params }: PageProps) {
         enteredBy={authMemberId ?? undefined}
         rejectionSource={rejectionInfo.rejectionSource}
         rejectionReason={rejectionInfo.rejectionReason}
+        standardDailyHours={standardDailyHours}
         onClose={handleClose}
         onSave={handleSave}
       />

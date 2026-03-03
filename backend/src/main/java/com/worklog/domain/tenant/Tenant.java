@@ -4,6 +4,7 @@ import com.worklog.domain.shared.AggregateRoot;
 import com.worklog.domain.shared.Code;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.domain.shared.DomainException;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -31,6 +32,7 @@ public class Tenant extends AggregateRoot<TenantId> {
     private Status status;
     private UUID defaultFiscalYearPatternId;
     private UUID defaultMonthlyPeriodPatternId;
+    private BigDecimal standardDailyHours;
 
     // Private constructor for factory method
     private Tenant() {}
@@ -122,6 +124,21 @@ public class Tenant extends AggregateRoot<TenantId> {
     }
 
     /**
+     * Assigns standard daily working hours to this tenant.
+     * NULL means "inherit from system default" in the resolution chain.
+     *
+     * @param standardDailyHours The standard daily hours, or null to inherit
+     */
+    public void assignStandardDailyHours(BigDecimal standardDailyHours) {
+        if (this.status == Status.INACTIVE) {
+            throw new DomainException("TENANT_INACTIVE", "Cannot update an inactive tenant");
+        }
+        TenantStandardDailyHoursAssigned event =
+                TenantStandardDailyHoursAssigned.create(this.id.value(), standardDailyHours);
+        raiseEvent(event);
+    }
+
+    /**
      * Reactivates an inactive tenant.
      */
     public void activate() {
@@ -154,6 +171,9 @@ public class Tenant extends AggregateRoot<TenantId> {
             case TenantDefaultPatternsAssigned e -> {
                 this.defaultFiscalYearPatternId = e.defaultFiscalYearPatternId();
                 this.defaultMonthlyPeriodPatternId = e.defaultMonthlyPeriodPatternId();
+            }
+            case TenantStandardDailyHoursAssigned e -> {
+                this.standardDailyHours = e.standardDailyHours();
             }
             default ->
                 throw new IllegalArgumentException(
@@ -204,5 +224,9 @@ public class Tenant extends AggregateRoot<TenantId> {
 
     public UUID getDefaultMonthlyPeriodPatternId() {
         return defaultMonthlyPeriodPatternId;
+    }
+
+    public BigDecimal getStandardDailyHours() {
+        return standardDailyHours;
     }
 }
