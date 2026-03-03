@@ -40,7 +40,7 @@ const baseSummary = {
   standardDailyHours: 8,
   standardMonthlyHours: 160,
   overtimeHours: 20,
-  standardHoursSource: "MEMBER",
+  standardHoursSource: "member",
 };
 
 describe("MonthlySummary — Overtime Card", () => {

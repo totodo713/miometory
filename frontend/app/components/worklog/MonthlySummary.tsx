@@ -79,7 +79,8 @@ export function MonthlySummary({ year, month, memberId, fiscalMonthStart, fiscal
     return (
       <div className="bg-white rounded-lg shadow p-6">
         <Skeleton.Text lines={2} />
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+          <Skeleton.Card />
           <Skeleton.Card />
           <Skeleton.Card />
           <Skeleton.Card />

@@ -12,6 +12,7 @@ import com.worklog.infrastructure.repository.TenantRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class StandardWorkingHoursService {
@@ -37,6 +38,7 @@ public class StandardWorkingHoursService {
      *
      * Resolution chain: Member -> Organization hierarchy (child->parent->root) -> Tenant -> System default (8.0h)
      */
+    @Transactional(readOnly = true)
     public StandardHoursResolution resolveStandardDailyHours(UUID memberId) {
         Member member = memberRepository
                 .findById(MemberId.of(memberId))
