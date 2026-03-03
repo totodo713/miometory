@@ -15,6 +15,8 @@ interface AssignmentRow {
   projectName: string;
   isActive: boolean;
   assignedAt: string;
+  defaultStartTime: string | null;
+  defaultEndTime: string | null;
 }
 
 interface MemberOption {
@@ -54,6 +56,8 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
   // Add assignment form state
   const [addMemberId, setAddMemberId] = useState("");
   const [addProjectId, setAddProjectId] = useState("");
+  const [addDefaultStartTime, setAddDefaultStartTime] = useState("");
+  const [addDefaultEndTime, setAddDefaultEndTime] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
@@ -118,9 +122,16 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
     setIsAdding(true);
     setError(null);
     try {
-      await api.admin.assignments.create({ memberId, projectId });
+      await api.admin.assignments.create({
+        memberId,
+        projectId,
+        defaultStartTime: addDefaultStartTime || null,
+        defaultEndTime: addDefaultEndTime || null,
+      });
       setAddMemberId("");
       setAddProjectId("");
+      setAddDefaultStartTime("");
+      setAddDefaultEndTime("");
       onRefresh();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -266,6 +277,30 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
               </select>
             </div>
           )}
+          <div>
+            <label htmlFor="add-default-start-time" className="block text-sm font-medium text-gray-700 mb-1">
+              {t("defaultStartTime")}
+            </label>
+            <input
+              type="time"
+              id="add-default-start-time"
+              value={addDefaultStartTime}
+              onChange={(e) => setAddDefaultStartTime(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="add-default-end-time" className="block text-sm font-medium text-gray-700 mb-1">
+              {t("defaultEndTime")}
+            </label>
+            <input
+              type="time"
+              id="add-default-end-time"
+              value={addDefaultEndTime}
+              onChange={(e) => setAddDefaultEndTime(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <button
             type="button"
             onClick={handleAdd}
@@ -297,6 +332,8 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                 {viewMode === "by-member" && (
                   <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.project")}</th>
                 )}
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.defaultStartTime")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.defaultEndTime")}</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">{tc("status")}</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-700">{tc("actions")}</th>
               </tr>
@@ -314,6 +351,8 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                       <span className="font-mono text-xs">{a.projectCode}</span> {a.projectName}
                     </td>
                   )}
+                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultStartTime ?? "-"}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultEndTime ?? "-"}</td>
                   <td className="py-3 px-4">
                     <span
                       className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${

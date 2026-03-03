@@ -6,6 +6,7 @@ import com.worklog.application.service.UserContextService;
 import com.worklog.shared.AdminRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -58,7 +59,13 @@ public class AdminAssignmentController {
 
         enforceDirectReportIfSupervisor(authentication.getName(), request.memberId());
 
-        var command = new CreateAssignmentCommand(tenantId, request.memberId(), request.projectId(), actorMemberId);
+        var command = new CreateAssignmentCommand(
+                tenantId,
+                request.memberId(),
+                request.projectId(),
+                actorMemberId,
+                request.defaultStartTime(),
+                request.defaultEndTime());
         UUID id = adminAssignmentService.createAssignment(command);
         return new CreateAssignmentResponse(id.toString());
     }
@@ -91,7 +98,7 @@ public class AdminAssignmentController {
     }
 
     public record CreateAssignmentRequest(
-            @NotNull UUID memberId, @NotNull UUID projectId) {}
+            @NotNull UUID memberId, @NotNull UUID projectId, LocalTime defaultStartTime, LocalTime defaultEndTime) {}
 
     public record CreateAssignmentResponse(String id) {}
 }

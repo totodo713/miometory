@@ -2,6 +2,7 @@ package com.worklog.application.service;
 
 import com.worklog.application.command.CreateAssignmentCommand;
 import com.worklog.domain.shared.DomainException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -25,6 +26,7 @@ public class AdminAssignmentService {
         return jdbcTemplate.query(
                 """
                 SELECT a.id, a.member_id, a.project_id, a.is_active, a.assigned_at,
+                       a.default_start_time, a.default_end_time,
                        m.display_name AS member_name, m.email AS member_email,
                        p.code AS project_code, p.name AS project_name
                 FROM member_project_assignments a
@@ -33,16 +35,22 @@ public class AdminAssignmentService {
                 WHERE a.member_id = ? AND a.tenant_id = ?
                 ORDER BY p.code
                 """,
-                (rs, rowNum) -> new AssignmentRow(
-                        rs.getObject("id", UUID.class).toString(),
-                        rs.getObject("member_id", UUID.class).toString(),
-                        rs.getString("member_name"),
-                        rs.getString("member_email"),
-                        rs.getObject("project_id", UUID.class).toString(),
-                        rs.getString("project_code"),
-                        rs.getString("project_name"),
-                        rs.getBoolean("is_active"),
-                        rs.getTimestamp("assigned_at").toInstant().toString()),
+                (rs, rowNum) -> {
+                    Time startTime = rs.getTime("default_start_time");
+                    Time endTime = rs.getTime("default_end_time");
+                    return new AssignmentRow(
+                            rs.getObject("id", UUID.class).toString(),
+                            rs.getObject("member_id", UUID.class).toString(),
+                            rs.getString("member_name"),
+                            rs.getString("member_email"),
+                            rs.getObject("project_id", UUID.class).toString(),
+                            rs.getString("project_code"),
+                            rs.getString("project_name"),
+                            rs.getBoolean("is_active"),
+                            rs.getTimestamp("assigned_at").toInstant().toString(),
+                            startTime != null ? startTime.toLocalTime().toString() : null,
+                            endTime != null ? endTime.toLocalTime().toString() : null);
+                },
                 memberId,
                 tenantId);
     }
@@ -52,6 +60,7 @@ public class AdminAssignmentService {
         return jdbcTemplate.query(
                 """
                 SELECT a.id, a.member_id, a.project_id, a.is_active, a.assigned_at,
+                       a.default_start_time, a.default_end_time,
                        m.display_name AS member_name, m.email AS member_email,
                        p.code AS project_code, p.name AS project_name
                 FROM member_project_assignments a
@@ -60,16 +69,22 @@ public class AdminAssignmentService {
                 WHERE a.project_id = ? AND a.tenant_id = ?
                 ORDER BY m.display_name
                 """,
-                (rs, rowNum) -> new AssignmentRow(
-                        rs.getObject("id", UUID.class).toString(),
-                        rs.getObject("member_id", UUID.class).toString(),
-                        rs.getString("member_name"),
-                        rs.getString("member_email"),
-                        rs.getObject("project_id", UUID.class).toString(),
-                        rs.getString("project_code"),
-                        rs.getString("project_name"),
-                        rs.getBoolean("is_active"),
-                        rs.getTimestamp("assigned_at").toInstant().toString()),
+                (rs, rowNum) -> {
+                    Time startTime = rs.getTime("default_start_time");
+                    Time endTime = rs.getTime("default_end_time");
+                    return new AssignmentRow(
+                            rs.getObject("id", UUID.class).toString(),
+                            rs.getObject("member_id", UUID.class).toString(),
+                            rs.getString("member_name"),
+                            rs.getString("member_email"),
+                            rs.getObject("project_id", UUID.class).toString(),
+                            rs.getString("project_code"),
+                            rs.getString("project_name"),
+                            rs.getBoolean("is_active"),
+                            rs.getTimestamp("assigned_at").toInstant().toString(),
+                            startTime != null ? startTime.toLocalTime().toString() : null,
+                            endTime != null ? endTime.toLocalTime().toString() : null);
+                },
                 projectId,
                 tenantId);
     }
@@ -109,15 +124,17 @@ public class AdminAssignmentService {
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(
                 """
-                INSERT INTO member_project_assignments (id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, true)
+                INSERT INTO member_project_assignments (id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active, default_start_time, default_end_time)
+                VALUES (?, ?, ?, ?, ?, ?, true, ?, ?)
                 """,
                 id,
                 command.tenantId(),
                 command.memberId(),
                 command.projectId(),
                 Timestamp.from(Instant.now()),
-                command.assignedBy());
+                command.assignedBy(),
+                command.defaultStartTime() != null ? Time.valueOf(command.defaultStartTime()) : null,
+                command.defaultEndTime() != null ? Time.valueOf(command.defaultEndTime()) : null);
         return id;
     }
 
@@ -161,5 +178,7 @@ public class AdminAssignmentService {
             String projectCode,
             String projectName,
             boolean isActive,
-            String assignedAt) {}
+            String assignedAt,
+            String defaultStartTime,
+            String defaultEndTime) {}
 }

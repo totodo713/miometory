@@ -943,7 +943,9 @@
         "project": "Project",
         "startDate": "Start Date",
         "endDate": "End Date",
-        "actions": "Actions"
+        "actions": "Actions",
+        "defaultStartTime": "Start Time",
+        "defaultEndTime": "End Time"
       },
       "form": {
         "member": "Member",
@@ -951,7 +953,9 @@
         "project": "Project",
         "selectProject": "Select project",
         "startDate": "Start Date",
-        "endDate": "End Date"
+        "endDate": "End Date",
+        "defaultStartTime": "Default Start Time",
+        "defaultEndTime": "Default End Time"
       },
       "description": "Manage member-project assignments",
       "byMember": "By Member",
@@ -967,7 +971,9 @@
       "createError": "Failed to create assignment",
       "updateError": "Failed to update assignment",
       "deleteError": "Failed to delete assignment",
-      "noAssignments": "No assignments registered"
+      "noAssignments": "No assignments registered",
+      "defaultStartTime": "Default Start Time",
+      "defaultEndTime": "Default End Time"
     },
     "dailyApproval": {
       "title": "Daily Approval",
