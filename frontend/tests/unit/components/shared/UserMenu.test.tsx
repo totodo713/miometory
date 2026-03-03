@@ -39,7 +39,7 @@ describe("UserMenu", () => {
         <UserMenu />
       </IntlWrapper>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "ユーザーメニュー" }));
+    fireEvent.click(screen.getByRole("button", { name: /ユーザーメニュー/ }));
     expect(screen.getByText("マイページ")).toBeInTheDocument();
     expect(screen.getByText("ログアウト")).toBeInTheDocument();
   });
@@ -50,7 +50,7 @@ describe("UserMenu", () => {
         <UserMenu />
       </IntlWrapper>,
     );
-    const trigger = screen.getByRole("button", { name: "ユーザーメニュー" });
+    const trigger = screen.getByRole("button", { name: /ユーザーメニュー/ });
     fireEvent.click(trigger);
     expect(screen.getByText("マイページ")).toBeInTheDocument();
     fireEvent.click(trigger);
@@ -63,9 +63,22 @@ describe("UserMenu", () => {
         <UserMenu />
       </IntlWrapper>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "ユーザーメニュー" }));
+    fireEvent.click(screen.getByRole("button", { name: /ユーザーメニュー/ }));
     const link = screen.getByText("マイページ");
     expect(link.closest("a")).toHaveAttribute("href", "/mypage");
+  });
+
+  test("closes dropdown when clicking outside", () => {
+    render(
+      <IntlWrapper>
+        <UserMenu />
+      </IntlWrapper>,
+    );
+    const trigger = screen.getByRole("button", { name: /ユーザーメニュー/ });
+    fireEvent.click(trigger);
+    expect(screen.getByText("マイページ")).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByText("マイページ")).not.toBeInTheDocument();
   });
 
   test("calls logout on logout button click", () => {
@@ -74,7 +87,7 @@ describe("UserMenu", () => {
         <UserMenu />
       </IntlWrapper>,
     );
-    fireEvent.click(screen.getByRole("button", { name: "ユーザーメニュー" }));
+    fireEvent.click(screen.getByRole("button", { name: /ユーザーメニュー/ }));
     fireEvent.click(screen.getByText("ログアウト"));
     expect(mockLogout).toHaveBeenCalledTimes(1);
   });

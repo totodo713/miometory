@@ -89,6 +89,7 @@
       "updated": "プロフィールを更新しました",
       "updateError": "プロフィールの更新に失敗しました",
       "displayNameRequired": "表示名を入力してください",
+    "displayNameTooLong": "表示名は100文字以内で入力してください",
       "emailRequired": "メールアドレスを入力してください",
       "emailInvalid": "有効なメールアドレスを入力してください",
       "loadError": "プロフィールの読み込みに失敗しました",

@@ -75,7 +75,7 @@ test.describe("MyPage Feature", () => {
     await page.waitForLoadState("networkidle");
 
     // Click the UserMenu trigger (user name button)
-    const userMenuButton = page.getByRole("button", { name: "User menu" });
+    const userMenuButton = page.getByRole("button", { name: /User menu/ });
     await userMenuButton.click();
 
     // Verify dropdown shows "My Page" link

@@ -120,16 +120,19 @@ export default function MypagePage() {
 
   const validateForm = (): boolean => {
     const errors: { displayName?: string; email?: string } = {};
-    if (!editDisplayName.trim()) {
+    const trimmedDisplayName = editDisplayName.trim();
+    const trimmedEmail = editEmail.trim();
+
+    if (!trimmedDisplayName) {
       errors.displayName = t("profile.displayNameRequired");
-    } else if (editDisplayName.trim().length > 100) {
-      errors.displayName = t("profile.displayNameRequired");
+    } else if (trimmedDisplayName.length > 100) {
+      errors.displayName = t("profile.displayNameTooLong");
     }
-    if (!editEmail.trim()) {
+    if (!trimmedEmail) {
       errors.email = t("profile.emailRequired");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       errors.email = t("profile.emailInvalid");
-    } else if (editEmail.trim().length > 254) {
+    } else if (trimmedEmail.length > 254) {
       errors.email = t("profile.emailInvalid");
     }
     setEditErrors(errors);

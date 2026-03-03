@@ -40,11 +40,11 @@ export function UserMenu() {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900"
-        aria-label={t("userMenu")}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         <span>{user.displayName}</span>
+        <span className="sr-only">{t("userMenu")}</span>
         <svg
           className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
           fill="none"

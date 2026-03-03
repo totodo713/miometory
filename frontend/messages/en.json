@@ -89,6 +89,7 @@
       "updated": "Profile updated",
       "updateError": "Failed to update profile",
       "displayNameRequired": "Display name is required",
+    "displayNameTooLong": "Display name must be 100 characters or less",
       "emailRequired": "Email is required",
       "emailInvalid": "Please enter a valid email address",
       "loadError": "Failed to load profile",
