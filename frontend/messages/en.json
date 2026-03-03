@@ -1118,6 +1118,7 @@
         "entries": "Holiday Entries",
         "addEntry": "Add Holiday",
         "entryName": "Holiday Name",
+        "entryNameJa": "Holiday Name (Japanese)",
         "entryType": "Type",
         "entryFixed": "Fixed Date",
         "entryNthWeekday": "Nth Weekday",

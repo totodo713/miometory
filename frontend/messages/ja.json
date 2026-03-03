@@ -1118,6 +1118,7 @@
         "entries": "祝日エントリ",
         "addEntry": "祝日を追加",
         "entryName": "祝日名",
+        "entryNameJa": "祝日名（日本語）",
         "entryType": "種類",
         "entryFixed": "固定日",
         "entryNthWeekday": "第N曜日",

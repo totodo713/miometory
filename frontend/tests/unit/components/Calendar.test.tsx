@@ -38,6 +38,8 @@ describe("Calendar Component", () => {
       status: "APPROVED",
       isWeekend: false,
       isHoliday: false,
+      holidayName: null,
+      holidayNameJa: null,
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -49,6 +51,8 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: false,
+      holidayName: null,
+      holidayNameJa: null,
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -60,6 +64,8 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: false,
+      holidayName: null,
+      holidayNameJa: null,
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -71,6 +77,8 @@ describe("Calendar Component", () => {
       status: "SUBMITTED",
       isWeekend: true,
       isHoliday: false,
+      holidayName: null,
+      holidayNameJa: null,
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -82,6 +90,8 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: true,
       isHoliday: false,
+      holidayName: null,
+      holidayNameJa: null,
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -93,6 +103,8 @@ describe("Calendar Component", () => {
       status: "REJECTED",
       isWeekend: false,
       isHoliday: false,
+      holidayName: null,
+      holidayNameJa: null,
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -104,6 +116,8 @@ describe("Calendar Component", () => {
       status: "MIXED",
       isWeekend: false,
       isHoliday: false,
+      holidayName: null,
+      holidayNameJa: null,
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -115,6 +129,8 @@ describe("Calendar Component", () => {
       status: "DRAFT",
       isWeekend: false,
       isHoliday: true,
+      holidayName: "Test Holiday",
+      holidayNameJa: "テスト祝日",
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
@@ -353,21 +369,22 @@ describe("Calendar Component", () => {
         </IntlWrapper>,
       );
 
-      // Find the button for date 2026-01-24 (Saturday, weekend)
-      const buttons = screen.getAllByRole("button");
-      const weekendButton = buttons.find((btn) => btn.textContent?.includes("24"));
-
+      // Find the button for date 2026-01-24 (Saturday, weekend) by aria-label
+      const weekendButton = screen.getByRole("button", { name: /24, 2026/ });
       expect(weekendButton).toHaveClass("bg-weekend-100");
     });
 
-    it("should display holiday indicator", () => {
+    it("should display holiday name instead of H badge", () => {
       render(
         <IntlWrapper>
           <Calendar year={2026} month={1} dates={mockDates} />
         </IntlWrapper>,
       );
 
-      expect(screen.getByText("H")).toBeInTheDocument();
+      // "H" badge should NOT be present
+      expect(screen.queryByText("H")).not.toBeInTheDocument();
+      // Holiday name should be displayed (ja locale in test IntlWrapper)
+      expect(screen.getByText("テスト祝日")).toBeInTheDocument();
     });
 
     it("should highlight holiday dates", () => {
@@ -377,11 +394,86 @@ describe("Calendar Component", () => {
         </IntlWrapper>,
       );
 
-      // Find the button for date 2026-01-28 (holiday)
-      const buttons = screen.getAllByRole("button");
-      const holidayButton = buttons.find((btn) => btn.textContent?.includes("28"));
-
+      // Find the button for date 2026-01-28 (holiday) by aria-label
+      const holidayButton = screen.getByRole("button", { name: /28, 2026/ });
       expect(holidayButton).toHaveClass("bg-holiday-100");
+    });
+
+    it("should highlight Sunday dates with holiday background", () => {
+      // 2026-01-25 is a Sunday
+      const sundayDates: DailyCalendarEntry[] = [
+        {
+          date: "2026-01-25",
+          totalWorkHours: 0,
+          totalAbsenceHours: 0,
+          status: "DRAFT",
+          isWeekend: true,
+          isHoliday: false,
+          holidayName: null,
+          holidayNameJa: null,
+          hasProxyEntries: false,
+          rejectionSource: null,
+          rejectionReason: null,
+        },
+      ];
+
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={sundayDates} />
+        </IntlWrapper>,
+      );
+
+      // Find the Sunday button by aria-label
+      const sundayButton = screen.getByRole("button", { name: /25, 2026/ });
+      expect(sundayButton).toHaveClass("bg-holiday-100");
+    });
+
+    it("should color Sunday day number with holiday color", () => {
+      const sundayDates: DailyCalendarEntry[] = [
+        {
+          date: "2026-01-25",
+          totalWorkHours: 0,
+          totalAbsenceHours: 0,
+          status: "DRAFT",
+          isWeekend: true,
+          isHoliday: false,
+          holidayName: null,
+          holidayNameJa: null,
+          hasProxyEntries: false,
+          rejectionSource: null,
+          rejectionReason: null,
+        },
+      ];
+
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={sundayDates} />
+        </IntlWrapper>,
+      );
+
+      const dayNum = screen.getByText("25");
+      expect(dayNum).toHaveClass("text-holiday-600");
+    });
+
+    it("should color Saturday day number with blue", () => {
+      render(
+        <IntlWrapper>
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
+
+      const dayNum = screen.getByText("24");
+      expect(dayNum).toHaveClass("text-blue-700");
+    });
+
+    it("should display English holiday name for en locale", () => {
+      render(
+        <IntlWrapper locale="en">
+          <Calendar year={2026} month={1} dates={mockDates} />
+        </IntlWrapper>,
+      );
+
+      expect(screen.getByText("Test Holiday")).toBeInTheDocument();
     });
   });
 
@@ -491,6 +583,8 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          holidayName: null,
+          holidayNameJa: null,
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
@@ -516,6 +610,8 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          holidayName: null,
+          holidayNameJa: null,
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
@@ -527,6 +623,8 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          holidayName: null,
+          holidayNameJa: null,
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
@@ -552,6 +650,8 @@ describe("Calendar Component", () => {
           status: "UNKNOWN" as any, // Force unknown status
           isWeekend: false,
           isHoliday: false,
+          holidayName: null,
+          holidayNameJa: null,
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
@@ -580,6 +680,8 @@ describe("Calendar Component", () => {
           status: "DRAFT",
           isWeekend: false,
           isHoliday: false,
+          holidayName: null,
+          holidayNameJa: null,
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,

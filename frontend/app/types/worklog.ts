@@ -63,6 +63,8 @@ export interface DailyCalendarEntry {
   status: DailyStatus;
   isWeekend: boolean;
   isHoliday: boolean;
+  holidayName: string | null;
+  holidayNameJa: string | null;
   hasProxyEntries: boolean;
   rejectionSource: "monthly" | "daily" | null;
   rejectionReason: string | null;

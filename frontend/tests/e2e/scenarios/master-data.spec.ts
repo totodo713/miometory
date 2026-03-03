@@ -132,7 +132,7 @@ test.describe("Master Data Management", () => {
       ).toHaveAttribute("aria-expanded", "true");
 
       // Entries should be visible (seed data has at least "New Year's Day" / "元日")
-      await expect(page.getByText("New Year's Day").or(page.getByText("元日"))).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("New Year's Day").or(page.getByText("元日")).first()).toBeVisible({ timeout: 5000 });
     });
   });
 });

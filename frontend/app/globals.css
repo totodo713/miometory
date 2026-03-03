@@ -35,12 +35,12 @@
   --color-weekend-100: oklch(0.94 0.02 230);
   --color-weekend-200: oklch(0.9 0.04 230);
 
-  /* Holiday colors - warm orange for holidays */
-  --color-holiday-50: oklch(0.98 0.02 60);
-  --color-holiday-100: oklch(0.95 0.04 55);
-  --color-holiday-200: oklch(0.9 0.08 50);
-  --color-holiday-500: oklch(0.7 0.18 45);
-  --color-holiday-600: oklch(0.6 0.2 40);
+  /* Holiday colors - pink for holidays and Sundays */
+  --color-holiday-50: oklch(0.97 0.03 350);
+  --color-holiday-100: oklch(0.93 0.06 350);
+  --color-holiday-200: oklch(0.88 0.1 350);
+  --color-holiday-500: oklch(0.65 0.2 350);
+  --color-holiday-600: oklch(0.48 0.22 350);
 
   /* Status colors for entry states */
   --color-status-draft: oklch(0.95 0.01 250);

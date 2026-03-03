@@ -186,7 +186,10 @@ export function HolidayCalendarPresetList({
             <tbody>
               {entries.map((entry) => (
                 <tr key={entry.id} className="border-b border-gray-100">
-                  <td className="py-2 px-3">{entry.name}</td>
+                  <td className="py-2 px-3">
+                    {entry.name}
+                    {entry.nameJa && <span className="text-gray-500 ml-1">({entry.nameJa})</span>}
+                  </td>
                   <td className="py-2 px-3">{renderEntryTypeBadge(entry.entryType)}</td>
                   <td className="py-2 px-3 text-gray-600">
                     {formatEntryDate(entry, t, tMonth, tNth, tWeekday)}
@@ -247,7 +250,10 @@ export function HolidayCalendarPresetList({
             {entries.map((entry) => (
               <div key={entry.id} className="bg-white border border-gray-100 rounded p-3 space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-900">{entry.name}</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {entry.name}
+                    {entry.nameJa && <span className="text-gray-500 ml-1 text-xs">({entry.nameJa})</span>}
+                  </span>
                   {renderEntryTypeBadge(entry.entryType)}
                 </div>
                 <p className="text-xs text-gray-600">
