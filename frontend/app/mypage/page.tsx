@@ -49,8 +49,9 @@ export default function MypagePage() {
   const emailChangedTitleId = `${uniqueId}-email-changed-title`;
   const emailChangedMessageId = `${uniqueId}-email-changed-message`;
 
-  // Dialog ref for focus trap
+  // Dialog refs
   const dialogRef = useRef<HTMLDivElement>(null);
+  const emailDialogButtonRef = useRef<HTMLButtonElement>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -103,6 +104,11 @@ export default function MypagePage() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [isEditing]);
+
+  // Focus management for email changed dialog
+  useEffect(() => {
+    if (showEmailChanged) emailDialogButtonRef.current?.focus();
+  }, [showEmailChanged]);
 
   const openEditModal = () => {
     if (!profile) return;
@@ -308,7 +314,7 @@ export default function MypagePage() {
               <button
                 type="button"
                 onClick={() => setIsEditing(false)}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 {t("profile.cancel")}
               </button>
@@ -316,7 +322,7 @@ export default function MypagePage() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+                className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 {saving ? tc("saving") : t("profile.save")}
               </button>
@@ -344,9 +350,10 @@ export default function MypagePage() {
             </p>
             <div className="flex justify-end">
               <button
+                ref={emailDialogButtonRef}
                 type="button"
                 onClick={() => logout()}
-                className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 {t("profile.emailChangedConfirm")}
               </button>
