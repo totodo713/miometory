@@ -68,6 +68,8 @@ export interface DailyCalendarEntry {
   hasProxyEntries: boolean;
   rejectionSource: "monthly" | "daily" | null;
   rejectionReason: string | null;
+  standardDailyHours: number | null;
+  overtimeHours: number | null;
 }
 
 /**

@@ -43,6 +43,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
     {
       date: "2026-01-22",
@@ -56,6 +58,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
     {
       date: "2026-01-23",
@@ -69,6 +73,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
     {
       date: "2026-01-24",
@@ -82,6 +88,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
     {
       date: "2026-01-25",
@@ -95,6 +103,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
     {
       date: "2026-01-26",
@@ -108,6 +118,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
     {
       date: "2026-01-27",
@@ -121,6 +133,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
     {
       date: "2026-01-28",
@@ -134,6 +148,8 @@ describe("Calendar Component", () => {
       hasProxyEntries: false,
       rejectionSource: null,
       rejectionReason: null,
+      standardDailyHours: null,
+      overtimeHours: null,
     },
   ];
 
@@ -414,6 +430,8 @@ describe("Calendar Component", () => {
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
+          standardDailyHours: null,
+          overtimeHours: null,
         },
       ];
 
@@ -442,6 +460,8 @@ describe("Calendar Component", () => {
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
+          standardDailyHours: null,
+          overtimeHours: null,
         },
       ];
 
@@ -588,6 +608,8 @@ describe("Calendar Component", () => {
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
+          standardDailyHours: null,
+          overtimeHours: null,
         },
       ];
 
@@ -615,6 +637,8 @@ describe("Calendar Component", () => {
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
+          standardDailyHours: null,
+          overtimeHours: null,
         },
         {
           date: "2026-01-22",
@@ -628,6 +652,8 @@ describe("Calendar Component", () => {
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
+          standardDailyHours: null,
+          overtimeHours: null,
         },
       ];
 
@@ -655,6 +681,8 @@ describe("Calendar Component", () => {
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
+          standardDailyHours: null,
+          overtimeHours: null,
         },
       ];
 
@@ -685,6 +713,8 @@ describe("Calendar Component", () => {
           hasProxyEntries: false,
           rejectionSource: null,
           rejectionReason: null,
+          standardDailyHours: null,
+          overtimeHours: null,
         },
       ];
 

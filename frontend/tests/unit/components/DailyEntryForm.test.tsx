@@ -1025,6 +1025,126 @@ describe("DailyEntryForm", () => {
     });
   });
 
+  // ===== Overtime Indicator Tests =====
+  describe("Overtime Indicator", () => {
+    it("should show overtime when totalWorkHours exceeds standardDailyHours", async () => {
+      const mockEntries = [
+        {
+          id: "entry-1",
+          projectId: mockProjectId,
+          hours: 10,
+          comment: "",
+          status: "DRAFT",
+          version: 1,
+        },
+      ];
+      (mockGetEntries as any).mockResolvedValue({
+        entries: mockEntries,
+        total: mockEntries.length,
+      });
+
+      renderWithProviders(
+        <DailyEntryForm
+          date={mockDate}
+          memberId={mockMemberId}
+          standardDailyHours={8}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+      );
+
+      await waitFor(() => {
+        // "残業時間" is the Japanese translation for "overtime"
+        expect(screen.getByText("残業時間:")).toBeInTheDocument();
+      });
+
+      // 10 - 8 = 2.00h overtime
+      expect(screen.getByText("2.00h")).toBeInTheDocument();
+    });
+
+    it("should not show overtime when totalWorkHours is less than or equal to standardDailyHours", async () => {
+      const mockEntries = [
+        {
+          id: "entry-1",
+          projectId: mockProjectId,
+          hours: 7,
+          comment: "",
+          status: "DRAFT",
+          version: 1,
+        },
+      ];
+      (mockGetEntries as any).mockResolvedValue({
+        entries: mockEntries,
+        total: mockEntries.length,
+      });
+
+      renderWithProviders(
+        <DailyEntryForm
+          date={mockDate}
+          memberId={mockMemberId}
+          standardDailyHours={8}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+      );
+
+      await waitFor(() => {
+        // Required hours label should still show
+        expect(screen.getByText("所定時間:")).toBeInTheDocument();
+      });
+
+      // Overtime label should NOT appear
+      expect(screen.queryByText("残業時間:")).not.toBeInTheDocument();
+    });
+
+    it("should not show overtime section when standardDailyHours is undefined", async () => {
+      renderWithProviders(
+        <DailyEntryForm date={mockDate} memberId={mockMemberId} onClose={mockOnClose} onSave={mockOnSave} />,
+      );
+
+      await waitForLoading();
+
+      // Neither overtime label nor required hours label should appear
+      expect(screen.queryByText("残業時間:")).not.toBeInTheDocument();
+      expect(screen.queryByText("所定時間:")).not.toBeInTheDocument();
+    });
+
+    it("should show required hours when standardDailyHours is provided even without overtime", async () => {
+      const mockEntries = [
+        {
+          id: "entry-1",
+          projectId: mockProjectId,
+          hours: 6,
+          comment: "",
+          status: "DRAFT",
+          version: 1,
+        },
+      ];
+      (mockGetEntries as any).mockResolvedValue({
+        entries: mockEntries,
+        total: mockEntries.length,
+      });
+
+      renderWithProviders(
+        <DailyEntryForm
+          date={mockDate}
+          memberId={mockMemberId}
+          standardDailyHours={8}
+          onClose={mockOnClose}
+          onSave={mockOnSave}
+        />,
+      );
+
+      await waitFor(() => {
+        // Required hours label should appear (visible when work hours > 0)
+        expect(screen.getByText("所定時間:")).toBeInTheDocument();
+      });
+      expect(screen.getByText("8h")).toBeInTheDocument();
+      // Overtime label should NOT appear since 6 < 8
+      expect(screen.queryByText("残業時間:")).not.toBeInTheDocument();
+    });
+  });
+
   // ===== Delete Entry Tests =====
   describe("Delete Entry", () => {
     it("should show delete button for existing DRAFT entries", async () => {
