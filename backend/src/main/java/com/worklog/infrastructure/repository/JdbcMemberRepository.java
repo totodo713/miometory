@@ -4,6 +4,7 @@ import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.organization.OrganizationId;
 import com.worklog.domain.tenant.TenantId;
+import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -49,7 +50,7 @@ public class JdbcMemberRepository {
     public Optional<Member> findById(MemberId id) {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name,
-                   manager_id, is_active, version, created_at, updated_at
+                   manager_id, standard_daily_hours, is_active, version, created_at, updated_at
             FROM members
             WHERE id = ?
             """;
@@ -71,7 +72,7 @@ public class JdbcMemberRepository {
     public Optional<Member> findByEmail(TenantId tenantId, String email) {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name,
-                   manager_id, is_active, version, created_at, updated_at
+                   manager_id, standard_daily_hours, is_active, version, created_at, updated_at
             FROM members
             WHERE tenant_id = ? AND email = ?
             """;
@@ -94,7 +95,7 @@ public class JdbcMemberRepository {
     public List<Member> findAllByEmail(String email) {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name,
-                   manager_id, is_active, version, created_at, updated_at
+                   manager_id, standard_daily_hours, is_active, version, created_at, updated_at
             FROM members
             WHERE email = ?
             LIMIT 50
@@ -113,7 +114,7 @@ public class JdbcMemberRepository {
     public List<Member> findDirectSubordinates(MemberId managerId) {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name,
-                   manager_id, is_active, version, created_at, updated_at
+                   manager_id, standard_daily_hours, is_active, version, created_at, updated_at
             FROM members
             WHERE manager_id = ? AND is_active = true
             ORDER BY display_name
@@ -134,7 +135,7 @@ public class JdbcMemberRepository {
             WITH RECURSIVE subordinates AS (
                 -- Base case: direct reports
                 SELECT id, tenant_id, organization_id, email, display_name,
-                       manager_id, is_active, version, created_at, updated_at, 1 as level
+                       manager_id, standard_daily_hours, is_active, version, created_at, updated_at, 1 as level
                 FROM members
                 WHERE manager_id = ? AND is_active = true
 
@@ -142,13 +143,13 @@ public class JdbcMemberRepository {
 
                 -- Recursive case: reports of reports
                 SELECT m.id, m.tenant_id, m.organization_id, m.email, m.display_name,
-                       m.manager_id, m.is_active, m.version, m.created_at, m.updated_at, s.level + 1
+                       m.manager_id, m.standard_daily_hours, m.is_active, m.version, m.created_at, m.updated_at, s.level + 1
                 FROM members m
                 INNER JOIN subordinates s ON m.manager_id = s.id
                 WHERE m.is_active = true AND s.level < 10  -- Prevent infinite loops, max 10 levels
             )
             SELECT id, tenant_id, organization_id, email, display_name,
-                   manager_id, is_active, version, created_at, updated_at
+                   manager_id, standard_daily_hours, is_active, version, created_at, updated_at
             FROM subordinates
             ORDER BY level, display_name
             """;
@@ -247,13 +248,14 @@ public class JdbcMemberRepository {
     public void save(Member member, int expectedVersion) {
         String upsertSql = """
             INSERT INTO members (id, tenant_id, organization_id, email, display_name,
-                               manager_id, is_active, version, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                               manager_id, standard_daily_hours, is_active, version, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
                 organization_id = EXCLUDED.organization_id,
                 email = EXCLUDED.email,
                 display_name = EXCLUDED.display_name,
                 manager_id = EXCLUDED.manager_id,
+                standard_daily_hours = EXCLUDED.standard_daily_hours,
                 is_active = EXCLUDED.is_active,
                 version = members.version + 1,
                 updated_at = EXCLUDED.updated_at
@@ -268,6 +270,7 @@ public class JdbcMemberRepository {
                 member.getEmail(),
                 member.getDisplayName(),
                 member.getManagerId() != null ? member.getManagerId().value() : null,
+                member.getStandardDailyHours(),
                 member.isActive(),
                 expectedVersion, // Version for new records
                 Timestamp.from(member.getCreatedAt()),
@@ -309,7 +312,7 @@ public class JdbcMemberRepository {
     public List<Member> findByOrganization(OrganizationId organizationId) {
         String sql = """
             SELECT id, tenant_id, organization_id, email, display_name,
-                   manager_id, is_active, version, created_at, updated_at
+                   manager_id, standard_daily_hours, is_active, version, created_at, updated_at
             FROM members
             WHERE organization_id = ? AND is_active = true
             ORDER BY display_name
@@ -382,6 +385,7 @@ public class JdbcMemberRepository {
         public Member mapRow(ResultSet rs, int rowNum) throws SQLException {
             UUID managerId = (UUID) rs.getObject("manager_id");
             UUID orgId = rs.getObject("organization_id", UUID.class);
+            BigDecimal standardDailyHours = rs.getBigDecimal("standard_daily_hours");
             Instant createdAt = rs.getTimestamp("created_at").toInstant();
             Instant updatedAt = rs.getTimestamp("updated_at").toInstant();
 
@@ -392,6 +396,7 @@ public class JdbcMemberRepository {
                     rs.getString("email"),
                     rs.getString("display_name"),
                     managerId != null ? MemberId.of(managerId) : null,
+                    standardDailyHours,
                     rs.getBoolean("is_active"),
                     createdAt,
                     updatedAt);

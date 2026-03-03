@@ -90,14 +90,15 @@ public class TenantRepository {
         jdbcTemplate.update(
                 "INSERT INTO tenant (id, code, name, status, version, "
                         + "default_fiscal_year_pattern_id, default_monthly_period_pattern_id, "
-                        + "created_at, updated_at) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
+                        + "standard_daily_hours, created_at, updated_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "
                         + "status = EXCLUDED.status, "
                         + "version = EXCLUDED.version, "
                         + "default_fiscal_year_pattern_id = EXCLUDED.default_fiscal_year_pattern_id, "
                         + "default_monthly_period_pattern_id = EXCLUDED.default_monthly_period_pattern_id, "
+                        + "standard_daily_hours = EXCLUDED.standard_daily_hours, "
                         + "updated_at = NOW()",
                 tenant.getId().value(),
                 tenant.getCode().value(),
@@ -105,7 +106,8 @@ public class TenantRepository {
                 tenant.getStatus().name(),
                 tenant.getVersion(),
                 tenant.getDefaultFiscalYearPatternId(),
-                tenant.getDefaultMonthlyPeriodPatternId());
+                tenant.getDefaultMonthlyPeriodPatternId(),
+                tenant.getStandardDailyHours());
     }
 
     /**
@@ -120,6 +122,8 @@ public class TenantRepository {
                 case "TenantActivated" -> objectMapper.readValue(storedEvent.payload(), TenantActivated.class);
                 case "TenantDefaultPatternsAssigned" ->
                     objectMapper.readValue(storedEvent.payload(), TenantDefaultPatternsAssigned.class);
+                case "TenantStandardDailyHoursAssigned" ->
+                    objectMapper.readValue(storedEvent.payload(), TenantStandardDailyHoursAssigned.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {

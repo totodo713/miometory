@@ -2,6 +2,7 @@ package com.worklog.domain.member;
 
 import com.worklog.domain.organization.OrganizationId;
 import com.worklog.domain.tenant.TenantId;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -19,6 +20,7 @@ public class Member {
     private String email;
     private String displayName;
     private MemberId managerId; // T012: Manager ID for proxy entry permission
+    private BigDecimal standardDailyHours;
     private boolean isActive;
     private final Instant createdAt;
     private Instant updatedAt;
@@ -52,12 +54,31 @@ public class Member {
             boolean isActive,
             Instant createdAt,
             Instant updatedAt) {
+        this(id, tenantId, organizationId, email, displayName, managerId, null, isActive, createdAt, updatedAt);
+    }
+
+    /**
+     * Full rehydration constructor including standard daily hours.
+     * Use this when loading from database where all fields including standard daily hours are known.
+     */
+    public Member(
+            MemberId id,
+            TenantId tenantId,
+            OrganizationId organizationId,
+            String email,
+            String displayName,
+            MemberId managerId,
+            BigDecimal standardDailyHours,
+            boolean isActive,
+            Instant createdAt,
+            Instant updatedAt) {
         this.id = Objects.requireNonNull(id, "Member ID cannot be null");
         this.tenantId = Objects.requireNonNull(tenantId, "Tenant ID cannot be null");
         this.organizationId = organizationId; // Nullable: null = not yet assigned to organization
         this.email = Objects.requireNonNull(email, "Email cannot be null");
         this.displayName = Objects.requireNonNull(displayName, "Display name cannot be null");
         this.managerId = managerId; // Can be null if no manager
+        this.standardDailyHours = standardDailyHours; // Nullable: null = inherit from parent level
         this.isActive = isActive;
         this.createdAt = Objects.requireNonNull(createdAt, "Created timestamp cannot be null");
         this.updatedAt = Objects.requireNonNull(updatedAt, "Updated timestamp cannot be null");
@@ -95,6 +116,17 @@ public class Member {
                 null, // No manager
                 true, // New members are active by default
                 Instant.now());
+    }
+
+    /**
+     * Updates the member's standard daily working hours.
+     * NULL means "inherit from parent level" in the resolution chain.
+     *
+     * @param standardDailyHours The standard daily hours, or null to inherit
+     */
+    public void updateStandardDailyHours(BigDecimal standardDailyHours) {
+        this.standardDailyHours = standardDailyHours;
+        this.updatedAt = Instant.now();
     }
 
     /**
@@ -209,6 +241,10 @@ public class Member {
 
     public MemberId getManagerId() {
         return managerId;
+    }
+
+    public BigDecimal getStandardDailyHours() {
+        return standardDailyHours;
     }
 
     public boolean isActive() {
