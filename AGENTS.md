@@ -136,6 +136,8 @@ PostgreSQL 17 with JSONB for events. Flyway migrations in `backend/src/main/reso
 - Prefer `export function` over default exports for components
 - Use `catch (error: unknown)` with type guards, not `catch (error: any)`
 - Use `biome-ignore` (not eslint-disable) to suppress warnings, placed on the line before the flagged statement
+- **Biome CSS formatting**: Trailing zeros in decimal values are errors (e.g. `0.10` → `0.1`). Common in OKLCH color values
+- **Biome ARIA lint**: `noAriaUnsupportedOnRole` — plain `<span>` elements don't support `aria-label`. Use `title` attribute for tooltips instead; CSS `truncate` doesn't affect DOM text for screen readers
 
 ### Backend
 - Spotless: palantir-java-format (Java), ktlint intellij_idea style (Kotlin). 4 spaces, 120-char lines
@@ -163,6 +165,8 @@ Test templates and patterns → use `/gen-test` skill. Below are non-obvious got
 - **TOCTOU on unique constraints**: Catch `DataIntegrityViolationException` on save and translate to `DomainException`. See `AdminMasterDataService` for pattern
 - **Fake timers + waitFor**: `vi.useFakeTimers()` breaks `waitFor()`. Use `act(() => vi.advanceTimersByTime(ms))` then assert synchronously
 - **Fake timers + userEvent**: `userEvent.setup({ advanceTimers })` can still timeout. Use `fireEvent` for click/input in fake timer tests
+- **IntlWrapper default locale**: `frontend/tests/helpers/intl.tsx` defaults to `locale="ja"`. Tests asserting locale-dependent text (e.g. holiday names) must account for this or pass `locale="en"` explicitly
+- **E2E mock data and new nullable fields**: When adding `string | null` fields to interfaces (e.g. `DailyCalendarEntry`), existing E2E mocks without the new fields still work — `undefined` is falsy in conditional checks. No E2E mock update needed for display-only nullable additions
 
 ## Database Implementation Rules
 
