@@ -88,6 +88,13 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## Frontend Patterns
 
 - **Loading skeleton ↔ content layout parity**: Skeleton grids (column count, card count) must match the actual content layout to prevent CLS (Cumulative Layout Shift)
+- **useToast in useEffect deps**: `ToastProvider` の context value が `useMemo` 未適用（#131）— `useEffect` 依存配列に `toast` を入れるとエラー時に無限ループする。`toast` メソッドは deps から除外するか、Provider 側で value を memoize すること
+
+## Permission System
+
+- **ロール二重構造**: data-dev.sql のレガシーロール (ADMIN/USER/MODERATOR, `00000000-...` UUID) と V18 の管理ロール (SYSTEM_ADMIN/TENANT_ADMIN/SUPERVISOR, `aa000000-...` UUID) が共存
+- **設定権限は V18 に未含**: `system_settings.*` は V26、`tenant_settings.*` は V29 で後追い追加 — 権限不足の調査時は V18 だけでなく後続マイグレーションも確認すること
+- **AdminNav 表示条件**: 各ナビアイテムの `permission` フィールドで制御 — `AdminNav.tsx` の `NAV_ITEMS` 定義を参照
 
 ## GitHub Issue Management
 
