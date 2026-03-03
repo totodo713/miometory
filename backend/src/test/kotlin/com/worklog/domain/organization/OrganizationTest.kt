@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import java.math.BigDecimal
 import java.util.UUID
 
 /**
@@ -301,5 +302,43 @@ class OrganizationTest {
         assertNull(organization.fiscalYearPatternId)
         assertNull(organization.monthlyPeriodPatternId)
         assertEquals(1, organization.uncommittedEvents.size)
+    }
+
+    @Test
+    fun `assignStandardDailyHours should raise event and update field`() {
+        // Arrange
+        val organization = createOrganization()
+        organization.clearUncommittedEvents()
+        val hours = BigDecimal("7.50")
+
+        // Act
+        organization.assignStandardDailyHours(hours)
+
+        // Assert
+        assertEquals(hours, organization.standardDailyHours)
+        assertEquals(1, organization.uncommittedEvents.size)
+        assertTrue(organization.uncommittedEvents[0] is OrganizationStandardDailyHoursAssigned)
+
+        val event = organization.uncommittedEvents[0] as OrganizationStandardDailyHoursAssigned
+        assertEquals(organization.id.value, event.aggregateId())
+        assertEquals(hours, event.standardDailyHours())
+    }
+
+    @Test
+    fun `assignStandardDailyHours should accept null hours for inheritance`() {
+        // Arrange
+        val organization = createOrganization()
+        // First set a value
+        organization.assignStandardDailyHours(BigDecimal("8.00"))
+        organization.clearUncommittedEvents()
+
+        // Act - set to null (inherit from parent)
+        organization.assignStandardDailyHours(null)
+
+        // Assert
+        assertNull(organization.standardDailyHours)
+        assertEquals(1, organization.uncommittedEvents.size)
+        val event = organization.uncommittedEvents[0] as OrganizationStandardDailyHoursAssigned
+        assertNull(event.standardDailyHours())
     }
 }
