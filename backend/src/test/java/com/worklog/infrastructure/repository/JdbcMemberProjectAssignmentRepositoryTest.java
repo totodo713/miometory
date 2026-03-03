@@ -149,7 +149,9 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                     ProjectId.of(UUID.randomUUID()),
                     Instant.now(),
                     null,
-                    true);
+                    true,
+                    null,
+                    null);
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any())).thenReturn(List.of(expectedAssignment));
 
@@ -196,7 +198,15 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             ProjectId projectId = ProjectId.of(UUID.randomUUID());
 
             MemberProjectAssignment expectedAssignment = new MemberProjectAssignment(
-                    MemberProjectAssignmentId.generate(), tenantId, memberId, projectId, Instant.now(), null, true);
+                    MemberProjectAssignmentId.generate(),
+                    tenantId,
+                    memberId,
+                    projectId,
+                    Instant.now(),
+                    null,
+                    true,
+                    null,
+                    null);
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
                     .thenReturn(List.of(expectedAssignment));
@@ -259,8 +269,8 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             MemberId assignedBy = MemberId.of(UUID.randomUUID());
             Instant assignedAt = Instant.now();
 
-            MemberProjectAssignment assignment =
-                    new MemberProjectAssignment(id, tenantId, memberId, projectId, assignedAt, assignedBy, true);
+            MemberProjectAssignment assignment = new MemberProjectAssignment(
+                    id, tenantId, memberId, projectId, assignedAt, assignedBy, true, null, null);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
@@ -275,7 +285,9 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             eq(projectId.value()),
                             any(), // Timestamp
                             eq(assignedBy.value()),
-                            eq(true));
+                            eq(true),
+                            isNull(), // defaultStartTime
+                            isNull()); // defaultEndTime
         }
 
         @Test
@@ -288,7 +300,9 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                     ProjectId.of(UUID.randomUUID()),
                     Instant.now(),
                     null, // No assignedBy
-                    true);
+                    true,
+                    null,
+                    null);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
@@ -303,7 +317,9 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             any(),
                             any(),
                             isNull(), // assignedBy should be null
-                            any());
+                            any(),
+                            isNull(), // defaultStartTime
+                            isNull()); // defaultEndTime
         }
 
         @Test

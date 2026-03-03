@@ -106,8 +106,15 @@ class MemberProjectAssignmentTest {
             Instant assignedAt = Instant.now().minusSeconds(3600);
 
             MemberProjectAssignment assignment = new MemberProjectAssignment(
-                    id, testTenantId, testMemberId, testProjectId, assignedAt, testAssignedBy, false // Inactive
-                    );
+                    id,
+                    testTenantId,
+                    testMemberId,
+                    testProjectId,
+                    assignedAt,
+                    testAssignedBy,
+                    false, // Inactive
+                    null,
+                    null);
 
             assertEquals(id, assignment.getId());
             assertEquals(testTenantId, assignment.getTenantId());
@@ -124,7 +131,15 @@ class MemberProjectAssignmentTest {
             NullPointerException exception = assertThrows(
                     NullPointerException.class,
                     () -> new MemberProjectAssignment(
-                            null, testTenantId, testMemberId, testProjectId, Instant.now(), testAssignedBy, true));
+                            null,
+                            testTenantId,
+                            testMemberId,
+                            testProjectId,
+                            Instant.now(),
+                            testAssignedBy,
+                            true,
+                            null,
+                            null));
 
             assertEquals("Assignment ID cannot be null", exception.getMessage());
         }
@@ -141,7 +156,9 @@ class MemberProjectAssignmentTest {
                             testProjectId,
                             Instant.now(),
                             testAssignedBy,
-                            true));
+                            true,
+                            null,
+                            null));
 
             assertEquals("Tenant ID cannot be null", exception.getMessage());
         }
@@ -158,7 +175,9 @@ class MemberProjectAssignmentTest {
                             testProjectId,
                             Instant.now(),
                             testAssignedBy,
-                            true));
+                            true,
+                            null,
+                            null));
 
             assertEquals("Member ID cannot be null", exception.getMessage());
         }
@@ -175,7 +194,9 @@ class MemberProjectAssignmentTest {
                             null,
                             Instant.now(),
                             testAssignedBy,
-                            true));
+                            true,
+                            null,
+                            null));
 
             assertEquals("Project ID cannot be null", exception.getMessage());
         }
@@ -192,7 +213,9 @@ class MemberProjectAssignmentTest {
                             testProjectId,
                             null,
                             testAssignedBy,
-                            true));
+                            true,
+                            null,
+                            null));
 
             assertEquals("Assigned timestamp cannot be null", exception.getMessage());
         }
@@ -207,7 +230,9 @@ class MemberProjectAssignmentTest {
                     testProjectId,
                     Instant.now(),
                     null, // assignedBy can be null
-                    true);
+                    true,
+                    null,
+                    null);
 
             assertNotNull(assignment);
             assertNull(assignment.getAssignedBy());
@@ -288,7 +313,7 @@ class MemberProjectAssignmentTest {
             MemberProjectAssignmentId id = MemberProjectAssignmentId.generate();
 
             MemberProjectAssignment assignment1 = new MemberProjectAssignment(
-                    id, testTenantId, testMemberId, testProjectId, Instant.now(), testAssignedBy, true);
+                    id, testTenantId, testMemberId, testProjectId, Instant.now(), testAssignedBy, true, null, null);
             MemberProjectAssignment assignment2 = new MemberProjectAssignment(
                     id,
                     testTenantId,
@@ -296,8 +321,9 @@ class MemberProjectAssignmentTest {
                     testProjectId,
                     Instant.now(),
                     testAssignedBy,
-                    false // Different active state
-                    );
+                    false, // Different active state
+                    null,
+                    null);
 
             assertEquals(assignment1, assignment2);
             assertEquals(assignment1.hashCode(), assignment2.hashCode());

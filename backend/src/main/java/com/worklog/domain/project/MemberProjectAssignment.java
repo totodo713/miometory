@@ -3,6 +3,7 @@ package com.worklog.domain.project;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.tenant.TenantId;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.Objects;
 
 /**
@@ -20,6 +21,8 @@ public class MemberProjectAssignment {
     private final Instant assignedAt;
     private final MemberId assignedBy; // Can be null
     private boolean isActive;
+    private LocalTime defaultStartTime; // Can be null
+    private LocalTime defaultEndTime; // Can be null
 
     /**
      * Constructor for reconstituting from persistence.
@@ -31,7 +34,9 @@ public class MemberProjectAssignment {
             ProjectId projectId,
             Instant assignedAt,
             MemberId assignedBy,
-            boolean isActive) {
+            boolean isActive,
+            LocalTime defaultStartTime,
+            LocalTime defaultEndTime) {
         this.id = Objects.requireNonNull(id, "Assignment ID cannot be null");
         this.tenantId = Objects.requireNonNull(tenantId, "Tenant ID cannot be null");
         this.memberId = Objects.requireNonNull(memberId, "Member ID cannot be null");
@@ -39,6 +44,8 @@ public class MemberProjectAssignment {
         this.assignedAt = Objects.requireNonNull(assignedAt, "Assigned timestamp cannot be null");
         this.assignedBy = assignedBy; // Can be null
         this.isActive = isActive;
+        this.defaultStartTime = defaultStartTime; // Can be null
+        this.defaultEndTime = defaultEndTime; // Can be null
     }
 
     /**
@@ -53,8 +60,9 @@ public class MemberProjectAssignment {
                 projectId,
                 Instant.now(),
                 assignedBy,
-                true // New assignments are active by default
-                );
+                true, // New assignments are active by default
+                null,
+                null);
     }
 
     /**
@@ -101,6 +109,24 @@ public class MemberProjectAssignment {
 
     public boolean isActive() {
         return isActive;
+    }
+
+    public LocalTime getDefaultStartTime() {
+        return defaultStartTime;
+    }
+
+    public LocalTime getDefaultEndTime() {
+        return defaultEndTime;
+    }
+
+    // Setters
+
+    public void setDefaultStartTime(LocalTime defaultStartTime) {
+        this.defaultStartTime = defaultStartTime;
+    }
+
+    public void setDefaultEndTime(LocalTime defaultEndTime) {
+        this.defaultEndTime = defaultEndTime;
     }
 
     @Override
