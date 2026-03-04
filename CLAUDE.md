@@ -96,6 +96,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## Backend Auth in Tests
 
 - **`Authentication` parameter is null in test profile**: `TestRestTemplate`-based integration tests run with security disabled (`permitAll`), so `Authentication` is null. Controllers with manual auth checks must guard `if (authentication == null) return;` for dev/test compatibility. `MockMvc`-based tests (e.g. `AdminIntegrationTestBase`) use `.with(user(email))` and provide non-null auth.
+- **MockMvc `jsonPath().doesNotExist()`**: null 値のフィールドはキーが存在するため `doesNotExist()` は失敗する。また JsonPath フィルタ式 `$[?(@.field == 'val')].other` は配列を返すため挙動が異なる → `$[0].field` インデックスを使う
 
 ## Troubleshooting
 
