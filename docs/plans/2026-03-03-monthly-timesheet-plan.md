@@ -1,26 +1,24 @@
-# Monthly Timesheet Implementation Plan
+# Monthly Timesheet (月次勤務表) Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+**Goal:** プロジェクト単位の月次勤務表ページを新設し、日次の開始時間・終了時間・稼働時間・備考を閲覧・編集できるようにする。
 
-**Goal:** Add a project-scoped monthly timesheet page where users can view and inline-edit daily start/end times, working hours, and remarks.
+**Architecture:** DailyAttendance を MemberProjectAssignment と同じ CRUD パターン（JdbcTemplate + UPSERT）で実装。TimesheetController が DailyAttendance + WorkLogEntry hours + デフォルト時間を結合する CQRS 読み取りモデルを提供。フロントエンドは Next.js + Zustand + next-intl で、既存 worklog ページパターンに従う。
 
-**Architecture:** CRUD entity (DailyAttendance) with a GetTimesheetUseCase interactor that composes attendance records, WorkLogEntry hours, assignment defaults, and holidays into a single read model. Frontend uses an inline-editable table with dirty-row tracking.
-
-**Tech Stack:** Spring Boot 3.5 (Kotlin config / Java domain), PostgreSQL + Flyway, Next.js 16, React 19, Zustand, Tailwind CSS, next-intl, Vitest, Playwright
-
-**Related Issues:** #109 (parent), #110–#119 (sub-issues)
+**Tech Stack:** Java 21 records, JdbcTemplate (positional `?`), Kotlin test, Next.js 15, React 19, Zustand, next-intl, Vitest + RTL, Playwright
 
 **Design Doc:** `docs/plans/2026-03-02-monthly-timesheet-design.md`
 
+**Issues:** #109 (parent), #110–#119 (child)
+
 ---
 
-## Task 1: DB Migrations (Issue #110)
+## Task 1: DB Migrations (#110)
 
 **Files:**
 - Create: `backend/src/main/resources/db/migration/V32__daily_attendance.sql`
 - Create: `backend/src/main/resources/db/migration/V33__assignment_default_times.sql`
 
-**Step 1: Create V32 — daily_attendance table**
+### Step 1: Create V32 — daily_attendance table
 
 ```sql
 -- V32__daily_attendance.sql
@@ -42,51 +40,138 @@ CREATE INDEX idx_daily_attendance_member_date ON daily_attendance(member_id, att
 CREATE INDEX idx_daily_attendance_tenant ON daily_attendance(tenant_id);
 ```
 
-**Step 2: Create V33 — assignment default times**
+### Step 2: Create V33 — assignment default times
 
 ```sql
 -- V33__assignment_default_times.sql
 ALTER TABLE member_project_assignments
-    ADD COLUMN default_start_time TIME,
-    ADD COLUMN default_end_time TIME;
+    ADD COLUMN IF NOT EXISTS default_start_time TIME,
+    ADD COLUMN IF NOT EXISTS default_end_time TIME;
 ```
 
-**Step 3: Verify migrations apply cleanly**
+### Step 3: Verify migrations run
 
-Run: `cd backend && ./gradlew test --tests "*.HealthControllerTest" -q`
+Run: `cd backend && ./gradlew flywayMigrate -Dflyway.url=... 2>&1 | tail -5`
+Expected: Both V32 and V33 migrate successfully.
 
-Flyway runs at app startup during tests. If this passes, migrations are valid.
+Alternatively, integration tests in Task 4 will run migrations via Testcontainers.
 
-**Step 4: Commit**
+### Step 4: Commit
 
-```
-feat(backend): add V32/V33 migrations for daily_attendance and assignment defaults
+```bash
+git add backend/src/main/resources/db/migration/V32__daily_attendance.sql \
+       backend/src/main/resources/db/migration/V33__assignment_default_times.sql
+git commit -m "feat(backend): add daily_attendance table and assignment default times (V32, V33)
 
-Closes #110
+Closes #110"
 ```
 
 ---
 
-## Task 2: DailyAttendanceId Value Object (Issue #111)
+## Task 2: DailyAttendance Domain Entity + ID (#111 part 1/3)
 
 **Files:**
 - Create: `backend/src/main/java/com/worklog/domain/attendance/DailyAttendanceId.java`
+- Create: `backend/src/main/java/com/worklog/domain/attendance/DailyAttendance.java`
+- Test: `backend/src/test/kotlin/com/worklog/domain/attendance/DailyAttendanceTest.kt`
 
-**Reference pattern:** `MemberId.java` — record implementing `EntityId` with null-check, `generate()`, `of(UUID)`, `of(String)`.
+### Step 1: Write the failing test
 
-**Step 1: Write DailyAttendanceId**
+```kotlin
+// DailyAttendanceTest.kt
+package com.worklog.domain.attendance
+
+import com.worklog.domain.member.MemberId
+import com.worklog.domain.tenant.TenantId
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import java.time.LocalDate
+import java.time.LocalTime
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+
+class DailyAttendanceTest {
+
+    private val tenantId = TenantId.generate()
+    private val memberId = MemberId.generate()
+    private val date = LocalDate.of(2026, 3, 2)
+
+    @Test
+    fun `create should generate id and set defaults`() {
+        val attendance = DailyAttendance.create(
+            tenantId, memberId, date,
+            LocalTime.of(9, 0), LocalTime.of(18, 0), "test"
+        )
+        assertNotNull(attendance.id)
+        assertEquals(tenantId, attendance.tenantId)
+        assertEquals(memberId, attendance.memberId)
+        assertEquals(date, attendance.attendanceDate)
+        assertEquals(LocalTime.of(9, 0), attendance.startTime)
+        assertEquals(LocalTime.of(18, 0), attendance.endTime)
+        assertEquals("test", attendance.remarks)
+        assertEquals(0, attendance.version)
+    }
+
+    @Test
+    fun `create should allow null times and remarks`() {
+        val attendance = DailyAttendance.create(
+            tenantId, memberId, date, null, null, null
+        )
+        assertNull(attendance.startTime)
+        assertNull(attendance.endTime)
+        assertNull(attendance.remarks)
+    }
+
+    @Test
+    fun `should reject endTime before startTime`() {
+        assertThrows<IllegalArgumentException> {
+            DailyAttendance.create(
+                tenantId, memberId, date,
+                LocalTime.of(18, 0), LocalTime.of(9, 0), null
+            )
+        }
+    }
+
+    @Test
+    fun `should reject remarks over 500 characters`() {
+        assertThrows<IllegalArgumentException> {
+            DailyAttendance.create(
+                tenantId, memberId, date,
+                null, null, "a".repeat(501)
+            )
+        }
+    }
+
+    @Test
+    fun `should allow equal startTime and endTime`() {
+        val attendance = DailyAttendance.create(
+            tenantId, memberId, date,
+            LocalTime.of(9, 0), LocalTime.of(9, 0), null
+        )
+        assertEquals(attendance.startTime, attendance.endTime)
+    }
+}
+```
+
+### Step 2: Run test to verify it fails
+
+Run: `cd backend && ./gradlew test --tests "com.worklog.domain.attendance.DailyAttendanceTest" 2>&1 | tail -5`
+Expected: FAIL — class not found
+
+### Step 3: Implement DailyAttendanceId
 
 ```java
+// DailyAttendanceId.java
 package com.worklog.domain.attendance;
 
 import com.worklog.domain.shared.EntityId;
 import java.util.UUID;
 
 public record DailyAttendanceId(UUID value) implements EntityId {
-
     public DailyAttendanceId {
         if (value == null) {
-            throw new IllegalArgumentException("DailyAttendanceId value cannot be null");
+            throw new IllegalArgumentException("DailyAttendanceId cannot be null");
         }
     }
 
@@ -109,124 +194,10 @@ public record DailyAttendanceId(UUID value) implements EntityId {
 }
 ```
 
-**Step 2: Commit** (will be grouped with Task 3)
-
----
-
-## Task 3: DailyAttendance Entity (Issue #111)
-
-**Files:**
-- Create: `backend/src/main/java/com/worklog/domain/attendance/DailyAttendance.java`
-- Test: `backend/src/test/java/com/worklog/domain/attendance/DailyAttendanceTest.java`
-
-**Reference pattern:** `MemberProjectAssignment.java` — immutable ID fields, mutable business state, factory method, validation in setters.
-
-**Step 1: Write failing unit tests for DailyAttendance**
+### Step 4: Implement DailyAttendance
 
 ```java
-package com.worklog.domain.attendance;
-
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.worklog.domain.member.MemberId;
-import com.worklog.domain.tenant.TenantId;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-@DisplayName("DailyAttendance")
-class DailyAttendanceTest {
-
-    private static final TenantId TENANT = TenantId.of("550e8400-e29b-41d4-a716-446655440001");
-    private static final MemberId MEMBER = MemberId.of("660e8400-e29b-41d4-a716-446655440001");
-    private static final LocalDate DATE = LocalDate.of(2026, 3, 2);
-
-    @Test
-    @DisplayName("create should set defaults correctly")
-    void create_setsDefaults() {
-        var attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
-
-        assertNotNull(attendance.getId());
-        assertEquals(TENANT, attendance.getTenantId());
-        assertEquals(MEMBER, attendance.getMemberId());
-        assertEquals(DATE, attendance.getDate());
-        assertNull(attendance.getStartTime());
-        assertNull(attendance.getEndTime());
-        assertNull(attendance.getRemarks());
-        assertEquals(0, attendance.getVersion());
-    }
-
-    @Test
-    @DisplayName("update should change mutable fields")
-    void update_changesMutableFields() {
-        var attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
-        attendance.update(LocalTime.of(9, 0), LocalTime.of(18, 0), "Meeting day");
-
-        assertEquals(LocalTime.of(9, 0), attendance.getStartTime());
-        assertEquals(LocalTime.of(18, 0), attendance.getEndTime());
-        assertEquals("Meeting day", attendance.getRemarks());
-    }
-
-    @Test
-    @DisplayName("update should reject endTime before startTime")
-    void update_rejectsEndBeforeStart() {
-        var attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
-        assertThrows(IllegalArgumentException.class, () ->
-            attendance.update(LocalTime.of(18, 0), LocalTime.of(9, 0), null));
-    }
-
-    @Test
-    @DisplayName("update should allow only startTime without endTime")
-    void update_allowsStartTimeOnly() {
-        var attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
-        attendance.update(LocalTime.of(9, 0), null, null);
-
-        assertEquals(LocalTime.of(9, 0), attendance.getStartTime());
-        assertNull(attendance.getEndTime());
-    }
-
-    @Test
-    @DisplayName("update should reject remarks exceeding 500 characters")
-    void update_rejectsLongRemarks() {
-        var attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
-        String longRemarks = "a".repeat(501);
-        assertThrows(IllegalArgumentException.class, () ->
-            attendance.update(null, null, longRemarks));
-    }
-
-    @Test
-    @DisplayName("update should allow exactly 500 character remarks")
-    void update_allows500CharRemarks() {
-        var attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
-        String remarks500 = "a".repeat(500);
-        attendance.update(null, null, remarks500);
-        assertEquals(500, attendance.getRemarks().length());
-    }
-
-    @Test
-    @DisplayName("update should allow null times and null remarks to clear fields")
-    void update_allowsNulls() {
-        var attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
-        attendance.update(LocalTime.of(9, 0), LocalTime.of(18, 0), "test");
-        attendance.update(null, null, null);
-
-        assertNull(attendance.getStartTime());
-        assertNull(attendance.getEndTime());
-        assertNull(attendance.getRemarks());
-    }
-}
-```
-
-**Step 2: Run tests to verify they fail**
-
-Run: `cd backend && ./gradlew test --tests "com.worklog.domain.attendance.DailyAttendanceTest" -q`
-
-Expected: Compilation error — `DailyAttendance` class does not exist.
-
-**Step 3: Implement DailyAttendance**
-
-```java
+// DailyAttendance.java
 package com.worklog.domain.attendance;
 
 import com.worklog.domain.member.MemberId;
@@ -240,7 +211,7 @@ public class DailyAttendance {
     private final DailyAttendanceId id;
     private final TenantId tenantId;
     private final MemberId memberId;
-    private final LocalDate date;
+    private final LocalDate attendanceDate;
     private LocalTime startTime;
     private LocalTime endTime;
     private String remarks;
@@ -250,43 +221,70 @@ public class DailyAttendance {
             DailyAttendanceId id,
             TenantId tenantId,
             MemberId memberId,
-            LocalDate date,
+            LocalDate attendanceDate,
             LocalTime startTime,
             LocalTime endTime,
             String remarks,
             int version) {
-        this.id = Objects.requireNonNull(id, "DailyAttendanceId cannot be null");
-        this.tenantId = Objects.requireNonNull(tenantId, "TenantId cannot be null");
-        this.memberId = Objects.requireNonNull(memberId, "MemberId cannot be null");
-        this.date = Objects.requireNonNull(date, "Date cannot be null");
+        Objects.requireNonNull(id, "id cannot be null");
+        Objects.requireNonNull(tenantId, "tenantId cannot be null");
+        Objects.requireNonNull(memberId, "memberId cannot be null");
+        Objects.requireNonNull(attendanceDate, "attendanceDate cannot be null");
+        validateTimes(startTime, endTime);
+        validateRemarks(remarks);
+        this.id = id;
+        this.tenantId = tenantId;
+        this.memberId = memberId;
+        this.attendanceDate = attendanceDate;
         this.startTime = startTime;
         this.endTime = endTime;
         this.remarks = remarks;
         this.version = version;
     }
 
-    public static DailyAttendance create(TenantId tenantId, MemberId memberId, LocalDate date) {
+    public static DailyAttendance create(
+            TenantId tenantId,
+            MemberId memberId,
+            LocalDate attendanceDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            String remarks) {
         return new DailyAttendance(
-                DailyAttendanceId.generate(), tenantId, memberId, date, null, null, null, 0);
+                DailyAttendanceId.generate(),
+                tenantId,
+                memberId,
+                attendanceDate,
+                startTime,
+                endTime,
+                remarks,
+                0);
     }
 
     public void update(LocalTime startTime, LocalTime endTime, String remarks) {
-        if (startTime != null && endTime != null && !endTime.isAfter(startTime)) {
-            throw new IllegalArgumentException("End time must be after start time");
-        }
-        if (remarks != null && remarks.length() > 500) {
-            throw new IllegalArgumentException("Remarks cannot exceed 500 characters");
-        }
+        validateTimes(startTime, endTime);
+        validateRemarks(remarks);
         this.startTime = startTime;
         this.endTime = endTime;
         this.remarks = remarks;
+    }
+
+    private static void validateTimes(LocalTime startTime, LocalTime endTime) {
+        if (startTime != null && endTime != null && endTime.isBefore(startTime)) {
+            throw new IllegalArgumentException("endTime must not be before startTime");
+        }
+    }
+
+    private static void validateRemarks(String remarks) {
+        if (remarks != null && remarks.length() > 500) {
+            throw new IllegalArgumentException("remarks must not exceed 500 characters");
+        }
     }
 
     // Getters
     public DailyAttendanceId getId() { return id; }
     public TenantId getTenantId() { return tenantId; }
     public MemberId getMemberId() { return memberId; }
-    public LocalDate getDate() { return date; }
+    public LocalDate getAttendanceDate() { return attendanceDate; }
     public LocalTime getStartTime() { return startTime; }
     public LocalTime getEndTime() { return endTime; }
     public String getRemarks() { return remarks; }
@@ -295,184 +293,147 @@ public class DailyAttendance {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        DailyAttendance that = (DailyAttendance) o;
-        return Objects.equals(id, that.id);
+        if (!(o instanceof DailyAttendance that)) return false;
+        return id.equals(that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return id.hashCode();
     }
 }
 ```
 
-**Step 4: Run tests to verify they pass**
+### Step 5: Run test to verify it passes
 
-Run: `cd backend && ./gradlew test --tests "com.worklog.domain.attendance.DailyAttendanceTest" -q`
+Run: `cd backend && ./gradlew test --tests "com.worklog.domain.attendance.DailyAttendanceTest" 2>&1 | tail -5`
+Expected: PASS (5 tests)
 
-Expected: All 7 tests PASS.
+### Step 6: Commit
 
-**Step 5: Commit**
+```bash
+git add backend/src/main/java/com/worklog/domain/attendance/ \
+       backend/src/test/kotlin/com/worklog/domain/attendance/
+git commit -m "feat(backend): add DailyAttendance domain entity and ID
 
-```
-feat(backend): add DailyAttendance domain entity and ID value object
-
-Closes #111
+#111"
 ```
 
 ---
 
-## Task 4: JdbcDailyAttendanceRepository (Issue #111)
+## Task 3: DailyAttendance Repository (#111 part 2/3)
 
 **Files:**
 - Create: `backend/src/main/java/com/worklog/infrastructure/repository/JdbcDailyAttendanceRepository.java`
-- Test: `backend/src/test/java/com/worklog/infrastructure/repository/JdbcDailyAttendanceRepositoryTest.java`
+- Test: `backend/src/test/kotlin/com/worklog/infrastructure/repository/DailyAttendanceRepositoryTest.kt`
 
-**Reference pattern:** `JdbcMemberProjectAssignmentRepository.java` — JdbcTemplate, RowMapper, UPSERT.
+### Step 1: Write the failing integration test
 
-**Step 1: Write failing integration test**
+```kotlin
+// DailyAttendanceRepositoryTest.kt
+package com.worklog.infrastructure.repository
 
-```java
-package com.worklog.infrastructure.repository;
+import com.worklog.IntegrationTestBase
+import com.worklog.domain.attendance.DailyAttendance
+import com.worklog.domain.attendance.DailyAttendanceId
+import com.worklog.domain.member.MemberId
+import com.worklog.domain.tenant.TenantId
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import java.time.LocalDate
+import java.time.LocalTime
+import java.util.UUID
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
-import static org.junit.jupiter.api.Assertions.*;
-
-import com.worklog.IntegrationTestBase;
-import com.worklog.domain.attendance.DailyAttendance;
-import com.worklog.domain.attendance.DailyAttendanceId;
-import com.worklog.domain.member.MemberId;
-import com.worklog.domain.tenant.TenantId;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-
-@DisplayName("JdbcDailyAttendanceRepository")
-class JdbcDailyAttendanceRepositoryTest extends IntegrationTestBase {
+class DailyAttendanceRepositoryTest : IntegrationTestBase() {
 
     @Autowired
-    private JdbcDailyAttendanceRepository repository;
+    private lateinit var repository: JdbcDailyAttendanceRepository
 
-    private UUID memberId;
-    private static final TenantId TENANT_ID =
-            TenantId.of("550e8400-e29b-41d4-a716-446655440001");
+    private val tenantId = TenantId.of(UUID.fromString(TEST_TENANT_ID))
+    private val memberId = MemberId.of(UUID.randomUUID())
+    private val date = LocalDate.of(2026, 3, 2)
 
     @BeforeEach
-    void setUp() {
-        memberId = UUID.randomUUID();
-        createTestMember(memberId);
-        // Clean up any existing attendance data for this member
-        executeInNewTransaction(() ->
-            baseJdbcTemplate.update(
-                "DELETE FROM daily_attendance WHERE member_id = ?", memberId));
+    fun setUp() {
+        createTestMember(memberId.value())
     }
 
     @Test
-    @DisplayName("save should insert new attendance record")
-    void save_insertsNew() {
-        var attendance = DailyAttendance.create(
-                TENANT_ID, MemberId.of(memberId), LocalDate.of(2026, 3, 2));
-        attendance.update(LocalTime.of(9, 0), LocalTime.of(18, 0), "Test day");
+    fun `save should insert new attendance`() {
+        val attendance = DailyAttendance.create(
+            tenantId, memberId, date,
+            LocalTime.of(9, 0), LocalTime.of(18, 0), "test"
+        )
+        repository.save(attendance)
 
-        repository.save(attendance);
-
-        var found = repository.findByMemberAndDate(
-                MemberId.of(memberId), LocalDate.of(2026, 3, 2));
-        assertTrue(found.isPresent());
-        assertEquals(LocalTime.of(9, 0), found.get().getStartTime());
-        assertEquals(LocalTime.of(18, 0), found.get().getEndTime());
-        assertEquals("Test day", found.get().getRemarks());
-        assertEquals(0, found.get().getVersion());
+        val found = repository.findByMemberAndDate(memberId, date)
+        assertNotNull(found)
+        assertEquals(attendance.id, found.id)
+        assertEquals(LocalTime.of(9, 0), found.startTime)
+        assertEquals(LocalTime.of(18, 0), found.endTime)
+        assertEquals("test", found.remarks)
     }
 
     @Test
-    @DisplayName("save should upsert on conflict (same member + date)")
-    void save_upsertsOnConflict() {
-        var date = LocalDate.of(2026, 3, 3);
-        var first = DailyAttendance.create(TENANT_ID, MemberId.of(memberId), date);
-        first.update(LocalTime.of(9, 0), LocalTime.of(17, 0), null);
-        repository.save(first);
+    fun `save should upsert on conflict`() {
+        val attendance = DailyAttendance.create(
+            tenantId, memberId, date,
+            LocalTime.of(9, 0), LocalTime.of(18, 0), "first"
+        )
+        repository.save(attendance)
 
-        var second = DailyAttendance.create(TENANT_ID, MemberId.of(memberId), date);
-        second.update(LocalTime.of(10, 0), LocalTime.of(19, 0), "Updated");
-        repository.save(second);
+        attendance.update(LocalTime.of(10, 0), LocalTime.of(19, 0), "updated")
+        repository.save(attendance)
 
-        var found = repository.findByMemberAndDate(MemberId.of(memberId), date);
-        assertTrue(found.isPresent());
-        assertEquals(LocalTime.of(10, 0), found.get().getStartTime());
-        assertEquals("Updated", found.get().getRemarks());
+        val found = repository.findByMemberAndDate(memberId, date)
+        assertNotNull(found)
+        assertEquals(LocalTime.of(10, 0), found.startTime)
+        assertEquals("updated", found.remarks)
     }
 
     @Test
-    @DisplayName("findByMemberAndDate should return empty for nonexistent record")
-    void findByMemberAndDate_returnsEmpty() {
-        var found = repository.findByMemberAndDate(
-                MemberId.of(memberId), LocalDate.of(2099, 1, 1));
-        assertTrue(found.isEmpty());
-    }
-
-    @Test
-    @DisplayName("findByMemberAndDateRange should return records in range")
-    void findByMemberAndDateRange_returnsInRange() {
-        for (int day = 1; day <= 5; day++) {
-            var att = DailyAttendance.create(
-                    TENANT_ID, MemberId.of(memberId), LocalDate.of(2026, 3, day));
-            att.update(LocalTime.of(9, 0), LocalTime.of(18, 0), null);
-            repository.save(att);
+    fun `findByMemberAndDateRange should return entries in range`() {
+        val start = LocalDate.of(2026, 3, 1)
+        for (i in 0L..4L) {
+            val d = start.plusDays(i)
+            repository.save(
+                DailyAttendance.create(tenantId, memberId, d, LocalTime.of(9, 0), LocalTime.of(18, 0), null)
+            )
         }
-
-        List<DailyAttendance> results = repository.findByMemberAndDateRange(
-                MemberId.of(memberId), LocalDate.of(2026, 3, 2), LocalDate.of(2026, 3, 4));
-
-        assertEquals(3, results.size());
-        assertEquals(LocalDate.of(2026, 3, 2), results.get(0).getDate());
-        assertEquals(LocalDate.of(2026, 3, 4), results.get(2).getDate());
+        val results = repository.findByMemberAndDateRange(memberId, start, start.plusDays(2))
+        assertEquals(3, results.size)
     }
 
     @Test
-    @DisplayName("deleteByMemberAndDate should remove record")
-    void deleteByMemberAndDate_removesRecord() {
-        var date = LocalDate.of(2026, 3, 10);
-        var att = DailyAttendance.create(TENANT_ID, MemberId.of(memberId), date);
-        repository.save(att);
-
-        repository.deleteByMemberAndDate(MemberId.of(memberId), date);
-
-        assertTrue(repository.findByMemberAndDate(MemberId.of(memberId), date).isEmpty());
+    fun `deleteByMemberAndDate should remove entry`() {
+        repository.save(
+            DailyAttendance.create(tenantId, memberId, date, LocalTime.of(9, 0), LocalTime.of(18, 0), null)
+        )
+        repository.deleteByMemberAndDate(memberId, date)
+        assertNull(repository.findByMemberAndDate(memberId, date))
     }
 
     @Test
-    @DisplayName("save should handle null start/end times")
-    void save_handlesNullTimes() {
-        var att = DailyAttendance.create(
-                TENANT_ID, MemberId.of(memberId), LocalDate.of(2026, 3, 15));
-        att.update(null, null, "Remarks only");
-        repository.save(att);
-
-        var found = repository.findByMemberAndDate(
-                MemberId.of(memberId), LocalDate.of(2026, 3, 15));
-        assertTrue(found.isPresent());
-        assertNull(found.get().getStartTime());
-        assertNull(found.get().getEndTime());
-        assertEquals("Remarks only", found.get().getRemarks());
+    fun `findByMemberAndDate should return null when not found`() {
+        assertNull(repository.findByMemberAndDate(memberId, date))
     }
 }
 ```
 
-**Step 2: Run to verify failure**
+### Step 2: Run test to verify it fails
 
-Run: `cd backend && ./gradlew test --tests "com.worklog.infrastructure.repository.JdbcDailyAttendanceRepositoryTest" -q`
+Run: `cd backend && ./gradlew test --tests "com.worklog.infrastructure.repository.DailyAttendanceRepositoryTest" 2>&1 | tail -10`
+Expected: FAIL — bean not found
 
-Expected: Compilation error — repository class does not exist.
-
-**Step 3: Implement JdbcDailyAttendanceRepository**
+### Step 3: Implement repository
 
 ```java
+// JdbcDailyAttendanceRepository.java
 package com.worklog.infrastructure.repository;
 
 import com.worklog.domain.attendance.DailyAttendance;
@@ -485,7 +446,6 @@ import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -501,10 +461,11 @@ public class JdbcDailyAttendanceRepository {
     }
 
     public void save(DailyAttendance attendance) {
-        String sql = """
+        String sql =
+                """
             INSERT INTO daily_attendance
-                (id, tenant_id, member_id, attendance_date, start_time, end_time, remarks, version, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                (id, tenant_id, member_id, attendance_date, start_time, end_time, remarks, version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (member_id, attendance_date) DO UPDATE SET
                 start_time = EXCLUDED.start_time,
                 end_time = EXCLUDED.end_time,
@@ -512,47 +473,48 @@ public class JdbcDailyAttendanceRepository {
                 version = daily_attendance.version + 1,
                 updated_at = CURRENT_TIMESTAMP
             """;
-
         jdbcTemplate.update(
                 sql,
                 attendance.getId().value(),
                 attendance.getTenantId().value(),
                 attendance.getMemberId().value(),
-                attendance.getDate(),
+                attendance.getAttendanceDate(),
                 attendance.getStartTime() != null ? Time.valueOf(attendance.getStartTime()) : null,
                 attendance.getEndTime() != null ? Time.valueOf(attendance.getEndTime()) : null,
                 attendance.getRemarks(),
                 attendance.getVersion());
     }
 
-    public Optional<DailyAttendance> findByMemberAndDate(MemberId memberId, LocalDate date) {
-        String sql = """
+    public DailyAttendance findByMemberAndDate(MemberId memberId, LocalDate date) {
+        String sql =
+                """
             SELECT id, tenant_id, member_id, attendance_date, start_time, end_time, remarks, version
             FROM daily_attendance
             WHERE member_id = ? AND attendance_date = ?
             """;
-
         List<DailyAttendance> results =
                 jdbcTemplate.query(sql, new DailyAttendanceRowMapper(), memberId.value(), date);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+        return results.isEmpty() ? null : results.get(0);
     }
 
     public List<DailyAttendance> findByMemberAndDateRange(
             MemberId memberId, LocalDate startDate, LocalDate endDate) {
-        String sql = """
+        String sql =
+                """
             SELECT id, tenant_id, member_id, attendance_date, start_time, end_time, remarks, version
             FROM daily_attendance
             WHERE member_id = ? AND attendance_date >= ? AND attendance_date <= ?
             ORDER BY attendance_date
             """;
-
         return jdbcTemplate.query(
                 sql, new DailyAttendanceRowMapper(), memberId.value(), startDate, endDate);
     }
 
     public void deleteByMemberAndDate(MemberId memberId, LocalDate date) {
-        String sql = "DELETE FROM daily_attendance WHERE member_id = ? AND attendance_date = ?";
-        jdbcTemplate.update(sql, memberId.value(), date);
+        jdbcTemplate.update(
+                "DELETE FROM daily_attendance WHERE member_id = ? AND attendance_date = ?",
+                memberId.value(),
+                date);
     }
 
     private static class DailyAttendanceRowMapper implements RowMapper<DailyAttendance> {
@@ -560,12 +522,11 @@ public class JdbcDailyAttendanceRepository {
         public DailyAttendance mapRow(ResultSet rs, int rowNum) throws SQLException {
             Time startTime = rs.getTime("start_time");
             Time endTime = rs.getTime("end_time");
-
             return new DailyAttendance(
                     DailyAttendanceId.of(rs.getObject("id", UUID.class)),
                     TenantId.of(rs.getObject("tenant_id", UUID.class)),
                     MemberId.of(rs.getObject("member_id", UUID.class)),
-                    rs.getObject("attendance_date", LocalDate.class),
+                    rs.getDate("attendance_date").toLocalDate(),
                     startTime != null ? startTime.toLocalTime() : null,
                     endTime != null ? endTime.toLocalTime() : null,
                     rs.getString("remarks"),
@@ -575,134 +536,146 @@ public class JdbcDailyAttendanceRepository {
 }
 ```
 
-**Step 4: Run tests**
+### Step 4: Run test to verify it passes
 
-Run: `cd backend && ./gradlew test --tests "com.worklog.infrastructure.repository.JdbcDailyAttendanceRepositoryTest" -q`
+Run: `cd backend && ./gradlew test --tests "com.worklog.infrastructure.repository.DailyAttendanceRepositoryTest" 2>&1 | tail -5`
+Expected: PASS (5 tests)
 
-Expected: All 6 tests PASS.
+### Step 5: Commit
 
-**Step 5: Commit**
+```bash
+git add backend/src/main/java/com/worklog/infrastructure/repository/JdbcDailyAttendanceRepository.java \
+       backend/src/test/kotlin/com/worklog/infrastructure/repository/DailyAttendanceRepositoryTest.kt
+git commit -m "feat(backend): add JdbcDailyAttendanceRepository with UPSERT
 
-```
-feat(backend): add JdbcDailyAttendanceRepository with UPSERT support
+#111"
 ```
 
 ---
 
-## Task 5: DailyAttendanceService (Issue #111)
+## Task 4: DailyAttendanceService (#111 part 3/3)
 
 **Files:**
 - Create: `backend/src/main/java/com/worklog/application/service/DailyAttendanceService.java`
-- Test: `backend/src/test/java/com/worklog/application/service/DailyAttendanceServiceTest.java`
+- Test: `backend/src/test/kotlin/com/worklog/application/service/DailyAttendanceServiceTest.kt`
 
-This service handles CRUD only. The read-model composition is in GetTimesheetUseCase (Task 7).
+### Step 1: Write the failing test
 
-**Step 1: Write failing unit test**
+```kotlin
+// DailyAttendanceServiceTest.kt
+package com.worklog.application.service
 
-Test the optimistic locking behavior and delegation to repository.
+import com.worklog.domain.attendance.DailyAttendance
+import com.worklog.domain.attendance.DailyAttendanceId
+import com.worklog.domain.member.MemberId
+import com.worklog.domain.tenant.TenantId
+import com.worklog.infrastructure.repository.JdbcDailyAttendanceRepository
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.any
+import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
+import java.time.LocalDate
+import java.time.LocalTime
+import java.util.UUID
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
-```java
-package com.worklog.application.service;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-import com.worklog.domain.attendance.DailyAttendance;
-import com.worklog.domain.member.MemberId;
-import com.worklog.domain.shared.DomainException;
-import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.repository.JdbcDailyAttendanceRepository;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.Optional;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-@ExtendWith(MockitoExtension.class)
-@DisplayName("DailyAttendanceService")
 class DailyAttendanceServiceTest {
 
-    @Mock
-    private JdbcDailyAttendanceRepository repository;
+    private lateinit var repository: JdbcDailyAttendanceRepository
+    private lateinit var service: DailyAttendanceService
 
-    @InjectMocks
-    private DailyAttendanceService service;
+    private val tenantId = TenantId.generate()
+    private val memberId = MemberId.generate()
+    private val date = LocalDate.of(2026, 3, 2)
 
-    private static final TenantId TENANT = TenantId.of("550e8400-e29b-41d4-a716-446655440001");
-    private static final MemberId MEMBER = MemberId.of("660e8400-e29b-41d4-a716-446655440001");
-
-    @Test
-    @DisplayName("saveAttendance should create new record when none exists")
-    void saveAttendance_createsNew() {
-        var date = LocalDate.of(2026, 3, 2);
-        when(repository.findByMemberAndDate(MEMBER, date)).thenReturn(Optional.empty());
-
-        service.saveAttendance(TENANT, MEMBER, date, LocalTime.of(9, 0), LocalTime.of(18, 0), "Test", 0);
-
-        verify(repository).save(any(DailyAttendance.class));
+    @BeforeEach
+    fun setUp() {
+        repository = mock()
+        service = DailyAttendanceService(repository)
     }
 
     @Test
-    @DisplayName("saveAttendance should update existing with matching version")
-    void saveAttendance_updatesExisting() {
-        var date = LocalDate.of(2026, 3, 2);
-        var existing = DailyAttendance.create(TENANT, MEMBER, date);
-        when(repository.findByMemberAndDate(MEMBER, date)).thenReturn(Optional.of(existing));
+    fun `saveAttendance should create new attendance when none exists`() {
+        whenever(repository.findByMemberAndDate(memberId, date)).thenReturn(null)
 
-        service.saveAttendance(TENANT, MEMBER, date, LocalTime.of(10, 0), LocalTime.of(19, 0), null, 0);
+        val id = service.saveAttendance(
+            tenantId, memberId, date,
+            LocalTime.of(9, 0), LocalTime.of(18, 0), "test", null
+        )
 
-        verify(repository).save(existing);
-        assertEquals(LocalTime.of(10, 0), existing.getStartTime());
+        assertNotNull(id)
+        verify(repository).save(any())
     }
 
     @Test
-    @DisplayName("saveAttendance should throw on version mismatch")
-    void saveAttendance_throwsOnVersionMismatch() {
-        var date = LocalDate.of(2026, 3, 2);
-        var existing = DailyAttendance.create(TENANT, MEMBER, date);
-        when(repository.findByMemberAndDate(MEMBER, date)).thenReturn(Optional.of(existing));
+    fun `saveAttendance should update existing attendance with matching version`() {
+        val existing = DailyAttendance(
+            DailyAttendanceId.generate(), tenantId, memberId, date,
+            LocalTime.of(9, 0), LocalTime.of(18, 0), "old", 1
+        )
+        whenever(repository.findByMemberAndDate(memberId, date)).thenReturn(existing)
 
-        // existing.version is 0, but we pass version 5
-        assertThrows(DomainException.class, () ->
-            service.saveAttendance(TENANT, MEMBER, date, LocalTime.of(9, 0), LocalTime.of(18, 0), null, 5));
+        service.saveAttendance(
+            tenantId, memberId, date,
+            LocalTime.of(10, 0), LocalTime.of(19, 0), "new", 1
+        )
+
+        verify(repository).save(any())
     }
 
     @Test
-    @DisplayName("deleteAttendance should delegate to repository")
-    void deleteAttendance_delegates() {
-        var date = LocalDate.of(2026, 3, 2);
-        service.deleteAttendance(MEMBER, date);
-        verify(repository).deleteByMemberAndDate(MEMBER, date);
+    fun `saveAttendance should throw on version mismatch`() {
+        val existing = DailyAttendance(
+            DailyAttendanceId.generate(), tenantId, memberId, date,
+            LocalTime.of(9, 0), LocalTime.of(18, 0), "old", 2
+        )
+        whenever(repository.findByMemberAndDate(memberId, date)).thenReturn(existing)
+
+        assertThrows<IllegalStateException> {
+            service.saveAttendance(
+                tenantId, memberId, date,
+                LocalTime.of(10, 0), LocalTime.of(19, 0), "new", 1
+            )
+        }
+    }
+
+    @Test
+    fun `deleteAttendance should delegate to repository`() {
+        service.deleteAttendance(memberId, date)
+        verify(repository).deleteByMemberAndDate(memberId, date)
     }
 }
 ```
 
-**Step 2: Run to verify failure**
+**Note:** If `mockito-kotlin` is not in the test dependencies, check `build.gradle` and add if needed. The existing codebase tests use `@SpringBootTest` for integration tests; this test uses plain mocks for unit testing the service logic.
 
-Run: `cd backend && ./gradlew test --tests "com.worklog.application.service.DailyAttendanceServiceTest" -q`
+### Step 2: Run test to verify it fails
 
-**Step 3: Implement DailyAttendanceService**
+Run: `cd backend && ./gradlew test --tests "com.worklog.application.service.DailyAttendanceServiceTest" 2>&1 | tail -10`
+Expected: FAIL — class not found
+
+### Step 3: Implement service
 
 ```java
+// DailyAttendanceService.java
 package com.worklog.application.service;
 
 import com.worklog.domain.attendance.DailyAttendance;
 import com.worklog.domain.member.MemberId;
-import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.repository.JdbcDailyAttendanceRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional
 public class DailyAttendanceService {
 
     private final JdbcDailyAttendanceRepository repository;
@@ -711,108 +684,80 @@ public class DailyAttendanceService {
         this.repository = repository;
     }
 
-    public void saveAttendance(
+    @Transactional
+    public UUID saveAttendance(
             TenantId tenantId,
             MemberId memberId,
             LocalDate date,
             LocalTime startTime,
             LocalTime endTime,
             String remarks,
-            int expectedVersion) {
-        var existing = repository.findByMemberAndDate(memberId, date);
+            Integer expectedVersion) {
+        DailyAttendance existing = repository.findByMemberAndDate(memberId, date);
 
-        if (existing.isPresent()) {
-            var attendance = existing.get();
-            if (attendance.getVersion() != expectedVersion) {
-                throw new DomainException(
-                        "OPTIMISTIC_LOCK_FAILURE",
-                        "Attendance record has been modified by another user");
+        if (existing != null) {
+            if (expectedVersion != null && existing.getVersion() != expectedVersion) {
+                throw new IllegalStateException(
+                        "Version mismatch: expected " + expectedVersion + " but was " + existing.getVersion());
             }
-            attendance.update(startTime, endTime, remarks);
-            repository.save(attendance);
+            existing.update(startTime, endTime, remarks);
+            repository.save(existing);
+            return existing.getId().value();
         } else {
-            var attendance = DailyAttendance.create(tenantId, memberId, date);
-            attendance.update(startTime, endTime, remarks);
+            DailyAttendance attendance =
+                    DailyAttendance.create(tenantId, memberId, date, startTime, endTime, remarks);
             repository.save(attendance);
+            return attendance.getId().value();
         }
     }
 
+    @Transactional
     public void deleteAttendance(MemberId memberId, LocalDate date) {
         repository.deleteByMemberAndDate(memberId, date);
     }
 
     @Transactional(readOnly = true)
-    public List<DailyAttendance> findByMemberAndDateRange(
+    public List<DailyAttendance> getAttendanceRange(
             MemberId memberId, LocalDate startDate, LocalDate endDate) {
         return repository.findByMemberAndDateRange(memberId, startDate, endDate);
     }
 }
 ```
 
-**Step 4: Run tests**
+### Step 4: Run test to verify it passes
 
-Run: `cd backend && ./gradlew test --tests "com.worklog.application.service.DailyAttendanceServiceTest" -q`
+Run: `cd backend && ./gradlew test --tests "com.worklog.application.service.DailyAttendanceServiceTest" 2>&1 | tail -5`
+Expected: PASS (4 tests)
 
-Expected: All 4 tests PASS.
+### Step 5: Commit
 
-**Step 5: Commit**
+```bash
+git add backend/src/main/java/com/worklog/application/service/DailyAttendanceService.java \
+       backend/src/test/kotlin/com/worklog/application/service/DailyAttendanceServiceTest.kt
+git commit -m "feat(backend): add DailyAttendanceService with optimistic locking
 
-```
-feat(backend): add DailyAttendanceService with optimistic locking
-```
-
----
-
-## Task 6: MemberProjectAssignment Default Times (Issue #112)
-
-**Files:**
-- Modify: `backend/src/main/java/com/worklog/domain/project/MemberProjectAssignment.java`
-- Modify: `backend/src/main/java/com/worklog/infrastructure/repository/JdbcMemberProjectAssignmentRepository.java`
-
-Add `defaultStartTime` and `defaultEndTime` fields to the existing entity and repository.
-
-**Step 1: Add fields to MemberProjectAssignment**
-
-Add `LocalTime defaultStartTime` and `LocalTime defaultEndTime` as private mutable fields. Add them to the constructor, factory method (default null), and add getters/setters.
-
-**Step 2: Update JdbcMemberProjectAssignmentRepository**
-
-- Add the two columns to `save()` INSERT/UPDATE SQL
-- Add them to `findById()` and `findByMemberAndProject()` SELECT SQL
-- Add them to `MemberProjectAssignmentRowMapper.mapRow()`
-- Add a new query: `findDefaultTimesForMemberProject(MemberId, ProjectId)` returning `Optional<DefaultTimes>` record
-
-**Step 3: Run existing tests to verify no regression**
-
-Run: `cd backend && ./gradlew test --tests "*.JdbcMemberProjectAssignmentRepository*" -q`
-
-**Step 4: Commit**
-
-```
-feat(backend): add default start/end time fields to MemberProjectAssignment
+Closes #111"
 ```
 
 ---
 
-## Task 7: TimesheetController DTOs + GetTimesheetUseCase (Issue #112)
+## Task 5: TimesheetController + DTOs + Projection (#112)
 
 **Files:**
 - Create: `backend/src/main/java/com/worklog/api/dto/TimesheetResponse.java`
 - Create: `backend/src/main/java/com/worklog/api/dto/SaveAttendanceRequest.java`
-- Create: `backend/src/main/java/com/worklog/application/usecase/GetTimesheetUseCase.java`
+- Create: `backend/src/main/java/com/worklog/infrastructure/projection/TimesheetProjection.java`
 - Create: `backend/src/main/java/com/worklog/api/TimesheetController.java`
-- Test: `backend/src/test/java/com/worklog/application/usecase/GetTimesheetUseCaseTest.java`
+- Modify: `backend/src/main/java/com/worklog/domain/project/MemberProjectAssignment.java` (add default time fields)
+- Modify: `backend/src/main/java/com/worklog/infrastructure/repository/JdbcMemberProjectAssignmentRepository.java` (add default time columns)
 
-This is the largest task. Split into sub-steps.
-
-**Step 1: Create DTOs**
+### Step 1: Create DTO records
 
 ```java
 // TimesheetResponse.java
 package com.worklog.api.dto;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -826,13 +771,12 @@ public record TimesheetResponse(
         String periodType,
         LocalDate periodStart,
         LocalDate periodEnd,
-        boolean canEdit,
         List<TimesheetRow> rows,
         TimesheetSummary summary) {
 
     public record TimesheetRow(
             LocalDate date,
-            DayOfWeek dayOfWeek,
+            String dayOfWeek,
             boolean isWeekend,
             boolean isHoliday,
             String holidayName,
@@ -844,7 +788,7 @@ public record TimesheetResponse(
             LocalTime defaultEndTime,
             boolean hasAttendanceRecord,
             UUID attendanceId,
-            int attendanceVersion) {}
+            Integer attendanceVersion) {}
 
     public record TimesheetSummary(
             BigDecimal totalWorkingHours,
@@ -859,162 +803,490 @@ package com.worklog.api.dto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.UUID;
 
 public record SaveAttendanceRequest(
-        UUID memberId,
         LocalDate date,
         LocalTime startTime,
         LocalTime endTime,
         String remarks,
-        int version) {}
+        Integer version) {}
 ```
 
-**Step 2: Write failing UseCase test**
+### Step 2: Add default time fields to MemberProjectAssignment
 
+In `MemberProjectAssignment.java`, add fields:
 ```java
-package com.worklog.application.usecase;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
-// Test that GetTimesheetUseCase correctly composes data from:
-// - DailyAttendanceService (attendance records)
-// - MonthlyCalendarProjection (WorkLogEntry hours per date)
-// - JdbcMemberProjectAssignmentRepository (default times)
-// - HolidayResolutionService (holidays)
-// - JdbcMemberRepository (member info)
-// Focus on the composition logic, not individual sources.
+private final LocalTime defaultStartTime; // nullable
+private final LocalTime defaultEndTime;   // nullable
 ```
 
-Write a test that verifies:
-- Rows are generated for every day in the period
-- Weekend detection works
-- Holiday info is merged
-- Attendance records are merged with correct times
-- Default times are populated from assignment
-- WorkLogEntry hours are merged
-- Summary totals are calculated
-- canEdit is true for own data, true for manager's subordinate, false for admin
+Update constructor to accept these (as last params, nullable). Update `create()` to pass null for both. Add getters.
 
-**Step 3: Implement GetTimesheetUseCase**
+In `JdbcMemberProjectAssignmentRepository.java`:
+- Update INSERT SQL to include `default_start_time`, `default_end_time`
+- Update RowMapper to read `default_start_time`, `default_end_time` (nullable Time → LocalTime)
+- Update ON CONFLICT SET clause
 
-The UseCase takes `memberId`, `projectId`, `periodStart`, `periodEnd`, and `requestingMemberId` (for access control). It:
-1. Loads member info (for display name + tenantId)
-2. Loads holidays for the period
-3. Loads DailyAttendance records for the period
-4. Loads WorkLogEntry hours per date (from MonthlyCalendarProjection or a direct query)
-5. Loads assignment defaults
-6. Determines canEdit based on requester/target relationship
-7. Builds TimesheetRow for each day in the period
-8. Calculates summary
-
-**Step 4: Implement TimesheetController**
+### Step 3: Create TimesheetProjection
 
 ```java
+// TimesheetProjection.java
+package com.worklog.infrastructure.projection;
+
+import com.worklog.api.dto.TimesheetResponse;
+import com.worklog.application.service.DailyAttendanceService;
+import com.worklog.domain.attendance.DailyAttendance;
+import com.worklog.domain.member.MemberId;
+import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.TextStyle;
+import java.util.*;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+
+@Component
+public class TimesheetProjection {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final DailyAttendanceService attendanceService;
+
+    public TimesheetProjection(JdbcTemplate jdbcTemplate, DailyAttendanceService attendanceService) {
+        this.jdbcTemplate = jdbcTemplate;
+        this.attendanceService = attendanceService;
+    }
+
+    public List<TimesheetResponse.TimesheetRow> buildRows(
+            UUID memberId, UUID projectId, LocalDate startDate, LocalDate endDate,
+            LocalTime defaultStartTime, LocalTime defaultEndTime,
+            Set<LocalDate> holidays, Map<LocalDate, String> holidayNames) {
+
+        // 1. Get attendance records for the period
+        List<DailyAttendance> attendances = attendanceService.getAttendanceRange(
+                MemberId.of(memberId), startDate, endDate);
+        Map<LocalDate, DailyAttendance> attendanceMap = new HashMap<>();
+        for (DailyAttendance a : attendances) {
+            attendanceMap.put(a.getAttendanceDate(), a);
+        }
+
+        // 2. Get work hours from work_log_entries_projection
+        String hoursSql = """
+            SELECT work_date, SUM(hours) as total_hours
+            FROM work_log_entries_projection
+            WHERE member_id = ? AND project_id = ? AND work_date >= ? AND work_date <= ?
+            GROUP BY work_date
+            """;
+        List<Map<String, Object>> hoursRows =
+                jdbcTemplate.queryForList(hoursSql, memberId, projectId, startDate, endDate);
+        Map<LocalDate, BigDecimal> hoursMap = new HashMap<>();
+        for (Map<String, Object> row : hoursRows) {
+            LocalDate d = ((java.sql.Date) row.get("work_date")).toLocalDate();
+            hoursMap.put(d, (BigDecimal) row.get("total_hours"));
+        }
+
+        // 3. Build rows for each day in the range
+        List<TimesheetResponse.TimesheetRow> rows = new ArrayList<>();
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+            DayOfWeek dow = d.getDayOfWeek();
+            boolean isWeekend = dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY;
+            boolean isHoliday = holidays.contains(d);
+            DailyAttendance attendance = attendanceMap.get(d);
+
+            rows.add(new TimesheetResponse.TimesheetRow(
+                    d,
+                    dow.getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                    isWeekend,
+                    isHoliday,
+                    holidayNames.getOrDefault(d, null),
+                    attendance != null ? attendance.getStartTime() : null,
+                    attendance != null ? attendance.getEndTime() : null,
+                    hoursMap.getOrDefault(d, BigDecimal.ZERO),
+                    attendance != null ? attendance.getRemarks() : null,
+                    defaultStartTime,
+                    defaultEndTime,
+                    attendance != null,
+                    attendance != null ? attendance.getId().value() : null,
+                    attendance != null ? attendance.getVersion() : null));
+        }
+        return rows;
+    }
+}
+```
+
+### Step 4: Create TimesheetController
+
+```java
+// TimesheetController.java
+package com.worklog.api;
+
+import com.worklog.api.dto.SaveAttendanceRequest;
+import com.worklog.api.dto.TimesheetResponse;
+import com.worklog.application.service.DailyAttendanceService;
+import com.worklog.domain.member.MemberId;
+import com.worklog.domain.tenant.TenantId;
+import com.worklog.infrastructure.projection.TimesheetProjection;
+import com.worklog.infrastructure.repository.JdbcMemberProjectAssignmentRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
 @RequestMapping("/api/v1/worklog/timesheet")
 public class TimesheetController {
 
-    private final GetTimesheetUseCase getTimesheetUseCase;
+    private final TimesheetProjection projection;
     private final DailyAttendanceService attendanceService;
-    private final JdbcMemberRepository memberRepository;
+    private final JdbcMemberProjectAssignmentRepository assignmentRepository;
+    private final JdbcTemplate jdbcTemplate;
+
+    public TimesheetController(
+            TimesheetProjection projection,
+            DailyAttendanceService attendanceService,
+            JdbcMemberProjectAssignmentRepository assignmentRepository,
+            JdbcTemplate jdbcTemplate) {
+        this.projection = projection;
+        this.attendanceService = attendanceService;
+        this.assignmentRepository = assignmentRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @GetMapping("/{year}/{month}")
     public ResponseEntity<TimesheetResponse> getTimesheet(
             @PathVariable int year,
             @PathVariable int month,
+            @RequestParam UUID memberId,
             @RequestParam UUID projectId,
-            @RequestParam(required = false) UUID memberId,
             @RequestParam(defaultValue = "calendar") String periodType) {
-        // Validate, resolve memberId, calculate period, delegate to UseCase
+
+        // Calculate period bounds
+        LocalDate periodStart;
+        LocalDate periodEnd;
+        if ("fiscal".equals(periodType)) {
+            // Fiscal: 21st of previous month to 20th of current month
+            periodStart = LocalDate.of(year, month, 1).minusMonths(1).withDayOfMonth(21);
+            periodEnd = LocalDate.of(year, month, 20);
+        } else {
+            periodStart = LocalDate.of(year, month, 1);
+            periodEnd = periodStart.withDayOfMonth(periodStart.lengthOfMonth());
+        }
+
+        // Get member name
+        String memberName = getMemberName(memberId);
+
+        // Get project name
+        String projectName = getProjectName(projectId);
+
+        // Get default times from assignment (nullable)
+        LocalTime defaultStart = null;
+        LocalTime defaultEnd = null;
+        var assignments = assignmentRepository.findByMemberAndProject(
+                MemberId.of(memberId), projectId);
+        if (assignments != null) {
+            defaultStart = assignments.getDefaultStartTime();
+            defaultEnd = assignments.getDefaultEndTime();
+        }
+
+        // Get holidays (reuse existing HolidayService or holiday table)
+        Set<LocalDate> holidays = new HashSet<>();
+        Map<LocalDate, String> holidayNames = new HashMap<>();
+        loadHolidays(periodStart, periodEnd, holidays, holidayNames);
+
+        // Build rows
+        List<TimesheetResponse.TimesheetRow> rows = projection.buildRows(
+                memberId, projectId, periodStart, periodEnd,
+                defaultStart, defaultEnd, holidays, holidayNames);
+
+        // Build summary
+        BigDecimal totalHours = rows.stream()
+                .map(TimesheetResponse.TimesheetRow::workingHours)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        int workingDays = (int) rows.stream()
+                .filter(r -> r.workingHours().compareTo(BigDecimal.ZERO) > 0)
+                .count();
+        int businessDays = (int) rows.stream()
+                .filter(r -> !r.isWeekend() && !r.isHoliday())
+                .count();
+
+        return ResponseEntity.ok(new TimesheetResponse(
+                memberId, memberName, projectId, projectName,
+                periodType, periodStart, periodEnd, rows,
+                new TimesheetResponse.TimesheetSummary(totalHours, workingDays, businessDays)));
     }
 
     @PutMapping("/attendance")
-    public ResponseEntity<Void> saveAttendance(@RequestBody SaveAttendanceRequest request) {
-        // Resolve memberId, check access, delegate to service
+    public ResponseEntity<Map<String, Object>> saveAttendance(
+            @RequestParam UUID memberId,
+            @RequestParam UUID tenantId,
+            @RequestBody SaveAttendanceRequest request) {
+        UUID id = attendanceService.saveAttendance(
+                TenantId.of(tenantId),
+                MemberId.of(memberId),
+                request.date(),
+                request.startTime(),
+                request.endTime(),
+                request.remarks(),
+                request.version());
+        return ResponseEntity.ok(Map.of("id", id));
     }
 
-    @DeleteMapping("/attendance/{memberId}/{date}")
+    @DeleteMapping("/attendance/{date}")
     public ResponseEntity<Void> deleteAttendance(
-            @PathVariable UUID memberId,
+            @RequestParam UUID memberId,
             @PathVariable LocalDate date) {
-        // Check access, delegate to service
+        attendanceService.deleteAttendance(MemberId.of(memberId), date);
+        return ResponseEntity.noContent().build();
+    }
+
+    // Helper methods — will be refined based on actual repo interfaces
+    private String getMemberName(UUID memberId) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT display_name FROM members WHERE id = ?", memberId);
+        return rows.isEmpty() ? "" : (String) rows.get(0).get("display_name");
+    }
+
+    private String getProjectName(UUID projectId) {
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT name FROM projects WHERE id = ?", projectId);
+        return rows.isEmpty() ? "" : (String) rows.get(0).get("name");
+    }
+
+    private void loadHolidays(
+            LocalDate start, LocalDate end,
+            Set<LocalDate> holidays, Map<LocalDate, String> holidayNames) {
+        // Reuse the holiday logic from CalendarController/HolidayService
+        // This will be adjusted to use the existing holiday resolution
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                """
+                SELECT holiday_date, name_en FROM holidays
+                WHERE holiday_date >= ? AND holiday_date <= ?
+                """,
+                start, end);
+        for (Map<String, Object> row : rows) {
+            LocalDate d = ((java.sql.Date) row.get("holiday_date")).toLocalDate();
+            holidays.add(d);
+            holidayNames.put(d, (String) row.get("name_en"));
+        }
     }
 }
 ```
 
-**Step 5: Run tests**
+**Implementation notes:**
+- `findByMemberAndProject` needs to be added to `JdbcMemberProjectAssignmentRepository`. This returns a single assignment with the default times.
+- The holiday loading will be refined based on the actual holiday table schema (from `V30__holiday_name_ja.sql` and existing `CalendarController` logic). Read the actual schema and adjust.
+- `tenantId` in the PUT endpoint: in the current codebase pattern, tenant context comes from `@RequestParam`. This should follow the same pattern as other controllers.
 
-Run: `cd backend && ./gradlew test --tests "com.worklog.application.usecase.GetTimesheetUseCaseTest" -q`
+### Step 5: Commit
 
-**Step 6: Commit**
+```bash
+git add backend/src/main/java/com/worklog/api/TimesheetController.java \
+       backend/src/main/java/com/worklog/api/dto/TimesheetResponse.java \
+       backend/src/main/java/com/worklog/api/dto/SaveAttendanceRequest.java \
+       backend/src/main/java/com/worklog/infrastructure/projection/TimesheetProjection.java \
+       backend/src/main/java/com/worklog/domain/project/MemberProjectAssignment.java \
+       backend/src/main/java/com/worklog/infrastructure/repository/JdbcMemberProjectAssignmentRepository.java
+git commit -m "feat(backend): add TimesheetController, DTOs, and projection
 
-```
-feat(backend): add TimesheetController, DTOs, and GetTimesheetUseCase
-
-Closes #112
+Closes #112"
 ```
 
 ---
 
-## Task 8: Backend Integration Tests (Issue #113)
+## Task 6: Backend Integration Tests (#113)
 
 **Files:**
-- Create: `backend/src/test/java/com/worklog/api/TimesheetControllerTest.java`
+- Create: `backend/src/test/kotlin/com/worklog/api/TimesheetControllerTest.kt`
 
-**Reference pattern:** Extend `IntegrationTestBase`, use `TestRestTemplate` for HTTP assertions.
+### Step 1: Write integration tests
 
-Tests to write:
-1. GET timesheet — returns 31 rows for March calendar period
-2. GET timesheet — merges attendance data correctly
-3. GET timesheet — fiscal period (21st-20th) returns correct date range
-4. PUT attendance — creates new record
-5. PUT attendance — updates existing record with version
-6. PUT attendance — returns 409 Conflict on version mismatch
-7. DELETE attendance — removes record
-8. Access control — self can edit
-9. Access control — manager can view and edit subordinate
-10. Access control — admin can view but not edit
-11. Access control — unrelated user gets 403
+```kotlin
+// TimesheetControllerTest.kt
+package com.worklog.api
 
-**Commit:**
+import com.worklog.IntegrationTestBase
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.web.client.TestRestTemplate
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
+import java.util.UUID
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
+class TimesheetControllerTest : IntegrationTestBase() {
+
+    @Autowired
+    private lateinit var restTemplate: TestRestTemplate
+
+    private val testMemberId = UUID.randomUUID()
+    private val testProjectId = UUID.randomUUID()
+
+    @BeforeEach
+    fun setUp() {
+        createTestMember(testMemberId)
+        createTestProject(testProjectId, "TST-001")
+        // Insert assignment
+        executeInNewTransaction {
+            baseJdbcTemplate.update(
+                """INSERT INTO member_project_assignments
+                   (id, tenant_id, member_id, project_id, assigned_at, is_active)
+                   VALUES (?, ?::uuid, ?, ?, CURRENT_TIMESTAMP, true)
+                   ON CONFLICT DO NOTHING""",
+                UUID.randomUUID(), TEST_TENANT_ID, testMemberId, testProjectId
+            )
+        }
+    }
+
+    @Test
+    fun `GET timesheet should return 200 with calendar period`() {
+        val response = restTemplate.getForEntity(
+            "/api/v1/worklog/timesheet/2026/3?memberId=$testMemberId&projectId=$testProjectId&periodType=calendar",
+            Map::class.java
+        )
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val body = response.body as Map<*, *>
+        assertEquals("2026-03-01", body["periodStart"])
+        assertEquals("2026-03-31", body["periodEnd"])
+        assertNotNull(body["rows"])
+        assertNotNull(body["summary"])
+    }
+
+    @Test
+    fun `GET timesheet should return 200 with fiscal period`() {
+        val response = restTemplate.getForEntity(
+            "/api/v1/worklog/timesheet/2026/3?memberId=$testMemberId&projectId=$testProjectId&periodType=fiscal",
+            Map::class.java
+        )
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val body = response.body as Map<*, *>
+        assertEquals("2026-02-21", body["periodStart"])
+        assertEquals("2026-03-20", body["periodEnd"])
+    }
+
+    @Test
+    fun `PUT attendance should save and return id`() {
+        val request = mapOf(
+            "date" to "2026-03-02",
+            "startTime" to "09:00:00",
+            "endTime" to "18:00:00",
+            "remarks" to "test",
+            "version" to null
+        )
+        val response = restTemplate.exchange(
+            "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId&tenantId=$TEST_TENANT_ID",
+            HttpMethod.PUT,
+            HttpEntity(request),
+            Map::class.java
+        )
+        assertEquals(HttpStatus.OK, response.statusCode)
+        assertNotNull((response.body as Map<*, *>)["id"])
+    }
+
+    @Test
+    fun `DELETE attendance should return 204`() {
+        // First save one
+        val request = mapOf(
+            "date" to "2026-03-02",
+            "startTime" to "09:00:00",
+            "endTime" to "18:00:00",
+            "remarks" to null,
+            "version" to null
+        )
+        restTemplate.exchange(
+            "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId&tenantId=$TEST_TENANT_ID",
+            HttpMethod.PUT,
+            HttpEntity(request),
+            Map::class.java
+        )
+
+        val response = restTemplate.exchange(
+            "/api/v1/worklog/timesheet/attendance/2026-03-02?memberId=$testMemberId",
+            HttpMethod.DELETE,
+            null,
+            Void::class.java
+        )
+        assertEquals(HttpStatus.NO_CONTENT, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should include saved attendance data`() {
+        // Save attendance for 3/2
+        val saveReq = mapOf(
+            "date" to "2026-03-02",
+            "startTime" to "09:00:00",
+            "endTime" to "18:00:00",
+            "remarks" to "meeting",
+            "version" to null
+        )
+        restTemplate.exchange(
+            "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId&tenantId=$TEST_TENANT_ID",
+            HttpMethod.PUT,
+            HttpEntity(saveReq),
+            Map::class.java
+        )
+
+        val response = restTemplate.getForEntity(
+            "/api/v1/worklog/timesheet/2026/3?memberId=$testMemberId&projectId=$testProjectId",
+            Map::class.java
+        )
+        val body = response.body as Map<*, *>
+        val rows = body["rows"] as List<*>
+        // Find the row for 3/2
+        val march2 = rows.find { (it as Map<*, *>)["date"] == "2026-03-02" } as Map<*, *>
+        assertEquals(true, march2["hasAttendanceRecord"])
+        assertEquals("09:00:00", march2["startTime"])
+        assertEquals("meeting", march2["remarks"])
+    }
+}
 ```
-test(backend): add TimesheetController integration tests
 
-Closes #113
+### Step 2: Run tests
+
+Run: `cd backend && ./gradlew test --tests "com.worklog.api.TimesheetControllerTest" 2>&1 | tail -10`
+Expected: PASS (5 tests). Fix any issues that arise from schema differences.
+
+### Step 3: Commit
+
+```bash
+git add backend/src/test/kotlin/com/worklog/api/TimesheetControllerTest.kt
+git commit -m "test(backend): add TimesheetController integration tests
+
+Closes #113"
 ```
 
 ---
 
-## Task 9: Frontend Types + API Client (Issue #114)
+## Task 7: Frontend Types + API Client (#114)
 
 **Files:**
 - Create: `frontend/app/types/timesheet.ts`
 - Modify: `frontend/app/services/api.ts`
 
-**Step 1: Create TypeScript types**
+### Step 1: Create type definitions
 
 ```typescript
-// frontend/app/types/timesheet.ts
-export type PeriodType = "calendar" | "fiscal";
-
+// timesheet.ts
 export interface TimesheetRow {
   date: string;
   dayOfWeek: string;
   isWeekend: boolean;
   isHoliday: boolean;
   holidayName: string | null;
-  startTime: string | null;   // "HH:mm"
-  endTime: string | null;     // "HH:mm"
+  startTime: string | null;
+  endTime: string | null;
   workingHours: number;
   remarks: string | null;
   defaultStartTime: string | null;
   defaultEndTime: string | null;
   hasAttendanceRecord: boolean;
   attendanceId: string | null;
-  attendanceVersion: number;
+  attendanceVersion: number | null;
 }
 
 export interface TimesheetSummary {
@@ -1028,297 +1300,929 @@ export interface TimesheetResponse {
   memberName: string;
   projectId: string;
   projectName: string;
-  periodType: PeriodType;
+  periodType: "calendar" | "fiscal";
   periodStart: string;
   periodEnd: string;
-  canEdit: boolean;
   rows: TimesheetRow[];
   summary: TimesheetSummary;
 }
 
 export interface SaveAttendanceRequest {
-  memberId?: string;
   date: string;
   startTime: string | null;
   endTime: string | null;
   remarks: string | null;
-  version: number;
+  version: number | null;
 }
+
+export type PeriodType = "calendar" | "fiscal";
 ```
 
-**Step 2: Add API endpoints to api.ts**
+### Step 2: Add API client methods
 
-Add a `timesheet` object inside the existing `worklog` namespace:
+In `frontend/app/services/api.ts`, add to the `api` object (inside the `worklog` namespace or as new `timesheet` namespace):
 
 ```typescript
 timesheet: {
   get: (params: {
     year: number;
     month: number;
+    memberId: string;
     projectId: string;
-    memberId?: string;
-    periodType?: PeriodType;
+    periodType?: string;
   }) => {
     const query = new URLSearchParams({
+      memberId: params.memberId,
       projectId: params.projectId,
-      ...(params.memberId && { memberId: params.memberId }),
       ...(params.periodType && { periodType: params.periodType }),
     });
     return apiClient.get<TimesheetResponse>(
       `/api/v1/worklog/timesheet/${params.year}/${params.month}?${query}`
     );
   },
-
-  saveAttendance: (data: SaveAttendanceRequest) =>
-    apiClient.put<void>("/api/v1/worklog/timesheet/attendance", data),
-
-  deleteAttendance: (memberId: string, date: string) =>
-    apiClient.delete<void>(
-      `/api/v1/worklog/timesheet/attendance/${memberId}/${date}`
-    ),
+  saveAttendance: (
+    memberId: string,
+    tenantId: string,
+    data: SaveAttendanceRequest
+  ) => {
+    const query = new URLSearchParams({ memberId, tenantId });
+    return apiClient.put<{ id: string }>(
+      `/api/v1/worklog/timesheet/attendance?${query}`,
+      data
+    );
+  },
+  deleteAttendance: (memberId: string, date: string) => {
+    const query = new URLSearchParams({ memberId });
+    return apiClient.delete<void>(
+      `/api/v1/worklog/timesheet/attendance/${date}?${query}`
+    );
+  },
 },
 ```
 
-**Step 3: Commit**
-
+Add imports at the top of `api.ts`:
+```typescript
+import type { TimesheetResponse, SaveAttendanceRequest } from "@/types/timesheet";
 ```
-feat(frontend): add timesheet types and API client
 
-Closes #114
+### Step 3: Run lint
+
+Run: `cd frontend && npx biome check --write app/types/timesheet.ts app/services/api.ts`
+
+### Step 4: Commit
+
+```bash
+git add frontend/app/types/timesheet.ts frontend/app/services/api.ts
+git commit -m "feat(frontend): add timesheet types and API client
+
+Closes #114"
 ```
 
 ---
 
-## Task 10: Frontend Components (Issue #115)
+## Task 8: Frontend Components (#115)
 
 **Files:**
+- Create: `frontend/app/components/worklog/timesheet/TimesheetTable.tsx`
+- Create: `frontend/app/components/worklog/timesheet/TimesheetRow.tsx`
 - Create: `frontend/app/components/worklog/timesheet/TimesheetPeriodToggle.tsx`
 - Create: `frontend/app/components/worklog/timesheet/TimesheetSummary.tsx`
-- Create: `frontend/app/components/worklog/timesheet/TimesheetRow.tsx`
-- Create: `frontend/app/components/worklog/timesheet/TimesheetTable.tsx`
 
-Build bottom-up: toggle → summary → row → table.
+### Step 1: TimesheetPeriodToggle
 
-**Step 1: TimesheetPeriodToggle** — simple two-button toggle for calendar/fiscal
-
-**Step 2: TimesheetSummary** — renders totalWorkingHours, totalWorkingDays, totalBusinessDays
-
-**Step 3: TimesheetRow** — the core inline-editing component:
-- Props: `row: TimesheetRow`, `canEdit: boolean`, `isDirty: boolean`, `onUpdate(field, value)`, `onSave()`, `isSaving: boolean`
-- Two `<input type="time">` for start/end
-- One `<input type="text">` for remarks
-- Read-only `workingHours` display
-- Conditional Save button (only if `isDirty && canEdit`)
-- Weekend/holiday background colors (`bg-gray-50` / `bg-amber-50`)
-- Default time styling: if `!hasAttendanceRecord && defaultStartTime`, show in italic gray
-
-**Step 4: TimesheetTable** — orchestrates rows:
-- Manages `editedRows: Map<string, Partial<TimesheetRow>>` for dirty tracking
-- Compares edited values to original via JSON.stringify per row
-- Calls `api.worklog.timesheet.saveAttendance()` per row on Save
-- Shows table header, maps over `rows`, renders `TimesheetRow` for each
-- Footer with `TimesheetSummary`
-
-**Step 5: Run lint + format**
-
-Run: `cd frontend && npx biome check --write app/components/worklog/timesheet/`
-
-**Step 6: Commit**
-
-```
-feat(frontend): add TimesheetTable, TimesheetRow, TimesheetPeriodToggle, TimesheetSummary
-
-Closes #115
-```
-
----
-
-## Task 11: Frontend Page (Issue #116)
-
-**Files:**
-- Create: `frontend/app/worklog/timesheet/page.tsx`
-- Modify: `frontend/app/services/worklogStore.ts`
-
-**Step 1: Add Zustand store state**
-
-Add `timesheetProjectId: string | null` and `timesheetPeriodType: PeriodType` to the store. Persist both to localStorage via `partialize`.
-
-**Step 2: Create Timesheet page**
-
-```typescript
+```tsx
 "use client";
 
-export default function TimesheetPage() {
-  // State: year, month, projectId (from store), periodType (from store)
-  // memberId from useAuth + optional member selector for managers
-  // Load data via api.worklog.timesheet.get()
-  // Render: header, ProjectSelector, month nav, period toggle, member selector, TimesheetTable
+import { useTranslations } from "next-intl";
+import type { PeriodType } from "@/types/timesheet";
+
+interface Props {
+  value: PeriodType;
+  onChange: (value: PeriodType) => void;
+}
+
+export function TimesheetPeriodToggle({ value, onChange }: Props) {
+  const t = useTranslations("timesheet");
+  return (
+    <div className="inline-flex rounded-lg border border-gray-300" role="radiogroup" aria-label={t("periodType")}>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === "calendar"}
+        onClick={() => onChange("calendar")}
+        className={`px-4 py-2 text-sm font-medium rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          value === "calendar" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
+        }`}
+      >
+        {t("calendarPeriod")}
+      </button>
+      <button
+        type="button"
+        role="radio"
+        aria-checked={value === "fiscal"}
+        onClick={() => onChange("fiscal")}
+        className={`px-4 py-2 text-sm font-medium rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+          value === "fiscal" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
+        }`}
+      >
+        {t("fiscalPeriod")}
+      </button>
+    </div>
+  );
 }
 ```
 
-Key layout elements:
-- Page title "月次勤務表" / "Monthly Timesheet"
-- `ProjectSelector` (reuse existing component)
-- Month navigation arrows (← / →) with current month display
-- `TimesheetPeriodToggle`
-- Member selector (only for managers/admins)
-- `TimesheetTable` with data
+### Step 2: TimesheetRow
 
-**Step 3: Run lint + typecheck**
+```tsx
+"use client";
 
-Run: `cd frontend && npx biome check --write app/worklog/timesheet/page.tsx`
+import { useTranslations } from "next-intl";
+import { useCallback, useState } from "react";
+import type { TimesheetRow as TimesheetRowType } from "@/types/timesheet";
 
-**Step 4: Commit**
+interface Props {
+  row: TimesheetRowType;
+  readOnly: boolean;
+  onSave: (date: string, startTime: string | null, endTime: string | null, remarks: string | null, version: number | null) => Promise<void>;
+}
 
+export function TimesheetRow({ row, readOnly, onSave }: Props) {
+  const t = useTranslations("timesheet");
+  const [startTime, setStartTime] = useState(row.startTime ?? row.defaultStartTime ?? "");
+  const [endTime, setEndTime] = useState(row.endTime ?? row.defaultEndTime ?? "");
+  const [remarks, setRemarks] = useState(row.remarks ?? "");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isDefault = !row.hasAttendanceRecord;
+  const textStyle = isDefault ? "text-gray-400 italic" : "text-gray-900";
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(
+        row.date,
+        startTime || null,
+        endTime || null,
+        remarks || null,
+        row.attendanceVersion,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("saveError"));
+    } finally {
+      setSaving(false);
+    }
+  }, [row.date, startTime, endTime, remarks, row.attendanceVersion, onSave, t]);
+
+  const rowBg = row.isHoliday
+    ? "bg-amber-50"
+    : row.isWeekend
+      ? "bg-gray-50"
+      : "bg-white";
+
+  return (
+    <tr className={rowBg}>
+      <td className="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
+        {new Date(row.date).getDate()}
+      </td>
+      <td className="px-3 py-2 text-sm text-gray-500 whitespace-nowrap">
+        {row.dayOfWeek}
+        {row.isHoliday && row.holidayName && (
+          <span className="ml-1 text-xs text-amber-600">({row.holidayName})</span>
+        )}
+      </td>
+      <td className="px-3 py-2">
+        {readOnly ? (
+          <span className={`text-sm ${textStyle}`}>{startTime || "-"}</span>
+        ) : (
+          <input
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            className={`w-24 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 ${textStyle}`}
+            aria-label={t("startTimeLabel", { date: row.date })}
+          />
+        )}
+      </td>
+      <td className="px-3 py-2">
+        {readOnly ? (
+          <span className={`text-sm ${textStyle}`}>{endTime || "-"}</span>
+        ) : (
+          <input
+            type="time"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+            className={`w-24 text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 ${textStyle}`}
+            aria-label={t("endTimeLabel", { date: row.date })}
+          />
+        )}
+      </td>
+      <td className="px-3 py-2 text-sm text-gray-900 text-right whitespace-nowrap">
+        {row.workingHours > 0 ? `${row.workingHours.toFixed(2)}h` : "-"}
+      </td>
+      <td className="px-3 py-2">
+        {readOnly ? (
+          <span className="text-sm text-gray-600">{remarks || ""}</span>
+        ) : (
+          <input
+            type="text"
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            maxLength={500}
+            placeholder={t("remarksPlaceholder")}
+            className="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label={t("remarksLabel", { date: row.date })}
+          />
+        )}
+      </td>
+      <td className="px-3 py-2">
+        {!readOnly && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {saving ? t("saving") : t("save")}
+            </button>
+            {error && <span className="text-xs text-red-600" role="alert">{error}</span>}
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+}
 ```
-feat(frontend): add /worklog/timesheet page with store state
 
-Closes #116
+### Step 3: TimesheetSummary
+
+```tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+import type { TimesheetSummary as SummaryType } from "@/types/timesheet";
+
+interface Props {
+  summary: SummaryType;
+}
+
+export function TimesheetSummary({ summary }: Props) {
+  const t = useTranslations("timesheet.summary");
+  return (
+    <div className="grid grid-cols-3 gap-4 mt-4">
+      <div className="bg-blue-50 rounded-lg p-4 text-center">
+        <p className="text-sm text-gray-600">{t("totalHours")}</p>
+        <p className="text-2xl font-bold text-blue-700">{summary.totalWorkingHours.toFixed(1)}h</p>
+      </div>
+      <div className="bg-green-50 rounded-lg p-4 text-center">
+        <p className="text-sm text-gray-600">{t("workingDays")}</p>
+        <p className="text-2xl font-bold text-green-700">{summary.totalWorkingDays}</p>
+      </div>
+      <div className="bg-gray-50 rounded-lg p-4 text-center">
+        <p className="text-sm text-gray-600">{t("businessDays")}</p>
+        <p className="text-2xl font-bold text-gray-700">{summary.totalBusinessDays}</p>
+      </div>
+    </div>
+  );
+}
+```
+
+### Step 4: TimesheetTable
+
+```tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+import type { TimesheetResponse } from "@/types/timesheet";
+import { TimesheetRow } from "./TimesheetRow";
+
+interface Props {
+  data: TimesheetResponse;
+  readOnly: boolean;
+  onSave: (date: string, startTime: string | null, endTime: string | null, remarks: string | null, version: number | null) => Promise<void>;
+}
+
+export function TimesheetTable({ data, readOnly, onSave }: Props) {
+  const t = useTranslations("timesheet.table");
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("date")}</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("dayOfWeek")}</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("startTime")}</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("endTime")}</th>
+            <th className="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">{t("workingHours")}</th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t("remarks")}</th>
+            {!readOnly && (
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <span className="sr-only">{t("actions")}</span>
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {data.rows.map((row) => (
+            <TimesheetRow key={row.date} row={row} readOnly={readOnly} onSave={onSave} />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+```
+
+### Step 5: Run lint
+
+Run: `cd frontend && npx biome check --write app/components/worklog/timesheet/`
+
+### Step 6: Commit
+
+```bash
+git add frontend/app/components/worklog/timesheet/
+git commit -m "feat(frontend): add Timesheet components (Table, Row, PeriodToggle, Summary)
+
+Closes #115"
 ```
 
 ---
 
-## Task 12: i18n + Navigation (Issue #117)
+## Task 9: Frontend Page (#116)
+
+**Files:**
+- Create: `frontend/app/worklog/timesheet/page.tsx`
+- Create: `frontend/app/worklog/timesheet/layout.tsx`
+
+### Step 1: Create layout
+
+```tsx
+// layout.tsx
+"use client";
+
+import { AuthGuard } from "@/components/shared/AuthGuard";
+
+export default function TimesheetLayout({ children }: { children: React.ReactNode }) {
+  return <AuthGuard>{children}</AuthGuard>;
+}
+```
+
+### Step 2: Create page
+
+```tsx
+// page.tsx
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/services/api";
+import type { PeriodType, TimesheetResponse } from "@/types/timesheet";
+import { TimesheetTable } from "@/components/worklog/timesheet/TimesheetTable";
+import { TimesheetPeriodToggle } from "@/components/worklog/timesheet/TimesheetPeriodToggle";
+import { TimesheetSummary } from "@/components/worklog/timesheet/TimesheetSummary";
+import { ProjectSelector } from "@/components/worklog/ProjectSelector";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+
+export default function TimesheetPage() {
+  const t = useTranslations("timesheet");
+  const { memberId, tenantId } = useAuth();
+
+  const [data, setData] = useState<TimesheetResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // UI state
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [periodType, setPeriodType] = useState<PeriodType>("calendar");
+
+  const loadTimesheet = useCallback(async () => {
+    if (!memberId || !projectId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await api.timesheet.get({
+        year, month, memberId, projectId, periodType,
+      });
+      setData(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("loadError"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [year, month, memberId, projectId, periodType, t]);
+
+  useEffect(() => { loadTimesheet(); }, [loadTimesheet]);
+
+  const handlePrevMonth = () => {
+    if (month === 1) { setYear(year - 1); setMonth(12); }
+    else { setMonth(month - 1); }
+  };
+
+  const handleNextMonth = () => {
+    if (month === 12) { setYear(year + 1); setMonth(1); }
+    else { setMonth(month + 1); }
+  };
+
+  const handleSave = useCallback(async (
+    date: string,
+    startTime: string | null,
+    endTime: string | null,
+    remarks: string | null,
+    version: number | null,
+  ) => {
+    if (!memberId || !tenantId) return;
+    await api.timesheet.saveAttendance(memberId, tenantId, {
+      date, startTime, endTime, remarks, version,
+    });
+    await loadTimesheet(); // Reload to reflect saved data
+  }, [memberId, tenantId, loadTimesheet]);
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-wrap items-center gap-4 mb-6">
+          <ProjectSelector
+            memberId={memberId ?? ""}
+            onSelect={(id) => setProjectId(id)}
+          />
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={handlePrevMonth}
+              className="p-2 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label={t("prevMonth")}>
+              &#9664;
+            </button>
+            <span className="text-lg font-medium">{year}{t("yearSuffix")}{month}{t("monthSuffix")}</span>
+            <button type="button" onClick={handleNextMonth}
+              className="p-2 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label={t("nextMonth")}>
+              &#9654;
+            </button>
+          </div>
+          <TimesheetPeriodToggle value={periodType} onChange={setPeriodType} />
+        </div>
+
+        {/* Content */}
+        {isLoading && <LoadingSpinner />}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-red-800" role="alert">{error}</p>
+          </div>
+        )}
+        {!isLoading && !error && data && (
+          <div className="bg-white rounded-lg shadow">
+            <TimesheetTable data={data} readOnly={false} onSave={handleSave} />
+            <div className="p-4">
+              <TimesheetSummary summary={data.summary} />
+            </div>
+          </div>
+        )}
+        {!isLoading && !error && !projectId && (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+            {t("selectProjectPrompt")}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+```
+
+**Notes:**
+- `useAuth()` hook — check its actual interface. It may return `{ user: { id, tenantId } }` rather than `{ memberId, tenantId }` directly. Adapt the destructuring to match.
+- `ProjectSelector` — verify it exists in `frontend/app/components/worklog/ProjectSelector.tsx` and check its props interface (it may use `onProjectSelect` or similar). The E2E fixture shows it's a combobox (`role="combobox"` + `role="option"`).
+- `LoadingSpinner` — verify its path and props.
+
+### Step 3: Run lint and typecheck
+
+Run: `cd frontend && npx biome check --write app/worklog/timesheet/ && npx tsc --noEmit 2>&1 | head -20`
+
+### Step 4: Commit
+
+```bash
+git add frontend/app/worklog/timesheet/
+git commit -m "feat(frontend): add Timesheet page with month/project navigation
+
+Closes #116"
+```
+
+---
+
+## Task 10: i18n + Navigation (#117)
 
 **Files:**
 - Modify: `frontend/messages/en.json`
 - Modify: `frontend/messages/ja.json`
-- Modify: `frontend/app/worklog/page.tsx` (add navigation link)
+- Modify: Navigation component (Header or worklog page)
 
-**Step 1: Add i18n keys**
+### Step 1: Add i18n keys to en.json
 
-Add `worklog.timesheet.*` namespace to both en.json and ja.json:
-
+Add `"timesheet"` top-level key:
 ```json
 "timesheet": {
   "title": "Monthly Timesheet",
-  "date": "Date",
-  "dayOfWeek": "Day",
-  "startTime": "Start",
-  "endTime": "End",
-  "workingHours": "Hours",
-  "remarks": "Remarks",
+  "loadError": "Failed to load timesheet",
+  "prevMonth": "Previous month",
+  "nextMonth": "Next month",
+  "yearSuffix": " ",
+  "monthSuffix": "",
+  "calendarPeriod": "Calendar",
+  "fiscalPeriod": "Fiscal",
+  "periodType": "Period type",
+  "selectProjectPrompt": "Select a project to view the timesheet.",
   "save": "Save",
   "saving": "Saving...",
-  "saved": "Saved",
   "saveError": "Failed to save",
-  "totalHours": "Total Hours",
-  "workingDays": "Working Days",
-  "businessDays": "Business Days",
-  "periodCalendar": "Calendar",
-  "periodFiscal": "Fiscal",
-  "selectProject": "Select project",
-  "selectMember": "Select member",
-  "noProject": "Please select a project",
-  "readOnly": "View only",
-  "defaultTime": "Default",
-  "summary": "Summary",
-  "daysCount": "{working} / {business} days"
+  "startTimeLabel": "Start time for {date}",
+  "endTimeLabel": "End time for {date}",
+  "remarksLabel": "Remarks for {date}",
+  "remarksPlaceholder": "Remarks",
+  "table": {
+    "date": "Date",
+    "dayOfWeek": "Day",
+    "startTime": "Start",
+    "endTime": "End",
+    "workingHours": "Hours",
+    "remarks": "Remarks",
+    "actions": "Actions"
+  },
+  "summary": {
+    "totalHours": "Total Hours",
+    "workingDays": "Working Days",
+    "businessDays": "Business Days"
+  }
 }
 ```
 
-Japanese counterparts in ja.json.
+### Step 2: Add i18n keys to ja.json
 
-**Step 2: Add navigation link**
+```json
+"timesheet": {
+  "title": "月次勤務表",
+  "loadError": "勤務表の読み込みに失敗しました",
+  "prevMonth": "前月",
+  "nextMonth": "翌月",
+  "yearSuffix": "年",
+  "monthSuffix": "月",
+  "calendarPeriod": "暦月",
+  "fiscalPeriod": "締月",
+  "periodType": "期間タイプ",
+  "selectProjectPrompt": "プロジェクトを選択して勤務表を表示してください。",
+  "save": "保存",
+  "saving": "保存中...",
+  "saveError": "保存に失敗しました",
+  "startTimeLabel": "{date}の始業時間",
+  "endTimeLabel": "{date}の終業時間",
+  "remarksLabel": "{date}の備考",
+  "remarksPlaceholder": "備考",
+  "table": {
+    "date": "日付",
+    "dayOfWeek": "曜日",
+    "startTime": "始業",
+    "endTime": "終業",
+    "workingHours": "稼働",
+    "remarks": "備考",
+    "actions": "操作"
+  },
+  "summary": {
+    "totalHours": "合計稼働時間",
+    "workingDays": "稼働日数",
+    "businessDays": "営業日数"
+  }
+}
+```
 
-Add a link to `/worklog/timesheet` in the worklog page header alongside existing links (Proxy Mode, CSV Import, etc.).
+### Step 3: Add navigation link
 
-**Step 3: Run lint/format on JSON files**
+Find the header/navigation component that has links to worklog pages. Add a "Timesheet" link:
+- Read `frontend/app/components/shared/Header.tsx` (or wherever navigation lives)
+- Add a link to `/worklog/timesheet`
+- i18n key: `header.timesheet` = "Timesheet" / "勤務表"
+
+### Step 4: Run lint
 
 Run: `cd frontend && npx biome check --write messages/en.json messages/ja.json`
 
-**Step 4: Commit**
+### Step 5: Commit
 
-```
-feat(frontend): add timesheet i18n messages and navigation link
+```bash
+git add frontend/messages/en.json frontend/messages/ja.json frontend/app/components/shared/Header.tsx
+git commit -m "feat(frontend): add timesheet i18n keys and navigation link
 
-Closes #117
-```
-
----
-
-## Task 13: Admin UI — Default Times (Issue #118)
-
-**Files:**
-- Modify: Admin assignment components (identify exact file during implementation)
-- Modify: Backend `AdminAssignmentController` or equivalent
-
-**Step 1: Add time inputs to assignment form**
-
-Add two `<input type="time">` fields for default start/end time to the existing assignment management form.
-
-**Step 2: Update backend PATCH endpoint**
-
-Ensure `PATCH /api/v1/admin/assignments/{id}` accepts and persists `defaultStartTime` and `defaultEndTime`.
-
-**Step 3: Commit**
-
-```
-feat(admin): add default start/end time fields to assignment management
-
-Closes #118
+Closes #117"
 ```
 
 ---
 
-## Task 14: Frontend Tests (Issue #119)
+## Task 11: Admin UI — Default Times (#118)
 
 **Files:**
-- Create: `frontend/tests/components/worklog/timesheet/TimesheetTable.test.tsx`
-- Create: `frontend/tests/components/worklog/timesheet/TimesheetRow.test.tsx`
+- Modify: `frontend/app/admin/assignments/` components (add default start/end time fields)
+- Modify: Backend assignment update endpoint (if not already supporting the new fields)
 
-**Tests to write:**
-1. TimesheetTable renders correct number of rows
-2. TimesheetRow shows default time in italic when no attendance record
-3. TimesheetRow shows Save button only when row is dirty
-4. TimesheetRow hides inputs when canEdit is false
-5. TimesheetRow applies weekend/holiday background colors
-6. Save button triggers API call with correct data
-7. Period toggle switches between calendar and fiscal
+### Step 1: Read admin assignment components
 
-Run: `cd frontend && npm test -- --run`
+Read `frontend/app/admin/assignments/page.tsx` and the `AssignmentManager` component it renders. Understand the current form fields.
 
-**Commit:**
+### Step 2: Add time fields to assignment form
 
+Add two `<input type="time">` fields for `defaultStartTime` and `defaultEndTime` in the assignment creation/edit form.
+
+```tsx
+<div className="flex gap-4">
+  <div>
+    <label htmlFor="defaultStartTime" className="block text-sm font-medium text-gray-700">
+      {t("defaultStartTime")}
+    </label>
+    <input
+      id="defaultStartTime"
+      type="time"
+      value={defaultStartTime}
+      onChange={(e) => setDefaultStartTime(e.target.value)}
+      className="mt-1 block w-32 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+  <div>
+    <label htmlFor="defaultEndTime" className="block text-sm font-medium text-gray-700">
+      {t("defaultEndTime")}
+    </label>
+    <input
+      id="defaultEndTime"
+      type="time"
+      value={defaultEndTime}
+      onChange={(e) => setDefaultEndTime(e.target.value)}
+      className="mt-1 block w-32 border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+</div>
 ```
-test(frontend): add TimesheetTable and TimesheetRow component tests
+
+### Step 3: Add i18n keys
+
+In `admin.assignments` namespace:
+- `"defaultStartTime"`: "Default Start Time" / "デフォルト始業時間"
+- `"defaultEndTime"`: "Default End Time" / "デフォルト終業時間"
+
+### Step 4: Update backend API (if needed)
+
+Ensure the assignment PATCH/PUT endpoint accepts `defaultStartTime` and `defaultEndTime` in the request body. Update the DTO and service accordingly.
+
+### Step 5: Run lint and commit
+
+```bash
+cd frontend && npx biome check --write app/admin/assignments/ messages/en.json messages/ja.json
+git add frontend/app/admin/assignments/ frontend/messages/en.json frontend/messages/ja.json \
+       backend/src/main/java/com/worklog/api/dto/ backend/src/main/java/com/worklog/domain/project/
+git commit -m "feat: add default start/end time fields to assignment management
+
+Closes #118"
 ```
 
 ---
 
-## Task 15: E2E Tests (Issue #119)
+## Task 12: Frontend Unit Tests + E2E (#119)
 
 **Files:**
+- Create: `frontend/tests/unit/components/worklog/TimesheetTable.test.tsx`
 - Create: `frontend/tests/e2e/timesheet.spec.ts`
 
-**Reference:** Check `frontend/tests/e2e/fixtures/auth.ts` for `selectProject()` helper, login fixtures.
+### Step 1: Unit test for TimesheetTable
 
-**Tests:**
-1. Navigate to `/worklog/timesheet` and verify page loads
-2. Select a project → table appears with 28-31 rows
-3. Toggle calendar/fiscal → date range changes
-4. Edit a row (change start time) → Save button appears → click Save → data persists
-5. Manager views subordinate's timesheet → can edit
-6. Admin views other member's timesheet → read-only
+```tsx
+// TimesheetTable.test.tsx
+import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { IntlWrapper } from "../../../helpers/intl";
+import { TimesheetTable } from "../../../../app/components/worklog/timesheet/TimesheetTable";
+import type { TimesheetResponse } from "../../../../app/types/timesheet";
 
-Run: `cd frontend && npx playwright test --project=chromium tests/e2e/timesheet.spec.ts`
+const mockData: TimesheetResponse = {
+  memberId: "member-1",
+  memberName: "Test User",
+  projectId: "project-1",
+  projectName: "Test Project",
+  periodType: "calendar",
+  periodStart: "2026-03-01",
+  periodEnd: "2026-03-31",
+  rows: [
+    {
+      date: "2026-03-02",
+      dayOfWeek: "Mon",
+      isWeekend: false,
+      isHoliday: false,
+      holidayName: null,
+      startTime: "09:00",
+      endTime: "18:00",
+      workingHours: 8.0,
+      remarks: "meeting",
+      defaultStartTime: "09:00",
+      defaultEndTime: "18:00",
+      hasAttendanceRecord: true,
+      attendanceId: "att-1",
+      attendanceVersion: 0,
+    },
+    {
+      date: "2026-03-07",
+      dayOfWeek: "Sat",
+      isWeekend: true,
+      isHoliday: false,
+      holidayName: null,
+      startTime: null,
+      endTime: null,
+      workingHours: 0,
+      remarks: null,
+      defaultStartTime: null,
+      defaultEndTime: null,
+      hasAttendanceRecord: false,
+      attendanceId: null,
+      attendanceVersion: null,
+    },
+  ],
+  summary: { totalWorkingHours: 8.0, totalWorkingDays: 1, totalBusinessDays: 22 },
+};
 
-**Commit:**
+describe("TimesheetTable", () => {
+  it("should render table headers", () => {
+    render(
+      <IntlWrapper>
+        <TimesheetTable data={mockData} readOnly={false} onSave={vi.fn()} />
+      </IntlWrapper>,
+    );
+    // Check headers exist — exact text from ja.json
+    expect(screen.getByRole("columnheader", { name: /日付/i })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: /曜日/i })).toBeInTheDocument();
+  });
 
+  it("should render rows for each date", () => {
+    render(
+      <IntlWrapper>
+        <TimesheetTable data={mockData} readOnly={false} onSave={vi.fn()} />
+      </IntlWrapper>,
+    );
+    const rows = screen.getAllByRole("row");
+    // 1 header row + 2 data rows = 3
+    expect(rows.length).toBe(3);
+  });
+
+  it("should hide save buttons in readOnly mode", () => {
+    render(
+      <IntlWrapper>
+        <TimesheetTable data={mockData} readOnly={true} onSave={vi.fn()} />
+      </IntlWrapper>,
+    );
+    expect(screen.queryByRole("button", { name: /保存/i })).not.toBeInTheDocument();
+  });
+
+  it("should show working hours", () => {
+    render(
+      <IntlWrapper>
+        <TimesheetTable data={mockData} readOnly={true} onSave={vi.fn()} />
+      </IntlWrapper>,
+    );
+    expect(screen.getByText("8.00h")).toBeInTheDocument();
+  });
+});
 ```
-test: add E2E tests for timesheet page
 
-Closes #119
+### Step 2: Run unit test
+
+Run: `cd frontend && npm test -- --run tests/unit/components/worklog/TimesheetTable.test.tsx 2>&1 | tail -10`
+Expected: PASS
+
+### Step 3: E2E test
+
+```typescript
+// timesheet.spec.ts
+import { expect, mockProjectsApi, selectProject, test } from "./fixtures/auth";
+
+test.describe("Timesheet Page", () => {
+  test.beforeEach(async ({ page }) => {
+    // Mock timesheet API
+    await page.route("**/api/v1/worklog/timesheet/**", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            memberId: "test-member",
+            memberName: "Test User",
+            projectId: "test-project",
+            projectName: "Test Project",
+            periodType: "calendar",
+            periodStart: "2026-03-01",
+            periodEnd: "2026-03-31",
+            rows: [
+              {
+                date: "2026-03-02",
+                dayOfWeek: "Mon",
+                isWeekend: false,
+                isHoliday: false,
+                holidayName: null,
+                startTime: "09:00",
+                endTime: "18:00",
+                workingHours: 8.0,
+                remarks: null,
+                defaultStartTime: "09:00",
+                defaultEndTime: "18:00",
+                hasAttendanceRecord: true,
+                attendanceId: "att-1",
+                attendanceVersion: 0,
+              },
+            ],
+            summary: {
+              totalWorkingHours: 8.0,
+              totalWorkingDays: 1,
+              totalBusinessDays: 22,
+            },
+          }),
+        });
+      }
+    });
+    await mockProjectsApi(page);
+  });
+
+  test("should display timesheet page with table", async ({ page }) => {
+    await page.goto("/worklog/timesheet", { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: /月次勤務表/i })).toBeVisible({ timeout: 10000 });
+  });
+
+  test("should show data after selecting project", async ({ page }) => {
+    await page.goto("/worklog/timesheet", { waitUntil: "networkidle" });
+    await selectProject(page, 0, "Project Alpha");
+    await expect(page.locator("text=8.00h").first()).toBeVisible();
+  });
+
+  test("should toggle between calendar and fiscal periods", async ({ page }) => {
+    await page.goto("/worklog/timesheet", { waitUntil: "networkidle" });
+    await selectProject(page, 0, "Project Alpha");
+    // Click fiscal toggle
+    await page.getByRole("radio", { name: /締月/i }).click();
+    await expect(page.getByRole("radio", { name: /締月/i })).toHaveAttribute("aria-checked", "true");
+  });
+});
+```
+
+### Step 4: Run E2E test
+
+Run: `cd frontend && npx playwright test --project=chromium tests/e2e/timesheet.spec.ts 2>&1 | tail -10`
+Expected: PASS
+
+### Step 5: Commit
+
+```bash
+git add frontend/tests/unit/components/worklog/TimesheetTable.test.tsx \
+       frontend/tests/e2e/timesheet.spec.ts
+git commit -m "test(frontend): add Timesheet unit tests and E2E tests
+
+Closes #119"
 ```
 
 ---
 
-## Verification Checklist
+## Final Verification
 
-After all tasks complete:
+### Backend
+```bash
+cd backend && ./gradlew test jacocoTestReport 2>&1 | tail -10
+```
+Expected: All tests PASS, coverage ≥ 80%
 
-1. `cd backend && ./gradlew test jacocoTestReport` — all pass, 80%+ coverage
-2. `cd frontend && npm test -- --run` — all pass
-3. `cd frontend && npx playwright test --project=chromium` — all pass
-4. `cd backend && ./gradlew formatAll` — no changes
-5. `cd frontend && npx biome ci` — no errors
+### Frontend
+```bash
+cd frontend && npm test -- --run 2>&1 | tail -10
+cd frontend && npx playwright test --project=chromium 2>&1 | tail -10
+```
+Expected: All tests PASS
+
+### Lint/Format
+```bash
+cd frontend && npx biome ci 2>&1 | tail -5
+cd backend && ./gradlew spotlessCheck 2>&1 | tail -5
+```
+Expected: No errors
+
+---
+
+## Key Implementation Notes
+
+1. **Migration versions**: V32 (daily_attendance), V33 (assignment defaults) — V31 is already taken by `V31__standard_working_hours.sql`
+2. **JdbcTemplate**: Use positional `?` parameters (NOT NamedParameterJdbcTemplate)
+3. **DTOs**: All Java records
+4. **IDs**: Records implementing `EntityId` interface
+5. **Backend tests**: Kotlin, extend `IntegrationTestBase` for integration tests, use `mockito-kotlin` for unit tests
+6. **Frontend mocks**: Use `vi.hoisted()` for error classes, double-mock `../../../app/services/api` and `@/services/api`
+7. **i18n**: Run `npx biome check --write` after editing JSON files
+8. **E2E**: Import `{ test, expect }` from `./fixtures/auth`, use `selectProject()` helper, `.first()` for strict-mode
+9. **Accessibility**: `role="dialog"`, `aria-modal`, `aria-labelledby`, `focus:ring-2`, `role="alert"` for errors
+10. **Holiday loading**: Reuse existing holiday table/service from `CalendarController`. Read the actual schema before implementing `loadHolidays()`.

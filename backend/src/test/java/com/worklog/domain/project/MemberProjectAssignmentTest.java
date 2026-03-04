@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.tenant.TenantId;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -107,15 +106,8 @@ class MemberProjectAssignmentTest {
             Instant assignedAt = Instant.now().minusSeconds(3600);
 
             MemberProjectAssignment assignment = new MemberProjectAssignment(
-                    id,
-                    testTenantId,
-                    testMemberId,
-                    testProjectId,
-                    assignedAt,
-                    testAssignedBy,
-                    false, // Inactive
-                    null,
-                    null);
+                    id, testTenantId, testMemberId, testProjectId, assignedAt, testAssignedBy, false // Inactive
+                    );
 
             assertEquals(id, assignment.getId());
             assertEquals(testTenantId, assignment.getTenantId());
@@ -132,15 +124,7 @@ class MemberProjectAssignmentTest {
             NullPointerException exception = assertThrows(
                     NullPointerException.class,
                     () -> new MemberProjectAssignment(
-                            null,
-                            testTenantId,
-                            testMemberId,
-                            testProjectId,
-                            Instant.now(),
-                            testAssignedBy,
-                            true,
-                            null,
-                            null));
+                            null, testTenantId, testMemberId, testProjectId, Instant.now(), testAssignedBy, true));
 
             assertEquals("Assignment ID cannot be null", exception.getMessage());
         }
@@ -157,9 +141,7 @@ class MemberProjectAssignmentTest {
                             testProjectId,
                             Instant.now(),
                             testAssignedBy,
-                            true,
-                            null,
-                            null));
+                            true));
 
             assertEquals("Tenant ID cannot be null", exception.getMessage());
         }
@@ -176,9 +158,7 @@ class MemberProjectAssignmentTest {
                             testProjectId,
                             Instant.now(),
                             testAssignedBy,
-                            true,
-                            null,
-                            null));
+                            true));
 
             assertEquals("Member ID cannot be null", exception.getMessage());
         }
@@ -195,9 +175,7 @@ class MemberProjectAssignmentTest {
                             null,
                             Instant.now(),
                             testAssignedBy,
-                            true,
-                            null,
-                            null));
+                            true));
 
             assertEquals("Project ID cannot be null", exception.getMessage());
         }
@@ -214,9 +192,7 @@ class MemberProjectAssignmentTest {
                             testProjectId,
                             null,
                             testAssignedBy,
-                            true,
-                            null,
-                            null));
+                            true));
 
             assertEquals("Assigned timestamp cannot be null", exception.getMessage());
         }
@@ -231,9 +207,7 @@ class MemberProjectAssignmentTest {
                     testProjectId,
                     Instant.now(),
                     null, // assignedBy can be null
-                    true,
-                    null,
-                    null);
+                    true);
 
             assertNotNull(assignment);
             assertNull(assignment.getAssignedBy());
@@ -314,7 +288,7 @@ class MemberProjectAssignmentTest {
             MemberProjectAssignmentId id = MemberProjectAssignmentId.generate();
 
             MemberProjectAssignment assignment1 = new MemberProjectAssignment(
-                    id, testTenantId, testMemberId, testProjectId, Instant.now(), testAssignedBy, true, null, null);
+                    id, testTenantId, testMemberId, testProjectId, Instant.now(), testAssignedBy, true);
             MemberProjectAssignment assignment2 = new MemberProjectAssignment(
                     id,
                     testTenantId,
@@ -322,9 +296,8 @@ class MemberProjectAssignmentTest {
                     testProjectId,
                     Instant.now(),
                     testAssignedBy,
-                    false, // Different active state
-                    null,
-                    null);
+                    false // Different active state
+                    );
 
             assertEquals(assignment1, assignment2);
             assertEquals(assignment1.hashCode(), assignment2.hashCode());
@@ -356,7 +329,7 @@ class MemberProjectAssignmentTest {
             MemberProjectAssignment assignment =
                     MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
 
-            assertFalse(assignment.equals(null));
+            assertNotEquals(null, assignment);
         }
 
         @Test
@@ -365,53 +338,7 @@ class MemberProjectAssignmentTest {
             MemberProjectAssignment assignment =
                     MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
 
-            assertFalse(assignment.equals("not an assignment"));
-        }
-    }
-
-    @Nested
-    @DisplayName("Default time setters")
-    class DefaultTimeSetters {
-
-        @Test
-        @DisplayName("should set and get default start time")
-        void shouldSetDefaultStartTime() {
-            MemberProjectAssignment assignment =
-                    MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
-            assertNull(assignment.getDefaultStartTime());
-
-            LocalTime time = LocalTime.of(9, 0);
-            assignment.setDefaultStartTime(time);
-
-            assertEquals(time, assignment.getDefaultStartTime());
-        }
-
-        @Test
-        @DisplayName("should set and get default end time")
-        void shouldSetDefaultEndTime() {
-            MemberProjectAssignment assignment =
-                    MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
-            assertNull(assignment.getDefaultEndTime());
-
-            LocalTime time = LocalTime.of(18, 0);
-            assignment.setDefaultEndTime(time);
-
-            assertEquals(time, assignment.getDefaultEndTime());
-        }
-
-        @Test
-        @DisplayName("should allow null default times")
-        void shouldAllowNullDefaultTimes() {
-            MemberProjectAssignment assignment =
-                    MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
-            assignment.setDefaultStartTime(LocalTime.of(9, 0));
-            assignment.setDefaultEndTime(LocalTime.of(18, 0));
-
-            assignment.setDefaultStartTime(null);
-            assignment.setDefaultEndTime(null);
-
-            assertNull(assignment.getDefaultStartTime());
-            assertNull(assignment.getDefaultEndTime());
+            assertNotEquals("not an assignment", assignment);
         }
     }
 

@@ -56,6 +56,8 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
   // Add assignment form state
   const [addMemberId, setAddMemberId] = useState("");
   const [addProjectId, setAddProjectId] = useState("");
+  const [addDefaultStartTime, setAddDefaultStartTime] = useState("");
+  const [addDefaultEndTime, setAddDefaultEndTime] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: refreshKey is needed to trigger refresh
@@ -120,9 +122,16 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
     setIsAdding(true);
     setError(null);
     try {
-      await api.admin.assignments.create({ memberId, projectId });
+      await api.admin.assignments.create({
+        memberId,
+        projectId,
+        defaultStartTime: addDefaultStartTime || null,
+        defaultEndTime: addDefaultEndTime || null,
+      });
       setAddMemberId("");
       setAddProjectId("");
+      setAddDefaultStartTime("");
+      setAddDefaultEndTime("");
       onRefresh();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -144,32 +153,6 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
         await api.admin.assignments.activate(assignment.id);
       }
       onRefresh();
-    } catch (err: unknown) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError(tc("error"));
-      }
-    }
-  };
-
-  const handleDefaultTimeBlur = async (
-    assignment: AssignmentRow,
-    field: "defaultStartTime" | "defaultEndTime",
-    value: string,
-  ) => {
-    const newValue = value || null;
-    const currentValue = assignment[field];
-    if (newValue === currentValue) return;
-
-    const updatedData = {
-      defaultStartTime: field === "defaultStartTime" ? newValue : assignment.defaultStartTime,
-      defaultEndTime: field === "defaultEndTime" ? newValue : assignment.defaultEndTime,
-    };
-
-    try {
-      await api.admin.assignments.updateDefaultTimes(assignment.id, updatedData);
-      setAssignments((prev) => prev.map((a) => (a.id === assignment.id ? { ...a, [field]: newValue } : a)));
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -294,6 +277,30 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
               </select>
             </div>
           )}
+          <div>
+            <label htmlFor="add-default-start-time" className="block text-sm font-medium text-gray-700 mb-1">
+              {t("defaultStartTime")}
+            </label>
+            <input
+              type="time"
+              id="add-default-start-time"
+              value={addDefaultStartTime}
+              onChange={(e) => setAddDefaultStartTime(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="add-default-end-time" className="block text-sm font-medium text-gray-700 mb-1">
+              {t("defaultEndTime")}
+            </label>
+            <input
+              type="time"
+              id="add-default-end-time"
+              value={addDefaultEndTime}
+              onChange={(e) => setAddDefaultEndTime(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
           <button
             type="button"
             onClick={handleAdd}
@@ -344,26 +351,8 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                       <span className="font-mono text-xs">{a.projectCode}</span> {a.projectName}
                     </td>
                   )}
-                  <td className="py-3 px-4">
-                    <input
-                      type="time"
-                      step="60"
-                      defaultValue={a.defaultStartTime ?? ""}
-                      disabled={!a.isActive}
-                      onBlur={(e) => handleDefaultTimeBlur(a, "defaultStartTime", e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
-                    />
-                  </td>
-                  <td className="py-3 px-4">
-                    <input
-                      type="time"
-                      step="60"
-                      defaultValue={a.defaultEndTime ?? ""}
-                      disabled={!a.isActive}
-                      onBlur={(e) => handleDefaultTimeBlur(a, "defaultEndTime", e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
-                    />
-                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultStartTime ?? "—"}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultEndTime ?? "—"}</td>
                   <td className="py-3 px-4">
                     <span
                       className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${

@@ -151,9 +151,7 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                     ProjectId.of(UUID.randomUUID()),
                     Instant.now(),
                     null,
-                    true,
-                    null,
-                    null);
+                    true);
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any())).thenReturn(List.of(expectedAssignment));
 
@@ -200,15 +198,7 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             ProjectId projectId = ProjectId.of(UUID.randomUUID());
 
             MemberProjectAssignment expectedAssignment = new MemberProjectAssignment(
-                    MemberProjectAssignmentId.generate(),
-                    tenantId,
-                    memberId,
-                    projectId,
-                    Instant.now(),
-                    null,
-                    true,
-                    null,
-                    null);
+                    MemberProjectAssignmentId.generate(), tenantId, memberId, projectId, Instant.now(), null, true);
 
             when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any(), any()))
                     .thenReturn(List.of(expectedAssignment));
@@ -258,6 +248,67 @@ class JdbcMemberProjectAssignmentRepositoryTest {
     }
 
     @Nested
+    @DisplayName("findActiveByMemberAndProject")
+    class FindActiveByMemberAndProject {
+
+        @Test
+        @DisplayName("should return assignment when active assignment found")
+        void shouldReturnAssignmentWhenFound() {
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            UUID projectId = UUID.randomUUID();
+
+            MemberProjectAssignment expectedAssignment = new MemberProjectAssignment(
+                    MemberProjectAssignmentId.generate(),
+                    TenantId.of(UUID.randomUUID()),
+                    memberId,
+                    ProjectId.of(projectId),
+                    Instant.now(),
+                    null,
+                    LocalTime.of(9, 0),
+                    LocalTime.of(18, 0),
+                    true);
+
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any()))
+                    .thenReturn(List.of(expectedAssignment));
+
+            MemberProjectAssignment result = repository.findActiveByMemberAndProject(memberId, projectId);
+
+            assertNotNull(result);
+            assertEquals(memberId, result.getMemberId());
+            assertEquals(ProjectId.of(projectId), result.getProjectId());
+        }
+
+        @Test
+        @DisplayName("should return null when no active assignment found")
+        void shouldReturnNullWhenNotFound() {
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            UUID projectId = UUID.randomUUID();
+
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any()))
+                    .thenReturn(Collections.emptyList());
+
+            MemberProjectAssignment result = repository.findActiveByMemberAndProject(memberId, projectId);
+
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("should pass memberId and projectId to query")
+        void shouldPassCorrectParameters() {
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            UUID projectId = UUID.randomUUID();
+
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any()))
+                    .thenReturn(Collections.emptyList());
+
+            repository.findActiveByMemberAndProject(memberId, projectId);
+
+            verify(jdbcTemplate)
+                    .query(contains("is_active = true"), any(RowMapper.class), eq(memberId.value()), eq(projectId));
+        }
+    }
+
+    @Nested
     @DisplayName("save")
     class Save {
 
@@ -271,8 +322,8 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             MemberId assignedBy = MemberId.of(UUID.randomUUID());
             Instant assignedAt = Instant.now();
 
-            MemberProjectAssignment assignment = new MemberProjectAssignment(
-                    id, tenantId, memberId, projectId, assignedAt, assignedBy, true, null, null);
+            MemberProjectAssignment assignment =
+                    new MemberProjectAssignment(id, tenantId, memberId, projectId, assignedAt, assignedBy, true);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
@@ -287,9 +338,9 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             eq(projectId.value()),
                             any(), // Timestamp
                             eq(assignedBy.value()),
-                            eq(true),
                             isNull(), // defaultStartTime
-                            isNull()); // defaultEndTime
+                            isNull(), // defaultEndTime
+                            eq(true));
         }
 
         @Test
@@ -302,9 +353,7 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                     ProjectId.of(UUID.randomUUID()),
                     Instant.now(),
                     null, // No assignedBy
-                    true,
-                    null,
-                    null);
+                    true);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
@@ -319,9 +368,9 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             any(),
                             any(),
                             isNull(), // assignedBy should be null
-                            any(),
                             isNull(), // defaultStartTime
-                            isNull()); // defaultEndTime
+                            isNull(), // defaultEndTime
+                            any());
         }
 
         @Test
@@ -331,13 +380,11 @@ class JdbcMemberProjectAssignmentRepositoryTest {
             TenantId tenantId = TenantId.of(UUID.randomUUID());
             MemberId memberId = MemberId.of(UUID.randomUUID());
             ProjectId projectId = ProjectId.of(UUID.randomUUID());
-            MemberId assignedBy = MemberId.of(UUID.randomUUID());
-            Instant assignedAt = Instant.now();
-            LocalTime startTime = LocalTime.of(9, 0);
-            LocalTime endTime = LocalTime.of(18, 0);
+            LocalTime defaultStart = LocalTime.of(9, 0);
+            LocalTime defaultEnd = LocalTime.of(18, 0);
 
             MemberProjectAssignment assignment = new MemberProjectAssignment(
-                    id, tenantId, memberId, projectId, assignedAt, assignedBy, true, startTime, endTime);
+                    id, tenantId, memberId, projectId, Instant.now(), null, defaultStart, defaultEnd, true);
 
             when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
 
@@ -351,10 +398,10 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             eq(memberId.value()),
                             eq(projectId.value()),
                             any(), // Timestamp
-                            eq(assignedBy.value()),
-                            eq(true),
-                            eq(Time.valueOf(startTime)),
-                            eq(Time.valueOf(endTime)));
+                            isNull(), // assignedBy
+                            eq(Time.valueOf(defaultStart)),
+                            eq(Time.valueOf(defaultEnd)),
+                            eq(true));
         }
 
         @Test

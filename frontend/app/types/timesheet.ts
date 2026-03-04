@@ -1,4 +1,10 @@
-export type PeriodType = "calendar" | "fiscal";
+/**
+ * TypeScript type definitions for Monthly Timesheet feature
+ *
+ * Mirrors the backend DTOs:
+ * - TimesheetResponse.java (TimesheetRow, TimesheetSummary)
+ * - SaveAttendanceRequest.java
+ */
 
 export interface TimesheetRow {
   date: string;
@@ -6,15 +12,15 @@ export interface TimesheetRow {
   isWeekend: boolean;
   isHoliday: boolean;
   holidayName: string | null;
-  startTime: string | null; // "HH:mm"
-  endTime: string | null; // "HH:mm"
+  startTime: string | null;
+  endTime: string | null;
   workingHours: number;
   remarks: string | null;
   defaultStartTime: string | null;
   defaultEndTime: string | null;
   hasAttendanceRecord: boolean;
   attendanceId: string | null;
-  attendanceVersion: number;
+  attendanceVersion: number | null;
 }
 
 export interface TimesheetSummary {
@@ -28,19 +34,19 @@ export interface TimesheetResponse {
   memberName: string;
   projectId: string;
   projectName: string;
-  periodType: PeriodType;
+  periodType: "calendar" | "fiscal";
   periodStart: string;
   periodEnd: string;
-  canEdit: boolean;
   rows: TimesheetRow[];
   summary: TimesheetSummary;
 }
 
 export interface SaveAttendanceRequest {
-  memberId?: string;
   date: string;
   startTime: string | null;
   endTime: string | null;
   remarks: string | null;
-  version: number;
+  version: number | null;
 }
+
+export type PeriodType = "calendar" | "fiscal";

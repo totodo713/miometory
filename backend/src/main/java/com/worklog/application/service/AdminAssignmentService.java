@@ -5,7 +5,6 @@ import com.worklog.domain.shared.DomainException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -36,22 +35,22 @@ public class AdminAssignmentService {
                 WHERE a.member_id = ? AND a.tenant_id = ?
                 ORDER BY p.code
                 """,
-                (rs, rowNum) -> new AssignmentRow(
-                        rs.getObject("id", UUID.class).toString(),
-                        rs.getObject("member_id", UUID.class).toString(),
-                        rs.getString("member_name"),
-                        rs.getString("member_email"),
-                        rs.getObject("project_id", UUID.class).toString(),
-                        rs.getString("project_code"),
-                        rs.getString("project_name"),
-                        rs.getBoolean("is_active"),
-                        rs.getTimestamp("assigned_at").toInstant().toString(),
-                        rs.getTime("default_start_time") != null
-                                ? rs.getTime("default_start_time").toLocalTime().toString()
-                                : null,
-                        rs.getTime("default_end_time") != null
-                                ? rs.getTime("default_end_time").toLocalTime().toString()
-                                : null),
+                (rs, rowNum) -> {
+                    Time startTime = rs.getTime("default_start_time");
+                    Time endTime = rs.getTime("default_end_time");
+                    return new AssignmentRow(
+                            rs.getObject("id", UUID.class).toString(),
+                            rs.getObject("member_id", UUID.class).toString(),
+                            rs.getString("member_name"),
+                            rs.getString("member_email"),
+                            rs.getObject("project_id", UUID.class).toString(),
+                            rs.getString("project_code"),
+                            rs.getString("project_name"),
+                            rs.getBoolean("is_active"),
+                            rs.getTimestamp("assigned_at").toInstant().toString(),
+                            startTime != null ? startTime.toLocalTime().toString() : null,
+                            endTime != null ? endTime.toLocalTime().toString() : null);
+                },
                 memberId,
                 tenantId);
     }
@@ -70,22 +69,22 @@ public class AdminAssignmentService {
                 WHERE a.project_id = ? AND a.tenant_id = ?
                 ORDER BY m.display_name
                 """,
-                (rs, rowNum) -> new AssignmentRow(
-                        rs.getObject("id", UUID.class).toString(),
-                        rs.getObject("member_id", UUID.class).toString(),
-                        rs.getString("member_name"),
-                        rs.getString("member_email"),
-                        rs.getObject("project_id", UUID.class).toString(),
-                        rs.getString("project_code"),
-                        rs.getString("project_name"),
-                        rs.getBoolean("is_active"),
-                        rs.getTimestamp("assigned_at").toInstant().toString(),
-                        rs.getTime("default_start_time") != null
-                                ? rs.getTime("default_start_time").toLocalTime().toString()
-                                : null,
-                        rs.getTime("default_end_time") != null
-                                ? rs.getTime("default_end_time").toLocalTime().toString()
-                                : null),
+                (rs, rowNum) -> {
+                    Time startTime = rs.getTime("default_start_time");
+                    Time endTime = rs.getTime("default_end_time");
+                    return new AssignmentRow(
+                            rs.getObject("id", UUID.class).toString(),
+                            rs.getObject("member_id", UUID.class).toString(),
+                            rs.getString("member_name"),
+                            rs.getString("member_email"),
+                            rs.getObject("project_id", UUID.class).toString(),
+                            rs.getString("project_code"),
+                            rs.getString("project_name"),
+                            rs.getBoolean("is_active"),
+                            rs.getTimestamp("assigned_at").toInstant().toString(),
+                            startTime != null ? startTime.toLocalTime().toString() : null,
+                            endTime != null ? endTime.toLocalTime().toString() : null);
+                },
                 projectId,
                 tenantId);
     }
@@ -125,15 +124,17 @@ public class AdminAssignmentService {
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(
                 """
-                INSERT INTO member_project_assignments (id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, true)
+                INSERT INTO member_project_assignments (id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active, default_start_time, default_end_time)
+                VALUES (?, ?, ?, ?, ?, ?, true, ?, ?)
                 """,
                 id,
                 command.tenantId(),
                 command.memberId(),
                 command.projectId(),
                 Timestamp.from(Instant.now()),
-                command.assignedBy());
+                command.assignedBy(),
+                command.defaultStartTime() != null ? Time.valueOf(command.defaultStartTime()) : null,
+                command.defaultEndTime() != null ? Time.valueOf(command.defaultEndTime()) : null);
         return id;
     }
 
@@ -150,24 +151,6 @@ public class AdminAssignmentService {
     public void activateAssignment(UUID assignmentId, UUID tenantId) {
         int rows = jdbcTemplate.update(
                 "UPDATE member_project_assignments SET is_active = true WHERE id = ? AND tenant_id = ?",
-                assignmentId,
-                tenantId);
-        if (rows == 0) {
-            throw new DomainException("ASSIGNMENT_NOT_FOUND", "Assignment not found");
-        }
-    }
-
-    public void updateDefaultTimes(UUID assignmentId, UUID tenantId, String defaultStartTime, String defaultEndTime) {
-        Time startTime = defaultStartTime != null && !defaultStartTime.isEmpty()
-                ? Time.valueOf(LocalTime.parse(defaultStartTime))
-                : null;
-        Time endTime = defaultEndTime != null && !defaultEndTime.isEmpty()
-                ? Time.valueOf(LocalTime.parse(defaultEndTime))
-                : null;
-        int rows = jdbcTemplate.update(
-                "UPDATE member_project_assignments SET default_start_time = ?, default_end_time = ? WHERE id = ? AND tenant_id = ?",
-                startTime,
-                endTime,
                 assignmentId,
                 tenantId);
         if (rows == 0) {

@@ -34,6 +34,7 @@ Review agents: `build-integrity-verifier`, `qa-ux-guardian`, `security-reviewer`
 
 - **Always run `./gradlew spotlessApply` before committing backend changes** — Java (palantir-java-format) and Kotlin (ktlint) are checked separately in CI
 - Common pitfall: multi-argument `this()` calls and constructor invocations get reformatted to one-arg-per-line; the auto-format hook may miss files not directly edited (e.g. test files created via Write tool)
+- Common pitfall: Spotless may remove newly added imports if the referencing code hasn't been written yet — add imports AFTER the code that uses them, or re-add if removed
 
 ## Git Safety
 
@@ -58,6 +59,7 @@ PreToolUse hook adds second layer: blocks `--force`, `--no-verify`, `-D`, `check
 - Biome version is pinned in `frontend/package.json` (`@biomejs/biome`); always use the project-local binary
 - After adding JSX attributes (role, aria-*), run `npx biome check --write <file>` — long attribute lines get reformatted to multi-line
 - After adding keys to i18n JSON files (`messages/en.json`, `messages/ja.json`), run `npx biome check --write` — indentation mismatches fail CI
+- **i18n key-parity test**: `key-parity.test.ts` enforces no empty translation values — if a key is semantically empty in one language (e.g. English suffix), use `" "` (space) instead of `""`
 
 ## Devcontainer Workflow
 
@@ -69,6 +71,8 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **Start servers**: `exec -d app bash -c "cd /workspaces/miometory/backend && ./gradlew bootRun > /tmp/backend.log 2>&1"` / `exec -d app bash -c "cd /workspaces/miometory/frontend && npm run dev > /tmp/frontend.log 2>&1"`
 - **Path conversion**: Host `$PROJECT_ROOT/...` → Container `/workspaces/miometory/...` (automatic)
 - **Fallback**: If the container is not running, hooks execute commands locally (same as before)
+- **Worktree gotcha**: git worktree ではdevcontainerが起動していないことが多い。手動で `devcontainer-exec.sh` を呼ぶ場合、`--workdir` にコンテナパス (`/workspaces/...`) を使わず、ホストの絶対パスを使うか、直接 `cd` + コマンド実行する
+- **Worktree git CWD**: `backend/` や `frontend/` 内で作業中に `git add` する場合、パスが git root からの相対パスと不一致になる → `git -C <worktree-root> add <relative-path>` を使うか、git root に戻ってから実行
 - **Manual exec**: `.claude/hooks/devcontainer-exec.sh --workdir DIR -- COMMAND`
 
 ## E2E Tests (Playwright)
@@ -89,6 +93,13 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## Frontend Patterns
 
 - **Loading skeleton ↔ content layout parity**: Skeleton grids (column count, card count) must match the actual content layout to prevent CLS (Cumulative Layout Shift)
+- **useToast in useEffect deps**: `ToastProvider` の context value が `useMemo` 未適用（#131）— `useEffect` 依存配列に `toast` を入れるとエラー時に無限ループする。`toast` メソッドは deps から除外するか、Provider 側で value を memoize すること
+
+## Permission System
+
+- **ロール二重構造**: data-dev.sql のレガシーロール (ADMIN/USER/MODERATOR, `00000000-...` UUID) と V18 の管理ロール (SYSTEM_ADMIN/TENANT_ADMIN/SUPERVISOR, `aa000000-...` UUID) が共存
+- **設定権限は V18 に未含**: `system_settings.*` は V26、`tenant_settings.*` は V29 で後追い追加 — 権限不足の調査時は V18 だけでなく後続マイグレーションも確認すること
+- **AdminNav 表示条件**: 各ナビアイテムの `permission` フィールドで制御 — `AdminNav.tsx` の `NAV_ITEMS` 定義を参照
 
 ## GitHub Issue Management
 
@@ -97,16 +108,21 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## Backend Testing Patterns
 
 - **DomainException status mapping**: `GlobalExceptionHandler` がエラーコードで HTTP ステータスを決定 — `*_NOT_FOUND` → 404, `DUPLICATE_*` → 409, `ALREADY_*`/`CANNOT_*` → 422, その他 → 400
-- **JUnit equals coverage pitfall**: `assertNotEquals(null, obj)` は `obj.equals(null)` を呼ばない（`Objects.equals` 経由のため）。equals の null/型チェック分岐をカバーするには `assertFalse(obj.equals(null))` を使う
 - **`gradlew` location**: `backend/gradlew`（プロジェクトルート直下ではない）— `cd backend && ./gradlew` または `backend/gradlew` で実行
+
+## Backend Auth in Tests
+
+- **`Authentication` parameter is null in test profile**: `TestRestTemplate`-based integration tests run with security disabled (`permitAll`), so `Authentication` is null. Controllers with manual auth checks must guard `if (authentication == null) return;` for dev/test compatibility. `MockMvc`-based tests (e.g. `AdminIntegrationTestBase`) use `.with(user(email))` and provide non-null auth.
+- **MockMvc `jsonPath().doesNotExist()`**: null 値のフィールドはキーが存在するため `doesNotExist()` は失敗する。また JsonPath フィルタ式 `$[?(@.field == 'val')].other` は配列を返すため挙動が異なる → `$[0].field` インデックスを使う
 
 ## Backend Architecture Patterns
 
-- **UseCase/Interactor**: `GetTimesheetUseCase` が初の実装例 — 複数データソースを合成する読み取りモデル構築に使用。`@Service @Transactional(readOnly = true)` で定義
 - **CRUD entity (非Event Sourced)**: `DailyAttendance` は event sourcing を使わない単純CRUD — `JdbcDailyAttendanceRepository` が UPSERT + 楽観ロック（version カラム）を直接管理
 - **SecurityConfig httpBasic**: dev/test profile では `httpBasic(Customizer.withDefaults())` + `permitAll()` で、Controller の `Authentication` パラメータが任意受信可能（認証なしリクエストも通る）
 
 ## Troubleshooting
 
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
-- **Flyway checksum mismatch with Testcontainers reuse** ("Migration checksum mismatch for migration version X"): worktree間でマイグレーションファイルを変更すると、reuse されたPostgreSQLコンテナの `flyway_schema_history` と不一致 → `docker ps -a --filter "label=org.testcontainers"` で PostgreSQL コンテナIDを特定し `docker stop <id> && docker rm <id>` で再作成
+- **Flyway checksum mismatch in tests** ("Migration checksum mismatch for migration version N"): Testcontainers の `.withReuse(true)` がキャッシュした旧DBと migration file の内容が不一致 → `docker ps -a --filter "label=org.testcontainers"` で対象 PostgreSQL コンテナを特定し `docker stop/rm` で削除、再テスト
+- **MockK varargs type inference** (`Cannot infer type for type parameter 'T'`): `jdbcTemplate.queryForList(any<String>(), any(), any())` は型推論に失敗する → `queryForList(any<String>(), *anyVararg())` + 戻り値を `emptyList<Map<String, Any>>()` のように明示型指定
+- **Detekt `EqualsNullCall`**: テストで `.equals(null)` を直接呼ぶとdetektが失敗する → `assertNotEquals(null, x)` を使う。CIでは Lint & Format Check と Build & Test Backend の両方がdetektを実行するため、1つの違反で2ジョブ失敗する

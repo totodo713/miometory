@@ -20,12 +20,12 @@ public class MemberProjectAssignment {
     private final ProjectId projectId;
     private final Instant assignedAt;
     private final MemberId assignedBy; // Can be null
+    private final LocalTime defaultStartTime; // Can be null
+    private final LocalTime defaultEndTime; // Can be null
     private boolean isActive;
-    private LocalTime defaultStartTime; // Can be null
-    private LocalTime defaultEndTime; // Can be null
 
     /**
-     * Constructor for reconstituting from persistence.
+     * Full constructor for reconstituting from persistence.
      */
     public MemberProjectAssignment(
             MemberProjectAssignmentId id,
@@ -34,18 +34,32 @@ public class MemberProjectAssignment {
             ProjectId projectId,
             Instant assignedAt,
             MemberId assignedBy,
-            boolean isActive,
             LocalTime defaultStartTime,
-            LocalTime defaultEndTime) {
+            LocalTime defaultEndTime,
+            boolean isActive) {
         this.id = Objects.requireNonNull(id, "Assignment ID cannot be null");
         this.tenantId = Objects.requireNonNull(tenantId, "Tenant ID cannot be null");
         this.memberId = Objects.requireNonNull(memberId, "Member ID cannot be null");
         this.projectId = Objects.requireNonNull(projectId, "Project ID cannot be null");
         this.assignedAt = Objects.requireNonNull(assignedAt, "Assigned timestamp cannot be null");
         this.assignedBy = assignedBy; // Can be null
-        this.isActive = isActive;
         this.defaultStartTime = defaultStartTime; // Can be null
         this.defaultEndTime = defaultEndTime; // Can be null
+        this.isActive = isActive;
+    }
+
+    /**
+     * Backward-compatible constructor without default time fields.
+     */
+    public MemberProjectAssignment(
+            MemberProjectAssignmentId id,
+            TenantId tenantId,
+            MemberId memberId,
+            ProjectId projectId,
+            Instant assignedAt,
+            MemberId assignedBy,
+            boolean isActive) {
+        this(id, tenantId, memberId, projectId, assignedAt, assignedBy, null, null, isActive);
     }
 
     /**
@@ -60,9 +74,10 @@ public class MemberProjectAssignment {
                 projectId,
                 Instant.now(),
                 assignedBy,
-                true, // New assignments are active by default
-                null,
-                null);
+                null, // defaultStartTime
+                null, // defaultEndTime
+                true // New assignments are active by default
+                );
     }
 
     /**
@@ -107,10 +122,6 @@ public class MemberProjectAssignment {
         return assignedBy;
     }
 
-    public boolean isActive() {
-        return isActive;
-    }
-
     public LocalTime getDefaultStartTime() {
         return defaultStartTime;
     }
@@ -119,14 +130,8 @@ public class MemberProjectAssignment {
         return defaultEndTime;
     }
 
-    // Setters
-
-    public void setDefaultStartTime(LocalTime defaultStartTime) {
-        this.defaultStartTime = defaultStartTime;
-    }
-
-    public void setDefaultEndTime(LocalTime defaultEndTime) {
-        this.defaultEndTime = defaultEndTime;
+    public boolean isActive() {
+        return isActive;
     }
 
     @Override

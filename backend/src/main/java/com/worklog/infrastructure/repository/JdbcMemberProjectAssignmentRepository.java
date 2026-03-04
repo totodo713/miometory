@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -69,8 +70,8 @@ public class JdbcMemberProjectAssignmentRepository {
      */
     public Optional<MemberProjectAssignment> findById(MemberProjectAssignmentId id) {
         String sql = """
-            SELECT id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active,
-                   default_start_time, default_end_time
+            SELECT id, tenant_id, member_id, project_id, assigned_at, assigned_by,
+                   default_start_time, default_end_time, is_active
             FROM member_project_assignments
             WHERE id = ?
             """;
@@ -91,8 +92,8 @@ public class JdbcMemberProjectAssignmentRepository {
     public Optional<MemberProjectAssignment> findByMemberAndProject(
             TenantId tenantId, MemberId memberId, ProjectId projectId) {
         String sql = """
-            SELECT id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active,
-                   default_start_time, default_end_time
+            SELECT id, tenant_id, member_id, project_id, assigned_at, assigned_by,
+                   default_start_time, default_end_time, is_active
             FROM member_project_assignments
             WHERE tenant_id = ? AND member_id = ? AND project_id = ?
             """;
@@ -100,6 +101,26 @@ public class JdbcMemberProjectAssignmentRepository {
         List<MemberProjectAssignment> results = jdbcTemplate.query(
                 sql, new MemberProjectAssignmentRowMapper(), tenantId.value(), memberId.value(), projectId.value());
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    /**
+     * Finds an active assignment by member and project.
+     *
+     * @param memberId Member ID
+     * @param projectId Project ID (raw UUID)
+     * @return The active assignment, or null if not found
+     */
+    public MemberProjectAssignment findActiveByMemberAndProject(MemberId memberId, UUID projectId) {
+        String sql = """
+            SELECT id, tenant_id, member_id, project_id, assigned_at, assigned_by,
+                   default_start_time, default_end_time, is_active
+            FROM member_project_assignments
+            WHERE member_id = ? AND project_id = ? AND is_active = true
+            """;
+
+        List<MemberProjectAssignment> results =
+                jdbcTemplate.query(sql, new MemberProjectAssignmentRowMapper(), memberId.value(), projectId);
+        return results.isEmpty() ? null : results.get(0);
     }
 
     /**
@@ -113,8 +134,8 @@ public class JdbcMemberProjectAssignmentRepository {
     public void save(MemberProjectAssignment assignment) {
         String upsertSql = """
             INSERT INTO member_project_assignments
-                (id, tenant_id, member_id, project_id, assigned_at, assigned_by, is_active,
-                 default_start_time, default_end_time)
+                (id, tenant_id, member_id, project_id, assigned_at, assigned_by,
+                 default_start_time, default_end_time, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
                 is_active = EXCLUDED.is_active,
@@ -132,9 +153,9 @@ public class JdbcMemberProjectAssignmentRepository {
                 assignment.getProjectId().value(),
                 Timestamp.from(assignment.getAssignedAt()),
                 assignment.getAssignedBy() != null ? assignment.getAssignedBy().value() : null,
-                assignment.isActive(),
                 assignment.getDefaultStartTime() != null ? Time.valueOf(assignment.getDefaultStartTime()) : null,
-                assignment.getDefaultEndTime() != null ? Time.valueOf(assignment.getDefaultEndTime()) : null);
+                assignment.getDefaultEndTime() != null ? Time.valueOf(assignment.getDefaultEndTime()) : null,
+                assignment.isActive());
     }
 
     /**
@@ -165,8 +186,10 @@ public class JdbcMemberProjectAssignmentRepository {
         @Override
         public MemberProjectAssignment mapRow(ResultSet rs, int rowNum) throws SQLException {
             UUID assignedById = (UUID) rs.getObject("assigned_by");
-            Time defaultStartTime = rs.getTime("default_start_time");
-            Time defaultEndTime = rs.getTime("default_end_time");
+            Time defaultStartTimeSql = rs.getTime("default_start_time");
+            Time defaultEndTimeSql = rs.getTime("default_end_time");
+            LocalTime defaultStartTime = defaultStartTimeSql != null ? defaultStartTimeSql.toLocalTime() : null;
+            LocalTime defaultEndTime = defaultEndTimeSql != null ? defaultEndTimeSql.toLocalTime() : null;
 
             return new MemberProjectAssignment(
                     MemberProjectAssignmentId.of(rs.getObject("id", UUID.class)),
@@ -175,9 +198,9 @@ public class JdbcMemberProjectAssignmentRepository {
                     ProjectId.of(rs.getObject("project_id", UUID.class)),
                     rs.getTimestamp("assigned_at").toInstant(),
                     assignedById != null ? MemberId.of(assignedById) : null,
-                    rs.getBoolean("is_active"),
-                    defaultStartTime != null ? defaultStartTime.toLocalTime() : null,
-                    defaultEndTime != null ? defaultEndTime.toLocalTime() : null);
+                    defaultStartTime,
+                    defaultEndTime,
+                    rs.getBoolean("is_active"));
         }
     }
 }

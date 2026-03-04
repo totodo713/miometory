@@ -1,4 +1,4 @@
-# Monthly Timesheet (月次勤務表) Feature Design
+# Monthly Timesheet (月次勤務表) Feature Plan
 
 ## Context
 
@@ -13,21 +13,13 @@
 - `MemberProjectAssignment` と同じCRUDパターンで実装（`work_log_events` テーブルは使わない）
 - 理由: 複雑なドメインイベントが不要で、CRUD projectionテーブルだけで十分
 
-### 2. GetTimesheetUseCase（Interactorパターン）
+### 2. 単一のTimesheetエンドポイント（CQRS読み取りモデル）
 - `GET /api/v1/worklog/timesheet/{year}/{month}` で DailyAttendance + WorkLogEntry hours + デフォルト時間を結合して返す
-- 結合ロジックは `GetTimesheetUseCase` (application/usecase/) に配置
-- DailyAttendanceService はCRUD操作のみに限定し、読み取りモデルの結合は UseCase が担当
-- 理由: CalendarController の肥大化パターンを避け、テスタビリティを向上させる。Timesheet 限定の段階的導入
+- CalendarControllerの既存パターンに倣う
 
-### 3. インライン編集: 変更行のみSave表示
-- 未変更行はSaveボタン非表示。変更した行だけSaveボタンが現れる
+### 3. インライン編集: 行単位の明示的Save
+- 各行（各日）にSaveボタンを表示し、明示的に保存
 - 楽観的ロック（version）を使用
-- 変更検知は DailyEntryForm.tsx と同じ JSON.stringify 比較パターン
-
-### 4. アクセス制御: マネージャーも部下の編集可
-- 自分のデータ: 閲覧・編集可
-- マネージャー: 部下のデータ閲覧・**編集可**（既存の `managerId` 関係を利用）
-- 管理者: 全メンバーのデータ閲覧可
 
 ---
 
@@ -66,7 +58,7 @@ ALTER TABLE member_project_assignments
 
 ### Domain Model
 **新規:** `backend/src/main/java/com/worklog/domain/attendance/`
-- `DailyAttendanceId.java` - UUID wrapper (MemberId と同じ record + EntityId パターン)
+- `DailyAttendanceId.java` - UUID wrapper
 - `DailyAttendance.java` - エンティティ（id, memberId, tenantId, date, startTime, endTime, remarks, version）
 - バリデーション: endTime > startTime（両方指定時）、remarks max 500文字
 
@@ -78,17 +70,11 @@ ALTER TABLE member_project_assignments
 - `findByMemberAndDateRange(memberId, startDate, endDate)` - 月間データ取得
 - `deleteByMemberAndDate(memberId, date)` - 削除
 
-### Service (CRUD only)
+### Service
 **新規:** `backend/src/main/java/com/worklog/application/service/DailyAttendanceService.java`
 - `saveAttendance(command)` - 作成/更新（楽観的ロック）
 - `deleteAttendance(memberId, date)` - 削除
-- CRUDのみ。読み取りモデル結合は UseCase に委譲
-
-### UseCase (Interactor)
-**新規:** `backend/src/main/java/com/worklog/application/usecase/GetTimesheetUseCase.java`
-- `execute(memberId, projectId, startDate, endDate)` → `TimesheetResponse`
-- DailyAttendanceService, MonthlyCalendarProjection (WorkLogEntry hours), JdbcMemberProjectAssignmentRepository, HolidayResolutionService を結合
-- `@Transactional(readOnly = true)`
+- `getTimesheetData(memberId, projectId, startDate, endDate)` - 結合クエリ
 
 ### MemberProjectAssignment 変更
 **変更:** `JdbcMemberProjectAssignmentRepository.java`, `MemberProjectAssignment.java`
@@ -102,24 +88,12 @@ ALTER TABLE member_project_assignments
 |--------|------|-------------|
 | GET | `/api/v1/worklog/timesheet/{year}/{month}` | 月次勤務表データ取得 |
 | PUT | `/api/v1/worklog/timesheet/attendance` | 日次出勤記録の保存 |
-| DELETE | `/api/v1/worklog/timesheet/attendance/{memberId}/{date}` | 日次出勤記録の削除 |
+| DELETE | `/api/v1/worklog/timesheet/attendance/{date}` | 日次出勤記録の削除 |
 
 **Query Parameters (GET):**
 - `memberId` - 対象メンバー（省略時は自分）
 - `projectId` - 対象プロジェクト（必須）
 - `periodType` - `calendar`（1日〜月末）or `fiscal`（21日〜20日）
-
-**PUT Request Body: `SaveAttendanceRequest`**
-```json
-{
-  "memberId": "uuid (省略時は自分)",
-  "date": "2026-03-02",
-  "startTime": "09:00",
-  "endTime": "18:00",
-  "remarks": "",
-  "version": 0
-}
-```
 
 **Response: `TimesheetResponse`**
 ```json
@@ -131,7 +105,6 @@ ALTER TABLE member_project_assignments
   "periodType": "calendar|fiscal",
   "periodStart": "2026-03-01",
   "periodEnd": "2026-03-31",
-  "canEdit": true,
   "rows": [
     {
       "date": "2026-03-02",
@@ -160,9 +133,8 @@ ALTER TABLE member_project_assignments
 
 ### アクセス制御
 - 自分のデータ: 閲覧・編集可
-- マネージャー: 部下のデータ閲覧・編集可（既存の `managerId` 関係を利用）
+- マネージャー: 部下のデータ閲覧可（既存の `managerId` 関係を利用）
 - 管理者: 全メンバーのデータ閲覧可
-- 他人のデータ（上記以外）: 403 Forbidden
 
 ---
 
@@ -177,7 +149,7 @@ ALTER TABLE member_project_assignments
 | Component | Description |
 |-----------|-------------|
 | `TimesheetTable.tsx` | メインテーブル。日付行 × 列（日付/曜日/開始/終了/稼働/備考）。フッターに合計行 |
-| `TimesheetRow.tsx` | 1日分の行。`<input type="time">` でインライン編集。変更時のみSaveボタン表示 |
+| `TimesheetRow.tsx` | 1日分の行。`<input type="time">` でインライン編集。Saveボタン |
 | `TimesheetPeriodToggle.tsx` | 暦月/締月の切り替えトグル |
 | `TimesheetSummary.tsx` | 合計稼働時間、稼働日数、営業日数 |
 
@@ -190,8 +162,8 @@ ALTER TABLE member_project_assignments
 │ 日付 │曜日│始業  │終業  │稼働   │備考          │     │
 ├──────┼────┼─────┼─────┼──────┼──────────────┼──────┤
 │ 3/1  │ 日 │     │     │      │              │      │  ← 土日はグレーアウト
-│ 3/2  │ 月 │09:00│18:00│ 8.00h│              │      │  ← 未変更: Saveなし
-│ 3/3  │ 火 │09:30│18:00│ 8.00h│定例MTG       │ Save │  ← 変更あり: Save表示
+│ 3/2  │ 月 │09:00│18:00│ 8.00h│              │ Save │
+│ 3/3  │ 火 │09:00│18:00│ 8.00h│定例MTG       │ Save │
 │ ...  │    │     │     │      │              │      │
 ├──────┴────┴─────┴─────┼──────┼──────────────┴──────┤
 │ 合計                   │176.0h│ 22日 / 22営業日     │
@@ -200,20 +172,17 @@ ALTER TABLE member_project_assignments
 
 - デフォルト時間（未保存）: 薄いグレー・イタリック表示
 - 保存済み: 通常表示
-- 変更あり: 行ハイライト + Saveボタン表示
 - 土日: `bg-gray-50` 背景
 - 祝日: `bg-amber-50` 背景 + 祝日名表示
-- 閲覧のみ（管理者 or マネージャーが別メンバー閲覧 and canEdit=false）: 全フィールド read-only
+- マネージャー/管理者閲覧時: 全フィールド read-only
 
 ### Types
 **新規:** `frontend/app/types/timesheet.ts`
-- `TimesheetResponse`, `TimesheetRow`, `TimesheetSummary`, `SaveAttendanceRequest`, `PeriodType`
+- `TimesheetResponse`, `TimesheetRow`, `TimesheetSummary`, `SaveAttendanceRequest`
 
 ### API Client
 **変更:** `frontend/app/services/api.ts`
-- `api.worklog.timesheet.get(year, month, params)` → GET
-- `api.worklog.timesheet.saveAttendance(req)` → PUT
-- `api.worklog.timesheet.deleteAttendance(memberId, date)` → DELETE
+- `api.worklog.timesheet.get(params)`, `.saveAttendance(req)`, `.deleteAttendance(date)`
 
 ### Zustand Store
 **変更:** `frontend/app/services/worklogStore.ts`
@@ -241,22 +210,19 @@ ALTER TABLE member_project_assignments
 
 ### Backend Tests
 - `DailyAttendanceService` のユニットテスト（CRUD + バリデーション）
-- `GetTimesheetUseCase` のユニットテスト（データ結合ロジック）
 - `TimesheetController` のインテグレーションテスト（`IntegrationTestBase` 継承）
 - アクセス制御テスト（自分/マネージャー/管理者）
 
 ### Frontend Tests
 - `TimesheetTable` コンポーネントテスト（Vitest + RTL）
 - インライン編集のインタラクションテスト
-- 変更検知 + Saveボタン表示のテスト
 
 ### E2E Tests (Playwright)
 - `/worklog/timesheet` ページ表示
 - プロジェクト切り替え
 - 暦月/締月切り替え
 - インライン編集 → Save → データ反映確認
-- マネージャーが部下の勤務表を編集
-- 管理者が全メンバーの勤務表を閲覧（read-only確認）
+- マネージャーが部下の勤務表を閲覧（read-only確認）
 
 ### Manual Verification
 1. `cd backend && ./gradlew test jacocoTestReport`
@@ -268,9 +234,9 @@ ALTER TABLE member_project_assignments
 ## Implementation Sequence
 
 1. **Backend DB:** V32 (daily_attendance) + V33 (assignment defaults) migrations
-2. **Backend Domain:** DailyAttendance entity + repository + service (CRUD)
-3. **Backend API:** TimesheetController + DTOs + GetTimesheetUseCase + MemberProjectAssignment変更
-4. **Backend Tests:** Integration tests + UseCase unit tests
+2. **Backend Domain:** DailyAttendance entity + repository + service
+3. **Backend API:** TimesheetController + DTOs + MemberProjectAssignment変更
+4. **Backend Tests:** Integration tests
 5. **Frontend Types + API:** timesheet.ts + api.ts additions
 6. **Frontend Components:** TimesheetTable, TimesheetRow, etc.
 7. **Frontend Page:** `/worklog/timesheet/page.tsx`
@@ -287,7 +253,6 @@ ALTER TABLE member_project_assignments
 - `backend/src/main/java/com/worklog/domain/attendance/DailyAttendanceId.java`
 - `backend/src/main/java/com/worklog/infrastructure/repository/JdbcDailyAttendanceRepository.java`
 - `backend/src/main/java/com/worklog/application/service/DailyAttendanceService.java`
-- `backend/src/main/java/com/worklog/application/usecase/GetTimesheetUseCase.java`
 - `backend/src/main/java/com/worklog/api/TimesheetController.java`
 - `backend/src/main/java/com/worklog/api/dto/TimesheetResponse.java` (+ related DTOs)
 - `frontend/app/types/timesheet.ts`
@@ -305,14 +270,3 @@ ALTER TABLE member_project_assignments
 - `frontend/messages/en.json`, `frontend/messages/ja.json` (add i18n keys)
 - `frontend/app/worklog/page.tsx` or Header (add navigation link)
 - Admin assignment components (add default time fields)
-
-## Review Changes from Original Design
-
-| # | Change | Reason |
-|---|--------|--------|
-| 1 | Migration V31/V32 → **V32/V33** | V31__standard_working_hours.sql already exists |
-| 2 | `getTimesheetData()` moved from DailyAttendanceService to **GetTimesheetUseCase** | Interactor pattern for better separation; CalendarController fat-controller anti-pattern avoidance |
-| 3 | Manager access: view-only → **view + edit subordinates** | Operational requirement for managers to correct subordinate attendance |
-| 4 | Save UX: all rows show Save → **changed rows only show Save** | Reduces UI clutter; follows dirty-tracking pattern from DailyEntryForm |
-| 5 | DELETE path: `/{date}` → **`/{memberId}/{date}`** | Required for manager editing (explicit memberId in path) |
-| 6 | Response: added **`canEdit`** field | Frontend needs to know if current user can edit the displayed member's data |

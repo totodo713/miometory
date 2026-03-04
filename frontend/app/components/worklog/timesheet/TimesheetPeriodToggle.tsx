@@ -4,37 +4,53 @@ import { useTranslations } from "next-intl";
 import type { PeriodType } from "@/types/timesheet";
 
 interface TimesheetPeriodToggleProps {
-  periodType: PeriodType;
-  onChange: (type: PeriodType) => void;
+  value: PeriodType;
+  onChange: (value: PeriodType) => void;
 }
 
-export function TimesheetPeriodToggle({ periodType, onChange }: TimesheetPeriodToggleProps) {
-  const t = useTranslations("worklog");
+/**
+ * TimesheetPeriodToggle - pill toggle between "Calendar" and "Fiscal" period types.
+ *
+ * Uses semantic radio inputs (visually hidden) with styled labels for accessibility.
+ */
+export function TimesheetPeriodToggle({ value, onChange }: TimesheetPeriodToggleProps) {
+  const t = useTranslations("timesheet");
 
   return (
-    <fieldset className="inline-flex rounded-md shadow-sm border-0 p-0 m-0">
-      <button
-        type="button"
-        onClick={() => onChange("calendar")}
-        className={`px-4 py-2 text-sm font-medium rounded-l-md border ${
-          periodType === "calendar"
-            ? "bg-blue-600 text-white border-blue-600"
-            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-      >
-        {t("timesheet.periodCalendar")}
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange("fiscal")}
-        className={`px-4 py-2 text-sm font-medium rounded-r-md border-t border-b border-r ${
-          periodType === "fiscal"
-            ? "bg-blue-600 text-white border-blue-600"
-            : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-        } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-      >
-        {t("timesheet.periodFiscal")}
-      </button>
+    <fieldset>
+      <legend className="sr-only">{t("periodType")}</legend>
+      <div className="inline-flex rounded-lg border border-gray-300 p-1">
+        <label
+          className={`cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-blue-500 ${
+            value === "calendar" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          <input
+            type="radio"
+            name="periodType"
+            value="calendar"
+            checked={value === "calendar"}
+            onChange={() => onChange("calendar")}
+            className="sr-only"
+          />
+          {t("calendarPeriod")}
+        </label>
+        <label
+          className={`cursor-pointer rounded-md px-4 py-2 text-sm font-medium transition-colors focus-within:ring-2 focus-within:ring-blue-500 ${
+            value === "fiscal" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
+          }`}
+        >
+          <input
+            type="radio"
+            name="periodType"
+            value="fiscal"
+            checked={value === "fiscal"}
+            onChange={() => onChange("fiscal")}
+            className="sr-only"
+          />
+          {t("fiscalPeriod")}
+        </label>
+      </div>
     </fieldset>
   );
 }

@@ -6,51 +6,85 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
 
+/**
+ * DailyAttendance entity.
+ *
+ * Represents a member's attendance record for a single day,
+ * including start time, end time, and optional remarks.
+ */
 public class DailyAttendance {
 
     private final DailyAttendanceId id;
     private final TenantId tenantId;
     private final MemberId memberId;
-    private final LocalDate date;
-    private LocalTime startTime;
-    private LocalTime endTime;
-    private String remarks;
-    private int version;
+    private final LocalDate attendanceDate;
+    private LocalTime startTime; // Nullable
+    private LocalTime endTime; // Nullable
+    private String remarks; // Nullable
+    private final int version;
 
+    /**
+     * Constructor for reconstituting from persistence.
+     */
     public DailyAttendance(
             DailyAttendanceId id,
             TenantId tenantId,
             MemberId memberId,
-            LocalDate date,
+            LocalDate attendanceDate,
             LocalTime startTime,
             LocalTime endTime,
             String remarks,
             int version) {
-        this.id = Objects.requireNonNull(id, "DailyAttendanceId cannot be null");
-        this.tenantId = Objects.requireNonNull(tenantId, "TenantId cannot be null");
-        this.memberId = Objects.requireNonNull(memberId, "MemberId cannot be null");
-        this.date = Objects.requireNonNull(date, "Date cannot be null");
+        this.id = Objects.requireNonNull(id, "Attendance ID cannot be null");
+        this.tenantId = Objects.requireNonNull(tenantId, "Tenant ID cannot be null");
+        this.memberId = Objects.requireNonNull(memberId, "Member ID cannot be null");
+        this.attendanceDate = Objects.requireNonNull(attendanceDate, "Attendance date cannot be null");
+        validateTimes(startTime, endTime);
+        validateRemarks(remarks);
         this.startTime = startTime;
         this.endTime = endTime;
         this.remarks = remarks;
         this.version = version;
     }
 
-    public static DailyAttendance create(TenantId tenantId, MemberId memberId, LocalDate date) {
-        return new DailyAttendance(DailyAttendanceId.generate(), tenantId, memberId, date, null, null, null, 0);
+    /**
+     * Factory method for creating a new daily attendance record.
+     */
+    public static DailyAttendance create(
+            TenantId tenantId,
+            MemberId memberId,
+            LocalDate attendanceDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            String remarks) {
+        return new DailyAttendance(
+                DailyAttendanceId.generate(), tenantId, memberId, attendanceDate, startTime, endTime, remarks, 0);
     }
 
+    /**
+     * Updates the mutable fields of this attendance record.
+     */
     public void update(LocalTime startTime, LocalTime endTime, String remarks) {
-        if (startTime != null && endTime != null && !endTime.isAfter(startTime)) {
-            throw new IllegalArgumentException("End time must be after start time");
-        }
-        if (remarks != null && remarks.length() > 500) {
-            throw new IllegalArgumentException("Remarks cannot exceed 500 characters");
-        }
+        validateTimes(startTime, endTime);
+        validateRemarks(remarks);
         this.startTime = startTime;
         this.endTime = endTime;
         this.remarks = remarks;
     }
+
+    private static void validateTimes(LocalTime startTime, LocalTime endTime) {
+        if (startTime != null && endTime != null && endTime.isBefore(startTime)) {
+            throw new IllegalArgumentException("End time cannot be before start time");
+        }
+    }
+
+    private static void validateRemarks(String remarks) {
+        if (remarks != null && remarks.length() > 500) {
+            throw new IllegalArgumentException("Remarks cannot exceed 500 characters");
+        }
+    }
+
+    // Getters
 
     public DailyAttendanceId getId() {
         return id;
@@ -64,8 +98,8 @@ public class DailyAttendance {
         return memberId;
     }
 
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getAttendanceDate() {
+        return attendanceDate;
     }
 
     public LocalTime getStartTime() {
@@ -95,5 +129,15 @@ public class DailyAttendance {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "DailyAttendance{" + "id="
+                + id + ", memberId="
+                + memberId + ", attendanceDate="
+                + attendanceDate + ", startTime="
+                + startTime + ", endTime="
+                + endTime + '}';
     }
 }

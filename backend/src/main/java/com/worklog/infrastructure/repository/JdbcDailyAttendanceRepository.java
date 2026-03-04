@@ -9,7 +9,6 @@ import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Repository;
  * JDBC-based repository for DailyAttendance entity.
  *
  * Provides CRUD operations for daily attendance records
- * with UPSERT support using the (member_id, attendance_date) unique constraint.
+ * using plain JdbcTemplate with positional parameters.
  */
 @Repository
 public class JdbcDailyAttendanceRepository {
@@ -31,15 +30,25 @@ public class JdbcDailyAttendanceRepository {
     }
 
     /**
-     * Saves a daily attendance record (insert or update).
+     * Saves a daily attendance record using UPSERT.
      *
-     * Uses the unique constraint (member_id, attendance_date) for conflict detection.
-     * On conflict, updates times, remarks, increments version, and sets updated_at.
+     * Uses ON CONFLICT (member_id, attendance_date) to handle duplicate entries.
+     * On conflict, updates start_time, end_time, remarks, increments version, and sets updated_at.
      *
      * @param attendance The attendance record to save
      */
+    /**
+     * Saves a daily attendance record using UPSERT with optimistic locking.
+     *
+     * On conflict, the update only succeeds if the DB version matches the entity's
+     * version (EXCLUDED.version). If another transaction modified the record,
+     * the version will differ and 0 rows will be affected.
+     *
+     * @param attendance The attendance record to save
+     * @throws org.springframework.dao.OptimisticLockingFailureException if the record was modified by another transaction
+     */
     public void save(DailyAttendance attendance) {
-        String upsertSql = """
+        String sql = """
             INSERT INTO daily_attendance
                 (id, tenant_id, member_id, attendance_date, start_time, end_time, remarks, version, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
@@ -49,18 +58,29 @@ public class JdbcDailyAttendanceRepository {
                 remarks = EXCLUDED.remarks,
                 version = daily_attendance.version + 1,
                 updated_at = CURRENT_TIMESTAMP
+            WHERE daily_attendance.version = EXCLUDED.version
             """;
 
-        jdbcTemplate.update(
-                upsertSql,
+        int rowsAffected = jdbcTemplate.update(
+                sql,
                 attendance.getId().value(),
                 attendance.getTenantId().value(),
                 attendance.getMemberId().value(),
-                attendance.getDate(),
+                attendance.getAttendanceDate(),
                 attendance.getStartTime() != null ? Time.valueOf(attendance.getStartTime()) : null,
                 attendance.getEndTime() != null ? Time.valueOf(attendance.getEndTime()) : null,
                 attendance.getRemarks(),
                 attendance.getVersion());
+
+        if (rowsAffected == 0) {
+            // Record exists but version didn't match — optimistic lock conflict
+            DailyAttendance current = findByMemberAndDate(attendance.getMemberId(), attendance.getAttendanceDate());
+            if (current != null) {
+                throw new org.springframework.dao.OptimisticLockingFailureException(
+                        "Attendance record was modified by another transaction. Expected version: "
+                                + attendance.getVersion() + ", actual: " + current.getVersion());
+            }
+        }
     }
 
     /**
@@ -68,9 +88,9 @@ public class JdbcDailyAttendanceRepository {
      *
      * @param memberId The member ID
      * @param date The attendance date
-     * @return Optional containing the attendance record if found
+     * @return The attendance record, or null if not found
      */
-    public Optional<DailyAttendance> findByMemberAndDate(MemberId memberId, LocalDate date) {
+    public DailyAttendance findByMemberAndDate(MemberId memberId, LocalDate date) {
         String sql = """
             SELECT id, tenant_id, member_id, attendance_date, start_time, end_time, remarks, version
             FROM daily_attendance
@@ -78,18 +98,18 @@ public class JdbcDailyAttendanceRepository {
             """;
 
         List<DailyAttendance> results = jdbcTemplate.query(sql, new DailyAttendanceRowMapper(), memberId.value(), date);
-        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+        return results.isEmpty() ? null : results.get(0);
     }
 
     /**
-     * Finds daily attendance records by member within a date range (inclusive).
+     * Finds daily attendance records for a member within a date range (inclusive).
      *
      * @param memberId The member ID
-     * @param start The start date (inclusive)
-     * @param end The end date (inclusive)
+     * @param startDate The start date (inclusive)
+     * @param endDate The end date (inclusive)
      * @return List of attendance records ordered by attendance_date
      */
-    public List<DailyAttendance> findByMemberAndDateRange(MemberId memberId, LocalDate start, LocalDate end) {
+    public List<DailyAttendance> findByMemberAndDateRange(MemberId memberId, LocalDate startDate, LocalDate endDate) {
         String sql = """
             SELECT id, tenant_id, member_id, attendance_date, start_time, end_time, remarks, version
             FROM daily_attendance
@@ -97,7 +117,7 @@ public class JdbcDailyAttendanceRepository {
             ORDER BY attendance_date
             """;
 
-        return jdbcTemplate.query(sql, new DailyAttendanceRowMapper(), memberId.value(), start, end);
+        return jdbcTemplate.query(sql, new DailyAttendanceRowMapper(), memberId.value(), startDate, endDate);
     }
 
     /**
@@ -124,7 +144,7 @@ public class JdbcDailyAttendanceRepository {
                     DailyAttendanceId.of(rs.getObject("id", UUID.class)),
                     TenantId.of(rs.getObject("tenant_id", UUID.class)),
                     MemberId.of(rs.getObject("member_id", UUID.class)),
-                    rs.getObject("attendance_date", LocalDate.class),
+                    rs.getDate("attendance_date").toLocalDate(),
                     startTime != null ? startTime.toLocalTime() : null,
                     endTime != null ? endTime.toLocalTime() : null,
                     rs.getString("remarks"),

@@ -1,35 +1,39 @@
 "use client";
 
+/**
+ * Monthly Timesheet Page
+ *
+ * Displays a project-specific monthly attendance grid where users can
+ * view and edit daily start/end times and remarks.
+ * Supports calendar vs fiscal period toggling and month navigation.
+ */
+
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { ProjectSelector } from "@/components/worklog/ProjectSelector";
 import { TimesheetPeriodToggle } from "@/components/worklog/timesheet/TimesheetPeriodToggle";
+import { TimesheetSummary } from "@/components/worklog/timesheet/TimesheetSummary";
 import { TimesheetTable } from "@/components/worklog/timesheet/TimesheetTable";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/services/api";
-import { useTimesheetPreferences } from "@/services/worklogStore";
 import type { PeriodType, TimesheetResponse } from "@/types/timesheet";
 
 export default function TimesheetPage() {
-  const t = useTranslations("worklog");
+  const t = useTranslations("timesheet");
   const { memberId } = useAuth();
-
-  const { timesheetProjectId, timesheetPeriodType, setTimesheetProjectId, setTimesheetPeriodType } =
-    useTimesheetPreferences();
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
-
+  const [projectId, setProjectId] = useState("");
+  const [periodType, setPeriodType] = useState<PeriodType>("calendar");
   const [data, setData] = useState<TimesheetResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const effectiveMemberId = memberId ?? "";
-
   const loadTimesheet = useCallback(async () => {
-    if (!timesheetProjectId || !effectiveMemberId) return;
+    if (!memberId || !projectId) return;
 
     setIsLoading(true);
     setError(null);
@@ -38,18 +42,18 @@ export default function TimesheetPage() {
       const response = await api.worklog.timesheet.get({
         year,
         month,
-        projectId: timesheetProjectId,
-        memberId: effectiveMemberId,
-        periodType: timesheetPeriodType,
+        memberId,
+        projectId,
+        periodType,
       });
       setData(response);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load timesheet");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("loadError"));
       setData(null);
     } finally {
       setIsLoading(false);
     }
-  }, [year, month, timesheetProjectId, effectiveMemberId, timesheetPeriodType]);
+  }, [year, month, memberId, projectId, periodType, t]);
 
   useEffect(() => {
     loadTimesheet();
@@ -73,84 +77,97 @@ export default function TimesheetPage() {
     }
   };
 
-  const handlePeriodTypeChange = (type: PeriodType) => {
-    setTimesheetPeriodType(type);
-  };
+  const handleSave = useCallback(
+    async (date: string, startTime: string, endTime: string, remarks: string, version: number | null) => {
+      if (!memberId) return;
 
-  const handleProjectChange = (projectId: string) => {
-    setTimesheetProjectId(projectId || null);
-  };
+      try {
+        await api.worklog.timesheet.saveAttendance(memberId, {
+          date,
+          startTime: startTime || null,
+          endTime: endTime || null,
+          remarks: remarks || null,
+          version,
+        });
+        await loadTimesheet();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("saveError"));
+      }
+    },
+    [memberId, loadTimesheet, t],
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">{t("timesheet.title")}</h1>
-        </div>
+        {/* Title */}
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">{t("title")}</h1>
 
-        {/* Controls */}
+        {/* Controls Bar */}
         <div className="mb-6 flex flex-wrap items-center gap-4">
           {/* Project Selector */}
-          <div className="w-64">
-            {effectiveMemberId && (
-              <ProjectSelector
-                memberId={effectiveMemberId}
-                value={timesheetProjectId ?? ""}
-                onChange={handleProjectChange}
-                placeholder={t("timesheet.selectProject")}
-              />
-            )}
+          <div className="w-72">
+            <ProjectSelector memberId={memberId ?? ""} value={projectId} onChange={setProjectId} />
           </div>
 
-          {/* Month navigation */}
+          {/* Month Navigation */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handlePreviousMonth}
               className="px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Previous month"
+              aria-label={t("prevMonth")}
             >
-              &larr;
+              &#9664;
             </button>
-            <span className="text-lg font-medium text-gray-900 min-w-[120px] text-center">
-              {year}/{String(month).padStart(2, "0")}
+            <span className="text-lg font-semibold text-gray-900 min-w-[120px] text-center">
+              {year}
+              {t("yearSuffix")}
+              {month}
+              {t("monthSuffix")}
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
               className="px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Next month"
+              aria-label={t("nextMonth")}
             >
-              &rarr;
+              &#9654;
             </button>
           </div>
 
-          {/* Period toggle */}
-          <TimesheetPeriodToggle periodType={timesheetPeriodType} onChange={handlePeriodTypeChange} />
+          {/* Period Type Toggle */}
+          <TimesheetPeriodToggle value={periodType} onChange={setPeriodType} />
         </div>
 
-        {/* No project selected message */}
-        {!timesheetProjectId && (
-          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-600">{t("timesheet.noProject")}</div>
-        )}
-
-        {/* Loading state */}
+        {/* Loading State */}
         {isLoading && (
           <div className="bg-white rounded-lg shadow p-8 flex justify-center">
-            <LoadingSpinner size="lg" label={t("timesheet.title")} />
+            <LoadingSpinner size="lg" label={t("title")} />
           </div>
         )}
 
-        {/* Error state */}
+        {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4" role="alert">
             <p className="text-red-800">{error}</p>
           </div>
         )}
 
-        {/* Timesheet table */}
-        {!isLoading && !error && data && <TimesheetTable data={data} onRefresh={loadTimesheet} />}
+        {/* Data State */}
+        {!isLoading && !error && data && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <TimesheetTable data={data} readOnly={false} onSave={handleSave} />
+            <div className="mt-6">
+              <TimesheetSummary summary={data.summary} />
+            </div>
+          </div>
+        )}
+
+        {/* No Project Selected */}
+        {!isLoading && !error && !data && !projectId && (
+          <div className="bg-white rounded-lg shadow p-8 text-center text-gray-600">{t("selectProjectPrompt")}</div>
+        )}
       </div>
     </div>
   );

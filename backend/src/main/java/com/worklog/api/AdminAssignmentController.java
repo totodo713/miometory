@@ -6,6 +6,7 @@ import com.worklog.application.service.UserContextService;
 import com.worklog.shared.AdminRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -58,7 +59,13 @@ public class AdminAssignmentController {
 
         enforceDirectReportIfSupervisor(authentication.getName(), request.memberId());
 
-        var command = new CreateAssignmentCommand(tenantId, request.memberId(), request.projectId(), actorMemberId);
+        var command = new CreateAssignmentCommand(
+                tenantId,
+                request.memberId(),
+                request.projectId(),
+                actorMemberId,
+                request.defaultStartTime(),
+                request.defaultEndTime());
         UUID id = adminAssignmentService.createAssignment(command);
         return new CreateAssignmentResponse(id.toString());
     }
@@ -78,14 +85,6 @@ public class AdminAssignmentController {
         adminAssignmentService.activateAssignment(id, tenantId);
     }
 
-    @PatchMapping("/{id}/default-times")
-    @PreAuthorize("hasPermission(null, 'assignment.create')")
-    public void updateDefaultTimes(
-            @PathVariable UUID id, @RequestBody UpdateDefaultTimesRequest request, Authentication authentication) {
-        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
-        adminAssignmentService.updateDefaultTimes(id, tenantId, request.defaultStartTime(), request.defaultEndTime());
-    }
-
     private void enforceDirectReportIfSupervisor(String email, UUID targetMemberId) {
         String roleName = jdbcTemplate.queryForObject("""
                 SELECT r.name FROM users u
@@ -99,9 +98,7 @@ public class AdminAssignmentController {
     }
 
     public record CreateAssignmentRequest(
-            @NotNull UUID memberId, @NotNull UUID projectId) {}
+            @NotNull UUID memberId, @NotNull UUID projectId, LocalTime defaultStartTime, LocalTime defaultEndTime) {}
 
     public record CreateAssignmentResponse(String id) {}
-
-    public record UpdateDefaultTimesRequest(String defaultStartTime, String defaultEndTime) {}
 }
