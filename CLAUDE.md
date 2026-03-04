@@ -94,6 +94,12 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - PR description に `Closes #xx` を含めて issue の自動クローズ漏れを防ぐ
 
+## Backend Testing Patterns
+
+- **DomainException status mapping**: `GlobalExceptionHandler` がエラーコードで HTTP ステータスを決定 — `*_NOT_FOUND` → 404, `DUPLICATE_*` → 409, `ALREADY_*`/`CANNOT_*` → 422, その他 → 400
+- **JUnit equals coverage pitfall**: `assertNotEquals(null, obj)` は `obj.equals(null)` を呼ばない（`Objects.equals` 経由のため）。equals の null/型チェック分岐をカバーするには `assertFalse(obj.equals(null))` を使う
+- **`gradlew` location**: `backend/gradlew`（プロジェクトルート直下ではない）— `cd backend && ./gradlew` または `backend/gradlew` で実行
+
 ## Backend Architecture Patterns
 
 - **UseCase/Interactor**: `GetTimesheetUseCase` が初の実装例 — 複数データソースを合成する読み取りモデル構築に使用。`@Service @Transactional(readOnly = true)` で定義
