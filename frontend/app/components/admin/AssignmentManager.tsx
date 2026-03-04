@@ -351,8 +351,8 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                       <span className="font-mono text-xs">{a.projectCode}</span> {a.projectName}
                     </td>
                   )}
-                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultStartTime ?? "-"}</td>
-                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultEndTime ?? "-"}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultStartTime ?? "—"}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600">{a.defaultEndTime ?? "—"}</td>
                   <td className="py-3 px-4">
                     <span
                       className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${

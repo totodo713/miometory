@@ -110,7 +110,7 @@ class TimesheetControllerTest : IntegrationTestBase() {
         // Act
         val response =
             restTemplate.exchange(
-                "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId&tenantId=$TEST_TENANT_ID",
+                "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId",
                 HttpMethod.PUT,
                 HttpEntity(requestBody, headers),
                 Map::class.java,
@@ -136,7 +136,7 @@ class TimesheetControllerTest : IntegrationTestBase() {
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
         restTemplate.exchange(
-            "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId&tenantId=$TEST_TENANT_ID",
+            "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId",
             HttpMethod.PUT,
             HttpEntity(requestBody, headers),
             Map::class.java,
@@ -336,7 +336,7 @@ class TimesheetControllerTest : IntegrationTestBase() {
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
         restTemplate.exchange(
-            "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId&tenantId=$TEST_TENANT_ID",
+            "/api/v1/worklog/timesheet/attendance?memberId=$testMemberId",
             HttpMethod.PUT,
             HttpEntity(requestBody, headers),
             Map::class.java,

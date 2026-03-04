@@ -16,14 +16,12 @@ import { TimesheetPeriodToggle } from "@/components/worklog/timesheet/TimesheetP
 import { TimesheetSummary } from "@/components/worklog/timesheet/TimesheetSummary";
 import { TimesheetTable } from "@/components/worklog/timesheet/TimesheetTable";
 import { useAuth } from "@/hooks/useAuth";
-import { useTenantContext } from "@/providers/TenantProvider";
 import { api } from "@/services/api";
 import type { PeriodType, TimesheetResponse } from "@/types/timesheet";
 
 export default function TimesheetPage() {
   const t = useTranslations("timesheet");
   const { memberId } = useAuth();
-  const { selectedTenantId } = useTenantContext();
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -41,7 +39,7 @@ export default function TimesheetPage() {
     setError(null);
 
     try {
-      const response = await api.timesheet.get({
+      const response = await api.worklog.timesheet.get({
         year,
         month,
         memberId,
@@ -81,10 +79,10 @@ export default function TimesheetPage() {
 
   const handleSave = useCallback(
     async (date: string, startTime: string, endTime: string, remarks: string, version: number | null) => {
-      if (!memberId || !selectedTenantId) return;
+      if (!memberId) return;
 
       try {
-        await api.timesheet.saveAttendance(memberId, selectedTenantId, {
+        await api.worklog.timesheet.saveAttendance(memberId, {
           date,
           startTime: startTime || null,
           endTime: endTime || null,
@@ -96,7 +94,7 @@ export default function TimesheetPage() {
         setError(err instanceof Error ? err.message : t("saveError"));
       }
     },
-    [memberId, selectedTenantId, loadTimesheet, t],
+    [memberId, loadTimesheet, t],
   );
 
   return (

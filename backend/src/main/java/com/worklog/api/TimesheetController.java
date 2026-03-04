@@ -6,12 +6,12 @@ import com.worklog.api.dto.TimesheetResponse.TimesheetRow;
 import com.worklog.api.dto.TimesheetResponse.TimesheetSummary;
 import com.worklog.application.service.DailyAttendanceService;
 import com.worklog.application.service.HolidayResolutionService;
+import com.worklog.application.service.UserContextService;
 import com.worklog.domain.member.Member;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.model.HolidayInfo;
 import com.worklog.domain.project.MemberProjectAssignment;
 import com.worklog.domain.shared.DomainException;
-import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.projection.TimesheetProjection;
 import com.worklog.infrastructure.repository.JdbcMemberProjectAssignmentRepository;
 import com.worklog.infrastructure.repository.JdbcMemberRepository;
@@ -26,6 +26,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -33,6 +35,10 @@ import org.springframework.web.bind.annotation.*;
  *
  * Provides endpoints for viewing monthly timesheets with attendance data,
  * and for saving/deleting daily attendance records.
+ *
+ * Authorization:
+ * - GET: self-access or users with assignment.view permission (admins/supervisors)
+ * - PUT/DELETE: self-access only (users can only modify their own attendance)
  */
 @RestController
 @RequestMapping("/api/v1/worklog/timesheet")
@@ -43,6 +49,7 @@ public class TimesheetController {
     private final JdbcMemberProjectAssignmentRepository assignmentRepository;
     private final HolidayResolutionService holidayResolutionService;
     private final DailyAttendanceService dailyAttendanceService;
+    private final UserContextService userContextService;
     private final JdbcTemplate jdbcTemplate;
 
     public TimesheetController(
@@ -51,26 +58,22 @@ public class TimesheetController {
             JdbcMemberProjectAssignmentRepository assignmentRepository,
             HolidayResolutionService holidayResolutionService,
             DailyAttendanceService dailyAttendanceService,
+            UserContextService userContextService,
             JdbcTemplate jdbcTemplate) {
         this.timesheetProjection = timesheetProjection;
         this.memberRepository = memberRepository;
         this.assignmentRepository = assignmentRepository;
         this.holidayResolutionService = holidayResolutionService;
         this.dailyAttendanceService = dailyAttendanceService;
+        this.userContextService = userContextService;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
      * Get monthly timesheet for a member and project.
      *
-     * GET /api/v1/worklog/timesheet/{year}/{month}?memberId=...&projectId=...&periodType=calendar
-     *
-     * @param year Year (2020-2100)
-     * @param month Month (1-12)
-     * @param memberId Member ID (required)
-     * @param projectId Project ID (required)
-     * @param periodType Period type: "calendar" (1st to last day) or "fiscal" (prev month 21st to current month 20th)
-     * @return Timesheet response with daily rows and summary
+     * Self-access is always allowed. Admins/supervisors (with assignment.view permission)
+     * can view other members' timesheets.
      */
     @GetMapping("/{year}/{month}")
     public ResponseEntity<TimesheetResponse> getMonthlyTimesheet(
@@ -78,7 +81,11 @@ public class TimesheetController {
             @PathVariable int month,
             @RequestParam UUID memberId,
             @RequestParam UUID projectId,
-            @RequestParam(defaultValue = "calendar") String periodType) {
+            @RequestParam(defaultValue = "calendar") String periodType,
+            Authentication authentication) {
+
+        // Authorize: self-access or admin/supervisor
+        validateReadAccess(authentication, memberId);
 
         // Validate year and month
         if (year < 2020 || year > 2100) {
@@ -156,19 +163,23 @@ public class TimesheetController {
     /**
      * Save (create or update) a daily attendance record.
      *
-     * PUT /api/v1/worklog/timesheet/attendance?memberId=...&tenantId=...
-     *
-     * @param memberId Member ID (required)
-     * @param tenantId Tenant ID (required)
-     * @param request Attendance data
-     * @return JSON with the saved attendance record ID
+     * Only the authenticated user can save their own attendance.
+     * TenantId is derived from the member record (not accepted from the client).
      */
     @PutMapping("/attendance")
     public ResponseEntity<Map<String, UUID>> saveAttendance(
-            @RequestParam UUID memberId, @RequestParam UUID tenantId, @RequestBody SaveAttendanceRequest request) {
+            @RequestParam UUID memberId, @RequestBody SaveAttendanceRequest request, Authentication authentication) {
+
+        // Authorize: self-access only for writes
+        validateWriteAccess(authentication, memberId);
+
+        // Derive tenantId from the member record (not from client)
+        Member member = memberRepository
+                .findById(MemberId.of(memberId))
+                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
         UUID attendanceId = dailyAttendanceService.saveAttendance(
-                TenantId.of(tenantId),
+                member.getTenantId(),
                 MemberId.of(memberId),
                 request.date(),
                 request.startTime(),
@@ -182,18 +193,68 @@ public class TimesheetController {
     /**
      * Delete a daily attendance record.
      *
-     * DELETE /api/v1/worklog/timesheet/attendance/{date}?memberId=...
-     *
-     * @param date The attendance date to delete
-     * @param memberId Member ID (required)
-     * @return 204 No Content
+     * Only the authenticated user can delete their own attendance.
      */
     @DeleteMapping("/attendance/{date}")
-    public ResponseEntity<Void> deleteAttendance(@PathVariable LocalDate date, @RequestParam UUID memberId) {
+    public ResponseEntity<Void> deleteAttendance(
+            @PathVariable LocalDate date, @RequestParam UUID memberId, Authentication authentication) {
+
+        // Authorize: self-access only for writes
+        validateWriteAccess(authentication, memberId);
 
         dailyAttendanceService.deleteAttendance(MemberId.of(memberId), date);
 
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Validates that the authenticated user can read the requested member's data.
+     * Allows self-access or users with assignment.view permission (admins/supervisors).
+     * Skipped when authentication is null (dev/test mode with security disabled).
+     */
+    private void validateReadAccess(Authentication authentication, UUID requestedMemberId) {
+        if (authentication == null) {
+            return; // Security disabled (dev/test profile)
+        }
+        UUID currentMemberId = userContextService.resolveUserMemberId(authentication.getName());
+        if (currentMemberId.equals(requestedMemberId)) {
+            return; // Self-access is always allowed
+        }
+        // Check if user has admin/supervisor permissions to view other members
+        if (!hasPermission(authentication.getName(), "assignment.view")) {
+            throw new AccessDeniedException("Access denied: cannot view another member's timesheet");
+        }
+    }
+
+    /**
+     * Validates that the authenticated user can write to the requested member's data.
+     * Only self-access is allowed for write operations.
+     * Skipped when authentication is null (dev/test mode with security disabled).
+     */
+    private void validateWriteAccess(Authentication authentication, UUID requestedMemberId) {
+        if (authentication == null) {
+            return; // Security disabled (dev/test profile)
+        }
+        UUID currentMemberId = userContextService.resolveUserMemberId(authentication.getName());
+        if (!currentMemberId.equals(requestedMemberId)) {
+            throw new AccessDeniedException("Access denied: can only modify own attendance");
+        }
+    }
+
+    /**
+     * Checks if the user has a specific permission (same pattern as CustomPermissionEvaluator).
+     */
+    private boolean hasPermission(String email, String permission) {
+        String sql = """
+            SELECT COUNT(*) > 0
+            FROM users u
+            JOIN roles r ON r.id = u.role_id
+            JOIN role_permissions rp ON rp.role_id = r.id
+            JOIN permissions p ON p.id = rp.permission_id
+            WHERE LOWER(u.email) = LOWER(?)
+              AND p.name = ?
+            """;
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, email, permission));
     }
 
     /**

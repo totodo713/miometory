@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TimesheetRow as TimesheetRowType } from "@/types/timesheet";
 
 interface TimesheetRowProps {
@@ -25,6 +25,13 @@ export function TimesheetRow({ row, readOnly, onSave }: TimesheetRowProps) {
   const [remarks, setRemarks] = useState(row.remarks ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync local state when props change (e.g. after save triggers data reload)
+  useEffect(() => {
+    setStartTime(row.startTime ?? row.defaultStartTime ?? "");
+    setEndTime(row.endTime ?? row.defaultEndTime ?? "");
+    setRemarks(row.remarks ?? "");
+  }, [row.startTime, row.endTime, row.remarks, row.defaultStartTime, row.defaultEndTime]);
 
   const bgColor = row.isHoliday ? "bg-amber-50" : row.isWeekend ? "bg-gray-50" : "bg-white";
   const noRecord = !row.hasAttendanceRecord;
@@ -56,13 +63,13 @@ export function TimesheetRow({ row, readOnly, onSave }: TimesheetRowProps) {
       {/* Start time */}
       <td className="py-2 px-3">
         {readOnly ? (
-          <span className={`text-sm ${valueStyle}`}>{row.startTime ?? "-"}</span>
+          <span className={`text-sm ${valueStyle}`}>{row.startTime ?? "—"}</span>
         ) : (
           <input
             type="time"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
-            aria-label={`${t("startTimeLabel")} ${row.date}`}
+            aria-label={t("startTimeLabel", { date: row.date })}
             className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         )}
@@ -71,20 +78,20 @@ export function TimesheetRow({ row, readOnly, onSave }: TimesheetRowProps) {
       {/* End time */}
       <td className="py-2 px-3">
         {readOnly ? (
-          <span className={`text-sm ${valueStyle}`}>{row.endTime ?? "-"}</span>
+          <span className={`text-sm ${valueStyle}`}>{row.endTime ?? "—"}</span>
         ) : (
           <input
             type="time"
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
-            aria-label={`${t("endTimeLabel")} ${row.date}`}
+            aria-label={t("endTimeLabel", { date: row.date })}
             className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         )}
       </td>
 
       {/* Working hours */}
-      <td className={`py-2 px-3 text-sm text-right ${valueStyle}`}>{row.workingHours > 0 ? row.workingHours : "-"}</td>
+      <td className={`py-2 px-3 text-sm text-right ${valueStyle}`}>{row.workingHours > 0 ? row.workingHours : "—"}</td>
 
       {/* Remarks */}
       <td className="py-2 px-3">
@@ -95,7 +102,7 @@ export function TimesheetRow({ row, readOnly, onSave }: TimesheetRowProps) {
             type="text"
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
-            aria-label={`${t("remarksLabel")} ${row.date}`}
+            aria-label={t("remarksLabel", { date: row.date })}
             placeholder={t("remarksPlaceholder")}
             className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />

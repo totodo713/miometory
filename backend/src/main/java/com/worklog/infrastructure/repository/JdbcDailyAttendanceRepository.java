@@ -37,6 +37,16 @@ public class JdbcDailyAttendanceRepository {
      *
      * @param attendance The attendance record to save
      */
+    /**
+     * Saves a daily attendance record using UPSERT with optimistic locking.
+     *
+     * On conflict, the update only succeeds if the DB version matches the entity's
+     * version (EXCLUDED.version). If another transaction modified the record,
+     * the version will differ and 0 rows will be affected.
+     *
+     * @param attendance The attendance record to save
+     * @throws org.springframework.dao.OptimisticLockingFailureException if the record was modified by another transaction
+     */
     public void save(DailyAttendance attendance) {
         String sql = """
             INSERT INTO daily_attendance
@@ -48,9 +58,10 @@ public class JdbcDailyAttendanceRepository {
                 remarks = EXCLUDED.remarks,
                 version = daily_attendance.version + 1,
                 updated_at = CURRENT_TIMESTAMP
+            WHERE daily_attendance.version = EXCLUDED.version
             """;
 
-        jdbcTemplate.update(
+        int rowsAffected = jdbcTemplate.update(
                 sql,
                 attendance.getId().value(),
                 attendance.getTenantId().value(),
@@ -60,6 +71,16 @@ public class JdbcDailyAttendanceRepository {
                 attendance.getEndTime() != null ? Time.valueOf(attendance.getEndTime()) : null,
                 attendance.getRemarks(),
                 attendance.getVersion());
+
+        if (rowsAffected == 0) {
+            // Record exists but version didn't match — optimistic lock conflict
+            DailyAttendance current = findByMemberAndDate(attendance.getMemberId(), attendance.getAttendanceDate());
+            if (current != null) {
+                throw new org.springframework.dao.OptimisticLockingFailureException(
+                        "Attendance record was modified by another transaction. Expected version: "
+                                + attendance.getVersion() + ", actual: " + current.getVersion());
+            }
+        }
     }
 
     /**

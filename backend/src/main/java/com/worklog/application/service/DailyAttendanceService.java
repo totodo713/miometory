@@ -38,7 +38,7 @@ public class DailyAttendanceService {
      * @param remarks         Remarks (nullable)
      * @param expectedVersion Expected version for optimistic locking (nullable for creates)
      * @return The ID of the saved attendance record
-     * @throws IllegalStateException if expectedVersion does not match the current version
+     * @throws com.worklog.domain.shared.OptimisticLockException if expectedVersion does not match
      */
     @Transactional
     public UUID saveAttendance(
@@ -61,8 +61,8 @@ public class DailyAttendanceService {
 
         // Update existing record with optimistic locking check
         if (expectedVersion != null && expectedVersion != existing.getVersion()) {
-            throw new IllegalStateException("Version mismatch for attendance record. Expected: " + expectedVersion
-                    + ", Actual: " + existing.getVersion());
+            throw new com.worklog.domain.shared.OptimisticLockException(
+                    "DailyAttendance", existing.getId().value().toString(), expectedVersion, existing.getVersion());
         }
 
         existing.update(startTime, endTime, remarks);

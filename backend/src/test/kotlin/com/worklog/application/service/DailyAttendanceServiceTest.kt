@@ -102,7 +102,7 @@ class DailyAttendanceServiceTest {
 
         every { attendanceRepository.findByMemberAndDate(testMemberId, testDate) } returns existing
 
-        assertThrows(IllegalStateException::class.java) {
+        assertThrows(com.worklog.domain.shared.OptimisticLockException::class.java) {
             service.saveAttendance(
                 testTenantId,
                 testMemberId,
