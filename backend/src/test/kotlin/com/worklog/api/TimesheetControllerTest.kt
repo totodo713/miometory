@@ -13,6 +13,7 @@ import org.springframework.http.MediaType
 import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -152,6 +153,173 @@ class TimesheetControllerTest : IntegrationTestBase() {
 
         // Assert
         assertEquals(HttpStatus.NO_CONTENT, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should return 400 for year below 2020`() {
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2019/3?memberId=$testMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should return 400 for year above 2100`() {
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2101/3?memberId=$testMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should return 400 for month below 1`() {
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2026/0?memberId=$testMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should return 400 for month above 12`() {
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2026/13?memberId=$testMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should accept boundary year 2020`() {
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2020/1?memberId=$testMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should accept boundary year 2100`() {
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2100/12?memberId=$testMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should return 404 for non-existent member`() {
+        val fakeMemberId = UUID.randomUUID()
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2026/3?memberId=$fakeMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should return 404 for non-existent project`() {
+        val fakeProjectId = UUID.randomUUID()
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2026/3?memberId=$testMemberId&projectId=$fakeProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+    }
+
+    @Test
+    fun `GET timesheet should work without assignment`() {
+        // Create a separate member with no assignment to this project
+        val unassignedMemberId = UUID.randomUUID()
+        createTestMember(unassignedMemberId)
+
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2026/3?memberId=$unassignedMemberId&projectId=$testProjectId",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val body = response.body as Map<*, *>
+
+        @Suppress("UNCHECKED_CAST")
+        val rows = body["rows"] as List<Map<String, Any?>>
+        // defaultStartTime/defaultEndTime should be null when no assignment
+        val firstRow = rows.first()
+        assertNull(firstRow["defaultStartTime"])
+        assertNull(firstRow["defaultEndTime"])
+    }
+
+    @Test
+    fun `GET timesheet should return default times from assignment`() {
+        // Create a member and project with default times in assignment
+        val memberWithDefaults = UUID.randomUUID()
+        val projectWithDefaults = UUID.randomUUID()
+        createTestMember(memberWithDefaults)
+        createTestProject(projectWithDefaults)
+        executeInNewTransaction {
+            baseJdbcTemplate.update(
+                """INSERT INTO member_project_assignments
+                   (id, tenant_id, member_id, project_id, assigned_at, is_active, default_start_time, default_end_time)
+                   VALUES (?, ?::uuid, ?, ?, CURRENT_TIMESTAMP, true, '09:00:00', '18:00:00')
+                   ON CONFLICT ON CONSTRAINT uk_member_project_assignment DO NOTHING""",
+                UUID.randomUUID(),
+                TEST_TENANT_ID,
+                memberWithDefaults,
+                projectWithDefaults,
+            )
+        }
+
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2026/3?memberId=$memberWithDefaults&projectId=$projectWithDefaults",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val body = response.body as Map<*, *>
+
+        @Suppress("UNCHECKED_CAST")
+        val rows = body["rows"] as List<Map<String, Any?>>
+        val firstRow = rows.first()
+        assertNotNull(firstRow["defaultStartTime"])
+        assertNotNull(firstRow["defaultEndTime"])
+    }
+
+    @Test
+    fun `GET timesheet summary should count business days correctly`() {
+        val response =
+            restTemplate.getForEntity(
+                "/api/v1/worklog/timesheet/2026/3?memberId=$testMemberId&projectId=$testProjectId&periodType=calendar",
+                Map::class.java,
+            )
+
+        assertEquals(HttpStatus.OK, response.statusCode)
+        val body = response.body as Map<*, *>
+
+        @Suppress("UNCHECKED_CAST")
+        val summary = body["summary"] as Map<String, Any?>
+        val businessDays = (summary["totalBusinessDays"] as Number).toInt()
+        assertTrue(businessDays in 20..23, "March 2026 should have 20-23 business days, got $businessDays")
+        assertEquals(0, (summary["totalWorkingDays"] as Number).toInt())
     }
 
     @Test

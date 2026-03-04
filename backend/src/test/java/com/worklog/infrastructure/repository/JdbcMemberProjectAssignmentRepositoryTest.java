@@ -10,8 +10,10 @@ import com.worklog.domain.project.MemberProjectAssignmentId;
 import com.worklog.domain.project.ProjectId;
 import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.projection.AssignedProjectInfo;
+import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -246,6 +248,67 @@ class JdbcMemberProjectAssignmentRepositoryTest {
     }
 
     @Nested
+    @DisplayName("findActiveByMemberAndProject")
+    class FindActiveByMemberAndProject {
+
+        @Test
+        @DisplayName("should return assignment when active assignment found")
+        void shouldReturnAssignmentWhenFound() {
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            UUID projectId = UUID.randomUUID();
+
+            MemberProjectAssignment expectedAssignment = new MemberProjectAssignment(
+                    MemberProjectAssignmentId.generate(),
+                    TenantId.of(UUID.randomUUID()),
+                    memberId,
+                    ProjectId.of(projectId),
+                    Instant.now(),
+                    null,
+                    LocalTime.of(9, 0),
+                    LocalTime.of(18, 0),
+                    true);
+
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any()))
+                    .thenReturn(List.of(expectedAssignment));
+
+            MemberProjectAssignment result = repository.findActiveByMemberAndProject(memberId, projectId);
+
+            assertNotNull(result);
+            assertEquals(memberId, result.getMemberId());
+            assertEquals(ProjectId.of(projectId), result.getProjectId());
+        }
+
+        @Test
+        @DisplayName("should return null when no active assignment found")
+        void shouldReturnNullWhenNotFound() {
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            UUID projectId = UUID.randomUUID();
+
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any()))
+                    .thenReturn(Collections.emptyList());
+
+            MemberProjectAssignment result = repository.findActiveByMemberAndProject(memberId, projectId);
+
+            assertNull(result);
+        }
+
+        @Test
+        @DisplayName("should pass memberId and projectId to query")
+        void shouldPassCorrectParameters() {
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            UUID projectId = UUID.randomUUID();
+
+            when(jdbcTemplate.query(anyString(), any(RowMapper.class), any(), any()))
+                    .thenReturn(Collections.emptyList());
+
+            repository.findActiveByMemberAndProject(memberId, projectId);
+
+            verify(jdbcTemplate)
+                    .query(contains("is_active = true"), any(RowMapper.class), eq(memberId.value()), eq(projectId));
+        }
+    }
+
+    @Nested
     @DisplayName("save")
     class Save {
 
@@ -308,6 +371,37 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             isNull(), // defaultStartTime
                             isNull(), // defaultEndTime
                             any());
+        }
+
+        @Test
+        @DisplayName("should save assignment with default times")
+        void shouldSaveAssignmentWithDefaultTimes() {
+            MemberProjectAssignmentId id = MemberProjectAssignmentId.generate();
+            TenantId tenantId = TenantId.of(UUID.randomUUID());
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            ProjectId projectId = ProjectId.of(UUID.randomUUID());
+            LocalTime defaultStart = LocalTime.of(9, 0);
+            LocalTime defaultEnd = LocalTime.of(18, 0);
+
+            MemberProjectAssignment assignment = new MemberProjectAssignment(
+                    id, tenantId, memberId, projectId, Instant.now(), null, defaultStart, defaultEnd, true);
+
+            when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
+
+            repository.save(assignment);
+
+            verify(jdbcTemplate)
+                    .update(
+                            contains("INSERT INTO member_project_assignments"),
+                            eq(id.value()),
+                            eq(tenantId.value()),
+                            eq(memberId.value()),
+                            eq(projectId.value()),
+                            any(), // Timestamp
+                            isNull(), // assignedBy
+                            eq(Time.valueOf(defaultStart)),
+                            eq(Time.valueOf(defaultEnd)),
+                            eq(true));
         }
 
         @Test

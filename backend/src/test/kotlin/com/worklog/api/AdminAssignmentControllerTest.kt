@@ -159,4 +159,145 @@ class AdminAssignmentControllerTest : AdminIntegrationTestBase() {
         )
             .andExpect(status().isForbidden)
     }
+
+    @Test
+    fun `create assignment with default times returns 201`() {
+        mockMvc.perform(
+            post("/api/v1/admin/assignments")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"memberId":"$targetMemberId","projectId":"$projectId",
+                       "defaultStartTime":"09:00:00","defaultEndTime":"18:00:00"}""",
+                ),
+        )
+            .andExpect(status().isCreated)
+            .andExpect(jsonPath("$.id").isNotEmpty)
+    }
+
+    @Test
+    fun `create assignment with only defaultStartTime returns 201`() {
+        val anotherProject = createProjectInTenant()
+        mockMvc.perform(
+            post("/api/v1/admin/assignments")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"memberId":"$targetMemberId","projectId":"$anotherProject",
+                       "defaultStartTime":"09:00:00"}""",
+                ),
+        )
+            .andExpect(status().isCreated)
+    }
+
+    @Test
+    fun `activate assignment returns 200`() {
+        // Create and deactivate first
+        val result = mockMvc.perform(
+            post("/api/v1/admin/assignments")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"memberId":"$adminMemberId","projectId":"$projectId"}"""),
+        )
+            .andExpect(status().isCreated)
+            .andReturn()
+
+        val id = objectMapper.readTree(result.response.contentAsString).get("id").asText()
+
+        mockMvc.perform(
+            patch("/api/v1/admin/assignments/$id/deactivate")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isOk)
+
+        // Activate
+        mockMvc.perform(
+            patch("/api/v1/admin/assignments/$id/activate")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `deactivate non-existent assignment returns 404`() {
+        val fakeId = UUID.randomUUID()
+        mockMvc.perform(
+            patch("/api/v1/admin/assignments/$fakeId/deactivate")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("ASSIGNMENT_NOT_FOUND"))
+    }
+
+    @Test
+    fun `activate non-existent assignment returns 404`() {
+        val fakeId = UUID.randomUUID()
+        mockMvc.perform(
+            patch("/api/v1/admin/assignments/$fakeId/activate")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("ASSIGNMENT_NOT_FOUND"))
+    }
+
+    @Test
+    fun `create assignment with inactive member returns 400`() {
+        // Create a member then deactivate
+        val inactiveMemberId = createMemberForUser("inactive-${UUID.randomUUID().toString().take(8)}@test.com")
+        baseJdbcTemplate.update(
+            "UPDATE members SET is_active = false WHERE id = ?",
+            inactiveMemberId,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admin/assignments")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"memberId":"$inactiveMemberId","projectId":"$projectId"}"""),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("MEMBER_NOT_FOUND"))
+    }
+
+    @Test
+    fun `create assignment with inactive project returns 404`() {
+        val inactiveProjectId = createProjectInTenant()
+        baseJdbcTemplate.update(
+            "UPDATE projects SET is_active = false WHERE id = ?",
+            inactiveProjectId,
+        )
+
+        mockMvc.perform(
+            post("/api/v1/admin/assignments")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"memberId":"$targetMemberId","projectId":"$inactiveProjectId"}"""),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("PROJECT_NOT_FOUND"))
+    }
+
+    @Test
+    fun `list by member returns assignments with default times`() {
+        // Create assignment with default times first
+        val proj2 = createProjectInTenant()
+        mockMvc.perform(
+            post("/api/v1/admin/assignments")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"memberId":"$targetMemberId","projectId":"$proj2",
+                       "defaultStartTime":"09:30:00","defaultEndTime":"17:30:00"}""",
+                ),
+        )
+            .andExpect(status().isCreated)
+
+        mockMvc.perform(
+            get("/api/v1/admin/assignments/by-member/$targetMemberId")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[?(@.projectId == '$proj2')].defaultStartTime").value("09:30"))
+            .andExpect(jsonPath("$[?(@.projectId == '$proj2')].defaultEndTime").value("17:30"))
+    }
 }
