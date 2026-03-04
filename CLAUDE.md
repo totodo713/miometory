@@ -102,3 +102,4 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
 - **Flyway checksum mismatch in tests** ("Migration checksum mismatch for migration version N"): Testcontainers の `.withReuse(true)` がキャッシュした旧DBと migration file の内容が不一致 → `docker ps -a --filter "label=org.testcontainers"` で対象 PostgreSQL コンテナを特定し `docker stop/rm` で削除、再テスト
 - **MockK varargs type inference** (`Cannot infer type for type parameter 'T'`): `jdbcTemplate.queryForList(any<String>(), any(), any())` は型推論に失敗する → `queryForList(any<String>(), *anyVararg())` + 戻り値を `emptyList<Map<String, Any>>()` のように明示型指定
+- **Detekt `EqualsNullCall`**: テストで `.equals(null)` を直接呼ぶとdetektが失敗する → `assertNotEquals(null, x)` を使う。CIでは Lint & Format Check と Build & Test Backend の両方がdetektを実行するため、1つの違反で2ジョブ失敗する
