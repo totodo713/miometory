@@ -20,6 +20,7 @@ import type {
   PresetPage,
 } from "@/types/masterData";
 import type { UserStatusResponse } from "@/types/tenant";
+import type { PeriodType, SaveAttendanceRequest, TimesheetResponse } from "@/types/timesheet";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 import { getCsrfToken } from "./csrf";
 
@@ -541,6 +542,26 @@ export const api = {
           rejectedAt: string;
         }>;
       }>(`/api/v1/worklog/rejections/daily?${query}`);
+    },
+
+    /**
+     * Timesheet endpoints
+     */
+    timesheet: {
+      get: (params: { year: number; month: number; projectId: string; memberId?: string; periodType?: PeriodType }) => {
+        const query = new URLSearchParams({
+          projectId: params.projectId,
+          ...(params.memberId && { memberId: params.memberId }),
+          ...(params.periodType && { periodType: params.periodType }),
+        });
+        return apiClient.get<TimesheetResponse>(`/api/v1/worklog/timesheet/${params.year}/${params.month}?${query}`);
+      },
+
+      saveAttendance: (data: SaveAttendanceRequest) =>
+        apiClient.put<void>("/api/v1/worklog/timesheet/attendance", data),
+
+      deleteAttendance: (memberId: string, date: string) =>
+        apiClient.delete<void>(`/api/v1/worklog/timesheet/attendance/${memberId}/${date}`),
     },
   },
 
