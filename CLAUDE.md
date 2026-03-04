@@ -104,6 +104,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## GitHub Issue Management
 
 - PR description に `Closes #xx` を含めて issue の自動クローズ漏れを防ぐ
+- Copilot/レビュアーコメントへの返信: `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -X POST -f body="..."`
 
 ## Backend Testing Patterns
 
@@ -122,6 +123,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 ## Troubleshooting
 
+- **Post-merge build verification**: マージコンフリクト解消後は必ず `cd backend && ./gradlew build` を実行 — auto-merge が壊れた参照（削除済みメソッド呼び出し、コンストラクタ引数順の不一致）を作ることがある
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
 - **Flyway checksum mismatch in tests** ("Migration checksum mismatch for migration version N"): Testcontainers の `.withReuse(true)` がキャッシュした旧DBと migration file の内容が不一致 → `docker ps -a --filter "label=org.testcontainers"` で対象 PostgreSQL コンテナを特定し `docker stop/rm` で削除、再テスト
 - **MockK varargs type inference** (`Cannot infer type for type parameter 'T'`): `jdbcTemplate.queryForList(any<String>(), any(), any())` は型推論に失敗する → `queryForList(any<String>(), *anyVararg())` + 戻り値を `emptyList<Map<String, Any>>()` のように明示型指定
