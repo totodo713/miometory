@@ -15,6 +15,8 @@ interface AssignmentRow {
   projectName: string;
   isActive: boolean;
   assignedAt: string;
+  defaultStartTime: string | null;
+  defaultEndTime: string | null;
 }
 
 interface MemberOption {
@@ -142,6 +144,32 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
         await api.admin.assignments.activate(assignment.id);
       }
       onRefresh();
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setError(err.message);
+      } else {
+        setError(tc("error"));
+      }
+    }
+  };
+
+  const handleDefaultTimeBlur = async (
+    assignment: AssignmentRow,
+    field: "defaultStartTime" | "defaultEndTime",
+    value: string,
+  ) => {
+    const newValue = value || null;
+    const currentValue = assignment[field];
+    if (newValue === currentValue) return;
+
+    const updatedData = {
+      defaultStartTime: field === "defaultStartTime" ? newValue : assignment.defaultStartTime,
+      defaultEndTime: field === "defaultEndTime" ? newValue : assignment.defaultEndTime,
+    };
+
+    try {
+      await api.admin.assignments.updateDefaultTimes(assignment.id, updatedData);
+      setAssignments((prev) => prev.map((a) => (a.id === assignment.id ? { ...a, [field]: newValue } : a)));
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -297,6 +325,8 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                 {viewMode === "by-member" && (
                   <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.project")}</th>
                 )}
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.defaultStartTime")}</th>
+                <th className="text-left py-3 px-4 font-medium text-gray-700">{t("table.defaultEndTime")}</th>
                 <th className="text-left py-3 px-4 font-medium text-gray-700">{tc("status")}</th>
                 <th className="text-right py-3 px-4 font-medium text-gray-700">{tc("actions")}</th>
               </tr>
@@ -314,6 +344,26 @@ export function AssignmentManager({ refreshKey, onRefresh }: AssignmentManagerPr
                       <span className="font-mono text-xs">{a.projectCode}</span> {a.projectName}
                     </td>
                   )}
+                  <td className="py-3 px-4">
+                    <input
+                      type="time"
+                      step="60"
+                      defaultValue={a.defaultStartTime ?? ""}
+                      disabled={!a.isActive}
+                      onBlur={(e) => handleDefaultTimeBlur(a, "defaultStartTime", e.target.value)}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
+                    />
+                  </td>
+                  <td className="py-3 px-4">
+                    <input
+                      type="time"
+                      step="60"
+                      defaultValue={a.defaultEndTime ?? ""}
+                      disabled={!a.isActive}
+                      onBlur={(e) => handleDefaultTimeBlur(a, "defaultEndTime", e.target.value)}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:bg-gray-100"
+                    />
+                  </td>
                   <td className="py-3 px-4">
                     <span
                       className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${

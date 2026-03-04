@@ -983,6 +983,8 @@ export const api = {
             projectName: string;
             isActive: boolean;
             assignedAt: string;
+            defaultStartTime: string | null;
+            defaultEndTime: string | null;
           }>
         >(`/api/v1/admin/assignments/by-member/${memberId}`),
       listByProject: (projectId: string) =>
@@ -997,12 +999,16 @@ export const api = {
             projectName: string;
             isActive: boolean;
             assignedAt: string;
+            defaultStartTime: string | null;
+            defaultEndTime: string | null;
           }>
         >(`/api/v1/admin/assignments/by-project/${projectId}`),
       create: (data: { memberId: string; projectId: string }) =>
         apiClient.post<{ id: string }>("/api/v1/admin/assignments", data),
       deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/assignments/${id}/deactivate`, {}),
       activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/assignments/${id}/activate`, {}),
+      updateDefaultTimes: (id: string, data: { defaultStartTime: string | null; defaultEndTime: string | null }) =>
+        apiClient.patch<void>(`/api/v1/admin/assignments/${id}/default-times`, data),
     },
 
     tenants: {

@@ -968,6 +968,8 @@
         "project": "Project",
         "startDate": "Start Date",
         "endDate": "End Date",
+        "defaultStartTime": "Default Start",
+        "defaultEndTime": "Default End",
         "actions": "Actions"
       },
       "form": {

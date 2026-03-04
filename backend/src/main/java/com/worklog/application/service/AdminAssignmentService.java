@@ -2,8 +2,10 @@ package com.worklog.application.service;
 
 import com.worklog.application.command.CreateAssignmentCommand;
 import com.worklog.domain.shared.DomainException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,6 +27,7 @@ public class AdminAssignmentService {
         return jdbcTemplate.query(
                 """
                 SELECT a.id, a.member_id, a.project_id, a.is_active, a.assigned_at,
+                       a.default_start_time, a.default_end_time,
                        m.display_name AS member_name, m.email AS member_email,
                        p.code AS project_code, p.name AS project_name
                 FROM member_project_assignments a
@@ -42,7 +45,13 @@ public class AdminAssignmentService {
                         rs.getString("project_code"),
                         rs.getString("project_name"),
                         rs.getBoolean("is_active"),
-                        rs.getTimestamp("assigned_at").toInstant().toString()),
+                        rs.getTimestamp("assigned_at").toInstant().toString(),
+                        rs.getTime("default_start_time") != null
+                                ? rs.getTime("default_start_time").toLocalTime().toString()
+                                : null,
+                        rs.getTime("default_end_time") != null
+                                ? rs.getTime("default_end_time").toLocalTime().toString()
+                                : null),
                 memberId,
                 tenantId);
     }
@@ -52,6 +61,7 @@ public class AdminAssignmentService {
         return jdbcTemplate.query(
                 """
                 SELECT a.id, a.member_id, a.project_id, a.is_active, a.assigned_at,
+                       a.default_start_time, a.default_end_time,
                        m.display_name AS member_name, m.email AS member_email,
                        p.code AS project_code, p.name AS project_name
                 FROM member_project_assignments a
@@ -69,7 +79,13 @@ public class AdminAssignmentService {
                         rs.getString("project_code"),
                         rs.getString("project_name"),
                         rs.getBoolean("is_active"),
-                        rs.getTimestamp("assigned_at").toInstant().toString()),
+                        rs.getTimestamp("assigned_at").toInstant().toString(),
+                        rs.getTime("default_start_time") != null
+                                ? rs.getTime("default_start_time").toLocalTime().toString()
+                                : null,
+                        rs.getTime("default_end_time") != null
+                                ? rs.getTime("default_end_time").toLocalTime().toString()
+                                : null),
                 projectId,
                 tenantId);
     }
@@ -141,6 +157,24 @@ public class AdminAssignmentService {
         }
     }
 
+    public void updateDefaultTimes(UUID assignmentId, UUID tenantId, String defaultStartTime, String defaultEndTime) {
+        Time startTime = defaultStartTime != null && !defaultStartTime.isEmpty()
+                ? Time.valueOf(LocalTime.parse(defaultStartTime))
+                : null;
+        Time endTime = defaultEndTime != null && !defaultEndTime.isEmpty()
+                ? Time.valueOf(LocalTime.parse(defaultEndTime))
+                : null;
+        int rows = jdbcTemplate.update(
+                "UPDATE member_project_assignments SET default_start_time = ?, default_end_time = ? WHERE id = ? AND tenant_id = ?",
+                startTime,
+                endTime,
+                assignmentId,
+                tenantId);
+        if (rows == 0) {
+            throw new DomainException("ASSIGNMENT_NOT_FOUND", "Assignment not found");
+        }
+    }
+
     /**
      * Validates that a member is a direct report of the given supervisor.
      */
@@ -161,5 +195,7 @@ public class AdminAssignmentService {
             String projectCode,
             String projectName,
             boolean isActive,
-            String assignedAt) {}
+            String assignedAt,
+            String defaultStartTime,
+            String defaultEndTime) {}
 }

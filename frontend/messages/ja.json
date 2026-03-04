@@ -968,6 +968,8 @@
         "project": "プロジェクト",
         "startDate": "開始日",
         "endDate": "終了日",
+        "defaultStartTime": "デフォルト開始",
+        "defaultEndTime": "デフォルト終了",
         "actions": "操作"
       },
       "form": {

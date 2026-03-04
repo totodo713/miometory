@@ -78,6 +78,14 @@ public class AdminAssignmentController {
         adminAssignmentService.activateAssignment(id, tenantId);
     }
 
+    @PatchMapping("/{id}/default-times")
+    @PreAuthorize("hasPermission(null, 'assignment.create')")
+    public void updateDefaultTimes(
+            @PathVariable UUID id, @RequestBody UpdateDefaultTimesRequest request, Authentication authentication) {
+        UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
+        adminAssignmentService.updateDefaultTimes(id, tenantId, request.defaultStartTime(), request.defaultEndTime());
+    }
+
     private void enforceDirectReportIfSupervisor(String email, UUID targetMemberId) {
         String roleName = jdbcTemplate.queryForObject("""
                 SELECT r.name FROM users u
@@ -94,4 +102,6 @@ public class AdminAssignmentController {
             @NotNull UUID memberId, @NotNull UUID projectId) {}
 
     public record CreateAssignmentResponse(String id) {}
+
+    public record UpdateDefaultTimesRequest(String defaultStartTime, String defaultEndTime) {}
 }
