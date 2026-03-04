@@ -3,6 +3,7 @@ package com.worklog.infrastructure.config
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -44,6 +45,9 @@ class SecurityConfig(private val corsConfigurationSource: CorsConfigurationSourc
         http
             .csrf { it.disable() }
             .cors { it.configurationSource(corsConfigurationSource) }
+            // Enable HTTP Basic auth so controllers can optionally receive Authentication
+            // when credentials are provided; unauthenticated requests still pass via permitAll
+            .httpBasic(Customizer.withDefaults())
             .authorizeHttpRequests { auth ->
                 auth
                     // Allow all requests during development

@@ -1,5 +1,6 @@
 package com.worklog.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -47,12 +48,12 @@ public record TimesheetResponse(
             boolean isWeekend,
             boolean isHoliday,
             String holidayName,
-            LocalTime startTime,
-            LocalTime endTime,
+            @JsonFormat(pattern = "HH:mm") LocalTime startTime,
+            @JsonFormat(pattern = "HH:mm") LocalTime endTime,
             BigDecimal workingHours,
             String remarks,
-            LocalTime defaultStartTime,
-            LocalTime defaultEndTime,
+            @JsonFormat(pattern = "HH:mm") LocalTime defaultStartTime,
+            @JsonFormat(pattern = "HH:mm") LocalTime defaultEndTime,
             boolean hasAttendanceRecord,
             UUID attendanceId,
             Integer attendanceVersion) {}

@@ -1,7 +1,5 @@
 # Monthly Timesheet (月次勤務表) Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
-
 **Goal:** プロジェクト単位の月次勤務表ページを新設し、日次の開始時間・終了時間・稼働時間・備考を閲覧・編集できるようにする。
 
 **Architecture:** DailyAttendance を MemberProjectAssignment と同じ CRUD パターン（JdbcTemplate + UPSERT）で実装。TimesheetController が DailyAttendance + WorkLogEntry hours + デフォルト時間を結合する CQRS 読み取りモデルを提供。フロントエンドは Next.js + Zustand + next-intl で、既存 worklog ページパターンに従う。

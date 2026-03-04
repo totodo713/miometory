@@ -88,6 +88,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
 - Explicit `role` attribute overrides implicit HTML role — `<Link role="menuitem">` needs `getByRole("menuitem")`, not `getByRole("link")`
+- TimesheetRow の time input は `aria-label` パターン `"Start {date}"` / `"End {date}"` / `"Save {date}"` で特定可能
 
 ## Frontend Patterns
 
@@ -103,14 +104,26 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## GitHub Issue Management
 
 - PR description に `Closes #xx` を含めて issue の自動クローズ漏れを防ぐ
+- Copilot/レビュアーコメントへの返信: `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -X POST -f body="..."`
+
+## Backend Testing Patterns
+
+- **DomainException status mapping**: `GlobalExceptionHandler` がエラーコードで HTTP ステータスを決定 — `*_NOT_FOUND` → 404, `DUPLICATE_*` → 409, `ALREADY_*`/`CANNOT_*` → 422, その他 → 400
+- **`gradlew` location**: `backend/gradlew`（プロジェクトルート直下ではない）— `cd backend && ./gradlew` または `backend/gradlew` で実行
 
 ## Backend Auth in Tests
 
 - **`Authentication` parameter is null in test profile**: `TestRestTemplate`-based integration tests run with security disabled (`permitAll`), so `Authentication` is null. Controllers with manual auth checks must guard `if (authentication == null) return;` for dev/test compatibility. `MockMvc`-based tests (e.g. `AdminIntegrationTestBase`) use `.with(user(email))` and provide non-null auth.
 - **MockMvc `jsonPath().doesNotExist()`**: null 値のフィールドはキーが存在するため `doesNotExist()` は失敗する。また JsonPath フィルタ式 `$[?(@.field == 'val')].other` は配列を返すため挙動が異なる → `$[0].field` インデックスを使う
 
+## Backend Architecture Patterns
+
+- **CRUD entity (非Event Sourced)**: `DailyAttendance` は event sourcing を使わない単純CRUD — `JdbcDailyAttendanceRepository` が UPSERT + 楽観ロック（version カラム）を直接管理
+- **SecurityConfig httpBasic**: dev/test profile では `httpBasic(Customizer.withDefaults())` + `permitAll()` で、Controller の `Authentication` パラメータが任意受信可能（認証なしリクエストも通る）
+
 ## Troubleshooting
 
+- **Post-merge build verification**: マージコンフリクト解消後は必ず `cd backend && ./gradlew build` を実行 — auto-merge が壊れた参照（削除済みメソッド呼び出し、コンストラクタ引数順の不一致）を作ることがある
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
 - **Flyway checksum mismatch in tests** ("Migration checksum mismatch for migration version N"): Testcontainers の `.withReuse(true)` がキャッシュした旧DBと migration file の内容が不一致 → `docker ps -a --filter "label=org.testcontainers"` で対象 PostgreSQL コンテナを特定し `docker stop/rm` で削除、再テスト
 - **MockK varargs type inference** (`Cannot infer type for type parameter 'T'`): `jdbcTemplate.queryForList(any<String>(), any(), any())` は型推論に失敗する → `queryForList(any<String>(), *anyVararg())` + 戻り値を `emptyList<Map<String, Any>>()` のように明示型指定
