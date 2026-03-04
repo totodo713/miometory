@@ -11,6 +11,7 @@
 
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import type { PeriodType } from "@/types/timesheet";
 
 /**
  * Calendar view modes
@@ -94,6 +95,10 @@ interface WorkLogState {
   // Calendar refresh trigger (incremented after save to force data reload)
   calendarRefreshKey: number;
 
+  // Timesheet preferences
+  timesheetProjectId: string | null;
+  timesheetPeriodType: PeriodType;
+
   // Actions
   setSelectedDate: (date: Date) => void;
   setViewMode: (mode: ViewMode) => void;
@@ -111,6 +116,10 @@ interface WorkLogState {
   enableProxyMode: (managerId: string, targetMember: SubordinateMember) => void;
   disableProxyMode: () => void;
   setProxyTargetMember: (member: SubordinateMember | null) => void;
+
+  // Timesheet actions
+  setTimesheetProjectId: (id: string | null) => void;
+  setTimesheetPeriodType: (type: PeriodType) => void;
 
   // Computed helpers
   getSelectedDateISO: () => string;
@@ -133,6 +142,8 @@ const initialState = {
   copiedProjects: null,
   proxyMode: null,
   calendarRefreshKey: 0,
+  timesheetProjectId: null,
+  timesheetPeriodType: "calendar" as PeriodType,
 };
 
 /**
@@ -192,6 +203,10 @@ export const useWorkLogStore = create<WorkLogState>()(
           }
         },
 
+        setTimesheetProjectId: (id) => set({ timesheetProjectId: id }),
+
+        setTimesheetPeriodType: (type) => set({ timesheetPeriodType: type }),
+
         getSelectedDateISO: () => {
           const date = get().selectedDate;
           return date.toISOString().split("T")[0];
@@ -212,6 +227,8 @@ export const useWorkLogStore = create<WorkLogState>()(
         partialize: (state) => ({
           // Only persist UI preferences, not transient state
           viewMode: state.viewMode,
+          timesheetProjectId: state.timesheetProjectId,
+          timesheetPeriodType: state.timesheetPeriodType,
         }),
       },
     ),
@@ -271,6 +288,23 @@ export function useCalendarRefresh() {
   const triggerRefresh = useWorkLogStore((state) => state.incrementCalendarRefreshKey);
 
   return { calendarRefreshKey, triggerRefresh };
+}
+
+/**
+ * Helper hook to access timesheet preferences
+ */
+export function useTimesheetPreferences() {
+  const timesheetProjectId = useWorkLogStore((state) => state.timesheetProjectId);
+  const timesheetPeriodType = useWorkLogStore((state) => state.timesheetPeriodType);
+  const setTimesheetProjectId = useWorkLogStore((state) => state.setTimesheetProjectId);
+  const setTimesheetPeriodType = useWorkLogStore((state) => state.setTimesheetPeriodType);
+
+  return {
+    timesheetProjectId,
+    timesheetPeriodType,
+    setTimesheetProjectId,
+    setTimesheetPeriodType,
+  };
 }
 
 /**
