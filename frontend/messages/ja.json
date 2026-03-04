@@ -70,6 +70,7 @@
     "switchTenant": "テナント切替",
     "currentTenant": "現在のテナント",
     "myPage": "マイページ",
+    "timesheet": "勤務表",
     "userMenu": "ユーザーメニュー"
   },
   "mypage": {
@@ -942,7 +943,9 @@
         "project": "プロジェクト",
         "startDate": "開始日",
         "endDate": "終了日",
-        "actions": "操作"
+        "actions": "操作",
+        "defaultStartTime": "始業時間",
+        "defaultEndTime": "終業時間"
       },
       "form": {
         "member": "メンバー",
@@ -950,7 +953,9 @@
         "project": "プロジェクト",
         "selectProject": "プロジェクトを選択",
         "startDate": "開始日",
-        "endDate": "終了日"
+        "endDate": "終了日",
+        "defaultStartTime": "デフォルト始業時間",
+        "defaultEndTime": "デフォルト終業時間"
       },
       "description": "メンバーとプロジェクトのアサインを管理します",
       "byMember": "メンバー別",
@@ -966,7 +971,9 @@
       "createError": "アサインの作成に失敗しました",
       "updateError": "アサインの更新に失敗しました",
       "deleteError": "アサインの削除に失敗しました",
-      "noAssignments": "アサインが登録されていません"
+      "noAssignments": "アサインが登録されていません",
+      "defaultStartTime": "デフォルト始業時間",
+      "defaultEndTime": "デフォルト終業時間"
     },
     "dailyApproval": {
       "title": "日次承認",
@@ -1250,5 +1257,38 @@
     "select": "選択",
     "organization": "組織",
     "noOrganization": "組織未配属"
+  },
+  "timesheet": {
+    "title": "月次勤務表",
+    "loadError": "勤務表の読み込みに失敗しました",
+    "prevMonth": "前月",
+    "nextMonth": "翌月",
+    "yearSuffix": "年",
+    "monthSuffix": "月",
+    "calendarPeriod": "暦月",
+    "fiscalPeriod": "締月",
+    "periodType": "期間タイプ",
+    "selectProjectPrompt": "プロジェクトを選択して勤務表を表示してください。",
+    "save": "保存",
+    "saving": "保存中...",
+    "saveError": "保存に失敗しました",
+    "startTimeLabel": "{date}の始業時間",
+    "endTimeLabel": "{date}の終業時間",
+    "remarksLabel": "{date}の備考",
+    "remarksPlaceholder": "備考",
+    "table": {
+      "date": "日付",
+      "dayOfWeek": "曜日",
+      "startTime": "始業",
+      "endTime": "終業",
+      "workingHours": "稼働",
+      "remarks": "備考",
+      "actions": "操作"
+    },
+    "summary": {
+      "totalHours": "合計稼働時間",
+      "workingDays": "稼働日数",
+      "businessDays": "営業日数"
+    }
   }
 }

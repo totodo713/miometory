@@ -20,6 +20,7 @@ import type {
   PresetPage,
 } from "@/types/masterData";
 import type { UserStatusResponse } from "@/types/tenant";
+import type { SaveAttendanceRequest, TimesheetResponse } from "@/types/timesheet";
 import type { MonthlyCalendarResponse } from "@/types/worklog";
 import { getCsrfToken } from "./csrf";
 
@@ -542,6 +543,39 @@ export const api = {
         }>;
       }>(`/api/v1/worklog/rejections/daily?${query}`);
     },
+
+    /**
+     * Timesheet endpoints (monthly attendance view)
+     */
+    timesheet: {
+      /**
+       * Get monthly timesheet for a member on a project
+       */
+      get: (params: { year: number; month: number; memberId: string; projectId: string; periodType?: string }) => {
+        const query = new URLSearchParams({
+          memberId: params.memberId,
+          projectId: params.projectId,
+          ...(params.periodType && { periodType: params.periodType }),
+        });
+        return apiClient.get<TimesheetResponse>(`/api/v1/worklog/timesheet/${params.year}/${params.month}?${query}`);
+      },
+
+      /**
+       * Save (create or update) a daily attendance record
+       */
+      saveAttendance: (memberId: string, data: SaveAttendanceRequest) => {
+        const query = new URLSearchParams({ memberId });
+        return apiClient.put<{ id: string }>(`/api/v1/worklog/timesheet/attendance?${query}`, data);
+      },
+
+      /**
+       * Delete a daily attendance record
+       */
+      deleteAttendance: (memberId: string, date: string) => {
+        const query = new URLSearchParams({ memberId });
+        return apiClient.delete<void>(`/api/v1/worklog/timesheet/attendance/${date}?${query}`);
+      },
+    },
   },
 
   /**
@@ -962,6 +996,8 @@ export const api = {
             projectName: string;
             isActive: boolean;
             assignedAt: string;
+            defaultStartTime: string | null;
+            defaultEndTime: string | null;
           }>
         >(`/api/v1/admin/assignments/by-member/${memberId}`),
       listByProject: (projectId: string) =>
@@ -976,10 +1012,16 @@ export const api = {
             projectName: string;
             isActive: boolean;
             assignedAt: string;
+            defaultStartTime: string | null;
+            defaultEndTime: string | null;
           }>
         >(`/api/v1/admin/assignments/by-project/${projectId}`),
-      create: (data: { memberId: string; projectId: string }) =>
-        apiClient.post<{ id: string }>("/api/v1/admin/assignments", data),
+      create: (data: {
+        memberId: string;
+        projectId: string;
+        defaultStartTime?: string | null;
+        defaultEndTime?: string | null;
+      }) => apiClient.post<{ id: string }>("/api/v1/admin/assignments", data),
       deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/assignments/${id}/deactivate`, {}),
       activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/assignments/${id}/activate`, {}),
     },

@@ -70,6 +70,7 @@
     "switchTenant": "Switch Tenant",
     "currentTenant": "Current Tenant",
     "myPage": "My Page",
+    "timesheet": "Timesheet",
     "userMenu": "User menu"
   },
   "mypage": {
@@ -942,7 +943,9 @@
         "project": "Project",
         "startDate": "Start Date",
         "endDate": "End Date",
-        "actions": "Actions"
+        "actions": "Actions",
+        "defaultStartTime": "Start Time",
+        "defaultEndTime": "End Time"
       },
       "form": {
         "member": "Member",
@@ -950,7 +953,9 @@
         "project": "Project",
         "selectProject": "Select project",
         "startDate": "Start Date",
-        "endDate": "End Date"
+        "endDate": "End Date",
+        "defaultStartTime": "Default Start Time",
+        "defaultEndTime": "Default End Time"
       },
       "description": "Manage member-project assignments",
       "byMember": "By Member",
@@ -966,7 +971,9 @@
       "createError": "Failed to create assignment",
       "updateError": "Failed to update assignment",
       "deleteError": "Failed to delete assignment",
-      "noAssignments": "No assignments registered"
+      "noAssignments": "No assignments registered",
+      "defaultStartTime": "Default Start Time",
+      "defaultEndTime": "Default End Time"
     },
     "dailyApproval": {
       "title": "Daily Approval",
@@ -1250,5 +1257,38 @@
     "select": "Select",
     "organization": "Organization",
     "noOrganization": "No organization assigned"
+  },
+  "timesheet": {
+    "title": "Monthly Timesheet",
+    "loadError": "Failed to load timesheet",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "yearSuffix": " ",
+    "monthSuffix": " ",
+    "calendarPeriod": "Calendar",
+    "fiscalPeriod": "Fiscal",
+    "periodType": "Period type",
+    "selectProjectPrompt": "Select a project to view the timesheet.",
+    "save": "Save",
+    "saving": "Saving...",
+    "saveError": "Failed to save",
+    "startTimeLabel": "Start time for {date}",
+    "endTimeLabel": "End time for {date}",
+    "remarksLabel": "Remarks for {date}",
+    "remarksPlaceholder": "Remarks",
+    "table": {
+      "date": "Date",
+      "dayOfWeek": "Day",
+      "startTime": "Start",
+      "endTime": "End",
+      "workingHours": "Hours",
+      "remarks": "Remarks",
+      "actions": "Actions"
+    },
+    "summary": {
+      "totalHours": "Total Hours",
+      "workingDays": "Working Days",
+      "businessDays": "Business Days"
+    }
   }
 }
