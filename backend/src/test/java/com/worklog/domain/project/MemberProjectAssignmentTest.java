@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.worklog.domain.member.MemberId;
 import com.worklog.domain.tenant.TenantId;
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -355,7 +356,7 @@ class MemberProjectAssignmentTest {
             MemberProjectAssignment assignment =
                     MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
 
-            assertNotEquals(null, assignment);
+            assertFalse(assignment.equals(null));
         }
 
         @Test
@@ -364,7 +365,53 @@ class MemberProjectAssignmentTest {
             MemberProjectAssignment assignment =
                     MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
 
-            assertNotEquals("not an assignment", assignment);
+            assertFalse(assignment.equals("not an assignment"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Default time setters")
+    class DefaultTimeSetters {
+
+        @Test
+        @DisplayName("should set and get default start time")
+        void shouldSetDefaultStartTime() {
+            MemberProjectAssignment assignment =
+                    MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
+            assertNull(assignment.getDefaultStartTime());
+
+            LocalTime time = LocalTime.of(9, 0);
+            assignment.setDefaultStartTime(time);
+
+            assertEquals(time, assignment.getDefaultStartTime());
+        }
+
+        @Test
+        @DisplayName("should set and get default end time")
+        void shouldSetDefaultEndTime() {
+            MemberProjectAssignment assignment =
+                    MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
+            assertNull(assignment.getDefaultEndTime());
+
+            LocalTime time = LocalTime.of(18, 0);
+            assignment.setDefaultEndTime(time);
+
+            assertEquals(time, assignment.getDefaultEndTime());
+        }
+
+        @Test
+        @DisplayName("should allow null default times")
+        void shouldAllowNullDefaultTimes() {
+            MemberProjectAssignment assignment =
+                    MemberProjectAssignment.create(testTenantId, testMemberId, testProjectId, testAssignedBy);
+            assignment.setDefaultStartTime(LocalTime.of(9, 0));
+            assignment.setDefaultEndTime(LocalTime.of(18, 0));
+
+            assignment.setDefaultStartTime(null);
+            assignment.setDefaultEndTime(null);
+
+            assertNull(assignment.getDefaultStartTime());
+            assertNull(assignment.getDefaultEndTime());
         }
     }
 

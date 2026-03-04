@@ -6,7 +6,9 @@ import com.worklog.domain.member.MemberId;
 import com.worklog.domain.tenant.TenantId;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @DisplayName("DailyAttendance entity")
@@ -96,5 +98,70 @@ class DailyAttendanceTest {
         assertNull(attendance.getStartTime());
         assertNull(attendance.getEndTime());
         assertNull(attendance.getRemarks());
+    }
+
+    @Nested
+    @DisplayName("Equality and HashCode")
+    class EqualityAndHashCode {
+
+        @Test
+        @DisplayName("should be equal to itself")
+        void equalToItself() {
+            DailyAttendance attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
+            assertEquals(attendance, attendance);
+        }
+
+        @Test
+        @DisplayName("should be equal when same ID")
+        void equalWhenSameId() {
+            UUID sharedUuid = UUID.randomUUID();
+            DailyAttendance a1 =
+                    new DailyAttendance(DailyAttendanceId.of(sharedUuid), TENANT, MEMBER, DATE, null, null, null, 0);
+            DailyAttendance a2 = new DailyAttendance(
+                    DailyAttendanceId.of(sharedUuid),
+                    TENANT,
+                    MEMBER,
+                    DATE,
+                    LocalTime.of(9, 0),
+                    LocalTime.of(18, 0),
+                    "different fields",
+                    1);
+            assertEquals(a1, a2);
+        }
+
+        @Test
+        @DisplayName("should not be equal when different ID")
+        void notEqualWhenDifferentId() {
+            DailyAttendance a1 = new DailyAttendance(
+                    DailyAttendanceId.of(UUID.randomUUID()), TENANT, MEMBER, DATE, null, null, null, 0);
+            DailyAttendance a2 = new DailyAttendance(
+                    DailyAttendanceId.of(UUID.randomUUID()), TENANT, MEMBER, DATE, null, null, null, 0);
+            assertNotEquals(a1, a2);
+        }
+
+        @Test
+        @DisplayName("should not be equal to null")
+        void notEqualToNull() {
+            DailyAttendance attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
+            assertFalse(attendance.equals(null));
+        }
+
+        @Test
+        @DisplayName("should not be equal to different type")
+        void notEqualToDifferentType() {
+            DailyAttendance attendance = DailyAttendance.create(TENANT, MEMBER, DATE);
+            assertFalse(attendance.equals("not an attendance"));
+        }
+
+        @Test
+        @DisplayName("should have consistent hashCode when same ID")
+        void hashCodeConsistentWithEquals() {
+            UUID sharedUuid = UUID.randomUUID();
+            DailyAttendance a1 =
+                    new DailyAttendance(DailyAttendanceId.of(sharedUuid), TENANT, MEMBER, DATE, null, null, null, 0);
+            DailyAttendance a2 =
+                    new DailyAttendance(DailyAttendanceId.of(sharedUuid), TENANT, MEMBER, DATE, null, null, null, 0);
+            assertEquals(a1.hashCode(), a2.hashCode());
+        }
     }
 }

@@ -10,8 +10,10 @@ import com.worklog.domain.project.MemberProjectAssignmentId;
 import com.worklog.domain.project.ProjectId;
 import com.worklog.domain.tenant.TenantId;
 import com.worklog.infrastructure.projection.AssignedProjectInfo;
+import java.sql.Time;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -320,6 +322,39 @@ class JdbcMemberProjectAssignmentRepositoryTest {
                             any(),
                             isNull(), // defaultStartTime
                             isNull()); // defaultEndTime
+        }
+
+        @Test
+        @DisplayName("should save assignment with default times")
+        void shouldSaveAssignmentWithDefaultTimes() {
+            MemberProjectAssignmentId id = MemberProjectAssignmentId.generate();
+            TenantId tenantId = TenantId.of(UUID.randomUUID());
+            MemberId memberId = MemberId.of(UUID.randomUUID());
+            ProjectId projectId = ProjectId.of(UUID.randomUUID());
+            MemberId assignedBy = MemberId.of(UUID.randomUUID());
+            Instant assignedAt = Instant.now();
+            LocalTime startTime = LocalTime.of(9, 0);
+            LocalTime endTime = LocalTime.of(18, 0);
+
+            MemberProjectAssignment assignment = new MemberProjectAssignment(
+                    id, tenantId, memberId, projectId, assignedAt, assignedBy, true, startTime, endTime);
+
+            when(jdbcTemplate.update(anyString(), any(Object[].class))).thenReturn(1);
+
+            repository.save(assignment);
+
+            verify(jdbcTemplate)
+                    .update(
+                            contains("INSERT INTO member_project_assignments"),
+                            eq(id.value()),
+                            eq(tenantId.value()),
+                            eq(memberId.value()),
+                            eq(projectId.value()),
+                            any(), // Timestamp
+                            eq(assignedBy.value()),
+                            eq(true),
+                            eq(Time.valueOf(startTime)),
+                            eq(Time.valueOf(endTime)));
         }
 
         @Test
