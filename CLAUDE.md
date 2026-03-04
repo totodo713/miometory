@@ -84,6 +84,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - `AbsenceType` enum has `OTHER` (not `UNPAID_LEAVE`) — see `frontend/app/types/absence.ts`
 - When fixing test selectors, read actual UI components first to avoid guesswork and rework
 - Explicit `role` attribute overrides implicit HTML role — `<Link role="menuitem">` needs `getByRole("menuitem")`, not `getByRole("link")`
+- TimesheetRow の time input は `aria-label` パターン `"Start {date}"` / `"End {date}"` / `"Save {date}"` で特定可能
 
 ## Frontend Patterns
 
@@ -93,6 +94,13 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - PR description に `Closes #xx` を含めて issue の自動クローズ漏れを防ぐ
 
+## Backend Architecture Patterns
+
+- **UseCase/Interactor**: `GetTimesheetUseCase` が初の実装例 — 複数データソースを合成する読み取りモデル構築に使用。`@Service @Transactional(readOnly = true)` で定義
+- **CRUD entity (非Event Sourced)**: `DailyAttendance` は event sourcing を使わない単純CRUD — `JdbcDailyAttendanceRepository` が UPSERT + 楽観ロック（version カラム）を直接管理
+- **SecurityConfig httpBasic**: dev/test profile では `httpBasic(Customizer.withDefaults())` + `permitAll()` で、Controller の `Authentication` パラメータが任意受信可能（認証なしリクエストも通る）
+
 ## Troubleshooting
 
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
+- **Flyway checksum mismatch with Testcontainers reuse** ("Migration checksum mismatch for migration version X"): worktree間でマイグレーションファイルを変更すると、reuse されたPostgreSQLコンテナの `flyway_schema_history` と不一致 → `docker ps -a --filter "label=org.testcontainers"` で PostgreSQL コンテナIDを特定し `docker stop <id> && docker rm <id>` で再作成
