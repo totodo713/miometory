@@ -327,7 +327,7 @@ class DailyAttendanceTest {
     fun `equals should be false for null`() {
         val a = DailyAttendance.create(tenantId, memberId, attendanceDate, null, null, null)
 
-        assertFalse(a.equals(null))
+        assertNotEquals(null, a)
     }
 
     @Test

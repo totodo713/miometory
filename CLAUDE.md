@@ -93,6 +93,10 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - **Loading skeleton ↔ content layout parity**: Skeleton grids (column count, card count) must match the actual content layout to prevent CLS (Cumulative Layout Shift)
 
+## Backend Auth in Tests
+
+- **`Authentication` parameter is null in test profile**: `TestRestTemplate`-based integration tests run with security disabled (`permitAll`), so `Authentication` is null. Controllers with manual auth checks must guard `if (authentication == null) return;` for dev/test compatibility. `MockMvc`-based tests (e.g. `AdminIntegrationTestBase`) use `.with(user(email))` and provide non-null auth.
+
 ## Troubleshooting
 
 - **Flyway validation failure** ("applied migration not resolved locally"): `flyway_schema_history` に孤児レコードあり → `DELETE FROM flyway_schema_history WHERE description = '...'` で該当行を削除
