@@ -68,7 +68,7 @@ test.describe("Proxy Entry Workflow", () => {
             },
           ],
           totalCount: 1,
-          recursive: false,
+          includesIndirect: false,
         }),
       });
     });

@@ -162,9 +162,9 @@ public class WorkLogControllerCalendarRejectionTest extends IntegrationTestBase 
             assertNull(body.get("monthlyApproval"), "monthlyApproval should be null when no approval exists");
 
             // Verify the calendar has dates with entries
-            List<Map<String, Object>> dates = (List<Map<String, Object>>) body.get("entries");
-            assertNotNull(dates);
-            assertFalse(dates.isEmpty(), "Calendar should have date entries");
+            List<Map<String, Object>> entries = (List<Map<String, Object>>) body.get("entries");
+            assertNotNull(entries);
+            assertFalse(entries.isEmpty(), "Calendar should have date entries");
         }
 
         @Test
@@ -215,10 +215,10 @@ public class WorkLogControllerCalendarRejectionTest extends IntegrationTestBase 
             assertNotNull(body);
 
             // Find the entry for the test date and verify rejection enrichment
-            List<Map<String, Object>> dates = (List<Map<String, Object>>) body.get("entries");
-            assertNotNull(dates);
+            List<Map<String, Object>> entries = (List<Map<String, Object>>) body.get("entries");
+            assertNotNull(entries);
 
-            Map<String, Object> testDateEntry = dates.stream()
+            Map<String, Object> testDateEntry = entries.stream()
                     .filter(d -> testDate.toString().equals(d.get("date")))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("No calendar entry found for test date " + testDate));

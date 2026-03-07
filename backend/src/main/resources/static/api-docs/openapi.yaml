@@ -475,6 +475,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/AbsenceResponse'
+                  totalCount:
+                    type: integer
                       
   /worklog/absences/{id}:
     delete:
@@ -905,13 +907,43 @@ components:
           format: uuid
         memberName:
           type: string
-        fiscalMonth:
-          $ref: '#/components/schemas/FiscalMonthPeriod'
+        periodStart:
+          type: string
+          format: date
+        periodEnd:
+          type: string
+          format: date
         entries:
           type: array
           items:
             $ref: '#/components/schemas/DailyCalendarEntry'
-            
+        monthlyApproval:
+          $ref: '#/components/schemas/MonthlyApprovalSummary'
+          nullable: true
+
+    MonthlyApprovalSummary:
+      type: object
+      properties:
+        approvalId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        rejectionReason:
+          type: string
+          nullable: true
+        reviewedBy:
+          type: string
+          format: uuid
+          nullable: true
+        reviewerName:
+          type: string
+          nullable: true
+        reviewedAt:
+          type: string
+          format: date-time
+          nullable: true
+
     DailyCalendarEntry:
       type: object
       properties:
