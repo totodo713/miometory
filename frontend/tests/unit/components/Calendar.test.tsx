@@ -157,7 +157,7 @@ describe("Calendar Component", () => {
     it("should render calendar header with month and year", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -167,7 +167,7 @@ describe("Calendar Component", () => {
     it("should display fiscal period dates", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -178,7 +178,7 @@ describe("Calendar Component", () => {
     it("should render day of week headers", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -191,7 +191,7 @@ describe("Calendar Component", () => {
     it("should render all date cells", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -209,7 +209,7 @@ describe("Calendar Component", () => {
       // Should have 3 empty cells before it
       const { container } = render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -225,7 +225,7 @@ describe("Calendar Component", () => {
     it("should display total work hours when present", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -242,7 +242,7 @@ describe("Calendar Component", () => {
     it("should not display hours when zero", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -254,7 +254,7 @@ describe("Calendar Component", () => {
     it("should display absence hours when present", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -268,7 +268,7 @@ describe("Calendar Component", () => {
     it("should not display absence hours when zero", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -282,7 +282,7 @@ describe("Calendar Component", () => {
     it("should display APPROVED status badge", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -292,7 +292,7 @@ describe("Calendar Component", () => {
     it("should display SUBMITTED status badge", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -302,7 +302,7 @@ describe("Calendar Component", () => {
     it("should display REJECTED status badge", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -312,7 +312,7 @@ describe("Calendar Component", () => {
     it("should display MIXED status badge", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -322,7 +322,7 @@ describe("Calendar Component", () => {
     it("should display DRAFT badge only for days with hours", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -335,7 +335,7 @@ describe("Calendar Component", () => {
     it("should apply correct color classes for APPROVED status", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -346,7 +346,7 @@ describe("Calendar Component", () => {
     it("should apply correct color classes for SUBMITTED status", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -357,7 +357,7 @@ describe("Calendar Component", () => {
     it("should apply correct color classes for REJECTED status", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -368,7 +368,7 @@ describe("Calendar Component", () => {
     it("should apply correct color classes for MIXED status", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -381,7 +381,7 @@ describe("Calendar Component", () => {
     it("should highlight weekend dates", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -393,7 +393,7 @@ describe("Calendar Component", () => {
     it("should display holiday name instead of H badge", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -406,7 +406,7 @@ describe("Calendar Component", () => {
     it("should highlight holiday dates", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -437,7 +437,7 @@ describe("Calendar Component", () => {
 
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={sundayDates} />
+          <Calendar year={2026} month={1} entries={sundayDates} />
         </IntlWrapper>,
       );
 
@@ -467,7 +467,7 @@ describe("Calendar Component", () => {
 
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={sundayDates} />
+          <Calendar year={2026} month={1} entries={sundayDates} />
         </IntlWrapper>,
       );
 
@@ -478,7 +478,7 @@ describe("Calendar Component", () => {
     it("should color Saturday day number with blue", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -489,7 +489,7 @@ describe("Calendar Component", () => {
     it("should display English holiday name for en locale", () => {
       render(
         <IntlWrapper locale="en">
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -504,7 +504,7 @@ describe("Calendar Component", () => {
 
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} onDateSelect={onDateSelect} />
+          <Calendar year={2026} month={1} entries={mockDates} onDateSelect={onDateSelect} />
         </IntlWrapper>,
       );
 
@@ -535,7 +535,7 @@ describe("Calendar Component", () => {
 
       render(
         <IntlWrapper>
-          <CalendarWithMock year={2026} month={1} dates={mockDates} />
+          <CalendarWithMock year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -552,7 +552,7 @@ describe("Calendar Component", () => {
     it("should make date cells keyboard accessible", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -569,7 +569,7 @@ describe("Calendar Component", () => {
     it("should have proper focus styling", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -585,7 +585,7 @@ describe("Calendar Component", () => {
     it("should handle empty dates array", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={[]} />
+          <Calendar year={2026} month={1} entries={[]} />
         </IntlWrapper>,
       );
 
@@ -615,7 +615,7 @@ describe("Calendar Component", () => {
 
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={singleDate} />
+          <Calendar year={2026} month={1} entries={singleDate} />
         </IntlWrapper>,
       );
 
@@ -659,7 +659,7 @@ describe("Calendar Component", () => {
 
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={datesWithDecimals} />
+          <Calendar year={2026} month={1} entries={datesWithDecimals} />
         </IntlWrapper>,
       );
 
@@ -689,7 +689,7 @@ describe("Calendar Component", () => {
       // Should not crash
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={datesWithUnknownStatus} />
+          <Calendar year={2026} month={1} entries={datesWithUnknownStatus} />
         </IntlWrapper>,
       );
 
@@ -720,7 +720,7 @@ describe("Calendar Component", () => {
 
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={januaryDates} />
+          <Calendar year={2026} month={1} entries={januaryDates} />
         </IntlWrapper>,
       );
 
@@ -733,7 +733,7 @@ describe("Calendar Component", () => {
     it("should have hover state on date cells", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 
@@ -746,7 +746,7 @@ describe("Calendar Component", () => {
     it("should have transition effects", () => {
       render(
         <IntlWrapper>
-          <Calendar year={2026} month={1} dates={mockDates} />
+          <Calendar year={2026} month={1} entries={mockDates} />
         </IntlWrapper>,
       );
 

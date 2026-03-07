@@ -10,7 +10,7 @@ import java.util.UUID;
  * @param projectIds List of unique project IDs from the previous month
  * @param previousMonthStart Start date of the previous fiscal month
  * @param previousMonthEnd End date of the previous fiscal month
- * @param count Number of projects found
+ * @param totalCount Number of projects found
  */
 public record PreviousMonthProjectsResponse(
-        List<UUID> projectIds, LocalDate previousMonthStart, LocalDate previousMonthEnd, int count) {}
+        List<UUID> projectIds, LocalDate previousMonthStart, LocalDate previousMonthEnd, int totalCount) {}

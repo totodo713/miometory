@@ -123,7 +123,7 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/WorkLogEntryResponse'
-                  total:
+                  totalCount:
                     type: integer
         '400':
           $ref: '#/components/responses/BadRequest'
@@ -907,7 +907,7 @@ components:
           type: string
         fiscalMonth:
           $ref: '#/components/schemas/FiscalMonthPeriod'
-        dates:
+        entries:
           type: array
           items:
             $ref: '#/components/schemas/DailyCalendarEntry'

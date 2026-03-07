@@ -23,7 +23,7 @@ import type { DailyCalendarEntry } from "@/types/worklog";
 interface CalendarProps {
   year: number;
   month: number;
-  dates: DailyCalendarEntry[];
+  entries: DailyCalendarEntry[];
   onDateSelect?: (date: string) => void;
   tenantId?: string;
   orgId?: string;
@@ -43,7 +43,7 @@ const STATUS_COLORS = {
   MIXED: "bg-yellow-100 text-yellow-800",
 } as const;
 
-export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: CalendarProps) {
+export function Calendar({ year, month, entries, onDateSelect, tenantId, orgId }: CalendarProps) {
   const router = useRouter();
   const format = useFormatter();
   const locale = useLocale();
@@ -63,7 +63,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
   const weeks: (DailyCalendarEntry | null)[][] = [];
   let currentWeek: (DailyCalendarEntry | null)[] = [];
 
-  for (const dateEntry of dates) {
+  for (const dateEntry of entries) {
     const date = parseLocalDate(dateEntry.date);
     const dayOfWeek = date.getDay();
 
@@ -109,7 +109,9 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
           })}
         </h2>
         <p className="text-sm text-gray-600">
-          {dates.length > 0 ? t("fiscalPeriod", { start: dates[0].date, end: dates[dates.length - 1].date }) : null}
+          {entries.length > 0
+            ? t("fiscalPeriod", { start: entries[0].date, end: entries[entries.length - 1].date })
+            : null}
         </p>
         {/* Date info (fiscal year, fiscal period, monthly period) */}
         {dateInfoLoading ? (
@@ -129,7 +131,7 @@ export function Calendar({ year, month, dates, onDateSelect, tenantId, orgId }: 
       {isMobile ? (
         /* Mobile list view */
         <div className="divide-y divide-gray-200" data-testid="mobile-calendar-list">
-          {dates.map((dateEntry) => {
+          {entries.map((dateEntry) => {
             const date = parseLocalDate(dateEntry.date);
             const dayNum = date.getDate();
             const dayName = DAY_NAMES[date.getDay()];

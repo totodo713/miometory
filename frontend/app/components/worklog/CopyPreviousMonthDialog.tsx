@@ -26,7 +26,7 @@ interface PreviousMonthData {
   projectIds: string[];
   previousMonthStart: string;
   previousMonthEnd: string;
-  count: number;
+  totalCount: number;
 }
 
 export function CopyPreviousMonthDialog({
@@ -204,7 +204,7 @@ export function CopyPreviousMonthDialog({
                 Previous period: {formatDate(data.previousMonthStart)} - {formatDate(data.previousMonthEnd)}
               </div>
 
-              {data.count === 0 ? (
+              {data.totalCount === 0 ? (
                 <div className="text-center py-8 text-gray-600">
                   <p className="text-lg mb-2">{t("noData")}</p>
                   <p className="text-sm">{t("noData")}</p>
@@ -250,7 +250,7 @@ export function CopyPreviousMonthDialog({
 
                   {/* Selection count */}
                   <div className="mt-2 text-sm text-gray-600">
-                    {selectedProjectIds.size} of {data.count} projects selected
+                    {selectedProjectIds.size} of {data.totalCount} projects selected
                   </div>
                 </>
               )}

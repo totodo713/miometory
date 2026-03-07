@@ -748,7 +748,7 @@ class AbsenceControllerTest : IntegrationTestBase() {
         val body = response.body as Map<*, *>
         val absences = body["absences"] as List<*>
         assertEquals(0, absences.size)
-        assertEquals(0, body["total"])
+        assertEquals(0, body["totalCount"])
     }
 
     // ================================================================================

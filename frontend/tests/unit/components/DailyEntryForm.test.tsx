@@ -132,21 +132,21 @@ describe("DailyEntryForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock successful API responses by default
-    (mockGetEntries as any).mockResolvedValue({ entries: [], total: 0 });
-    (mockGetAbsences as any).mockResolvedValue({ absences: [], total: 0 });
+    (mockGetEntries as any).mockResolvedValue({ entries: [], totalCount: 0 });
+    (mockGetAbsences as any).mockResolvedValue({ absences: [], totalCount: 0 });
     (mockGetAssignedProjects as any).mockResolvedValue({
       projects: [
         { id: "project-1", code: "PROJ1", name: "Project One" },
         { id: "project-2", code: "PROJ2", name: "Project Two" },
       ],
-      count: 2,
+      totalCount: 2,
     });
     (mockGetAssignedProjectsAlias as any).mockResolvedValue({
       projects: [
         { id: "project-1", code: "PROJ1", name: "Project One" },
         { id: "project-2", code: "PROJ2", name: "Project Two" },
       ],
-      count: 2,
+      totalCount: 2,
     });
     (mockCreateEntry as any).mockResolvedValue({
       id: "new-entry-id",
@@ -242,7 +242,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -272,7 +272,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -550,7 +550,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       const user = userEvent.setup();
@@ -778,7 +778,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -801,7 +801,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -824,7 +824,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -847,7 +847,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -871,7 +871,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -941,7 +941,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       const user = userEvent.setup();
@@ -1040,7 +1040,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -1075,7 +1075,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -1122,7 +1122,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -1158,7 +1158,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -1181,7 +1181,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       renderWithProviders(
@@ -1206,7 +1206,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       const user = userEvent.setup();
@@ -1248,7 +1248,7 @@ describe("DailyEntryForm", () => {
       ];
       (mockGetEntries as any).mockResolvedValue({
         entries: mockEntries,
-        total: mockEntries.length,
+        totalCount: mockEntries.length,
       });
 
       const user = userEvent.setup();

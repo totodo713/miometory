@@ -54,7 +54,7 @@ describe("MypagePage", () => {
         { id: "p1", code: "PRJ-001", name: "基幹システム開発" },
         { id: "p2", code: "PRJ-002", name: "Web改修" },
       ],
-      count: 2,
+      totalCount: 2,
     });
   });
 
@@ -87,7 +87,7 @@ describe("MypagePage", () => {
   });
 
   test("shows no projects message when empty", async () => {
-    mockGetAssignedProjects.mockResolvedValue({ projects: [], count: 0 });
+    mockGetAssignedProjects.mockResolvedValue({ projects: [], totalCount: 0 });
     render(
       <IntlWrapper>
         <MypagePage />

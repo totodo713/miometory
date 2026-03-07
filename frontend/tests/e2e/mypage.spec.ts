@@ -27,7 +27,7 @@ test.describe("MyPage Feature", () => {
       { id: "project-1", code: "PROJ-001", name: "Project Alpha" },
       { id: "project-2", code: "PROJ-002", name: "Project Beta" },
     ],
-    count: 2,
+    totalCount: 2,
   };
 
   test.beforeEach(async ({ page }) => {

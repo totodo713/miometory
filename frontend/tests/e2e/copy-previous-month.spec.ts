@@ -31,7 +31,7 @@ test.describe("Copy Previous Month", () => {
           memberName: "Test Engineer",
           periodStart: "2026-01-01",
           periodEnd: "2026-01-31",
-          dates: Array.from({ length: 31 }, (_, i) => ({
+          entries: Array.from({ length: 31 }, (_, i) => ({
             date: `2026-01-${String(i + 1).padStart(2, "0")}`,
             totalWorkHours: 0,
             totalAbsenceHours: 0,
@@ -69,7 +69,7 @@ test.describe("Copy Previous Month", () => {
           contentType: "application/json",
           body: JSON.stringify({
             entries: [],
-            total: 0,
+            totalCount: 0,
           }),
         });
       } else {
@@ -85,7 +85,7 @@ test.describe("Copy Previous Month", () => {
           contentType: "application/json",
           body: JSON.stringify({
             absences: [],
-            total: 0,
+            totalCount: 0,
           }),
         });
       } else {
@@ -102,7 +102,7 @@ test.describe("Copy Previous Month", () => {
           projectIds: ["PRJ-001", "PRJ-002"],
           previousMonthStart: "2025-12-21",
           previousMonthEnd: "2026-01-20",
-          count: 2,
+          totalCount: 2,
         }),
       });
     });
@@ -138,7 +138,7 @@ test.describe("Copy Previous Month", () => {
           projectIds: [],
           previousMonthStart: "2029-12-21",
           previousMonthEnd: "2030-01-20",
-          count: 0,
+          totalCount: 0,
         }),
       });
     });

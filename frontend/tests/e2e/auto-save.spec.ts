@@ -42,7 +42,7 @@ test.describe("Auto-Save Reliability", () => {
               version: 1,
             },
           ],
-          total: 1,
+          totalCount: 1,
         }),
       });
     });
@@ -155,7 +155,7 @@ test.describe("Auto-Save Reliability", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ entries: [], total: 0 }),
+        body: JSON.stringify({ entries: [], totalCount: 0 }),
       });
     });
 
@@ -247,7 +247,7 @@ test.describe("Auto-Save Reliability", () => {
               version: 1,
             },
           ],
-          total: 1,
+          totalCount: 1,
         }),
       });
     });

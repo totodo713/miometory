@@ -50,7 +50,7 @@ test.describe("Absence Entry Workflow", () => {
           memberName: "Test Engineer",
           periodStart: "2026-01-01",
           periodEnd: "2026-01-31",
-          dates: Array.from({ length: 31 }, (_, i) => ({
+          entries: Array.from({ length: 31 }, (_, i) => ({
             date: `2026-01-${String(i + 1).padStart(2, "0")}`,
             totalWorkHours: 0,
             totalAbsenceHours: 0,
@@ -69,7 +69,7 @@ test.describe("Absence Entry Workflow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           entries: [],
-          total: 0,
+          totalCount: 0,
         }),
       });
     });
@@ -81,7 +81,7 @@ test.describe("Absence Entry Workflow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           absences: [],
-          total: 0,
+          totalCount: 0,
         }),
       });
     });
@@ -448,7 +448,7 @@ test.describe("Absence Entry Workflow", () => {
               version: 1,
             },
           ],
-          total: 1,
+          totalCount: 1,
         }),
       });
     });
@@ -514,7 +514,7 @@ test.describe("Absence Entry Workflow", () => {
           memberName: "Test Engineer",
           periodStart: "2026-01-01",
           periodEnd: "2026-01-31",
-          dates: Array.from({ length: 31 }, (_, i) => {
+          entries: Array.from({ length: 31 }, (_, i) => {
             const dayNum = i + 1;
             const date = `2026-01-${String(dayNum).padStart(2, "0")}`;
             return {
@@ -585,7 +585,7 @@ test.describe("Absence Entry Workflow", () => {
           memberName: "Test Engineer",
           periodStart: "2026-01-01",
           periodEnd: "2026-01-31",
-          dates: Array.from({ length: 31 }, (_, i) => {
+          entries: Array.from({ length: 31 }, (_, i) => {
             const dayNum = i + 1;
             const date = `2026-01-${String(dayNum).padStart(2, "0")}`;
             // Day 15: 8h work, Day 20: 8h absence, Day 25: 4h work + 4h absence

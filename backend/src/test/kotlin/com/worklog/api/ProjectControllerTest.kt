@@ -39,7 +39,7 @@ class ProjectControllerTest : IntegrationTestBase() {
         assertEquals(HttpStatus.OK, response.statusCode)
         assertNotNull(response.body)
         val body = response.body as Map<*, *>
-        assertEquals(0, body["count"])
+        assertEquals(0, body["totalCount"])
         assertTrue((body["projectIds"] as List<*>).isEmpty())
         assertNotNull(body["previousMonthStart"])
         assertNotNull(body["previousMonthEnd"])
@@ -72,7 +72,7 @@ class ProjectControllerTest : IntegrationTestBase() {
         assertEquals(HttpStatus.OK, response.statusCode)
         assertNotNull(response.body)
         val body = response.body as Map<*, *>
-        assertEquals(2, body["count"]) // Should have 2 unique projects
+        assertEquals(2, body["totalCount"]) // Should have 2 unique projects
         val projectIds = body["projectIds"] as List<*>
         assertEquals(2, projectIds.size)
         assertTrue(
@@ -128,7 +128,7 @@ class ProjectControllerTest : IntegrationTestBase() {
         // Assert - Deleted entry's project should not appear
         assertEquals(HttpStatus.OK, response.statusCode)
         val body = response.body as Map<*, *>
-        assertEquals(0, body["count"])
+        assertEquals(0, body["totalCount"])
     }
 
     @Test
@@ -208,7 +208,7 @@ class ProjectControllerTest : IntegrationTestBase() {
         // Assert - Should only have member 1's project
         assertEquals(HttpStatus.OK, response.statusCode)
         val body = response.body as Map<*, *>
-        assertEquals(1, body["count"])
+        assertEquals(1, body["totalCount"])
         val projectIds = body["projectIds"] as List<*>
         assertTrue(projectIds.any { it.toString() == projectId1.toString() })
     }

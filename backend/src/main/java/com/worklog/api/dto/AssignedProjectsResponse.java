@@ -7,4 +7,4 @@ import java.util.List;
  *
  * Returns a list of projects that a member is assigned to and can log time against.
  */
-public record AssignedProjectsResponse(List<AssignedProject> projects, int count) {}
+public record AssignedProjectsResponse(List<AssignedProject> projects, int totalCount) {}

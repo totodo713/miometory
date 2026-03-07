@@ -389,7 +389,7 @@ export const api = {
           updatedAt: string;
           version: number;
         }>;
-        total: number;
+        totalCount: number;
       }>(`/api/v1/worklog/entries?${query}`);
     },
 
@@ -471,7 +471,7 @@ export const api = {
         projectIds: string[];
         previousMonthStart: string;
         previousMonthEnd: string;
-        count: number;
+        totalCount: number;
       }>(`/api/v1/worklog/projects/previous-month?${query}`);
     },
 
@@ -631,7 +631,7 @@ export const api = {
           updatedAt: string;
           version: number;
         }>;
-        total: number;
+        totalCount: number;
       }>(`/api/v1/absences?${query}`);
     },
 
@@ -866,7 +866,7 @@ export const api = {
           managerId: string | null;
           isActive: boolean;
         }>;
-        count: number;
+        totalCount: number;
         includesIndirect: boolean;
       }>(`/api/v1/members/${managerId}/subordinates?${query}`);
     },
@@ -891,7 +891,7 @@ export const api = {
           code: string;
           name: string;
         }>;
-        count: number;
+        totalCount: number;
       }>(`/api/v1/members/${memberId}/projects`),
   },
 

@@ -67,7 +67,7 @@ test.describe("Proxy Entry Workflow", () => {
               isActive: true,
             },
           ],
-          total: 1,
+          totalCount: 1,
           recursive: false,
         }),
       });
@@ -121,7 +121,7 @@ test.describe("Proxy Entry Workflow", () => {
           memberName: memberNameToUse,
           periodStart: "2025-12-21",
           periodEnd: "2026-01-20",
-          dates: Array.from({ length: 31 }, (_, i) => ({
+          entries: Array.from({ length: 31 }, (_, i) => ({
             date: `2026-01-${String(i + 1).padStart(2, "0")}`,
             totalWorkHours: isSubordinate && i === 14 ? 8 : 0, // Day 15 has proxy entry for subordinate
             totalAbsenceHours: 0,
@@ -141,7 +141,7 @@ test.describe("Proxy Entry Workflow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           entries: [],
-          total: 0,
+          totalCount: 0,
         }),
       });
     });
@@ -153,7 +153,7 @@ test.describe("Proxy Entry Workflow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           absences: [],
-          total: 0,
+          totalCount: 0,
         }),
       });
     });
@@ -188,7 +188,7 @@ test.describe("Proxy Entry Workflow", () => {
           projectIds: [],
           previousMonthStart: "2025-12-21",
           previousMonthEnd: "2026-01-20",
-          count: 0,
+          totalCount: 0,
         }),
       });
     });
