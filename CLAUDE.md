@@ -71,6 +71,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **Port forwarding** (on-demand): `docker compose -f .devcontainer/docker-compose.yml -f .devcontainer/docker-compose.ports.yml up -d app` — exposes FE:3000, BE:8080 to host
 - **Start servers**: `exec -d app bash -c "cd /workspaces/miometory/backend && ./gradlew bootRun > /tmp/backend.log 2>&1"` / `exec -d app bash -c "cd /workspaces/miometory/frontend && npm run dev > /tmp/frontend.log 2>&1"`
 - **Frontend npm ci**: コンテナ再作成後は `exec app bash -c "cd /workspaces/miometory/frontend && npm ci"` を `npm run dev` の前に実行すること — `node_modules` はボリューム外のため永続化されない
+- **Tailwind CSS v4 resolve**: Turbopack が `@import "tailwindcss"` をgitルートから解決しようとして失敗する場合、`next.config.ts` の `turbopack.resolveAlias` で `tailwindcss` を絶対パスにマッピング済み — シンボリックリンク等の回避策は不要
 - **Zombie processes**: `exec -d` で起動したプロセスがクラッシュするとゾンビ化する → `docker compose ... restart app` で解消
 - **Path conversion**: Host `$PROJECT_ROOT/...` → Container `/workspaces/miometory/...` (automatic)
 - **Fallback**: If the container is not running, hooks execute commands locally (same as before)
