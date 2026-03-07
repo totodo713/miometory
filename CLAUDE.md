@@ -128,6 +128,8 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - **4階層設定パターン (standard_daily_hours 雛形)**: System(`system_default_settings` JSONB) → Tenant(イベントソーシング集約) → Organization(イベントソーシング集約) → Member(CRUDカラム) の解決チェーン。新しい階層設定を追加する際は `StandardWorkingHoursService.java` + `StandardHoursResolution.java` + V31マイグレーションを雛形にする
 - **CRUD entity (非Event Sourced)**: `DailyAttendance` は event sourcing を使わない単純CRUD — `JdbcDailyAttendanceRepository` が UPSERT + 楽観ロック（version カラム）を直接管理
+- **Admin CRUD services**: `AdminAssignmentService`, `AdminProjectService` 等は `JdbcTemplate` 直接操作（ドメインモデル・リポジトリなし）— SQL UPDATE で `tenant_id` スコーピング + 影響行数0なら `DomainException("*_NOT_FOUND")` を throw
+- **Admin permission reuse**: 既存 admin 機能に操作を追加する場合、新権限よりも既存権限の再利用を優先（DB マイグレーション不要）— 例: assignment の編集は `assignment.create` を再利用
 - **SecurityConfig httpBasic**: dev/test profile では `httpBasic(Customizer.withDefaults())` + `permitAll()` で、Controller の `Authentication` パラメータが任意受信可能（認証なしリクエストも通る）
 - **OpenAPI spec is manually maintained**: `backend/src/main/resources/static/api-docs/openapi.yaml` は自動生成ではない — DTO フィールド名・型・エンドポイント変更時は手動で同期が必要
 - **Event-sourced aggregate seed data**: `Tenant` 等のイベントソーシング対象は `data-dev.sql` でプロジェクションテーブル（`tenant`）と EventStore（`event_store`）の**両方**にデータが必要 — プロジェクションのみだと `Repository.findById` が `Optional.empty()` を返す
@@ -140,3 +142,4 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **Flyway checksum mismatch in tests** ("Migration checksum mismatch for migration version N"): Testcontainers の `.withReuse(true)` がキャッシュした旧DBと migration file の内容が不一致 → `docker ps -a --filter "label=org.testcontainers"` で対象 PostgreSQL コンテナを特定し `docker stop/rm` で削除、再テスト
 - **MockK varargs type inference** (`Cannot infer type for type parameter 'T'`): `jdbcTemplate.queryForList(any<String>(), any(), any())` は型推論に失敗する → `queryForList(any<String>(), *anyVararg())` + 戻り値を `emptyList<Map<String, Any>>()` のように明示型指定
 - **Detekt `EqualsNullCall`**: テストで `.equals(null)` を直接呼ぶとdetektが失敗する → `assertNotEquals(null, x)` を使う。CIでは Lint & Format Check と Build & Test Backend の両方がdetektを実行するため、1つの違反で2ジョブ失敗する
+- **`queryForObject` vs `queryForList`**: `queryForObject` は結果0件で `EmptyResultDataAccessException` を throw する — optional な lookup では `queryForList(sql, type, args)` + `results.isEmpty()` チェックを使う
