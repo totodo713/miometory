@@ -24,6 +24,7 @@ Plan review は `/review-plan` スキルに委譲。3エージェント並列レ
 
 - Plan ドキュメントは `docs/plans/YYYY-MM-DD-<topic>-plan.md` に保存（`.claude/plans/` ではない）
 - Design ドキュメントは `docs/plans/YYYY-MM-DD-<topic>-design.md`
+- **重複防止**: 同一トピックの plan を更新する場合、新規ファイルを作らず既存を編集するか、旧ファイルを削除して一本化する
 
 ## Pre-PR Verification (MANDATORY)
 
@@ -78,6 +79,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 ## E2E Tests (Playwright)
 
 - **Shared E2E fixtures**: `frontend/tests/e2e/fixtures/auth.ts` contains mock helpers (`mockProjectsApi`, `mockCalendarApi`, etc.) — when renaming API response fields, update fixtures too (not just spec files)
+- **Inline E2E mocks**: 個別specファイル内の `page.route()` インラインmockもDTOフィールド名と同期が必要 — 共有fixtureだけでなくspec内のmockも検索すること
 - Devcontainer: `npx playwright test --project=chromium` — only the `chromium` Playwright project is configured and run in CI
 - Playwright strict mode: locators matching multiple elements fail; use `.first()` or `{ exact: true }`
 - Verifying modal open: use `getByRole("heading", { name })` not `getByText()` — button text and modal title often match, causing strict-mode violation
@@ -106,6 +108,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - PR description に `Closes #xx` を含めて issue の自動クローズ漏れを防ぐ
 - Copilot/レビュアーコメントへの返信: `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -X POST -f body="..."`
+- **Copilot "outdated" コメント**: 行番号がズレただけで指摘自体は未修正のことがある — outdated も含めて全件確認すること
 
 ## Backend Testing Patterns
 
