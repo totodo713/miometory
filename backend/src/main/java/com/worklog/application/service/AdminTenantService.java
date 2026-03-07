@@ -170,8 +170,8 @@ public class AdminTenantService {
                     org.parentId(),
                     org.code(),
                     org.name(),
-                    org.fiscalYearPatternId(),
-                    org.monthlyPeriodPatternId()));
+                    org.fiscalYearRuleId(),
+                    org.monthlyPeriodRuleId()));
             orgCodeToId.put(org.code(), orgId);
             createdOrgs.add(new CreatedOrganization(orgId, org.code()));
         }

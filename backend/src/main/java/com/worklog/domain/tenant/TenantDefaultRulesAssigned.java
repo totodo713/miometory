@@ -8,23 +8,23 @@ import java.util.UUID;
  * Event raised when default patterns are assigned to a tenant.
  * Either or both pattern IDs may be null (clearing the tenant-level default).
  */
-public record TenantDefaultPatternsAssigned(
+public record TenantDefaultRulesAssigned(
         UUID eventId,
         Instant occurredAt,
         UUID aggregateId,
-        UUID defaultFiscalYearPatternId,
-        UUID defaultMonthlyPeriodPatternId)
+        UUID defaultFiscalYearRuleId,
+        UUID defaultMonthlyPeriodRuleId)
         implements DomainEvent {
 
-    public static TenantDefaultPatternsAssigned create(
-            UUID tenantId, UUID defaultFiscalYearPatternId, UUID defaultMonthlyPeriodPatternId) {
-        return new TenantDefaultPatternsAssigned(
-                UUID.randomUUID(), Instant.now(), tenantId, defaultFiscalYearPatternId, defaultMonthlyPeriodPatternId);
+    public static TenantDefaultRulesAssigned create(
+            UUID tenantId, UUID defaultFiscalYearRuleId, UUID defaultMonthlyPeriodRuleId) {
+        return new TenantDefaultRulesAssigned(
+                UUID.randomUUID(), Instant.now(), tenantId, defaultFiscalYearRuleId, defaultMonthlyPeriodRuleId);
     }
 
     @Override
     public String eventType() {
-        return "TenantDefaultPatternsAssigned";
+        return "TenantDefaultRulesAssigned";
     }
 
     @Override

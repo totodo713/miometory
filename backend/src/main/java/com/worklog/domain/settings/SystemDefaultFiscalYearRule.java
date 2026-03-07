@@ -4,9 +4,9 @@ package com.worklog.domain.settings;
  * Value object representing the system-wide default fiscal year pattern.
  * Stored as raw values (not a pattern ID) since system defaults are tenant-independent.
  */
-public record SystemDefaultFiscalYearPattern(int startMonth, int startDay) {
+public record SystemDefaultFiscalYearRule(int startMonth, int startDay) {
 
-    public SystemDefaultFiscalYearPattern {
+    public SystemDefaultFiscalYearRule {
         if (startMonth < 1 || startMonth > 12) {
             throw new IllegalArgumentException("startMonth must be between 1 and 12");
         }

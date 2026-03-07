@@ -267,40 +267,40 @@ class OrganizationTest {
     }
 
     @Test
-    fun `assignPatterns should set fiscal year and monthly period pattern ids`() {
+    fun `assignRules should set fiscal year and monthly period pattern ids`() {
         // Arrange
         val organization = createOrganization()
         organization.clearUncommittedEvents()
-        val fiscalYearPatternId = UUID.randomUUID()
-        val monthlyPeriodPatternId = UUID.randomUUID()
+        val fiscalYearRuleId = UUID.randomUUID()
+        val monthlyPeriodRuleId = UUID.randomUUID()
 
         // Act
-        organization.assignPatterns(fiscalYearPatternId, monthlyPeriodPatternId)
+        organization.assignRules(fiscalYearRuleId, monthlyPeriodRuleId)
 
         // Assert
-        assertEquals(fiscalYearPatternId, organization.fiscalYearPatternId)
-        assertEquals(monthlyPeriodPatternId, organization.monthlyPeriodPatternId)
+        assertEquals(fiscalYearRuleId, organization.fiscalYearRuleId)
+        assertEquals(monthlyPeriodRuleId, organization.monthlyPeriodRuleId)
         assertEquals(1, organization.uncommittedEvents.size)
-        assertTrue(organization.uncommittedEvents[0] is OrganizationPatternAssigned)
+        assertTrue(organization.uncommittedEvents[0] is OrganizationRulesAssigned)
 
-        val event = organization.uncommittedEvents[0] as OrganizationPatternAssigned
+        val event = organization.uncommittedEvents[0] as OrganizationRulesAssigned
         assertEquals(organization.id.value, event.aggregateId)
-        assertEquals(fiscalYearPatternId, event.fiscalYearPatternId)
-        assertEquals(monthlyPeriodPatternId, event.monthlyPeriodPatternId)
+        assertEquals(fiscalYearRuleId, event.fiscalYearRuleId)
+        assertEquals(monthlyPeriodRuleId, event.monthlyPeriodRuleId)
     }
 
     @Test
-    fun `assignPatterns should allow null patterns for non-root organizations`() {
+    fun `assignRules should allow null patterns for non-root organizations`() {
         // Arrange
         val organization = createOrganization(parentId = randomOrganizationId(), level = 2)
         organization.clearUncommittedEvents()
 
         // Act
-        organization.assignPatterns(null, null)
+        organization.assignRules(null, null)
 
         // Assert
-        assertNull(organization.fiscalYearPatternId)
-        assertNull(organization.monthlyPeriodPatternId)
+        assertNull(organization.fiscalYearRuleId)
+        assertNull(organization.monthlyPeriodRuleId)
         assertEquals(1, organization.uncommittedEvents.size)
     }
 

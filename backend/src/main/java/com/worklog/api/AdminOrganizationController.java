@@ -3,7 +3,7 @@ package com.worklog.api;
 import com.worklog.application.command.CreateOrganizationCommand;
 import com.worklog.application.service.AdminOrganizationService;
 import com.worklog.application.service.DateInfoService;
-import com.worklog.application.service.DateInfoService.EffectivePatterns;
+import com.worklog.application.service.DateInfoService.EffectiveRules;
 import com.worklog.application.service.UserContextService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -98,12 +98,12 @@ public class AdminOrganizationController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}/patterns")
+    @PutMapping("/{id}/rules")
     @PreAuthorize("hasPermission(null, 'organization.update')")
-    public ResponseEntity<Void> assignPatterns(
-            @PathVariable UUID id, @RequestBody @Valid AssignPatternsRequest request, Authentication authentication) {
+    public ResponseEntity<Void> assignRules(
+            @PathVariable UUID id, @RequestBody @Valid AssignRulesRequest request, Authentication authentication) {
         UUID tenantId = userContextService.resolveUserTenantId(authentication.getName());
-        service.assignPatterns(id, tenantId, request.fiscalYearPatternId(), request.monthlyPeriodPatternId());
+        service.assignRules(id, tenantId, request.fiscalYearRuleId(), request.monthlyPeriodRuleId());
         return ResponseEntity.noContent().build();
     }
 
@@ -119,11 +119,11 @@ public class AdminOrganizationController {
         return service.listMembersByOrganization(id, tenantId, page, Math.min(size, 100), isActive);
     }
 
-    @GetMapping("/{id}/effective-patterns")
+    @GetMapping("/{id}/effective-rules")
     @PreAuthorize("hasPermission(null, 'organization.view')")
-    public ResponseEntity<EffectivePatterns> getEffectivePatterns(@PathVariable UUID id) {
-        EffectivePatterns patterns = dateInfoService.getEffectivePatterns(id);
-        return ResponseEntity.ok(patterns);
+    public ResponseEntity<EffectiveRules> getEffectiveRules(@PathVariable UUID id) {
+        EffectiveRules rules = dateInfoService.getEffectiveRules(id);
+        return ResponseEntity.ok(rules);
     }
 
     // Request/Response DTOs
@@ -140,5 +140,5 @@ public class AdminOrganizationController {
 
     public record DeactivateResponse(List<String> warnings) {}
 
-    public record AssignPatternsRequest(UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {}
+    public record AssignRulesRequest(UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {}
 }

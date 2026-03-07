@@ -1,11 +1,11 @@
 package com.worklog.application.service;
 
-import com.worklog.domain.fiscalyear.FiscalYearPattern;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
+import com.worklog.domain.fiscalyear.FiscalYearRule;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRule;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
-import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
+import com.worklog.infrastructure.repository.FiscalYearRuleRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodRuleRepository;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -21,16 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminMasterDataService {
 
     private final JdbcTemplate jdbcTemplate;
-    private final FiscalYearPatternRepository fiscalYearPatternRepository;
-    private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private final FiscalYearRuleRepository fiscalYearRuleRepository;
+    private final MonthlyPeriodRuleRepository monthlyPeriodRuleRepository;
 
     public AdminMasterDataService(
             JdbcTemplate jdbcTemplate,
-            FiscalYearPatternRepository fiscalYearPatternRepository,
-            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository) {
+            FiscalYearRuleRepository fiscalYearRuleRepository,
+            MonthlyPeriodRuleRepository monthlyPeriodRuleRepository) {
         this.jdbcTemplate = jdbcTemplate;
-        this.fiscalYearPatternRepository = fiscalYearPatternRepository;
-        this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
+        this.fiscalYearRuleRepository = fiscalYearRuleRepository;
+        this.monthlyPeriodRuleRepository = monthlyPeriodRuleRepository;
     }
 
     // ========================================================================
@@ -466,8 +466,8 @@ public class AdminMasterDataService {
                     int startMonth = rs.getInt("start_month");
                     int startDay = rs.getInt("start_day");
 
-                    FiscalYearPattern pattern = FiscalYearPattern.create(tid, name, startMonth, startDay);
-                    fiscalYearPatternRepository.save(pattern);
+                    FiscalYearRule pattern = FiscalYearRule.create(tid, name, startMonth, startDay);
+                    fiscalYearRuleRepository.save(pattern);
                     fyPatterns.add(new CopiedPattern(presetId, pattern.getId().value(), name));
                 });
 
@@ -480,8 +480,8 @@ public class AdminMasterDataService {
                     String name = rs.getString("name");
                     int startDay = rs.getInt("start_day");
 
-                    MonthlyPeriodPattern pattern = MonthlyPeriodPattern.create(tid, name, startDay);
-                    monthlyPeriodPatternRepository.save(pattern);
+                    MonthlyPeriodRule pattern = MonthlyPeriodRule.create(tid, name, startDay);
+                    monthlyPeriodRuleRepository.save(pattern);
                     mpPatterns.add(new CopiedPattern(presetId, pattern.getId().value(), name));
                 });
 

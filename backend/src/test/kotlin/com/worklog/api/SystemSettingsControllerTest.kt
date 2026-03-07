@@ -34,7 +34,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `get system settings returns 200 with defaults`() {
         mockMvc.perform(
-            get("/api/v1/admin/system/settings/patterns")
+            get("/api/v1/admin/system/settings/rules")
                 .with(user(adminEmail)),
         )
             .andExpect(status().isOk)
@@ -46,7 +46,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `get system settings returns 403 for non-admin`() {
         mockMvc.perform(
-            get("/api/v1/admin/system/settings/patterns")
+            get("/api/v1/admin/system/settings/rules")
                 .with(user(regularEmail)),
         )
             .andExpect(status().isForbidden)
@@ -55,7 +55,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `update system settings returns 204`() {
         mockMvc.perform(
-            put("/api/v1/admin/system/settings/patterns")
+            put("/api/v1/admin/system/settings/rules")
                 .with(user(adminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"fiscalYearStartMonth":10,"fiscalYearStartDay":1,"monthlyPeriodStartDay":15}"""),
@@ -64,7 +64,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Verify the update was persisted
         mockMvc.perform(
-            get("/api/v1/admin/system/settings/patterns")
+            get("/api/v1/admin/system/settings/rules")
                 .with(user(adminEmail)),
         )
             .andExpect(status().isOk)
@@ -74,7 +74,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Restore defaults for other tests
         mockMvc.perform(
-            put("/api/v1/admin/system/settings/patterns")
+            put("/api/v1/admin/system/settings/rules")
                 .with(user(adminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"fiscalYearStartMonth":4,"fiscalYearStartDay":1,"monthlyPeriodStartDay":1}"""),
@@ -85,7 +85,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `update system settings returns 403 for non-admin`() {
         mockMvc.perform(
-            put("/api/v1/admin/system/settings/patterns")
+            put("/api/v1/admin/system/settings/rules")
                 .with(user(regularEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"fiscalYearStartMonth":10,"fiscalYearStartDay":1,"monthlyPeriodStartDay":15}"""),
@@ -96,7 +96,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `update with invalid month returns 400`() {
         mockMvc.perform(
-            put("/api/v1/admin/system/settings/patterns")
+            put("/api/v1/admin/system/settings/rules")
                 .with(user(adminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"fiscalYearStartMonth":13,"fiscalYearStartDay":1,"monthlyPeriodStartDay":1}"""),
@@ -107,7 +107,7 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `update with invalid monthly period start day returns 400`() {
         mockMvc.perform(
-            put("/api/v1/admin/system/settings/patterns")
+            put("/api/v1/admin/system/settings/rules")
                 .with(user(adminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"fiscalYearStartMonth":4,"fiscalYearStartDay":1,"monthlyPeriodStartDay":29}"""),

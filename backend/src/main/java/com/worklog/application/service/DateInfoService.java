@@ -1,19 +1,19 @@
 package com.worklog.application.service;
 
-import com.worklog.domain.fiscalyear.FiscalYearPattern;
-import com.worklog.domain.fiscalyear.FiscalYearPattern.Pair;
-import com.worklog.domain.fiscalyear.FiscalYearPatternId;
+import com.worklog.domain.fiscalyear.FiscalYearRule;
+import com.worklog.domain.fiscalyear.FiscalYearRule.Pair;
+import com.worklog.domain.fiscalyear.FiscalYearRuleId;
 import com.worklog.domain.monthlyperiod.MonthlyPeriod;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRule;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRuleId;
 import com.worklog.domain.organization.Organization;
 import com.worklog.domain.organization.OrganizationId;
-import com.worklog.domain.settings.SystemDefaultFiscalYearPattern;
-import com.worklog.domain.settings.SystemDefaultMonthlyPeriodPattern;
+import com.worklog.domain.settings.SystemDefaultFiscalYearRule;
+import com.worklog.domain.settings.SystemDefaultMonthlyPeriodRule;
 import com.worklog.domain.tenant.Tenant;
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
-import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
+import com.worklog.infrastructure.repository.FiscalYearRuleRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodRuleRepository;
 import com.worklog.infrastructure.repository.OrganizationRepository;
 import com.worklog.infrastructure.repository.SystemDefaultSettingsRepository;
 import com.worklog.infrastructure.repository.TenantRepository;
@@ -28,27 +28,27 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * Resolution chain (3-tier inheritance):
  * 1. Organization hierarchy — walk up from current org to root
- * 2. Tenant default — tenant-level default pattern reference
+ * 2. Tenant default — tenant-level default rule reference
  * 3. System default — system-wide default values (raw startMonth/startDay)
  */
 @Service
 public class DateInfoService {
 
     private final OrganizationRepository organizationRepository;
-    private final FiscalYearPatternRepository fiscalYearPatternRepository;
-    private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private final FiscalYearRuleRepository fiscalYearRuleRepository;
+    private final MonthlyPeriodRuleRepository monthlyPeriodRuleRepository;
     private final TenantRepository tenantRepository;
     private final SystemDefaultSettingsRepository systemDefaultSettingsRepository;
 
     public DateInfoService(
             OrganizationRepository organizationRepository,
-            FiscalYearPatternRepository fiscalYearPatternRepository,
-            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository,
+            FiscalYearRuleRepository fiscalYearRuleRepository,
+            MonthlyPeriodRuleRepository monthlyPeriodRuleRepository,
             TenantRepository tenantRepository,
             SystemDefaultSettingsRepository systemDefaultSettingsRepository) {
         this.organizationRepository = organizationRepository;
-        this.fiscalYearPatternRepository = fiscalYearPatternRepository;
-        this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
+        this.fiscalYearRuleRepository = fiscalYearRuleRepository;
+        this.monthlyPeriodRuleRepository = monthlyPeriodRuleRepository;
         this.tenantRepository = tenantRepository;
         this.systemDefaultSettingsRepository = systemDefaultSettingsRepository;
     }
@@ -60,7 +60,7 @@ public class DateInfoService {
      * @param date The date to calculate for
      * @return DateInfo containing fiscal year, monthly period, and source information
      * @throws IllegalArgumentException if organization not found
-     * @throws IllegalStateException if system default settings are missing or an internal error prevents resolving patterns
+     * @throws IllegalStateException if system default settings are missing or an internal error prevents resolving rules
      */
     @Transactional(readOnly = true)
     public DateInfo getDateInfo(UUID organizationId, LocalDate date) {
@@ -68,17 +68,17 @@ public class DateInfoService {
                 .findById(new OrganizationId(organizationId))
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + organizationId));
 
-        PatternResolution fyResolution = resolveFiscalYearPattern(org);
-        PatternResolution mpResolution = resolveMonthlyPeriodPattern(org);
+        RuleResolution fyResolution = resolveFiscalYearRule(org);
+        RuleResolution mpResolution = resolveMonthlyPeriodRule(org);
 
         // Calculate fiscal year
-        FiscalYearPattern fyPattern = loadOrCreateFiscalYearPattern(fyResolution);
-        int fiscalYear = fyPattern.getFiscalYear(date);
-        Pair<LocalDate, LocalDate> fiscalYearRange = fyPattern.getFiscalYearRange(fiscalYear);
+        FiscalYearRule fyRule = loadOrCreateFiscalYearRule(fyResolution);
+        int fiscalYear = fyRule.getFiscalYear(date);
+        Pair<LocalDate, LocalDate> fiscalYearRange = fyRule.getFiscalYearRange(fiscalYear);
 
         // Calculate monthly period
-        MonthlyPeriodPattern mpPattern = loadOrCreateMonthlyPeriodPattern(mpResolution);
-        MonthlyPeriod monthlyPeriod = mpPattern.getMonthlyPeriod(date);
+        MonthlyPeriodRule mpRule = loadOrCreateMonthlyPeriodRule(mpResolution);
+        MonthlyPeriod monthlyPeriod = mpRule.getMonthlyPeriod(date);
 
         return new DateInfo(
                 date,
@@ -87,30 +87,30 @@ public class DateInfoService {
                 fiscalYearRange.second(),
                 monthlyPeriod.start(),
                 monthlyPeriod.end(),
-                fyResolution.patternId,
-                mpResolution.patternId,
+                fyResolution.ruleId,
+                mpResolution.ruleId,
                 organizationId,
                 fyResolution.source,
                 mpResolution.source);
     }
 
     /**
-     * Resolves the effective patterns for an organization (used by admin effective-patterns endpoint).
+     * Resolves the effective rules for an organization (used by admin effective-rules endpoint).
      */
     @Transactional(readOnly = true)
-    public EffectivePatterns getEffectivePatterns(UUID organizationId) {
+    public EffectiveRules getEffectiveRules(UUID organizationId) {
         Organization org = organizationRepository
                 .findById(new OrganizationId(organizationId))
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + organizationId));
 
-        PatternResolution fyResolution = resolveFiscalYearPattern(org);
-        PatternResolution mpResolution = resolveMonthlyPeriodPattern(org);
+        RuleResolution fyResolution = resolveFiscalYearRule(org);
+        RuleResolution mpResolution = resolveMonthlyPeriodRule(org);
 
-        return new EffectivePatterns(
-                fyResolution.patternId,
+        return new EffectiveRules(
+                fyResolution.ruleId,
                 fyResolution.source,
                 resolveSourceName(fyResolution.source),
-                mpResolution.patternId,
+                mpResolution.ruleId,
                 mpResolution.source,
                 resolveSourceName(mpResolution.source));
     }
@@ -127,15 +127,15 @@ public class DateInfoService {
     }
 
     /**
-     * Resolves fiscal year pattern from organization hierarchy, then tenant, then system.
+     * Resolves fiscal year rule from organization hierarchy, then tenant, then system.
      */
-    private PatternResolution resolveFiscalYearPattern(Organization org) {
+    private RuleResolution resolveFiscalYearRule(Organization org) {
         // Step 1: Walk organization hierarchy
         Organization current = org;
         while (current != null) {
-            if (current.getFiscalYearPatternId() != null) {
-                return new PatternResolution(
-                        current.getFiscalYearPatternId(),
+            if (current.getFiscalYearRuleId() != null) {
+                return new RuleResolution(
+                        current.getFiscalYearRuleId(),
                         "organization:" + current.getId().value());
             }
             if (current.getParentId() != null) {
@@ -147,24 +147,24 @@ public class DateInfoService {
 
         // Step 2: Check tenant default
         Tenant tenant = tenantRepository.findById(org.getTenantId()).orElse(null);
-        if (tenant != null && tenant.getDefaultFiscalYearPatternId() != null) {
-            return new PatternResolution(tenant.getDefaultFiscalYearPatternId(), "tenant");
+        if (tenant != null && tenant.getDefaultFiscalYearRuleId() != null) {
+            return new RuleResolution(tenant.getDefaultFiscalYearRuleId(), "tenant");
         }
 
         // Step 3: Fall back to system default
-        return new PatternResolution(null, "system");
+        return new RuleResolution(null, "system");
     }
 
     /**
-     * Resolves monthly period pattern from organization hierarchy, then tenant, then system.
+     * Resolves monthly period rule from organization hierarchy, then tenant, then system.
      */
-    private PatternResolution resolveMonthlyPeriodPattern(Organization org) {
+    private RuleResolution resolveMonthlyPeriodRule(Organization org) {
         // Step 1: Walk organization hierarchy
         Organization current = org;
         while (current != null) {
-            if (current.getMonthlyPeriodPatternId() != null) {
-                return new PatternResolution(
-                        current.getMonthlyPeriodPatternId(),
+            if (current.getMonthlyPeriodRuleId() != null) {
+                return new RuleResolution(
+                        current.getMonthlyPeriodRuleId(),
                         "organization:" + current.getId().value());
             }
             if (current.getParentId() != null) {
@@ -176,55 +176,55 @@ public class DateInfoService {
 
         // Step 2: Check tenant default
         Tenant tenant = tenantRepository.findById(org.getTenantId()).orElse(null);
-        if (tenant != null && tenant.getDefaultMonthlyPeriodPatternId() != null) {
-            return new PatternResolution(tenant.getDefaultMonthlyPeriodPatternId(), "tenant");
+        if (tenant != null && tenant.getDefaultMonthlyPeriodRuleId() != null) {
+            return new RuleResolution(tenant.getDefaultMonthlyPeriodRuleId(), "tenant");
         }
 
         // Step 3: Fall back to system default
-        return new PatternResolution(null, "system");
+        return new RuleResolution(null, "system");
     }
 
-    private FiscalYearPattern loadOrCreateFiscalYearPattern(PatternResolution resolution) {
-        if (resolution.patternId != null) {
-            return fiscalYearPatternRepository
-                    .findById(FiscalYearPatternId.of(resolution.patternId))
+    private FiscalYearRule loadOrCreateFiscalYearRule(RuleResolution resolution) {
+        if (resolution.ruleId != null) {
+            return fiscalYearRuleRepository
+                    .findById(FiscalYearRuleId.of(resolution.ruleId))
                     .orElseThrow(
-                            () -> new IllegalStateException("Fiscal year pattern not found: " + resolution.patternId));
+                            () -> new IllegalStateException("Fiscal year rule not found: " + resolution.ruleId));
         }
-        // System default: create transient pattern for calculation
-        SystemDefaultFiscalYearPattern systemDefault = systemDefaultSettingsRepository.getDefaultFiscalYearPattern();
-        return FiscalYearPattern.createWithId(
-                FiscalYearPatternId.generate(),
+        // System default: create transient rule for calculation
+        SystemDefaultFiscalYearRule systemDefault = systemDefaultSettingsRepository.getDefaultFiscalYearRule();
+        return FiscalYearRule.createWithId(
+                FiscalYearRuleId.generate(),
                 TenantId.of(new UUID(0, 0)),
                 "System Default",
                 systemDefault.startMonth(),
                 systemDefault.startDay());
     }
 
-    private MonthlyPeriodPattern loadOrCreateMonthlyPeriodPattern(PatternResolution resolution) {
-        if (resolution.patternId != null) {
-            return monthlyPeriodPatternRepository
-                    .findById(MonthlyPeriodPatternId.of(resolution.patternId))
+    private MonthlyPeriodRule loadOrCreateMonthlyPeriodRule(RuleResolution resolution) {
+        if (resolution.ruleId != null) {
+            return monthlyPeriodRuleRepository
+                    .findById(MonthlyPeriodRuleId.of(resolution.ruleId))
                     .orElseThrow(() ->
-                            new IllegalStateException("Monthly period pattern not found: " + resolution.patternId));
+                            new IllegalStateException("Monthly period rule not found: " + resolution.ruleId));
         }
-        // System default: create transient pattern for calculation
-        SystemDefaultMonthlyPeriodPattern systemDefault =
-                systemDefaultSettingsRepository.getDefaultMonthlyPeriodPattern();
-        return MonthlyPeriodPattern.createWithId(
-                MonthlyPeriodPatternId.generate(),
+        // System default: create transient rule for calculation
+        SystemDefaultMonthlyPeriodRule systemDefault =
+                systemDefaultSettingsRepository.getDefaultMonthlyPeriodRule();
+        return MonthlyPeriodRule.createWithId(
+                MonthlyPeriodRuleId.generate(),
                 TenantId.of(new UUID(0, 0)),
                 "System Default",
                 systemDefault.startDay());
     }
 
-    private record PatternResolution(UUID patternId, String source) {}
+    private record RuleResolution(UUID ruleId, String source) {}
 
-    public record EffectivePatterns(
-            UUID fiscalYearPatternId,
+    public record EffectiveRules(
+            UUID fiscalYearRuleId,
             String fiscalYearSource,
             String fiscalYearSourceName,
-            UUID monthlyPeriodPatternId,
+            UUID monthlyPeriodRuleId,
             String monthlyPeriodSource,
             String monthlyPeriodSourceName) {}
 }

@@ -11,14 +11,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 
 /**
- * Authorization tests for MonthlyPeriodPatternController.
+ * Authorization tests for MonthlyPeriodRuleController.
  *
  * Verifies @PreAuthorize + TenantAccessValidator enforcement:
  * - SYSTEM_ADMIN can access any tenant's patterns
  * - TENANT_ADMIN can access own tenant's patterns only
  * - Regular users are denied access
  */
-class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
+class MonthlyPeriodRuleControllerAuthTest : AdminIntegrationTestBase() {
 
     private lateinit var systemAdminEmail: String
     private lateinit var tenantAdminEmail: String
@@ -43,7 +43,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 200 for system admin`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-patterns")
+            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -53,7 +53,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 200 for tenant admin accessing own tenant`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-patterns")
+            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-rules")
                 .with(user(tenantAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -62,7 +62,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 403 for tenant admin accessing other tenant`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$otherTenantId/monthly-period-patterns")
+            get("/api/v1/tenants/$otherTenantId/monthly-period-rules")
                 .with(user(tenantAdminEmail)),
         )
             .andExpect(status().isForbidden)
@@ -71,7 +71,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 403 for regular user`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-patterns")
+            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-rules")
                 .with(user(regularEmail)),
         )
             .andExpect(status().isForbidden)
@@ -80,7 +80,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `POST returns 201 for tenant admin creating in own tenant`() {
         mockMvc.perform(
-            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-patterns")
+            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Auth Test MP ${UUID.randomUUID().toString().take(4)}","startDay":1}"""),
@@ -91,7 +91,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `POST returns 403 for tenant admin creating in other tenant`() {
         mockMvc.perform(
-            post("/api/v1/tenants/$otherTenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$otherTenantId/monthly-period-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Other Tenant MP","startDay":15}"""),
@@ -102,7 +102,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `POST returns 403 for regular user`() {
         mockMvc.perform(
-            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-patterns")
+            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/monthly-period-rules")
                 .with(user(regularEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Unauthorized MP","startDay":1}"""),
@@ -113,7 +113,7 @@ class MonthlyPeriodPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `SYSTEM_ADMIN can access any tenant patterns`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$otherTenantId/monthly-period-patterns")
+            get("/api/v1/tenants/$otherTenantId/monthly-period-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)

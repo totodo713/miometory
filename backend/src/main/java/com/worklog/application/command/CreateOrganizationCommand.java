@@ -9,13 +9,13 @@ import java.util.UUID;
  * @param parentId Optional ID of the parent organization (null for root/level 1)
  * @param code Unique code for the organization (alphanumeric and underscores only)
  * @param name Display name for the organization
- * @param fiscalYearPatternId Optional fiscal year pattern ID
- * @param monthlyPeriodPatternId Optional monthly period pattern ID
+ * @param fiscalYearRuleId Optional fiscal year rule ID
+ * @param monthlyPeriodRuleId Optional monthly period rule ID
  */
 public record CreateOrganizationCommand(
         UUID tenantId,
         UUID parentId,
         String code,
         String name,
-        UUID fiscalYearPatternId,
-        UUID monthlyPeriodPatternId) {}
+        UUID fiscalYearRuleId,
+        UUID monthlyPeriodRuleId) {}

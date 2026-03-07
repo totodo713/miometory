@@ -14,11 +14,11 @@ import java.util.UUID
 import kotlin.test.assertEquals
 
 /**
- * Integration tests for MonthlyPeriodPatternController CRUD operations.
+ * Integration tests for MonthlyPeriodRuleController CRUD operations.
  *
  * Uses system admin auth (required by @PreAuthorize + TenantAccessValidator).
  */
-class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
+class MonthlyPeriodRuleControllerTest : AdminIntegrationTestBase() {
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
@@ -37,7 +37,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         val result = mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"21st Cutoff","startDay":21}"""),
@@ -58,7 +58,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Invalid Pattern","startDay":0}"""),
@@ -71,7 +71,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Invalid Date","startDay":29}"""),
@@ -85,7 +85,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create pattern
         val createResult = mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"15th Cutoff","startDay":15}"""),
@@ -97,7 +97,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Get pattern by ID
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/monthly-period-patterns/$patternId")
+            get("/api/v1/tenants/$tenantId/monthly-period-rules/$patternId")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -112,7 +112,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
         val nonExistentId = UUID.randomUUID()
 
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/monthly-period-patterns/$nonExistentId")
+            get("/api/v1/tenants/$tenantId/monthly-period-rules/$nonExistentId")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isNotFound)
@@ -123,7 +123,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            get("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -137,14 +137,14 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create two patterns
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"1st Cutoff","startDay":1}"""),
         ).andExpect(status().isCreated)
 
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"21st Cutoff","startDay":21}"""),
@@ -152,7 +152,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Get list
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            get("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -166,7 +166,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create pattern for tenant1
         mockMvc.perform(
-            post("/api/v1/tenants/$tenant1Id/monthly-period-patterns")
+            post("/api/v1/tenants/$tenant1Id/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Tenant1 Pattern","startDay":1}"""),
@@ -174,7 +174,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create pattern for tenant2
         mockMvc.perform(
-            post("/api/v1/tenants/$tenant2Id/monthly-period-patterns")
+            post("/api/v1/tenants/$tenant2Id/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Tenant2 Pattern","startDay":15}"""),
@@ -182,7 +182,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Get list for tenant1
         mockMvc.perform(
-            get("/api/v1/tenants/$tenant1Id/monthly-period-patterns")
+            get("/api/v1/tenants/$tenant1Id/monthly-period-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)

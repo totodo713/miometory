@@ -3,19 +3,19 @@ package com.worklog.application.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.worklog.domain.fiscalyear.FiscalYearPattern;
-import com.worklog.domain.fiscalyear.FiscalYearPatternId;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.fiscalyear.FiscalYearRule;
+import com.worklog.domain.fiscalyear.FiscalYearRuleId;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRule;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRuleId;
 import com.worklog.domain.organization.Organization;
 import com.worklog.domain.organization.OrganizationId;
-import com.worklog.domain.settings.SystemDefaultFiscalYearPattern;
-import com.worklog.domain.settings.SystemDefaultMonthlyPeriodPattern;
+import com.worklog.domain.settings.SystemDefaultFiscalYearRule;
+import com.worklog.domain.settings.SystemDefaultMonthlyPeriodRule;
 import com.worklog.domain.shared.Code;
 import com.worklog.domain.tenant.Tenant;
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
-import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
+import com.worklog.infrastructure.repository.FiscalYearRuleRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodRuleRepository;
 import com.worklog.infrastructure.repository.OrganizationRepository;
 import com.worklog.infrastructure.repository.SystemDefaultSettingsRepository;
 import com.worklog.infrastructure.repository.TenantRepository;
@@ -38,10 +38,10 @@ class DateInfoServiceUnitTest {
     private OrganizationRepository organizationRepository;
 
     @Mock
-    private FiscalYearPatternRepository fiscalYearPatternRepository;
+    private FiscalYearRuleRepository fiscalYearRuleRepository;
 
     @Mock
-    private MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private MonthlyPeriodRuleRepository monthlyPeriodRuleRepository;
 
     @Mock
     private TenantRepository tenantRepository;
@@ -59,8 +59,8 @@ class DateInfoServiceUnitTest {
     void setUp() {
         service = new DateInfoService(
                 organizationRepository,
-                fiscalYearPatternRepository,
-                monthlyPeriodPatternRepository,
+                fiscalYearRuleRepository,
+                monthlyPeriodRuleRepository,
                 tenantRepository,
                 systemDefaultSettingsRepository);
     }
@@ -72,17 +72,17 @@ class DateInfoServiceUnitTest {
         Organization org = Organization.create(
                 orgId, TENANT_ID, parentOrgId, Code.of("ORG" + id.toString().substring(0, 4)), "Org", level);
         if (fyPatternId != null || mpPatternId != null) {
-            org.assignPatterns(fyPatternId, mpPatternId);
+            org.assignRules(fyPatternId, mpPatternId);
         }
         return org;
     }
 
-    private FiscalYearPattern createFyPattern(UUID id) {
-        return FiscalYearPattern.createWithId(FiscalYearPatternId.of(id), TENANT_ID, "FY Pattern", 4, 1);
+    private FiscalYearRule createFyPattern(UUID id) {
+        return FiscalYearRule.createWithId(FiscalYearRuleId.of(id), TENANT_ID, "FY Pattern", 4, 1);
     }
 
-    private MonthlyPeriodPattern createMpPattern(UUID id) {
-        return MonthlyPeriodPattern.createWithId(MonthlyPeriodPatternId.of(id), TENANT_ID, "MP Pattern", 1);
+    private MonthlyPeriodRule createMpPattern(UUID id) {
+        return MonthlyPeriodRule.createWithId(MonthlyPeriodRuleId.of(id), TENANT_ID, "MP Pattern", 1);
     }
 
     @Nested
@@ -93,21 +93,21 @@ class DateInfoServiceUnitTest {
         @DisplayName("should resolve patterns from organization itself")
         void shouldResolveFromOrganization() {
             UUID orgUuid = UUID.randomUUID();
-            UUID fyPatternUuid = UUID.randomUUID();
-            UUID mpPatternUuid = UUID.randomUUID();
+            UUID fyRuleUuid = UUID.randomUUID();
+            UUID mpRuleUuid = UUID.randomUUID();
 
-            Organization org = createOrg(orgUuid, null, fyPatternUuid, mpPatternUuid);
+            Organization org = createOrg(orgUuid, null, fyRuleUuid, mpRuleUuid);
             when(organizationRepository.findById(OrganizationId.of(orgUuid))).thenReturn(Optional.of(org));
-            when(fiscalYearPatternRepository.findById(FiscalYearPatternId.of(fyPatternUuid)))
-                    .thenReturn(Optional.of(createFyPattern(fyPatternUuid)));
-            when(monthlyPeriodPatternRepository.findById(MonthlyPeriodPatternId.of(mpPatternUuid)))
-                    .thenReturn(Optional.of(createMpPattern(mpPatternUuid)));
+            when(fiscalYearRuleRepository.findById(FiscalYearRuleId.of(fyRuleUuid)))
+                    .thenReturn(Optional.of(createFyPattern(fyRuleUuid)));
+            when(monthlyPeriodRuleRepository.findById(MonthlyPeriodRuleId.of(mpRuleUuid)))
+                    .thenReturn(Optional.of(createMpPattern(mpRuleUuid)));
 
             DateInfo result = service.getDateInfo(orgUuid, TEST_DATE);
 
             assertNotNull(result);
-            assertEquals(fyPatternUuid, result.fiscalYearPatternId());
-            assertEquals(mpPatternUuid, result.monthlyPeriodPatternId());
+            assertEquals(fyRuleUuid, result.fiscalYearRuleId());
+            assertEquals(mpRuleUuid, result.monthlyPeriodRuleId());
             assertEquals("organization:" + orgUuid, result.fiscalYearSource());
             assertEquals("organization:" + orgUuid, result.monthlyPeriodSource());
         }
@@ -117,18 +117,18 @@ class DateInfoServiceUnitTest {
         void shouldResolveFromParentOrganization() {
             UUID parentUuid = UUID.randomUUID();
             UUID childUuid = UUID.randomUUID();
-            UUID fyPatternUuid = UUID.randomUUID();
-            UUID mpPatternUuid = UUID.randomUUID();
+            UUID fyRuleUuid = UUID.randomUUID();
+            UUID mpRuleUuid = UUID.randomUUID();
 
-            Organization parent = createOrg(parentUuid, null, fyPatternUuid, mpPatternUuid);
+            Organization parent = createOrg(parentUuid, null, fyRuleUuid, mpRuleUuid);
             Organization child = createOrg(childUuid, parentUuid, null, null);
 
             when(organizationRepository.findById(OrganizationId.of(childUuid))).thenReturn(Optional.of(child));
             when(organizationRepository.findById(OrganizationId.of(parentUuid))).thenReturn(Optional.of(parent));
-            when(fiscalYearPatternRepository.findById(FiscalYearPatternId.of(fyPatternUuid)))
-                    .thenReturn(Optional.of(createFyPattern(fyPatternUuid)));
-            when(monthlyPeriodPatternRepository.findById(MonthlyPeriodPatternId.of(mpPatternUuid)))
-                    .thenReturn(Optional.of(createMpPattern(mpPatternUuid)));
+            when(fiscalYearRuleRepository.findById(FiscalYearRuleId.of(fyRuleUuid)))
+                    .thenReturn(Optional.of(createFyPattern(fyRuleUuid)));
+            when(monthlyPeriodRuleRepository.findById(MonthlyPeriodRuleId.of(mpRuleUuid)))
+                    .thenReturn(Optional.of(createMpPattern(mpRuleUuid)));
 
             DateInfo result = service.getDateInfo(childUuid, TEST_DATE);
 
@@ -147,18 +147,18 @@ class DateInfoServiceUnitTest {
             when(organizationRepository.findById(OrganizationId.of(orgUuid))).thenReturn(Optional.of(org));
 
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
-            tenant.assignDefaultPatterns(tenantFyPatternUuid, tenantMpPatternUuid);
+            tenant.assignDefaultRules(tenantFyPatternUuid, tenantMpPatternUuid);
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            when(fiscalYearPatternRepository.findById(FiscalYearPatternId.of(tenantFyPatternUuid)))
+            when(fiscalYearRuleRepository.findById(FiscalYearRuleId.of(tenantFyPatternUuid)))
                     .thenReturn(Optional.of(createFyPattern(tenantFyPatternUuid)));
-            when(monthlyPeriodPatternRepository.findById(MonthlyPeriodPatternId.of(tenantMpPatternUuid)))
+            when(monthlyPeriodRuleRepository.findById(MonthlyPeriodRuleId.of(tenantMpPatternUuid)))
                     .thenReturn(Optional.of(createMpPattern(tenantMpPatternUuid)));
 
             DateInfo result = service.getDateInfo(orgUuid, TEST_DATE);
 
-            assertEquals(tenantFyPatternUuid, result.fiscalYearPatternId());
-            assertEquals(tenantMpPatternUuid, result.monthlyPeriodPatternId());
+            assertEquals(tenantFyPatternUuid, result.fiscalYearRuleId());
+            assertEquals(tenantMpPatternUuid, result.monthlyPeriodRuleId());
             assertEquals("tenant", result.fiscalYearSource());
             assertEquals("tenant", result.monthlyPeriodSource());
         }
@@ -174,15 +174,15 @@ class DateInfoServiceUnitTest {
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            when(systemDefaultSettingsRepository.getDefaultFiscalYearPattern())
-                    .thenReturn(new SystemDefaultFiscalYearPattern(4, 1));
-            when(systemDefaultSettingsRepository.getDefaultMonthlyPeriodPattern())
-                    .thenReturn(new SystemDefaultMonthlyPeriodPattern(1));
+            when(systemDefaultSettingsRepository.getDefaultFiscalYearRule())
+                    .thenReturn(new SystemDefaultFiscalYearRule(4, 1));
+            when(systemDefaultSettingsRepository.getDefaultMonthlyPeriodRule())
+                    .thenReturn(new SystemDefaultMonthlyPeriodRule(1));
 
             DateInfo result = service.getDateInfo(orgUuid, TEST_DATE);
 
-            assertNull(result.fiscalYearPatternId());
-            assertNull(result.monthlyPeriodPatternId());
+            assertNull(result.fiscalYearRuleId());
+            assertNull(result.monthlyPeriodRuleId());
             assertEquals("system", result.fiscalYearSource());
             assertEquals("system", result.monthlyPeriodSource());
         }
@@ -198,22 +198,22 @@ class DateInfoServiceUnitTest {
     }
 
     @Nested
-    @DisplayName("getEffectivePatterns")
-    class GetEffectivePatterns {
+    @DisplayName("getEffectiveRules")
+    class GetEffectiveRules {
 
         @Test
         @DisplayName("should return organization source when org has patterns")
         void shouldReturnOrganizationSource() {
             UUID orgUuid = UUID.randomUUID();
-            UUID fyPatternUuid = UUID.randomUUID();
-            UUID mpPatternUuid = UUID.randomUUID();
+            UUID fyRuleUuid = UUID.randomUUID();
+            UUID mpRuleUuid = UUID.randomUUID();
 
-            Organization org = createOrg(orgUuid, null, fyPatternUuid, mpPatternUuid);
+            Organization org = createOrg(orgUuid, null, fyRuleUuid, mpRuleUuid);
             when(organizationRepository.findById(OrganizationId.of(orgUuid))).thenReturn(Optional.of(org));
 
-            DateInfoService.EffectivePatterns result = service.getEffectivePatterns(orgUuid);
+            DateInfoService.EffectiveRules result = service.getEffectiveRules(orgUuid);
 
-            assertEquals(fyPatternUuid, result.fiscalYearPatternId());
+            assertEquals(fyRuleUuid, result.fiscalYearRuleId());
             assertEquals("organization:" + orgUuid, result.fiscalYearSource());
             assertNotNull(result.fiscalYearSourceName());
             assertNotNull(result.monthlyPeriodSourceName());
@@ -230,12 +230,12 @@ class DateInfoServiceUnitTest {
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            DateInfoService.EffectivePatterns result = service.getEffectivePatterns(orgUuid);
+            DateInfoService.EffectiveRules result = service.getEffectiveRules(orgUuid);
 
-            assertNull(result.fiscalYearPatternId());
+            assertNull(result.fiscalYearRuleId());
             assertEquals("system", result.fiscalYearSource());
             assertNull(result.fiscalYearSourceName());
-            assertNull(result.monthlyPeriodPatternId());
+            assertNull(result.monthlyPeriodRuleId());
             assertEquals("system", result.monthlyPeriodSource());
             assertNull(result.monthlyPeriodSourceName());
         }

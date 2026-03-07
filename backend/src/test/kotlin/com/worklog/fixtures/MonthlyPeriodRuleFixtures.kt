@@ -1,18 +1,18 @@
 package com.worklog.fixtures
 
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRule
 import com.worklog.domain.tenant.TenantId
 import java.util.UUID
 
 /**
- * Test fixtures for MonthlyPeriodPattern-related entities.
+ * Test fixtures for MonthlyPeriodRule-related entities.
  */
-object MonthlyPeriodPatternFixtures {
+object MonthlyPeriodRuleFixtures {
     /**
-     * Kotlin-friendly wrapper for creating MonthlyPeriodPattern with named arguments.
+     * Kotlin-friendly wrapper for creating MonthlyPeriodRule with named arguments.
      */
-    fun createPattern(tenantId: TenantId, name: String, startDay: Int): MonthlyPeriodPattern =
-        MonthlyPeriodPattern.create(tenantId, name, startDay)
+    fun createPattern(tenantId: TenantId, name: String, startDay: Int): MonthlyPeriodRule =
+        MonthlyPeriodRule.create(tenantId, name, startDay)
 
     /**
      * Creates a valid monthly period pattern name.

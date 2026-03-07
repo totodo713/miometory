@@ -2,7 +2,7 @@ package com.worklog.domain.fiscalyear
 
 import com.worklog.domain.shared.DomainException
 import com.worklog.domain.tenant.TenantId
-import com.worklog.fixtures.FiscalYearPatternFixtures
+import com.worklog.fixtures.FiscalYearRuleFixtures
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.util.UUID
@@ -11,16 +11,16 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 /**
- * Unit tests for FiscalYearPattern entity.
+ * Unit tests for FiscalYearRule entity.
  * Tests domain logic for fiscal year calculation without infrastructure dependencies.
  */
-class FiscalYearPatternTest {
+class FiscalYearRuleTest {
     private val tenantId = TenantId(UUID.randomUUID())
 
     @Test
     fun `create should generate valid pattern`() {
         val pattern =
-            FiscalYearPatternFixtures.createPattern(
+            FiscalYearRuleFixtures.createPattern(
                 tenantId = tenantId,
                 name = "4月開始",
                 startMonth = 4,
@@ -37,7 +37,7 @@ class FiscalYearPatternTest {
     @Test
     fun `create should trim whitespace from name`() {
         val pattern =
-            FiscalYearPatternFixtures.createPattern(
+            FiscalYearRuleFixtures.createPattern(
                 tenantId = tenantId,
                 name = "  April Start  ",
                 startMonth = 4,
@@ -52,7 +52,7 @@ class FiscalYearPatternTest {
     fun `create should fail with startMonth less than 1`() {
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, "Invalid", 0, 1)
+                FiscalYearRuleFixtures.createPattern(tenantId, "Invalid", 0, 1)
             }
         assertEquals("INVALID_START_MONTH", exception.errorCode)
     }
@@ -61,7 +61,7 @@ class FiscalYearPatternTest {
     fun `create should fail with startMonth greater than 12`() {
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, "Invalid", 13, 1)
+                FiscalYearRuleFixtures.createPattern(tenantId, "Invalid", 13, 1)
             }
         assertEquals("INVALID_START_MONTH", exception.errorCode)
     }
@@ -70,7 +70,7 @@ class FiscalYearPatternTest {
     fun `create should fail with negative startMonth`() {
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, "Invalid", -1, 1)
+                FiscalYearRuleFixtures.createPattern(tenantId, "Invalid", -1, 1)
             }
         assertEquals("INVALID_START_MONTH", exception.errorCode)
     }
@@ -80,7 +80,7 @@ class FiscalYearPatternTest {
     fun `create should fail with startDay less than 1`() {
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, "Invalid", 4, 0)
+                FiscalYearRuleFixtures.createPattern(tenantId, "Invalid", 4, 0)
             }
         assertEquals("INVALID_START_DAY", exception.errorCode)
     }
@@ -89,7 +89,7 @@ class FiscalYearPatternTest {
     fun `create should fail with startDay greater than 31`() {
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, "Invalid", 4, 32)
+                FiscalYearRuleFixtures.createPattern(tenantId, "Invalid", 4, 32)
             }
         assertEquals("INVALID_START_DAY", exception.errorCode)
     }
@@ -98,7 +98,7 @@ class FiscalYearPatternTest {
     fun `create should fail with negative startDay`() {
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, "Invalid", 4, -1)
+                FiscalYearRuleFixtures.createPattern(tenantId, "Invalid", 4, -1)
             }
         assertEquals("INVALID_START_DAY", exception.errorCode)
     }
@@ -108,7 +108,7 @@ class FiscalYearPatternTest {
     fun `create should fail with empty name`() {
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, "", 4, 1)
+                FiscalYearRuleFixtures.createPattern(tenantId, "", 4, 1)
             }
         assertEquals("NAME_REQUIRED", exception.errorCode)
     }
@@ -118,7 +118,7 @@ class FiscalYearPatternTest {
         val longName = "a".repeat(101)
         val exception =
             assertFailsWith<DomainException> {
-                FiscalYearPatternFixtures.createPattern(tenantId, longName, 4, 1)
+                FiscalYearRuleFixtures.createPattern(tenantId, longName, 4, 1)
             }
         assertEquals("NAME_TOO_LONG", exception.errorCode)
     }
@@ -126,7 +126,7 @@ class FiscalYearPatternTest {
     // Fiscal year calculation tests - April start pattern (4月開始)
     @Test
     fun `getFiscalYear should return correct year for April start pattern - before fiscal year start`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "4月開始", 4, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "4月開始", 4, 1)
         val date = LocalDate.of(2025, 3, 31)
 
         assertEquals(2024, pattern.getFiscalYear(date))
@@ -134,7 +134,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for April start pattern - on fiscal year start`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "4月開始", 4, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "4月開始", 4, 1)
         val date = LocalDate.of(2025, 4, 1)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -142,7 +142,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for April start pattern - after fiscal year start`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "4月開始", 4, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "4月開始", 4, 1)
         val date = LocalDate.of(2025, 4, 2)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -150,7 +150,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for April start pattern - end of calendar year`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "4月開始", 4, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "4月開始", 4, 1)
         val date = LocalDate.of(2025, 12, 31)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -159,7 +159,7 @@ class FiscalYearPatternTest {
     // Fiscal year calculation tests - November start pattern (11月開始 - year boundary crossing)
     @Test
     fun `getFiscalYear should return correct year for November start pattern - before fiscal year start`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "11月開始", 11, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "11月開始", 11, 1)
         val date = LocalDate.of(2025, 10, 31)
 
         assertEquals(2024, pattern.getFiscalYear(date))
@@ -167,7 +167,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for November start pattern - on fiscal year start`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "11月開始", 11, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "11月開始", 11, 1)
         val date = LocalDate.of(2025, 11, 1)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -175,7 +175,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for November start pattern - after fiscal year start`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "11月開始", 11, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "11月開始", 11, 1)
         val date = LocalDate.of(2025, 11, 2)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -183,7 +183,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for November start pattern - next calendar year`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "11月開始", 11, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "11月開始", 11, 1)
         val date = LocalDate.of(2026, 1, 15)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -192,7 +192,7 @@ class FiscalYearPatternTest {
     // Fiscal year calculation tests - January start pattern (1月開始 - calendar year)
     @Test
     fun `getFiscalYear should return correct year for January start pattern - end of fiscal year`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "1月開始", 1, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "1月開始", 1, 1)
         val date = LocalDate.of(2024, 12, 31)
 
         assertEquals(2024, pattern.getFiscalYear(date))
@@ -200,7 +200,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for January start pattern - on fiscal year start`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "1月開始", 1, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "1月開始", 1, 1)
         val date = LocalDate.of(2025, 1, 1)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -208,7 +208,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYear should return correct year for January start pattern - end of calendar year`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "1月開始", 1, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "1月開始", 1, 1)
         val date = LocalDate.of(2025, 12, 31)
 
         assertEquals(2025, pattern.getFiscalYear(date))
@@ -217,7 +217,7 @@ class FiscalYearPatternTest {
     // Fiscal year range calculation tests
     @Test
     fun `getFiscalYearRange should return correct range for April start pattern`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "4月開始", 4, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "4月開始", 4, 1)
         val range = pattern.getFiscalYearRange(2025)
 
         assertEquals(LocalDate.of(2025, 4, 1), range.first)
@@ -226,7 +226,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYearRange should return correct range for November start pattern`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "11月開始", 11, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "11月開始", 11, 1)
         val range = pattern.getFiscalYearRange(2025)
 
         assertEquals(LocalDate.of(2025, 11, 1), range.first)
@@ -235,7 +235,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYearRange should return correct range for January start pattern`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "1月開始", 1, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "1月開始", 1, 1)
         val range = pattern.getFiscalYearRange(2025)
 
         assertEquals(LocalDate.of(2025, 1, 1), range.first)
@@ -245,7 +245,7 @@ class FiscalYearPatternTest {
     // Edge case: leap year handling
     @Test
     fun `getFiscalYear should handle leap year correctly`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "2月開始", 2, 29)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "2月開始", 2, 29)
         // 2024 is a leap year, 2025 is not
         val leapYearDate = LocalDate.of(2024, 2, 29)
 
@@ -255,9 +255,9 @@ class FiscalYearPatternTest {
     // Comprehensive test using fixtures
     @Test
     fun `getFiscalYear should match all test cases from fixtures`() {
-        FiscalYearPatternFixtures.fiscalYearCalculationTestCases.forEach { (patternData, dateStr, expectedYear) ->
+        FiscalYearRuleFixtures.fiscalYearCalculationTestCases.forEach { (patternData, dateStr, expectedYear) ->
             val pattern =
-                FiscalYearPatternFixtures.createPattern(
+                FiscalYearRuleFixtures.createPattern(
                     tenantId = tenantId,
                     name = "Test Pattern",
                     startMonth = patternData["startMonth"] as Int,
@@ -275,9 +275,9 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYearRange should match all test cases from fixtures`() {
-        FiscalYearPatternFixtures.fiscalYearRangeTestCases.forEach { (patternData, fiscalYear, expectedRange) ->
+        FiscalYearRuleFixtures.fiscalYearRangeTestCases.forEach { (patternData, fiscalYear, expectedRange) ->
             val pattern =
-                FiscalYearPatternFixtures.createPattern(
+                FiscalYearRuleFixtures.createPattern(
                     tenantId = tenantId,
                     name = "Test Pattern",
                     startMonth = patternData["startMonth"] as Int,
@@ -298,36 +298,36 @@ class FiscalYearPatternTest {
         }
     }
 
-    // FiscalYearPatternId tests for coverage improvement
+    // FiscalYearRuleId tests for coverage improvement
     @Test
-    fun `FiscalYearPatternId of(String) should create ID from string`() {
+    fun `FiscalYearRuleId of(String) should create ID from string`() {
         val uuidStr = UUID.randomUUID().toString()
-        val id = FiscalYearPatternId.of(uuidStr)
+        val id = FiscalYearRuleId.of(uuidStr)
 
         assertEquals(uuidStr, id.value().toString())
     }
 
     @Test
-    fun `FiscalYearPatternId of(UUID) should create ID from UUID`() {
+    fun `FiscalYearRuleId of(UUID) should create ID from UUID`() {
         val uuid = UUID.randomUUID()
-        val id = FiscalYearPatternId.of(uuid)
+        val id = FiscalYearRuleId.of(uuid)
 
         assertEquals(uuid, id.value())
     }
 
     @Test
-    fun `FiscalYearPatternId toString should return UUID string`() {
+    fun `FiscalYearRuleId toString should return UUID string`() {
         val uuid = UUID.randomUUID()
-        val id = FiscalYearPatternId.of(uuid)
+        val id = FiscalYearRuleId.of(uuid)
 
         assertEquals(uuid.toString(), id.toString())
     }
 
     @Test
     fun `createWithId should create pattern with specific ID`() {
-        val id = FiscalYearPatternId.generate()
+        val id = FiscalYearRuleId.generate()
         val pattern =
-            FiscalYearPattern.createWithId(
+            FiscalYearRule.createWithId(
                 id,
                 tenantId,
                 "Specific ID Pattern",
@@ -341,7 +341,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `getFiscalYearRange should handle February 29 in non-leap year`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "2月29日開始", 2, 29)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "2月29日開始", 2, 29)
         val range = pattern.getFiscalYearRange(2025) // 2025 is not a leap year
 
         // Should adjust to Feb 28 for non-leap years
@@ -351,7 +351,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `Pair component1 should return first value`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "Test", 4, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "Test", 4, 1)
         val range = pattern.getFiscalYearRange(2025)
 
         assertEquals(range.first, range.component1())
@@ -359,7 +359,7 @@ class FiscalYearPatternTest {
 
     @Test
     fun `Pair component2 should return second value`() {
-        val pattern = FiscalYearPatternFixtures.createPattern(tenantId, "Test", 4, 1)
+        val pattern = FiscalYearRuleFixtures.createPattern(tenantId, "Test", 4, 1)
         val range = pattern.getFiscalYearRange(2025)
 
         assertEquals(range.second, range.component2())

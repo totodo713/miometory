@@ -1,7 +1,7 @@
 package com.worklog.application.service;
 
-import com.worklog.domain.settings.SystemDefaultFiscalYearPattern;
-import com.worklog.domain.settings.SystemDefaultMonthlyPeriodPattern;
+import com.worklog.domain.settings.SystemDefaultFiscalYearRule;
+import com.worklog.domain.settings.SystemDefaultMonthlyPeriodRule;
 import com.worklog.infrastructure.repository.SystemDefaultSettingsRepository;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -20,20 +20,20 @@ public class SystemSettingsService {
     }
 
     @Transactional(readOnly = true)
-    public SystemDefaultPatterns getDefaultPatterns() {
-        SystemDefaultFiscalYearPattern fy = repository.getDefaultFiscalYearPattern();
-        SystemDefaultMonthlyPeriodPattern mp = repository.getDefaultMonthlyPeriodPattern();
-        return new SystemDefaultPatterns(fy.startMonth(), fy.startDay(), mp.startDay());
+    public SystemDefaultRules getDefaultRules() {
+        SystemDefaultFiscalYearRule fy = repository.getDefaultFiscalYearRule();
+        SystemDefaultMonthlyPeriodRule mp = repository.getDefaultMonthlyPeriodRule();
+        return new SystemDefaultRules(fy.startMonth(), fy.startDay(), mp.startDay());
     }
 
     @Transactional
-    public void updateDefaultPatterns(int fyStartMonth, int fyStartDay, int mpStartDay, UUID updatedBy) {
-        SystemDefaultFiscalYearPattern fyPattern = new SystemDefaultFiscalYearPattern(fyStartMonth, fyStartDay);
-        SystemDefaultMonthlyPeriodPattern mpPattern = new SystemDefaultMonthlyPeriodPattern(mpStartDay);
+    public void updateDefaultRules(int fyStartMonth, int fyStartDay, int mpStartDay, UUID updatedBy) {
+        SystemDefaultFiscalYearRule fyRule = new SystemDefaultFiscalYearRule(fyStartMonth, fyStartDay);
+        SystemDefaultMonthlyPeriodRule mpRule = new SystemDefaultMonthlyPeriodRule(mpStartDay);
 
-        repository.updateDefaultFiscalYearPattern(fyPattern, updatedBy);
-        repository.updateDefaultMonthlyPeriodPattern(mpPattern, updatedBy);
+        repository.updateDefaultFiscalYearRule(fyRule, updatedBy);
+        repository.updateDefaultMonthlyPeriodRule(mpRule, updatedBy);
     }
 
-    public record SystemDefaultPatterns(int fiscalYearStartMonth, int fiscalYearStartDay, int monthlyPeriodStartDay) {}
+    public record SystemDefaultRules(int fiscalYearStartMonth, int fiscalYearStartDay, int monthlyPeriodStartDay) {}
 }

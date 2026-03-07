@@ -38,8 +38,8 @@ public class Organization extends AggregateRoot<OrganizationId> {
     private Code code;
     private String name;
     private int level;
-    private UUID fiscalYearPatternId;
-    private UUID monthlyPeriodPatternId;
+    private UUID fiscalYearRuleId;
+    private UUID monthlyPeriodRuleId;
     private BigDecimal standardDailyHours;
     private Status status;
 
@@ -132,14 +132,14 @@ public class Organization extends AggregateRoot<OrganizationId> {
     }
 
     /**
-     * Assigns fiscal year and monthly period patterns to this organization.
+     * Assigns fiscal year and monthly period rules to this organization.
      *
-     * @param fiscalYearPatternId Fiscal year pattern ID (can be null for inheritance)
-     * @param monthlyPeriodPatternId Monthly period pattern ID (can be null for inheritance)
+     * @param fiscalYearRuleId Fiscal year rule ID (can be null for inheritance)
+     * @param monthlyPeriodRuleId Monthly period rule ID (can be null for inheritance)
      */
-    public void assignPatterns(UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {
-        OrganizationPatternAssigned event =
-                OrganizationPatternAssigned.create(this.id.value(), fiscalYearPatternId, monthlyPeriodPatternId);
+    public void assignRules(UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {
+        OrganizationRulesAssigned event =
+                OrganizationRulesAssigned.create(this.id.value(), fiscalYearRuleId, monthlyPeriodRuleId);
         raiseEvent(event);
     }
 
@@ -176,9 +176,9 @@ public class Organization extends AggregateRoot<OrganizationId> {
             case OrganizationActivated e -> {
                 this.status = Status.ACTIVE;
             }
-            case OrganizationPatternAssigned e -> {
-                this.fiscalYearPatternId = e.fiscalYearPatternId();
-                this.monthlyPeriodPatternId = e.monthlyPeriodPatternId();
+            case OrganizationRulesAssigned e -> {
+                this.fiscalYearRuleId = e.fiscalYearRuleId();
+                this.monthlyPeriodRuleId = e.monthlyPeriodRuleId();
             }
             case OrganizationStandardDailyHoursAssigned e -> {
                 this.standardDailyHours = e.standardDailyHours();
@@ -248,12 +248,12 @@ public class Organization extends AggregateRoot<OrganizationId> {
         return level;
     }
 
-    public UUID getFiscalYearPatternId() {
-        return fiscalYearPatternId;
+    public UUID getFiscalYearRuleId() {
+        return fiscalYearRuleId;
     }
 
-    public UUID getMonthlyPeriodPatternId() {
-        return monthlyPeriodPatternId;
+    public UUID getMonthlyPeriodRuleId() {
+        return monthlyPeriodRuleId;
     }
 
     public BigDecimal getStandardDailyHours() {

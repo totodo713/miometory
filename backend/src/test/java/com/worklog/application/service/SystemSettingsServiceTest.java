@@ -3,8 +3,8 @@ package com.worklog.application.service;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.worklog.domain.settings.SystemDefaultFiscalYearPattern;
-import com.worklog.domain.settings.SystemDefaultMonthlyPeriodPattern;
+import com.worklog.domain.settings.SystemDefaultFiscalYearRule;
+import com.worklog.domain.settings.SystemDefaultMonthlyPeriodRule;
 import com.worklog.infrastructure.repository.SystemDefaultSettingsRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,16 +30,16 @@ class SystemSettingsServiceTest {
     }
 
     @Nested
-    @DisplayName("getDefaultPatterns")
-    class GetDefaultPatterns {
+    @DisplayName("getDefaultRules")
+    class GetDefaultRules {
 
         @Test
         @DisplayName("should return combined fiscal year and monthly period defaults")
         void shouldReturnCombinedDefaults() {
-            when(repository.getDefaultFiscalYearPattern()).thenReturn(new SystemDefaultFiscalYearPattern(4, 1));
-            when(repository.getDefaultMonthlyPeriodPattern()).thenReturn(new SystemDefaultMonthlyPeriodPattern(1));
+            when(repository.getDefaultFiscalYearRule()).thenReturn(new SystemDefaultFiscalYearRule(4, 1));
+            when(repository.getDefaultMonthlyPeriodRule()).thenReturn(new SystemDefaultMonthlyPeriodRule(1));
 
-            SystemSettingsService.SystemDefaultPatterns result = service.getDefaultPatterns();
+            SystemSettingsService.SystemDefaultRules result = service.getDefaultRules();
 
             assertEquals(4, result.fiscalYearStartMonth());
             assertEquals(1, result.fiscalYearStartDay());
@@ -48,18 +48,18 @@ class SystemSettingsServiceTest {
     }
 
     @Nested
-    @DisplayName("updateDefaultPatterns")
-    class UpdateDefaultPatterns {
+    @DisplayName("updateDefaultRules")
+    class UpdateDefaultRules {
 
         @Test
         @DisplayName("should delegate to repository with correct values")
         void shouldDelegateToRepository() {
             UUID userId = UUID.randomUUID();
 
-            service.updateDefaultPatterns(10, 1, 15, userId);
+            service.updateDefaultRules(10, 1, 15, userId);
 
-            verify(repository).updateDefaultFiscalYearPattern(new SystemDefaultFiscalYearPattern(10, 1), userId);
-            verify(repository).updateDefaultMonthlyPeriodPattern(new SystemDefaultMonthlyPeriodPattern(15), userId);
+            verify(repository).updateDefaultFiscalYearRule(new SystemDefaultFiscalYearRule(10, 1), userId);
+            verify(repository).updateDefaultMonthlyPeriodRule(new SystemDefaultMonthlyPeriodRule(15), userId);
         }
 
         @Test
@@ -67,8 +67,8 @@ class SystemSettingsServiceTest {
         void shouldRejectInvalidMonth() {
             UUID userId = UUID.randomUUID();
 
-            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultPatterns(0, 1, 1, userId));
-            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultPatterns(13, 1, 1, userId));
+            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultRules(0, 1, 1, userId));
+            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultRules(13, 1, 1, userId));
         }
 
         @Test
@@ -76,8 +76,8 @@ class SystemSettingsServiceTest {
         void shouldRejectInvalidMonthlyPeriodStartDay() {
             UUID userId = UUID.randomUUID();
 
-            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultPatterns(4, 1, 0, userId));
-            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultPatterns(4, 1, 29, userId));
+            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultRules(4, 1, 0, userId));
+            assertThrows(IllegalArgumentException.class, () -> service.updateDefaultRules(4, 1, 29, userId));
         }
     }
 }

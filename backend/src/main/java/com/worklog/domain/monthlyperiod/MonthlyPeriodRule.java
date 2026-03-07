@@ -7,7 +7,7 @@ import com.worklog.domain.tenant.TenantId;
 import java.time.LocalDate;
 
 /**
- * MonthlyPeriodPattern aggregate root that defines how monthly periods are calculated.
+ * MonthlyPeriodRule aggregate root that defines how monthly periods are calculated.
  *
  * Business Rules:
  * - startDay must be 1-28 (to handle February in non-leap years)
@@ -15,52 +15,52 @@ import java.time.LocalDate;
  *
  * This is an event-sourced aggregate that tracks changes via domain events.
  */
-public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> {
+public class MonthlyPeriodRule extends AggregateRoot<MonthlyPeriodRuleId> {
 
-    private MonthlyPeriodPatternId id;
+    private MonthlyPeriodRuleId id;
     private TenantId tenantId;
     private String name;
     private int startDay;
 
     // Private constructor for factory methods
-    private MonthlyPeriodPattern() {}
+    private MonthlyPeriodRule() {}
 
     /**
-     * Creates a new MonthlyPeriodPattern.
+     * Creates a new MonthlyPeriodRule.
      *
      * @param tenantId The tenant ID
      * @param name The pattern name
      * @param startDay The starting day (1-28)
-     * @return A new MonthlyPeriodPattern with MonthlyPeriodPatternCreated event
+     * @return A new MonthlyPeriodRule with MonthlyPeriodRuleCreated event
      * @throws DomainException if validation fails
      */
-    public static MonthlyPeriodPattern create(TenantId tenantId, String name, int startDay) {
+    public static MonthlyPeriodRule create(TenantId tenantId, String name, int startDay) {
         validateName(name);
         validateStartDay(startDay);
 
-        MonthlyPeriodPattern pattern = new MonthlyPeriodPattern();
-        MonthlyPeriodPatternId patternId = MonthlyPeriodPatternId.generate();
+        MonthlyPeriodRule pattern = new MonthlyPeriodRule();
+        MonthlyPeriodRuleId patternId = MonthlyPeriodRuleId.generate();
 
-        MonthlyPeriodPatternCreated event =
-                MonthlyPeriodPatternCreated.create(patternId.value(), tenantId.value(), name.trim(), startDay);
+        MonthlyPeriodRuleCreated event =
+                MonthlyPeriodRuleCreated.create(patternId.value(), tenantId.value(), name.trim(), startDay);
         pattern.raiseEvent(event);
 
         return pattern;
     }
 
     /**
-     * Creates a new MonthlyPeriodPattern with a specific ID.
+     * Creates a new MonthlyPeriodRule with a specific ID.
      * Used for reconstitution from event store.
      */
-    public static MonthlyPeriodPattern createWithId(
-            MonthlyPeriodPatternId id, TenantId tenantId, String name, int startDay) {
+    public static MonthlyPeriodRule createWithId(
+            MonthlyPeriodRuleId id, TenantId tenantId, String name, int startDay) {
         validateName(name);
         validateStartDay(startDay);
 
-        MonthlyPeriodPattern pattern = new MonthlyPeriodPattern();
+        MonthlyPeriodRule pattern = new MonthlyPeriodRule();
 
-        MonthlyPeriodPatternCreated event =
-                MonthlyPeriodPatternCreated.create(id.value(), tenantId.value(), name.trim(), startDay);
+        MonthlyPeriodRuleCreated event =
+                MonthlyPeriodRuleCreated.create(id.value(), tenantId.value(), name.trim(), startDay);
         pattern.raiseEvent(event);
 
         return pattern;
@@ -94,8 +94,8 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
 
     @Override
     protected void apply(DomainEvent event) {
-        if (event instanceof MonthlyPeriodPatternCreated e) {
-            this.id = MonthlyPeriodPatternId.of(e.aggregateId());
+        if (event instanceof MonthlyPeriodRuleCreated e) {
+            this.id = MonthlyPeriodRuleId.of(e.aggregateId());
             this.tenantId = TenantId.of(e.tenantId());
             this.name = e.name();
             this.startDay = e.startDay();
@@ -124,13 +124,13 @@ public class MonthlyPeriodPattern extends AggregateRoot<MonthlyPeriodPatternId> 
     // Getters
 
     @Override
-    public MonthlyPeriodPatternId getId() {
+    public MonthlyPeriodRuleId getId() {
         return id;
     }
 
     @Override
     public String getAggregateType() {
-        return "MonthlyPeriodPattern";
+        return "MonthlyPeriodRule";
     }
 
     public TenantId getTenantId() {

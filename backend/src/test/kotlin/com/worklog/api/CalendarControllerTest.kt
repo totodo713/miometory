@@ -164,7 +164,7 @@ class CalendarControllerTest : IntegrationTestBase() {
         // Arrange - Create holiday calendar for test tenant
         val calendarId = UUID.randomUUID()
         createHolidayCalendar(calendarId)
-        createHolidayCalendarEntry(
+        createHolidayCalendarRule(
             calendarId = calendarId,
             name = "New Year's Day",
             nameJa = "元日",
@@ -331,7 +331,7 @@ class CalendarControllerTest : IntegrationTestBase() {
         }
     }
 
-    private fun createHolidayCalendarEntry(
+    private fun createHolidayCalendarRule(
         calendarId: UUID,
         name: String,
         nameJa: String,

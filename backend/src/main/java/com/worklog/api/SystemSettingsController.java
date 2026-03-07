@@ -1,7 +1,7 @@
 package com.worklog.api;
 
 import com.worklog.application.service.SystemSettingsService;
-import com.worklog.application.service.SystemSettingsService.SystemDefaultPatterns;
+import com.worklog.application.service.SystemSettingsService.SystemDefaultRules;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -30,26 +30,26 @@ public class SystemSettingsController {
         this.userRepository = userRepository;
     }
 
-    @GetMapping("/patterns")
+    @GetMapping("/rules")
     @PreAuthorize("hasPermission(null, 'system_settings.view')")
-    public ResponseEntity<SystemDefaultPatterns> getPatterns() {
-        return ResponseEntity.ok(systemSettingsService.getDefaultPatterns());
+    public ResponseEntity<SystemDefaultRules> getRules() {
+        return ResponseEntity.ok(systemSettingsService.getDefaultRules());
     }
 
-    @PutMapping("/patterns")
+    @PutMapping("/rules")
     @PreAuthorize("hasPermission(null, 'system_settings.update')")
-    public ResponseEntity<Void> updatePatterns(
-            @Valid @RequestBody UpdatePatternsRequest request, Authentication authentication) {
+    public ResponseEntity<Void> updateRules(
+            @Valid @RequestBody UpdateRulesRequest request, Authentication authentication) {
         UUID userId = userRepository
                 .findByEmail(authentication.getName())
                 .map(user -> user.getId().value())
                 .orElse(null);
-        systemSettingsService.updateDefaultPatterns(
+        systemSettingsService.updateDefaultRules(
                 request.fiscalYearStartMonth(), request.fiscalYearStartDay(), request.monthlyPeriodStartDay(), userId);
         return ResponseEntity.noContent().build();
     }
 
-    public record UpdatePatternsRequest(
+    public record UpdateRulesRequest(
             @Min(1) @Max(12) int fiscalYearStartMonth,
             @Min(1) @Max(31) int fiscalYearStartDay,
             @Min(1) @Max(28) int monthlyPeriodStartDay) {}

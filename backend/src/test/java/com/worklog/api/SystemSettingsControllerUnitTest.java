@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.worklog.application.service.SystemSettingsService;
-import com.worklog.application.service.SystemSettingsService.SystemDefaultPatterns;
+import com.worklog.application.service.SystemSettingsService.SystemDefaultRules;
 import com.worklog.domain.user.User;
 import com.worklog.domain.user.UserId;
 import com.worklog.infrastructure.persistence.JdbcUserRepository;
@@ -42,16 +42,16 @@ class SystemSettingsControllerUnitTest {
     }
 
     @Nested
-    @DisplayName("GET /api/v1/admin/system/settings/patterns")
-    class GetPatterns {
+    @DisplayName("GET /api/v1/admin/system/settings/rules")
+    class GetRules {
 
         @Test
         @DisplayName("should return system default patterns")
         void shouldReturnPatterns() {
-            SystemDefaultPatterns patterns = new SystemDefaultPatterns(4, 1, 1);
-            when(systemSettingsService.getDefaultPatterns()).thenReturn(patterns);
+            SystemDefaultRules patterns = new SystemDefaultRules(4, 1, 1);
+            when(systemSettingsService.getDefaultRules()).thenReturn(patterns);
 
-            ResponseEntity<SystemDefaultPatterns> response = controller.getPatterns();
+            ResponseEntity<SystemDefaultRules> response = controller.getRules();
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertNotNull(response.getBody());
@@ -62,8 +62,8 @@ class SystemSettingsControllerUnitTest {
     }
 
     @Nested
-    @DisplayName("PUT /api/v1/admin/system/settings/patterns")
-    class UpdatePatterns {
+    @DisplayName("PUT /api/v1/admin/system/settings/rules")
+    class UpdateRules {
 
         @Test
         @DisplayName("should update patterns and return no content")
@@ -74,13 +74,13 @@ class SystemSettingsControllerUnitTest {
             when(authentication.getName()).thenReturn("admin@test.com");
             when(userRepository.findByEmail("admin@test.com")).thenReturn(Optional.of(mockUser));
 
-            SystemSettingsController.UpdatePatternsRequest request =
-                    new SystemSettingsController.UpdatePatternsRequest(10, 1, 15);
+            SystemSettingsController.UpdateRulesRequest request =
+                    new SystemSettingsController.UpdateRulesRequest(10, 1, 15);
 
-            ResponseEntity<Void> response = controller.updatePatterns(request, authentication);
+            ResponseEntity<Void> response = controller.updateRules(request, authentication);
 
             assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-            verify(systemSettingsService).updateDefaultPatterns(10, 1, 15, userId);
+            verify(systemSettingsService).updateDefaultRules(10, 1, 15, userId);
         }
 
         @Test
@@ -89,13 +89,13 @@ class SystemSettingsControllerUnitTest {
             when(authentication.getName()).thenReturn("unknown@test.com");
             when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
 
-            SystemSettingsController.UpdatePatternsRequest request =
-                    new SystemSettingsController.UpdatePatternsRequest(4, 1, 1);
+            SystemSettingsController.UpdateRulesRequest request =
+                    new SystemSettingsController.UpdateRulesRequest(4, 1, 1);
 
-            ResponseEntity<Void> response = controller.updatePatterns(request, authentication);
+            ResponseEntity<Void> response = controller.updateRules(request, authentication);
 
             assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-            verify(systemSettingsService).updateDefaultPatterns(4, 1, 1, null);
+            verify(systemSettingsService).updateDefaultRules(4, 1, 1, null);
         }
     }
 }

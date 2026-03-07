@@ -3,7 +3,7 @@ package com.worklog.infrastructure.repository;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.worklog.IntegrationTestBase;
-import com.worklog.infrastructure.repository.HolidayCalendarEntryRepository.HolidayCalendarEntryRow;
+import com.worklog.infrastructure.repository.HolidayCalendarRuleRepository.HolidayCalendarRuleRow;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,11 +11,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@DisplayName("HolidayCalendarEntryRepository")
-class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
+@DisplayName("HolidayCalendarRuleRepository")
+class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
 
     @Autowired
-    private HolidayCalendarEntryRepository repository;
+    private HolidayCalendarRuleRepository repository;
 
     private UUID tenantId;
     private UUID calendarId;
@@ -47,10 +47,10 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
                 VALUES (?, 'New Year''s Day', '元日', 'FIXED', 1, 1)
                 """, calendarId);
 
-        List<HolidayCalendarEntryRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
 
         assertFalse(result.isEmpty());
-        HolidayCalendarEntryRow entry = result.stream()
+        HolidayCalendarRuleRow entry = result.stream()
                 .filter(e -> e.name().equals("New Year's Day"))
                 .findFirst()
                 .orElseThrow();
@@ -71,9 +71,9 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
                 VALUES (?, 'Coming of Age Day', '成人の日', 'NTH_WEEKDAY', 1, 2, 1)
                 """, calendarId);
 
-        List<HolidayCalendarEntryRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
 
-        HolidayCalendarEntryRow entry = result.stream()
+        HolidayCalendarRuleRow entry = result.stream()
                 .filter(e -> e.name().equals("Coming of Age Day"))
                 .findFirst()
                 .orElseThrow();
@@ -97,7 +97,7 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
                 VALUES (?, 'Hidden Holiday', '非表示', 'FIXED', 3, 15)
                 """, inactiveCalendarId);
 
-        List<HolidayCalendarEntryRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
 
         assertTrue(result.stream().noneMatch(e -> e.name().equals("Hidden Holiday")));
     }
@@ -107,7 +107,7 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
     void shouldReturnEmptyForUnknownTenant() {
         UUID unknownTenantId = UUID.randomUUID();
 
-        List<HolidayCalendarEntryRow> result = repository.findActiveEntriesByTenantId(unknownTenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(unknownTenantId);
 
         assertTrue(result.isEmpty());
     }
@@ -124,9 +124,9 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
                 VALUES (?, 'New Year''s Day', '元日', 'FIXED', 1, 1)
                 """, calendarId);
 
-        List<HolidayCalendarEntryRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
 
-        List<HolidayCalendarEntryRow> testEntries = result.stream()
+        List<HolidayCalendarRuleRow> testEntries = result.stream()
                 .filter(e -> e.name().equals("New Year's Day") || e.name().equals("Foundation Day"))
                 .toList();
         assertEquals(2, testEntries.size());
@@ -142,9 +142,9 @@ class HolidayCalendarEntryRepositoryTest extends IntegrationTestBase {
                 VALUES (?, 'Olympic Day', 'オリンピック記念日', 'FIXED', 7, 24, 2020)
                 """, calendarId);
 
-        List<HolidayCalendarEntryRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
 
-        HolidayCalendarEntryRow entry = result.stream()
+        HolidayCalendarRuleRow entry = result.stream()
                 .filter(e -> e.name().equals("Olympic Day"))
                 .findFirst()
                 .orElseThrow();

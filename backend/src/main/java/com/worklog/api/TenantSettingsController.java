@@ -1,13 +1,13 @@
 package com.worklog.api;
 
 import com.worklog.application.service.TenantAccessValidator;
-import com.worklog.domain.fiscalyear.FiscalYearPatternId;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.fiscalyear.FiscalYearRuleId;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRuleId;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.tenant.Tenant;
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
-import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
+import com.worklog.infrastructure.repository.FiscalYearRuleRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodRuleRepository;
 import com.worklog.infrastructure.repository.TenantRepository;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -26,62 +26,62 @@ import org.springframework.web.bind.annotation.*;
 public class TenantSettingsController {
 
     private final TenantRepository tenantRepository;
-    private final FiscalYearPatternRepository fiscalYearPatternRepository;
-    private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private final FiscalYearRuleRepository fiscalYearRuleRepository;
+    private final MonthlyPeriodRuleRepository monthlyPeriodRuleRepository;
     private final TenantAccessValidator tenantAccessValidator;
 
     public TenantSettingsController(
             TenantRepository tenantRepository,
-            FiscalYearPatternRepository fiscalYearPatternRepository,
-            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository,
+            FiscalYearRuleRepository fiscalYearRuleRepository,
+            MonthlyPeriodRuleRepository monthlyPeriodRuleRepository,
             TenantAccessValidator tenantAccessValidator) {
         this.tenantRepository = tenantRepository;
-        this.fiscalYearPatternRepository = fiscalYearPatternRepository;
-        this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
+        this.fiscalYearRuleRepository = fiscalYearRuleRepository;
+        this.monthlyPeriodRuleRepository = monthlyPeriodRuleRepository;
         this.tenantAccessValidator = tenantAccessValidator;
     }
 
-    @GetMapping("/default-patterns")
+    @GetMapping("/default-rules")
     @PreAuthorize("hasPermission(null, 'tenant_settings.view')")
-    public ResponseEntity<DefaultPatternsResponse> getDefaultPatterns(Authentication auth) {
+    public ResponseEntity<DefaultRulesResponse> getDefaultRules(Authentication auth) {
         UUID tenantId = tenantAccessValidator.resolveUserTenantId(auth);
         Tenant tenant = tenantRepository
                 .findById(TenantId.of(tenantId))
                 .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
-        return ResponseEntity.ok(new DefaultPatternsResponse(
-                tenant.getDefaultFiscalYearPatternId(), tenant.getDefaultMonthlyPeriodPatternId()));
+        return ResponseEntity.ok(new DefaultRulesResponse(
+                tenant.getDefaultFiscalYearRuleId(), tenant.getDefaultMonthlyPeriodRuleId()));
     }
 
-    @PutMapping("/default-patterns")
+    @PutMapping("/default-rules")
     @PreAuthorize("hasPermission(null, 'tenant_settings.manage')")
-    public ResponseEntity<Void> updateDefaultPatterns(
-            Authentication auth, @RequestBody UpdateDefaultPatternsRequest request) {
+    public ResponseEntity<Void> updateDefaultRules(
+            Authentication auth, @RequestBody UpdateDefaultRulesRequest request) {
         UUID tenantId = tenantAccessValidator.resolveUserTenantId(auth);
         Tenant tenant = tenantRepository
                 .findById(TenantId.of(tenantId))
                 .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
 
-        if (request.defaultFiscalYearPatternId() != null) {
-            fiscalYearPatternRepository
-                    .findById(FiscalYearPatternId.of(request.defaultFiscalYearPatternId()))
+        if (request.defaultFiscalYearRuleId() != null) {
+            fiscalYearRuleRepository
+                    .findById(FiscalYearRuleId.of(request.defaultFiscalYearRuleId()))
                     .filter(p -> p.getTenantId().value().equals(tenantId))
                     .orElseThrow(() -> new DomainException(
-                            "PATTERN_NOT_OWNED", "Fiscal year pattern does not belong to this tenant"));
+                            "RULE_NOT_OWNED", "Fiscal year rule does not belong to this tenant"));
         }
-        if (request.defaultMonthlyPeriodPatternId() != null) {
-            monthlyPeriodPatternRepository
-                    .findById(MonthlyPeriodPatternId.of(request.defaultMonthlyPeriodPatternId()))
+        if (request.defaultMonthlyPeriodRuleId() != null) {
+            monthlyPeriodRuleRepository
+                    .findById(MonthlyPeriodRuleId.of(request.defaultMonthlyPeriodRuleId()))
                     .filter(p -> p.getTenantId().value().equals(tenantId))
                     .orElseThrow(() -> new DomainException(
-                            "PATTERN_NOT_OWNED", "Monthly period pattern does not belong to this tenant"));
+                            "RULE_NOT_OWNED", "Monthly period rule does not belong to this tenant"));
         }
 
-        tenant.assignDefaultPatterns(request.defaultFiscalYearPatternId(), request.defaultMonthlyPeriodPatternId());
+        tenant.assignDefaultRules(request.defaultFiscalYearRuleId(), request.defaultMonthlyPeriodRuleId());
         tenantRepository.save(tenant);
         return ResponseEntity.noContent().build();
     }
 
-    public record DefaultPatternsResponse(UUID defaultFiscalYearPatternId, UUID defaultMonthlyPeriodPatternId) {}
+    public record DefaultRulesResponse(UUID defaultFiscalYearRuleId, UUID defaultMonthlyPeriodRuleId) {}
 
-    public record UpdateDefaultPatternsRequest(UUID defaultFiscalYearPatternId, UUID defaultMonthlyPeriodPatternId) {}
+    public record UpdateDefaultRulesRequest(UUID defaultFiscalYearRuleId, UUID defaultMonthlyPeriodRuleId) {}
 }

@@ -1,19 +1,19 @@
 package com.worklog.fixtures
 
-import com.worklog.domain.fiscalyear.FiscalYearPattern
+import com.worklog.domain.fiscalyear.FiscalYearRule
 import com.worklog.domain.tenant.TenantId
 import java.util.UUID
 
 /**
- * Test fixtures for FiscalYearPattern-related entities.
+ * Test fixtures for FiscalYearRule-related entities.
  * Uses Instancio for generating test data where applicable.
  */
-object FiscalYearPatternFixtures {
+object FiscalYearRuleFixtures {
     /**
-     * Kotlin-friendly wrapper for creating FiscalYearPattern with named arguments.
+     * Kotlin-friendly wrapper for creating FiscalYearRule with named arguments.
      */
-    fun createPattern(tenantId: TenantId, name: String, startMonth: Int, startDay: Int): FiscalYearPattern =
-        FiscalYearPattern.create(tenantId, name, startMonth, startDay)
+    fun createPattern(tenantId: TenantId, name: String, startMonth: Int, startDay: Int): FiscalYearRule =
+        FiscalYearRule.create(tenantId, name, startMonth, startDay)
 
     /**
      * Creates a valid fiscal year pattern name.
