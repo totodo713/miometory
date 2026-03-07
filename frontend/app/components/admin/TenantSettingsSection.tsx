@@ -26,6 +26,7 @@ export function TenantSettingsSection() {
   const [showFyForm, setShowFyForm] = useState(false);
   const [showMpForm, setShowMpForm] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: toast.error is stable via useMemo but excluded defensively (see #131)
   useEffect(() => {
     if (!tenantId) return;
     let cancelled = false;
@@ -59,7 +60,7 @@ export function TenantSettingsSection() {
     return () => {
       cancelled = true;
     };
-  }, [tenantId, toast, t]);
+  }, [tenantId, t]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: t from useTranslations is stable
   const handleSave = useCallback(async () => {
