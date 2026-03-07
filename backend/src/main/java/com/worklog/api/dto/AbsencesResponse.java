@@ -5,4 +5,4 @@ import java.util.List;
 /**
  * Response DTO for a list of absences.
  */
-public record AbsencesResponse(List<AbsenceResponse> absences, int total) {}
+public record AbsencesResponse(List<AbsenceResponse> absences, int totalCount) {}

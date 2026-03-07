@@ -33,7 +33,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
           memberName: "Test Engineer",
           periodStart: "2026-01-01",
           periodEnd: "2026-01-31",
-          dates: Array.from({ length: 31 }, (_, i) => ({
+          entries: Array.from({ length: 31 }, (_, i) => ({
             date: `2026-01-${String(i + 1).padStart(2, "0")}`,
             totalWorkHours: i === 14 ? 8 : 0,
             totalAbsenceHours: 0,
@@ -68,7 +68,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ entries: [], total: 0 }),
+          body: JSON.stringify({ entries: [], totalCount: 0 }),
         });
       } else {
         await route.continue();
@@ -80,7 +80,7 @@ test.describe("Accessibility - WCAG 2.1 AA Compliance", () => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ absences: [], total: 0 }),
+          body: JSON.stringify({ absences: [], totalCount: 0 }),
         });
       } else {
         await route.continue();

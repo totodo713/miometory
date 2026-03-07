@@ -185,7 +185,7 @@ class CalendarControllerTest : IntegrationTestBase() {
         val body = response.body as Map<*, *>
 
         @Suppress("UNCHECKED_CAST")
-        val entries = body["dates"] as List<Map<String, Any?>>
+        val entries = body["entries"] as List<Map<String, Any?>>
 
         val jan1 = entries.find { it["date"] == "2024-01-01" }
         assertNotNull(jan1, "Expected entry for 2024-01-01")
@@ -208,13 +208,13 @@ class CalendarControllerTest : IntegrationTestBase() {
         val body = response.body as Map<*, *>
 
         @Suppress("UNCHECKED_CAST")
-        val dates = body["dates"] as List<Map<String, Any?>>
+        val entries = body["entries"] as List<Map<String, Any?>>
 
         // Verify every entry contains isHoliday field and none are true
-        dates.forEach { entry ->
+        entries.forEach { entry ->
             assertTrue(entry.containsKey("isHoliday"), "Each entry should include isHoliday")
         }
-        val anyHoliday = dates.any { it["isHoliday"] == true }
+        val anyHoliday = entries.any { it["isHoliday"] == true }
         assertEquals(false, anyHoliday, "No entries should be marked as holidays")
     }
 

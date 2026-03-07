@@ -80,7 +80,7 @@ class MemberControllerUnitTest {
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertEquals(2, response.getBody().count());
+            assertEquals(2, response.getBody().totalCount());
             assertEquals(2, response.getBody().projects().size());
             assertEquals("PROJ1", response.getBody().projects().get(0).code());
             assertEquals("Project One", response.getBody().projects().get(0).name());
@@ -97,7 +97,7 @@ class MemberControllerUnitTest {
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertEquals(0, response.getBody().count());
+            assertEquals(0, response.getBody().totalCount());
             assertTrue(response.getBody().projects().isEmpty());
         }
 

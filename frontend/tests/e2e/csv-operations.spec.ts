@@ -47,7 +47,7 @@ test.describe("CSV Import/Export", () => {
           memberName: "Test User",
           periodStart: "2025-12-21",
           periodEnd: "2026-01-20",
-          dates: Array.from({ length: 31 }, (_, i) => ({
+          entries: Array.from({ length: 31 }, (_, i) => ({
             date: `2026-01-${String(i + 1).padStart(2, "0")}`,
             totalWorkHours: 0,
             totalAbsenceHours: 0,
@@ -65,7 +65,7 @@ test.describe("CSV Import/Export", () => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ entries: [], total: 0 }),
+          body: JSON.stringify({ entries: [], totalCount: 0 }),
         });
       } else if (route.request().method() === "POST") {
         const requestBody = route.request().postDataJSON();
@@ -92,7 +92,7 @@ test.describe("CSV Import/Export", () => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({ absences: [], total: 0 }),
+          body: JSON.stringify({ absences: [], totalCount: 0 }),
         });
       } else {
         await route.continue();
@@ -108,7 +108,7 @@ test.describe("CSV Import/Export", () => {
           projectIds: [],
           previousMonthStart: "2025-12-21",
           previousMonthEnd: "2026-01-20",
-          count: 0,
+          totalCount: 0,
         }),
       });
     });

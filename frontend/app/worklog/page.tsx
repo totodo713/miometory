@@ -252,7 +252,7 @@ export default function WorkLogPage() {
 
         {!isLoading && !error && calendarData && (
           <>
-            <Calendar year={year} month={month} dates={calendarData.dates} />
+            <Calendar year={year} month={month} entries={calendarData.entries} />
 
             {/* Monthly Summary (T072) */}
             <div className="mt-6">

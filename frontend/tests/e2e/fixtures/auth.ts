@@ -99,7 +99,7 @@ export async function mockProjectsApi(
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ projects, count: projects.length }),
+      body: JSON.stringify({ projects, totalCount: projects.length }),
     });
   });
 }

@@ -50,7 +50,7 @@ export interface PatchWorkLogEntryRequest {
  */
 export interface WorkLogEntriesResponse {
   entries: WorkLogEntry[];
-  total: number;
+  totalCount: number;
 }
 
 /**
@@ -80,7 +80,7 @@ export interface MonthlyCalendarResponse {
   memberName: string;
   periodStart: string; // ISO date format
   periodEnd: string; // ISO date format
-  dates: DailyCalendarEntry[];
+  entries: DailyCalendarEntry[];
   monthlyApproval: MonthlyApprovalSummary | null;
 }
 
@@ -120,7 +120,7 @@ export interface AssignedProject {
  */
 export interface AssignedProjectsResponse {
   projects: AssignedProject[];
-  count: number;
+  totalCount: number;
 }
 
 /**

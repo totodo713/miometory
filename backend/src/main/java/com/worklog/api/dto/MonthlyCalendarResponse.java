@@ -13,7 +13,7 @@ public record MonthlyCalendarResponse(
         String memberName,
         LocalDate periodStart,
         LocalDate periodEnd,
-        List<DailyCalendarEntry> dates,
+        List<DailyCalendarEntry> entries,
         MonthlyApprovalSummary monthlyApproval) {
 
     /**
@@ -24,8 +24,8 @@ public record MonthlyCalendarResponse(
             String memberName,
             LocalDate periodStart,
             LocalDate periodEnd,
-            List<DailyCalendarEntry> dates) {
-        this(memberId, memberName, periodStart, periodEnd, dates, null);
+            List<DailyCalendarEntry> entries) {
+        this(memberId, memberName, periodStart, periodEnd, entries, null);
     }
 
     /**
