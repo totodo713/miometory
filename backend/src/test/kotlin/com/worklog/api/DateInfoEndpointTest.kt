@@ -357,7 +357,7 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // (until proper event projections are implemented)
         jdbcTemplate.update(
             """
-            INSERT INTO tenant (id, code, name, status, created_at)
+            INSERT INTO tenants (id, code, name, status, created_at)
             VALUES (?, ?, ?, 'ACTIVE', NOW())
             ON CONFLICT (id) DO NOTHING
             """,

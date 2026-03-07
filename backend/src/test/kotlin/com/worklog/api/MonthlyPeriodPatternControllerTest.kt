@@ -204,7 +204,7 @@ class MonthlyPeriodPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create tenant projection (event store → projection gap)
         baseJdbcTemplate.update(
-            """INSERT INTO tenant (id, code, name, status, created_at)
+            """INSERT INTO tenants (id, code, name, status, created_at)
                VALUES (?, ?, ?, 'ACTIVE', NOW()) ON CONFLICT (id) DO NOTHING""",
             tenantId,
             shortCode,

@@ -30,9 +30,9 @@ class CalendarControllerTest : IntegrationTestBase() {
 
     private fun cleanupTestHolidayData() {
         executeInNewTransaction {
-            // CASCADE on holiday_calendar_entry handles child row cleanup
+            // CASCADE on holiday_calendar_rules handles child row cleanup
             baseJdbcTemplate.update(
-                "DELETE FROM holiday_calendar WHERE tenant_id = ?::UUID",
+                "DELETE FROM holiday_calendars WHERE tenant_id = ?::UUID",
                 TEST_TENANT_ID,
             )
         }
@@ -321,7 +321,7 @@ class CalendarControllerTest : IntegrationTestBase() {
     private fun createHolidayCalendar(calendarId: UUID) {
         executeInNewTransaction {
             baseJdbcTemplate.update(
-                """INSERT INTO holiday_calendar
+                """INSERT INTO holiday_calendars
                    (id, tenant_id, name, description, country, is_active)
                    VALUES (?::UUID, ?::UUID,
                    'Test Holidays', 'Test', 'JP', true)""",
@@ -343,7 +343,7 @@ class CalendarControllerTest : IntegrationTestBase() {
     ) {
         executeInNewTransaction {
             baseJdbcTemplate.update(
-                """INSERT INTO holiday_calendar_entry
+                """INSERT INTO holiday_calendar_rules
                    (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week)
                    VALUES (?::UUID, ?::UUID, ?, ?, ?, ?, ?, ?, ?)""",
                 UUID.randomUUID().toString(),

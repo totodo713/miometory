@@ -22,29 +22,46 @@ class AuditLoggerTest : IntegrationTestBase() {
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
 
+    private lateinit var testUserId: UUID
+
+    companion object {
+        private const val USER_ROLE_ID = "00000000-0000-0000-0000-000000000002"
+    }
+
     @BeforeEach
     fun setUp() {
         // Clean up audit_logs before each test
         jdbcTemplate.execute("DELETE FROM audit_logs")
+
+        // Create a test user for FK constraint on audit_logs.user_id
+        testUserId = UUID.randomUUID()
+        jdbcTemplate.update(
+            """INSERT INTO users (id, email, hashed_password, name, role_id, account_status, created_at, updated_at)
+               VALUES (?, ?, 'hashed', ?, ?::UUID, 'active', NOW(), NOW())
+               ON CONFLICT (id) DO NOTHING""",
+            testUserId,
+            "audit-test-${testUserId.toString().take(8)}@test.com",
+            "Audit Test User",
+            USER_ROLE_ID,
+        )
     }
 
     @Test
     fun `log should store audit entry with all fields`() {
         val tenantId = UUID.randomUUID()
-        val userId = UUID.randomUUID()
         val resourceId = UUID.randomUUID()
         val details = mapOf("oldName" to "Old", "newName" to "New")
 
-        auditLogger.log(tenantId, userId, "UPDATE", "Tenant", resourceId, details)
+        auditLogger.log(tenantId, testUserId, "UPDATE", "Tenant", resourceId, details)
 
         val entries =
             jdbcTemplate.queryForList(
                 "SELECT * FROM audit_logs WHERE user_id = ?",
-                userId,
+                testUserId,
             )
 
         assertEquals(1, entries.size)
-        assertEquals(userId.toString(), entries[0]["user_id"].toString())
+        assertEquals(testUserId.toString(), entries[0]["user_id"].toString())
         assertEquals("UPDATE", entries[0]["event_type"])
         assertNotNull(entries[0]["timestamp"])
         assertEquals(365, entries[0]["retention_days"])
@@ -97,15 +114,14 @@ class AuditLoggerTest : IntegrationTestBase() {
     @Test
     fun `log should handle empty details`() {
         val tenantId = UUID.randomUUID()
-        val userId = UUID.randomUUID()
         val resourceId = UUID.randomUUID()
 
-        auditLogger.log(tenantId, userId, "DELETE", "Organization", resourceId, emptyMap())
+        auditLogger.log(tenantId, testUserId, "DELETE", "Organization", resourceId, emptyMap())
 
         val entries =
             jdbcTemplate.queryForList(
                 "SELECT * FROM audit_logs WHERE user_id = ?",
-                userId,
+                testUserId,
             )
 
         assertEquals(1, entries.size)
@@ -119,15 +135,14 @@ class AuditLoggerTest : IntegrationTestBase() {
     @Test
     fun `log should handle null details`() {
         val tenantId = UUID.randomUUID()
-        val userId = UUID.randomUUID()
         val resourceId = UUID.randomUUID()
 
-        auditLogger.log(tenantId, userId, "CREATE", "Project", resourceId, null)
+        auditLogger.log(tenantId, testUserId, "CREATE", "Project", resourceId, null)
 
         val entries =
             jdbcTemplate.queryForList(
                 "SELECT * FROM audit_logs WHERE user_id = ?",
-                userId,
+                testUserId,
             )
 
         assertEquals(1, entries.size)
@@ -141,17 +156,16 @@ class AuditLoggerTest : IntegrationTestBase() {
     @Test
     fun `multiple log entries should be stored independently`() {
         val tenantId = UUID.randomUUID()
-        val userId = UUID.randomUUID()
         val resourceId = UUID.randomUUID()
 
-        auditLogger.log(tenantId, userId, "CREATE", "Tenant", resourceId, mapOf("name" to "New Tenant"))
-        auditLogger.log(tenantId, userId, "UPDATE", "Tenant", resourceId, mapOf("name" to "Updated Tenant"))
-        auditLogger.log(tenantId, userId, "DEACTIVATE", "Tenant", resourceId, mapOf("reason" to "User request"))
+        auditLogger.log(tenantId, testUserId, "CREATE", "Tenant", resourceId, mapOf("name" to "New Tenant"))
+        auditLogger.log(tenantId, testUserId, "UPDATE", "Tenant", resourceId, mapOf("name" to "Updated Tenant"))
+        auditLogger.log(tenantId, testUserId, "DEACTIVATE", "Tenant", resourceId, mapOf("reason" to "User request"))
 
         val entries =
             jdbcTemplate.queryForList(
                 "SELECT * FROM audit_logs WHERE user_id = ? ORDER BY timestamp",
-                userId,
+                testUserId,
             )
 
         assertEquals(3, entries.size)
@@ -163,7 +177,6 @@ class AuditLoggerTest : IntegrationTestBase() {
     @Test
     fun `log should handle complex nested details`() {
         val tenantId = UUID.randomUUID()
-        val userId = UUID.randomUUID()
         val resourceId = UUID.randomUUID()
         val complexDetails =
             mapOf(
@@ -175,12 +188,12 @@ class AuditLoggerTest : IntegrationTestBase() {
                 "metadata" to listOf("tag1", "tag2", "tag3"),
             )
 
-        auditLogger.log(tenantId, userId, "UPDATE", "Organization", resourceId, complexDetails)
+        auditLogger.log(tenantId, testUserId, "UPDATE", "Organization", resourceId, complexDetails)
 
         val entries =
             jdbcTemplate.queryForList(
                 "SELECT details::text FROM audit_logs WHERE user_id = ?",
-                userId,
+                testUserId,
             )
 
         assertEquals(1, entries.size)
