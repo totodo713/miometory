@@ -4,18 +4,19 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { ApiError, api } from "@/services/api";
 
-interface MonthlyPeriodPatternFormProps {
+interface FiscalYearRuleFormProps {
   tenantId: string;
   open: boolean;
   onClose: () => void;
-  onCreated: (pattern: { id: string; name: string; startDay: number }) => void;
+  onCreated: (pattern: { id: string; name: string; startMonth: number; startDay: number }) => void;
 }
 
-export function MonthlyPeriodPatternForm({ tenantId, open, onClose, onCreated }: MonthlyPeriodPatternFormProps) {
-  const t = useTranslations("admin.monthlyPeriodPattern");
+export function FiscalYearRuleForm({ tenantId, open, onClose, onCreated }: FiscalYearRuleFormProps) {
+  const t = useTranslations("admin.fiscalYearPattern");
   const tc = useTranslations("common");
   const [name, setName] = useState("");
-  const [startDay, setStartDay] = useState(21);
+  const [startMonth, setStartMonth] = useState(4);
+  const [startDay, setStartDay] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,7 +42,7 @@ export function MonthlyPeriodPatternForm({ tenantId, open, onClose, onCreated }:
 
     setIsSubmitting(true);
     try {
-      const pattern = await api.admin.patterns.createMonthlyPeriodPattern(tenantId, { name, startDay });
+      const pattern = await api.admin.rules.createFiscalYearRule(tenantId, { name, startMonth, startDay });
       onCreated(pattern);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -61,11 +62,11 @@ export function MonthlyPeriodPatternForm({ tenantId, open, onClose, onCreated }:
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="mp-pattern-name" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="fy-pattern-name" className="block text-sm font-medium text-gray-700 mb-1">
               {t("form.name")}
             </label>
             <input
-              id="mp-pattern-name"
+              id="fy-pattern-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -75,11 +76,29 @@ export function MonthlyPeriodPatternForm({ tenantId, open, onClose, onCreated }:
           </div>
 
           <div>
-            <label htmlFor="mp-pattern-start-day" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="fy-pattern-start-month" className="block text-sm font-medium text-gray-700 mb-1">
+              {t("form.startMonth")}
+            </label>
+            <select
+              id="fy-pattern-start-month"
+              value={startMonth}
+              onChange={(e) => setStartMonth(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                <option key={m} value={m}>
+                  {t("form.monthSuffix", { month: m })}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="fy-pattern-start-day" className="block text-sm font-medium text-gray-700 mb-1">
               {t("form.startDay")}
             </label>
             <select
-              id="mp-pattern-start-day"
+              id="fy-pattern-start-day"
               value={startDay}
               onChange={(e) => setStartDay(Number(e.target.value))}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

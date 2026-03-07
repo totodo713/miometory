@@ -100,8 +100,8 @@ test.describe("System Settings Page", () => {
   test.beforeEach(async ({ page }) => {
     await setupMockedPage(page);
 
-    // Mock GET/PUT system settings patterns
-    await page.route("**/api/v1/admin/system/settings/patterns", async (route) => {
+    // Mock GET/PUT system settings rules
+    await page.route("**/api/v1/admin/system/settings/rules", async (route) => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
@@ -146,7 +146,7 @@ test.describe("System Settings Page", () => {
 
     // Intercept the PUT request
     const putPromise = page.waitForRequest(
-      (req) => req.url().includes("/api/v1/admin/system/settings/patterns") && req.method() === "PUT",
+      (req) => req.url().includes("/api/v1/admin/system/settings/rules") && req.method() === "PUT",
     );
 
     // Click save
@@ -161,7 +161,7 @@ test.describe("System Settings Page", () => {
   });
 });
 
-test.describe("Organization Effective Patterns Display", () => {
+test.describe("Organization Effective Rules Display", () => {
   const orgId = "org-001";
   const tenantId = "tenant-001";
 
@@ -178,8 +178,8 @@ test.describe("Organization Effective Patterns Display", () => {
       level: 1,
       status: "ACTIVE",
       memberCount: 0,
-      fiscalYearPatternId: null,
-      monthlyPeriodPatternId: null,
+      fiscalYearRuleId: null,
+      monthlyPeriodRuleId: null,
       createdAt: "2024-01-01T00:00:00",
       updatedAt: "2024-01-01T00:00:00",
     };
@@ -223,10 +223,10 @@ test.describe("Organization Effective Patterns Display", () => {
     });
 
     // Mock pattern lists
-    await page.route("**/api/v1/admin/fiscal-year-patterns**", async (route) => {
+    await page.route("**/api/v1/admin/fiscal-year-rules**", async (route) => {
       await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
     });
-    await page.route("**/api/v1/admin/monthly-period-patterns**", async (route) => {
+    await page.route("**/api/v1/admin/monthly-period-rules**", async (route) => {
       await route.fulfill({ status: 200, contentType: "application/json", body: "[]" });
     });
 
@@ -242,15 +242,15 @@ test.describe("Organization Effective Patterns Display", () => {
 
   test("should show system default as inheritance source", async ({ page }) => {
     // Mock effective patterns — system default
-    await page.route(`**/api/v1/admin/organizations/${orgId}/effective-patterns`, async (route) => {
+    await page.route(`**/api/v1/admin/organizations/${orgId}/effective-rules`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          fiscalYearPatternId: null,
+          fiscalYearRuleId: null,
           fiscalYearSource: "system",
           fiscalYearSourceName: null,
-          monthlyPeriodPatternId: null,
+          monthlyPeriodRuleId: null,
           monthlyPeriodSource: "system",
           monthlyPeriodSourceName: null,
         }),
@@ -265,21 +265,21 @@ test.describe("Organization Effective Patterns Display", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify effective patterns section shows system default
-    await expect(page.getByText("Effective Patterns")).toBeVisible();
+    await expect(page.getByText("Effective Rules")).toBeVisible();
     await expect(page.getByText("System default").first()).toBeVisible();
   });
 
   test("should show tenant default as inheritance source", async ({ page }) => {
     // Mock effective patterns — tenant default
-    await page.route(`**/api/v1/admin/organizations/${orgId}/effective-patterns`, async (route) => {
+    await page.route(`**/api/v1/admin/organizations/${orgId}/effective-rules`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          fiscalYearPatternId: "fy-pattern-001",
+          fiscalYearRuleId: "fy-pattern-001",
           fiscalYearSource: "tenant",
           fiscalYearSourceName: null,
-          monthlyPeriodPatternId: "mp-pattern-001",
+          monthlyPeriodRuleId: "mp-pattern-001",
           monthlyPeriodSource: "tenant",
           monthlyPeriodSourceName: null,
         }),
@@ -292,7 +292,7 @@ test.describe("Organization Effective Patterns Display", () => {
     await page.getByText("Root Organization").click();
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Effective Patterns")).toBeVisible();
+    await expect(page.getByText("Effective Rules")).toBeVisible();
     await expect(page.getByText("Tenant default").first()).toBeVisible();
   });
 });

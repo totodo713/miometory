@@ -4,16 +4,16 @@ import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { useToast } from "@/hooks/useToast";
 import { ApiError, api } from "@/services/api";
-import type { HolidayEntryRow } from "@/types/masterData";
+import type { HolidayRuleRow } from "@/types/masterData";
 
-interface HolidayEntryFormProps {
+interface HolidayRuleFormProps {
   calendarId: string;
-  entry: HolidayEntryRow | null;
+  entry: HolidayRuleRow | null;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: HolidayEntryFormProps) {
+export function HolidayRuleForm({ calendarId, entry, onClose, onSaved }: HolidayRuleFormProps) {
   const t = useTranslations("admin.masterData");
   const tc = useTranslations("common");
   const tMonth = useTranslations("admin.masterData.fiscalYear.months");
@@ -57,7 +57,7 @@ export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: Holida
 
   const [name, setName] = useState(entry?.name ?? "");
   const [nameJa, setNameJa] = useState(entry?.nameJa ?? "");
-  const [entryType, setEntryType] = useState<"FIXED" | "NTH_WEEKDAY">(entry?.entryType ?? "FIXED");
+  const [ruleType, setRuleType] = useState<"FIXED" | "NTH_WEEKDAY">(entry?.ruleType ?? "FIXED");
   const [month, setMonth] = useState(entry?.month ?? 1);
   const [day, setDay] = useState(entry?.day ?? 1);
   const [nthOccurrence, setNthOccurrence] = useState(entry?.nthOccurrence ?? 1);
@@ -80,16 +80,16 @@ export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: Holida
       const data = {
         name,
         nameJa: nameJa.trim() || null,
-        entryType,
+        ruleType,
         month,
-        ...(entryType === "FIXED" ? { day } : { nthOccurrence, dayOfWeek }),
+        ...(ruleType === "FIXED" ? { day } : { nthOccurrence, dayOfWeek }),
         ...(specificYear ? { specificYear: Number(specificYear) } : {}),
       };
 
       if (isEdit && entry) {
-        await api.admin.masterData.holidayCalendars.updateEntry(calendarId, entry.id, data);
+        await api.admin.masterData.holidayCalendars.updateRule(calendarId, entry.id, data);
       } else {
-        await api.admin.masterData.holidayCalendars.addEntry(calendarId, data);
+        await api.admin.masterData.holidayCalendars.addRule(calendarId, data);
       }
       toast.success(isEdit ? t("updated") : t("created"));
       onSaved();
@@ -153,20 +153,20 @@ export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: Holida
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
-                  name="entryType"
+                  name="ruleType"
                   value="FIXED"
-                  checked={entryType === "FIXED"}
-                  onChange={() => setEntryType("FIXED")}
+                  checked={ruleType === "FIXED"}
+                  onChange={() => setRuleType("FIXED")}
                 />
                 {t("holidayCalendar.entryFixed")}
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
-                  name="entryType"
+                  name="ruleType"
                   value="NTH_WEEKDAY"
-                  checked={entryType === "NTH_WEEKDAY"}
-                  onChange={() => setEntryType("NTH_WEEKDAY")}
+                  checked={ruleType === "NTH_WEEKDAY"}
+                  onChange={() => setRuleType("NTH_WEEKDAY")}
                 />
                 {t("holidayCalendar.entryNthWeekday")}
               </label>
@@ -191,7 +191,7 @@ export function HolidayEntryForm({ calendarId, entry, onClose, onSaved }: Holida
             </select>
           </div>
 
-          {entryType === "FIXED" ? (
+          {ruleType === "FIXED" ? (
             <div>
               <label htmlFor="he-day" className="block text-sm font-medium text-gray-700 mb-1">
                 {t("holidayCalendar.day")}

@@ -6,17 +6,17 @@ import { IntlWrapper } from "../../../helpers/intl";
 vi.mock("@/services/api", () => ({
   api: {
     admin: {
-      patterns: {
-        createFiscalYearPattern: vi.fn(),
+      rules: {
+        createFiscalYearRule: vi.fn(),
       },
     },
   },
 }));
 
-import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
+import { FiscalYearRuleForm } from "@/components/admin/FiscalYearRuleForm";
 import { api } from "@/services/api";
 
-describe("FiscalYearPatternForm", () => {
+describe("FiscalYearRuleForm", () => {
   const defaultProps = {
     tenantId: "tenant-1",
     open: true,
@@ -26,8 +26,8 @@ describe("FiscalYearPatternForm", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (api.admin.patterns.createFiscalYearPattern as ReturnType<typeof vi.fn>).mockResolvedValue({
-      id: "new-pattern-id",
+    (api.admin.rules.createFiscalYearRule as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: "new-rule-id",
       tenantId: "tenant-1",
       name: "4月1日開始",
       startMonth: 4,
@@ -38,7 +38,7 @@ describe("FiscalYearPatternForm", () => {
   it("renders form fields", () => {
     render(
       <IntlWrapper>
-        <FiscalYearPatternForm {...defaultProps} />
+        <FiscalYearRuleForm {...defaultProps} />
       </IntlWrapper>,
     );
     expect(screen.getByLabelText(/名前/)).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe("FiscalYearPatternForm", () => {
     const user = userEvent.setup();
     render(
       <IntlWrapper>
-        <FiscalYearPatternForm {...defaultProps} />
+        <FiscalYearRuleForm {...defaultProps} />
       </IntlWrapper>,
     );
 
@@ -59,7 +59,7 @@ describe("FiscalYearPatternForm", () => {
     await user.click(screen.getByRole("button", { name: /作成/ }));
 
     await waitFor(() => {
-      expect(api.admin.patterns.createFiscalYearPattern).toHaveBeenCalledWith(
+      expect(api.admin.rules.createFiscalYearRule).toHaveBeenCalledWith(
         "tenant-1",
         expect.objectContaining({ name: "4月1日開始" }),
       );

@@ -5,15 +5,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/services/api", () => ({
   api: {
     admin: {
-      patterns: {
-        listFiscalYearPatterns: vi.fn(),
-        listMonthlyPeriodPatterns: vi.fn(),
-        createFiscalYearPattern: vi.fn(),
-        createMonthlyPeriodPattern: vi.fn(),
+      rules: {
+        listFiscalYearRules: vi.fn(),
+        listMonthlyPeriodRules: vi.fn(),
+        createFiscalYearRule: vi.fn(),
+        createMonthlyPeriodRule: vi.fn(),
       },
       tenantSettings: {
-        getDefaultPatterns: vi.fn(),
-        updateDefaultPatterns: vi.fn(),
+        getDefaultRules: vi.fn(),
+        updateDefaultRules: vi.fn(),
       },
     },
   },
@@ -56,11 +56,11 @@ const mpPatterns = [
 describe("TenantSettingsSection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (api.admin.patterns.listFiscalYearPatterns as ReturnType<typeof vi.fn>).mockResolvedValue(fyPatterns);
-    (api.admin.patterns.listMonthlyPeriodPatterns as ReturnType<typeof vi.fn>).mockResolvedValue(mpPatterns);
-    (api.admin.tenantSettings.getDefaultPatterns as ReturnType<typeof vi.fn>).mockResolvedValue({
-      defaultFiscalYearPatternId: "fy1",
-      defaultMonthlyPeriodPatternId: null,
+    (api.admin.rules.listFiscalYearRules as ReturnType<typeof vi.fn>).mockResolvedValue(fyPatterns);
+    (api.admin.rules.listMonthlyPeriodRules as ReturnType<typeof vi.fn>).mockResolvedValue(mpPatterns);
+    (api.admin.tenantSettings.getDefaultRules as ReturnType<typeof vi.fn>).mockResolvedValue({
+      defaultFiscalYearRuleId: "fy1",
+      defaultMonthlyPeriodRuleId: null,
     });
   });
 
@@ -107,16 +107,16 @@ describe("TenantSettingsSection", () => {
       expect(screen.getByText("テナント設定")).toBeInTheDocument();
     });
 
-    const fySelect = screen.getByLabelText("デフォルト会計年度パターン") as HTMLSelectElement;
+    const fySelect = screen.getByLabelText("デフォルト会計年度ルール") as HTMLSelectElement;
     expect(fySelect.value).toBe("fy1");
 
-    const mpSelect = screen.getByLabelText("デフォルト月次期間パターン") as HTMLSelectElement;
+    const mpSelect = screen.getByLabelText("デフォルト月次期間ルール") as HTMLSelectElement;
     expect(mpSelect.value).toBe("");
   });
 
   it("should save default patterns successfully", async () => {
     const user = userEvent.setup();
-    (api.admin.tenantSettings.updateDefaultPatterns as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    (api.admin.tenantSettings.updateDefaultRules as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
     render(
       <IntlWrapper>
@@ -128,24 +128,24 @@ describe("TenantSettingsSection", () => {
       expect(screen.getByText("テナント設定")).toBeInTheDocument();
     });
 
-    const mpSelect = screen.getByLabelText("デフォルト月次期間パターン");
+    const mpSelect = screen.getByLabelText("デフォルト月次期間ルール");
     await user.selectOptions(mpSelect, "mp1");
 
     const saveButton = screen.getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(api.admin.tenantSettings.updateDefaultPatterns).toHaveBeenCalledWith({
-        defaultFiscalYearPatternId: "fy1",
-        defaultMonthlyPeriodPatternId: "mp1",
+      expect(api.admin.tenantSettings.updateDefaultRules).toHaveBeenCalledWith({
+        defaultFiscalYearRuleId: "fy1",
+        defaultMonthlyPeriodRuleId: "mp1",
       });
-      expect(mockToast.success).toHaveBeenCalledWith("デフォルトパターンを保存しました");
+      expect(mockToast.success).toHaveBeenCalledWith("デフォルトルールを保存しました");
     });
   });
 
   it("should show error toast when save fails", async () => {
     const user = userEvent.setup();
-    (api.admin.tenantSettings.updateDefaultPatterns as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+    (api.admin.tenantSettings.updateDefaultRules as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
       new Error("Save failed"),
     );
 
@@ -163,14 +163,14 @@ describe("TenantSettingsSection", () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith("デフォルトパターンの保存に失敗しました");
+      expect(mockToast.error).toHaveBeenCalledWith("デフォルトルールの保存に失敗しました");
     });
   });
 
   it("should disable save button while saving", async () => {
     const user = userEvent.setup();
     let resolveUpdate: () => void = () => {};
-    (api.admin.tenantSettings.updateDefaultPatterns as ReturnType<typeof vi.fn>).mockImplementation(
+    (api.admin.tenantSettings.updateDefaultRules as ReturnType<typeof vi.fn>).mockImplementation(
       () =>
         new Promise<void>((resolve) => {
           resolveUpdate = resolve;
@@ -202,8 +202,8 @@ describe("TenantSettingsSection", () => {
   });
 
   it("should show empty message when no patterns exist", async () => {
-    (api.admin.patterns.listFiscalYearPatterns as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-    (api.admin.patterns.listMonthlyPeriodPatterns as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (api.admin.rules.listFiscalYearRules as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    (api.admin.rules.listMonthlyPeriodRules as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
     render(
       <IntlWrapper>
@@ -212,8 +212,8 @@ describe("TenantSettingsSection", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("会計年度パターンがありません")).toBeInTheDocument();
-      expect(screen.getByText("月次期間パターンがありません")).toBeInTheDocument();
+      expect(screen.getByText("会計年度ルールがありません")).toBeInTheDocument();
+      expect(screen.getByText("月次期間ルールがありません")).toBeInTheDocument();
     });
   });
 

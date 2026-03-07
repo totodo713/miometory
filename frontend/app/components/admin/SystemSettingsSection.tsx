@@ -22,7 +22,7 @@ export function SystemSettingsSection() {
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.admin.system.getPatterns();
+      const data = await api.admin.system.getRules();
       setFyStartMonth(data.fiscalYearStartMonth);
       setFyStartDay(data.fiscalYearStartDay);
       setMpStartDay(data.monthlyPeriodStartDay);
@@ -40,7 +40,7 @@ export function SystemSettingsSection() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await api.admin.system.updatePatterns({
+      await api.admin.system.updateRules({
         fiscalYearStartMonth: fyStartMonth,
         fiscalYearStartDay: fyStartDay,
         monthlyPeriodStartDay: mpStartDay,

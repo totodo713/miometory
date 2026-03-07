@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Skeleton } from "@/components/shared/Skeleton";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { ApiError, api, ForbiddenError } from "@/services/api";
-import type { HolidayCalendarPresetRow, HolidayEntryRow } from "@/types/masterData";
+import type { HolidayCalendarPresetRow, HolidayRuleRow } from "@/types/masterData";
 
 interface HolidayCalendarPresetListProps {
   onEdit: (calendar: HolidayCalendarPresetRow) => void;
@@ -14,19 +14,19 @@ interface HolidayCalendarPresetListProps {
   onActivate: (calendar: HolidayCalendarPresetRow) => void;
   onForbidden: () => void;
   onAddEntry: (calendarId: string) => void;
-  onEditEntry: (calendarId: string, entry: HolidayEntryRow) => void;
+  onEditEntry: (calendarId: string, entry: HolidayRuleRow) => void;
   onDeleteEntry: (calendarId: string, entryId: string) => void;
   refreshKey: number;
 }
 
 function formatEntryDate(
-  entry: HolidayEntryRow,
+  entry: HolidayRuleRow,
   t: (key: string, values?: Record<string, string>) => string,
   tMonth: (key: string) => string,
   tNth: (key: string) => string,
   tWeekday: (key: string) => string,
 ): string {
-  if (entry.entryType === "FIXED") {
+  if (entry.ruleType === "FIXED") {
     return `${tMonth(String(entry.month))} ${entry.day}`;
   }
   const nth = tNth(String(entry.nthOccurrence));
@@ -59,7 +59,7 @@ export function HolidayCalendarPresetList({
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedCalendarId, setExpandedCalendarId] = useState<string | null>(null);
-  const [entries, setEntries] = useState<HolidayEntryRow[]>([]);
+  const [entries, setEntries] = useState<HolidayRuleRow[]>([]);
   const [entriesLoading, setEntriesLoading] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
 
@@ -102,7 +102,7 @@ export function HolidayCalendarPresetList({
   const loadEntries = useCallback(async (calendarId: string) => {
     setEntriesLoading(true);
     try {
-      const result = await api.admin.masterData.holidayCalendars.listEntries(calendarId);
+      const result = await api.admin.masterData.holidayCalendars.listRules(calendarId);
       setEntries(result);
     } catch {
       setEntries([]);
@@ -134,13 +134,13 @@ export function HolidayCalendarPresetList({
 
   const hasFilters = !!debouncedSearch || showInactive;
 
-  const renderEntryTypeBadge = (entryType: "FIXED" | "NTH_WEEKDAY") => (
+  const renderRuleTypeBadge = (ruleType: "FIXED" | "NTH_WEEKDAY") => (
     <span
       className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-        entryType === "FIXED" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"
+        ruleType === "FIXED" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"
       }`}
     >
-      {entryType === "FIXED" ? t("holidayCalendar.entryFixed") : t("holidayCalendar.entryNthWeekday")}
+      {ruleType === "FIXED" ? t("holidayCalendar.entryFixed") : t("holidayCalendar.entryNthWeekday")}
     </span>
   );
 
@@ -190,7 +190,7 @@ export function HolidayCalendarPresetList({
                     {entry.name}
                     {entry.nameJa && <span className="text-gray-500 ml-1">({entry.nameJa})</span>}
                   </td>
-                  <td className="py-2 px-3">{renderEntryTypeBadge(entry.entryType)}</td>
+                  <td className="py-2 px-3">{renderRuleTypeBadge(entry.ruleType)}</td>
                   <td className="py-2 px-3 text-gray-600">
                     {formatEntryDate(entry, t, tMonth, tNth, tWeekday)}
                     {entry.specificYear ? ` (${entry.specificYear})` : ""}
@@ -254,7 +254,7 @@ export function HolidayCalendarPresetList({
                     {entry.name}
                     {entry.nameJa && <span className="text-gray-500 ml-1 text-xs">({entry.nameJa})</span>}
                   </span>
-                  {renderEntryTypeBadge(entry.entryType)}
+                  {renderRuleTypeBadge(entry.ruleType)}
                 </div>
                 <p className="text-xs text-gray-600">
                   {formatEntryDate(entry, t, tMonth, tNth, tWeekday)}
