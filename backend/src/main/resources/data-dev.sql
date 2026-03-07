@@ -46,6 +46,20 @@ ON CONFLICT (id) DO UPDATE SET
     updated_at = CURRENT_TIMESTAMP;
 @@
 
+-- EventStore: TenantCreated for Miometry (required for event-sourced TenantRepository)
+INSERT INTO event_store (id, aggregate_type, aggregate_id, event_type, payload, version, created_at)
+VALUES (
+    'ee000000-0000-0000-0000-000000000001',
+    'Tenant',
+    '550e8400-e29b-41d4-a716-446655440001',
+    'TenantCreated',
+    '{"eventId":"ee000000-0000-0000-0000-000000000001","occurredAt":"2025-01-01T00:00:00Z","aggregateId":"550e8400-e29b-41d4-a716-446655440001","code":"MIOMETRY","name":"Miometry Corporation"}',
+    1,
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT (aggregate_id, version) DO NOTHING;
+@@
+
 -- ============================================================================
 -- 2. Fiscal Year Pattern (April-start Japanese fiscal year)
 -- ============================================================================
@@ -1663,6 +1677,20 @@ ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     status = EXCLUDED.status,
     updated_at = CURRENT_TIMESTAMP;
+@@
+
+-- EventStore: TenantCreated for ACME (required for event-sourced TenantRepository)
+INSERT INTO event_store (id, aggregate_type, aggregate_id, event_type, payload, version, created_at)
+VALUES (
+    'ee000000-0000-0000-0000-000000000002',
+    'Tenant',
+    '550e8400-e29b-41d4-a716-446655440002',
+    'TenantCreated',
+    '{"eventId":"ee000000-0000-0000-0000-000000000002","occurredAt":"2025-01-01T00:00:00Z","aggregateId":"550e8400-e29b-41d4-a716-446655440002","code":"ACME","name":"ACME Corporation"}',
+    1,
+    CURRENT_TIMESTAMP
+)
+ON CONFLICT (aggregate_id, version) DO NOTHING;
 @@
 
 -- ACME Fiscal Year Pattern (Jan-Dec calendar year)
