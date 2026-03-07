@@ -34,14 +34,10 @@ public class JdbcAuditLogger implements AuditLogger {
             Map<String, Object> details) {
         String mergedDetailsJson = serializeMergedDetails(tenantId, resourceType, resourceId, details);
 
-        jdbcTemplate.update(
-                """
+        jdbcTemplate.update("""
             INSERT INTO audit_logs (user_id, event_type, ip_address, timestamp, details, retention_days)
             VALUES (?, ?, NULL, CURRENT_TIMESTAMP, ?::jsonb, 365)
-            """,
-                userId,
-                action,
-                mergedDetailsJson);
+            """, userId, action, mergedDetailsJson);
     }
 
     /**

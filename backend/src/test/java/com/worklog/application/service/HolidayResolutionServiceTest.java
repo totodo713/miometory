@@ -113,8 +113,7 @@ class HolidayResolutionServiceTest {
         @Test
         @DisplayName("should resolve holidays spanning multiple months")
         void shouldResolveHolidaysSpanningMultipleMonths() {
-            var newYear =
-                    new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
+            var newYear = new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
             var foundationDay = new HolidayCalendarRuleRow(
                     "Foundation Day", "\u5efa\u56fd\u8a18\u5ff5\u306e\u65e5", "FIXED", 2, 11, null, null, null);
             when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(newYear, foundationDay));
@@ -130,8 +129,7 @@ class HolidayResolutionServiceTest {
         @Test
         @DisplayName("should resolve holidays spanning multiple years")
         void shouldResolveHolidaysSpanningMultipleYears() {
-            var newYear =
-                    new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
+            var newYear = new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
             when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(newYear));
 
             Map<LocalDate, HolidayInfo> result =

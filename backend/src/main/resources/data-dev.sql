@@ -30,7 +30,7 @@
 -- ============================================================================
 -- 1. Tenant (must be first - referenced by all other tables)
 -- ============================================================================
-INSERT INTO tenant (id, code, name, status, version, created_at, updated_at)
+INSERT INTO tenants (id, code, name, status, version, created_at, updated_at)
 VALUES (
     '550e8400-e29b-41d4-a716-446655440001',
     'MIOMETRY',
@@ -61,13 +61,13 @@ ON CONFLICT (aggregate_id, version) DO NOTHING;
 @@
 
 -- ============================================================================
--- 2. Fiscal Year Pattern (April-start Japanese fiscal year)
+-- 2. Fiscal Year Rule (April-start Japanese fiscal year)
 -- ============================================================================
-INSERT INTO fiscal_year_pattern (id, tenant_id, organization_id, name, start_month, start_day, version, created_at)
+INSERT INTO fiscal_year_rules (id, tenant_id, organization_id, name, start_month, start_day, version, created_at)
 VALUES (
     '770e8400-e29b-41d4-a716-446655440001',
     '550e8400-e29b-41d4-a716-446655440001',
-    NULL,  -- Tenant-wide pattern (not org-specific)
+    NULL,  -- Tenant-wide rule (not org-specific)
     'Japanese Fiscal Year (April Start)',
     4,     -- April
     1,     -- 1st day
@@ -81,13 +81,13 @@ ON CONFLICT (id) DO UPDATE SET
 @@
 
 -- ============================================================================
--- 3. Monthly Period Pattern (21st to 20th billing cycle)
+-- 3. Monthly Period Rule (21st to 20th billing cycle)
 -- ============================================================================
-INSERT INTO monthly_period_pattern (id, tenant_id, organization_id, name, start_day, version, created_at)
+INSERT INTO monthly_period_rules (id, tenant_id, organization_id, name, start_day, version, created_at)
 VALUES (
     '660e8400-e29b-41d4-a716-446655440001',
     '550e8400-e29b-41d4-a716-446655440001',
-    NULL,  -- Tenant-wide pattern (not org-specific)
+    NULL,  -- Tenant-wide rule (not org-specific)
     'Standard Monthly Period (21st Start)',
     21,    -- Period runs from 21st to 20th
     0,
@@ -99,9 +99,9 @@ ON CONFLICT (id) DO UPDATE SET
 @@
 
 -- ============================================================================
--- 4. Organization (references tenant and patterns)
+-- 4. Organization (references tenant and rules)
 -- ============================================================================
-INSERT INTO organization (
+INSERT INTO organizations (
     id, tenant_id, parent_id, code, name, level, status, version,
     fiscal_year_pattern_id, monthly_period_pattern_id, created_at, updated_at
 )
@@ -114,8 +114,8 @@ VALUES (
     1,
     'ACTIVE',
     0,
-    '770e8400-e29b-41d4-a716-446655440001',  -- Fiscal year pattern
-    '660e8400-e29b-41d4-a716-446655440001',  -- Monthly period pattern
+    '770e8400-e29b-41d4-a716-446655440001',  -- Fiscal year rule
+    '660e8400-e29b-41d4-a716-446655440001',  -- Monthly period rule
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 )
@@ -1663,7 +1663,7 @@ ON CONFLICT (tenant_id, member_id, project_id) DO UPDATE SET
 -- 18. ACME Tenant (cross-tenant testing)
 -- ============================================================================
 
-INSERT INTO tenant (id, code, name, status, version, created_at, updated_at)
+INSERT INTO tenants (id, code, name, status, version, created_at, updated_at)
 VALUES (
     '550e8400-e29b-41d4-a716-446655440002',
     'ACME',
@@ -1693,8 +1693,8 @@ VALUES (
 ON CONFLICT (aggregate_id, version) DO NOTHING;
 @@
 
--- ACME Fiscal Year Pattern (Jan-Dec calendar year)
-INSERT INTO fiscal_year_pattern (id, tenant_id, organization_id, name, start_month, start_day, version, created_at)
+-- ACME Fiscal Year Rule (Jan-Dec calendar year)
+INSERT INTO fiscal_year_rules (id, tenant_id, organization_id, name, start_month, start_day, version, created_at)
 VALUES (
     '770e8400-e29b-41d4-a716-446655440002',
     '550e8400-e29b-41d4-a716-446655440002',
@@ -1708,8 +1708,8 @@ ON CONFLICT (id) DO UPDATE SET
     start_day = EXCLUDED.start_day;
 @@
 
--- ACME Monthly Period Pattern (1st-end standard)
-INSERT INTO monthly_period_pattern (id, tenant_id, organization_id, name, start_day, version, created_at)
+-- ACME Monthly Period Rule (1st-end standard)
+INSERT INTO monthly_period_rules (id, tenant_id, organization_id, name, start_day, version, created_at)
 VALUES (
     '660e8400-e29b-41d4-a716-446655440002',
     '550e8400-e29b-41d4-a716-446655440002',
@@ -1723,7 +1723,7 @@ ON CONFLICT (id) DO UPDATE SET
 @@
 
 -- ACME Organization: Sales Department
-INSERT INTO organization (
+INSERT INTO organizations (
     id, tenant_id, parent_id, code, name, level, status, version,
     fiscal_year_pattern_id, monthly_period_pattern_id, created_at, updated_at
 )
@@ -2384,8 +2384,8 @@ ON CONFLICT (id) DO UPDATE SET
 -- Run these queries to verify seed data:
 --
 -- Count all records:
--- SELECT 'tenant' as table_name, count(*) FROM tenant
--- UNION ALL SELECT 'organization', count(*) FROM organization
+-- SELECT 'tenants' as table_name, count(*) FROM tenants
+-- UNION ALL SELECT 'organizations', count(*) FROM organizations
 -- UNION ALL SELECT 'projects', count(*) FROM projects
 -- UNION ALL SELECT 'members', count(*) FROM members
 -- UNION ALL SELECT 'users', count(*) FROM users

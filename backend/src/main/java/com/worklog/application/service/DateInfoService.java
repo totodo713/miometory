@@ -188,8 +188,7 @@ public class DateInfoService {
         if (resolution.ruleId != null) {
             return fiscalYearRuleRepository
                     .findById(FiscalYearRuleId.of(resolution.ruleId))
-                    .orElseThrow(
-                            () -> new IllegalStateException("Fiscal year rule not found: " + resolution.ruleId));
+                    .orElseThrow(() -> new IllegalStateException("Fiscal year rule not found: " + resolution.ruleId));
         }
         // System default: create transient rule for calculation
         SystemDefaultFiscalYearRule systemDefault = systemDefaultSettingsRepository.getDefaultFiscalYearRule();
@@ -205,12 +204,11 @@ public class DateInfoService {
         if (resolution.ruleId != null) {
             return monthlyPeriodRuleRepository
                     .findById(MonthlyPeriodRuleId.of(resolution.ruleId))
-                    .orElseThrow(() ->
-                            new IllegalStateException("Monthly period rule not found: " + resolution.ruleId));
+                    .orElseThrow(
+                            () -> new IllegalStateException("Monthly period rule not found: " + resolution.ruleId));
         }
         // System default: create transient rule for calculation
-        SystemDefaultMonthlyPeriodRule systemDefault =
-                systemDefaultSettingsRepository.getDefaultMonthlyPeriodRule();
+        SystemDefaultMonthlyPeriodRule systemDefault = systemDefaultSettingsRepository.getDefaultMonthlyPeriodRule();
         return MonthlyPeriodRule.createWithId(
                 MonthlyPeriodRuleId.generate(),
                 TenantId.of(new UUID(0, 0)),

@@ -45,8 +45,8 @@ public class FiscalYearRuleController {
             @PathVariable UUID tenantId, @RequestBody CreateFiscalYearRuleRequest request, Authentication auth) {
         tenantAccessValidator.validateAccess(auth, tenantId);
 
-        FiscalYearRule pattern = FiscalYearRule.create(
-                TenantId.of(tenantId), request.name(), request.startMonth(), request.startDay());
+        FiscalYearRule pattern =
+                FiscalYearRule.create(TenantId.of(tenantId), request.name(), request.startMonth(), request.startDay());
 
         fiscalYearRuleRepository.save(pattern);
 

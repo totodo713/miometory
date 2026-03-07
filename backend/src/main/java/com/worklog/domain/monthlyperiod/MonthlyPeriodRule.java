@@ -52,8 +52,7 @@ public class MonthlyPeriodRule extends AggregateRoot<MonthlyPeriodRuleId> {
      * Creates a new MonthlyPeriodRule with a specific ID.
      * Used for reconstitution from event store.
      */
-    public static MonthlyPeriodRule createWithId(
-            MonthlyPeriodRuleId id, TenantId tenantId, String name, int startDay) {
+    public static MonthlyPeriodRule createWithId(MonthlyPeriodRuleId id, TenantId tenantId, String name, int startDay) {
         validateName(name);
         validateStartDay(startDay);
 

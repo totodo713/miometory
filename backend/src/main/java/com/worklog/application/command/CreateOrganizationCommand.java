@@ -13,9 +13,4 @@ import java.util.UUID;
  * @param monthlyPeriodRuleId Optional monthly period rule ID
  */
 public record CreateOrganizationCommand(
-        UUID tenantId,
-        UUID parentId,
-        String code,
-        String name,
-        UUID fiscalYearRuleId,
-        UUID monthlyPeriodRuleId) {}
+        UUID tenantId, UUID parentId, String code, String name, UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {}

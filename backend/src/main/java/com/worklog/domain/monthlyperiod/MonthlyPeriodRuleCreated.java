@@ -14,8 +14,7 @@ public record MonthlyPeriodRuleCreated(
         UUID eventId, Instant occurredAt, UUID aggregateId, UUID tenantId, String name, int startDay)
         implements DomainEvent {
 
-    public static MonthlyPeriodRuleCreated create(
-            UUID monthlyPeriodRuleId, UUID tenantId, String name, int startDay) {
+    public static MonthlyPeriodRuleCreated create(UUID monthlyPeriodRuleId, UUID tenantId, String name, int startDay) {
         return new MonthlyPeriodRuleCreated(
                 UUID.randomUUID(), Instant.now(), monthlyPeriodRuleId, tenantId, name, startDay);
     }

@@ -100,8 +100,8 @@ public class AdminTenantController {
         Tenant tenant = tenantRepository
                 .findById(TenantId.of(id))
                 .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
-        return ResponseEntity.ok(new DefaultRulesResponse(
-                tenant.getDefaultFiscalYearRuleId(), tenant.getDefaultMonthlyPeriodRuleId()));
+        return ResponseEntity.ok(
+                new DefaultRulesResponse(tenant.getDefaultFiscalYearRuleId(), tenant.getDefaultMonthlyPeriodRuleId()));
     }
 
     @PutMapping("/{id}/default-rules")
@@ -117,8 +117,8 @@ public class AdminTenantController {
             fiscalYearRuleRepository
                     .findById(FiscalYearRuleId.of(request.defaultFiscalYearRuleId()))
                     .filter(p -> p.getTenantId().value().equals(id))
-                    .orElseThrow(() -> new DomainException(
-                            "RULE_NOT_OWNED", "Fiscal year rule does not belong to this tenant"));
+                    .orElseThrow(() ->
+                            new DomainException("RULE_NOT_OWNED", "Fiscal year rule does not belong to this tenant"));
         }
         if (request.defaultMonthlyPeriodRuleId() != null) {
             monthlyPeriodRuleRepository

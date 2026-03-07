@@ -29,8 +29,7 @@ public class MonthlyPeriodRuleController {
     private final TenantAccessValidator tenantAccessValidator;
 
     public MonthlyPeriodRuleController(
-            MonthlyPeriodRuleRepository monthlyPeriodRuleRepository,
-            TenantAccessValidator tenantAccessValidator) {
+            MonthlyPeriodRuleRepository monthlyPeriodRuleRepository, TenantAccessValidator tenantAccessValidator) {
         this.monthlyPeriodRuleRepository = monthlyPeriodRuleRepository;
         this.tenantAccessValidator = tenantAccessValidator;
     }
@@ -46,8 +45,7 @@ public class MonthlyPeriodRuleController {
             @PathVariable UUID tenantId, @RequestBody CreateMonthlyPeriodRuleRequest request, Authentication auth) {
         tenantAccessValidator.validateAccess(auth, tenantId);
 
-        MonthlyPeriodRule pattern =
-                MonthlyPeriodRule.create(TenantId.of(tenantId), request.name(), request.startDay());
+        MonthlyPeriodRule pattern = MonthlyPeriodRule.create(TenantId.of(tenantId), request.name(), request.startDay());
 
         monthlyPeriodRuleRepository.save(pattern);
 
