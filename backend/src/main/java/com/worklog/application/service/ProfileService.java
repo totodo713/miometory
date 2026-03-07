@@ -42,7 +42,7 @@ public class ProfileService {
                 SELECT m.id, m.email, m.display_name, o.name AS organization_name,
                        mgr.display_name AS manager_name, m.is_active
                 FROM members m
-                LEFT JOIN organization o ON m.organization_id = o.id
+                LEFT JOIN organizations o ON m.organization_id = o.id
                 LEFT JOIN members mgr ON m.manager_id = mgr.id
                 WHERE m.tenant_id = ? AND LOWER(m.email) = LOWER(?)
                 LIMIT 1

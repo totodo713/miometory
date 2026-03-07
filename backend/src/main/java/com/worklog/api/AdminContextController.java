@@ -34,7 +34,7 @@ public class AdminContextController {
             FROM users u
             JOIN roles r ON r.id = u.role_id
             LEFT JOIN members m ON LOWER(m.email) = LOWER(u.email)
-            LEFT JOIN tenant t ON t.id = m.tenant_id
+            LEFT JOIN tenants t ON t.id = m.tenant_id
             WHERE LOWER(u.email) = LOWER(?)
             """;
 
