@@ -59,12 +59,12 @@ public class AdminOrganizationService {
                    o.fiscal_year_pattern_id, o.monthly_period_pattern_id,
                    o.created_at, o.updated_at,
                    COALESCE((SELECT COUNT(*) FROM members m WHERE m.organization_id = o.id), 0) AS member_count
-            FROM organization o
-            LEFT JOIN organization parent ON parent.id = o.parent_id
+            FROM organizations o
+            LEFT JOIN organizations parent ON parent.id = o.parent_id
             WHERE o.tenant_id = ?
             """);
 
-        var countSb = new StringBuilder("SELECT COUNT(*) FROM organization o WHERE o.tenant_id = ?");
+        var countSb = new StringBuilder("SELECT COUNT(*) FROM organizations o WHERE o.tenant_id = ?");
         var params = new ArrayList<Object>();
         params.add(tenantId);
         var countParams = new ArrayList<Object>();
@@ -139,7 +139,7 @@ public class AdminOrganizationService {
         var sb = new StringBuilder("""
             SELECT o.id, o.code, o.name, o.level, o.status, o.parent_id,
                    COALESCE((SELECT COUNT(*) FROM members m WHERE m.organization_id = o.id), 0) AS member_count
-            FROM organization o
+            FROM organizations o
             WHERE o.tenant_id = ?
             """);
 
@@ -226,7 +226,7 @@ public class AdminOrganizationService {
         }
 
         // Check code uniqueness within tenant (case-insensitive)
-        String checkCodeSql = "SELECT COUNT(*) FROM organization WHERE tenant_id = ? AND LOWER(code) = LOWER(?)";
+        String checkCodeSql = "SELECT COUNT(*) FROM organizations WHERE tenant_id = ? AND LOWER(code) = LOWER(?)";
         Long existingCount = jdbcTemplate.queryForObject(checkCodeSql, Long.class, command.tenantId(), command.code());
         if (existingCount != null && existingCount > 0) {
             throw new DomainException("DUPLICATE_CODE", "An organization with this code already exists in this tenant");
@@ -287,7 +287,7 @@ public class AdminOrganizationService {
         }
 
         // Count active children
-        String countChildrenSql = "SELECT COUNT(*) FROM organization WHERE parent_id = ? AND status = 'ACTIVE'";
+        String countChildrenSql = "SELECT COUNT(*) FROM organizations WHERE parent_id = ? AND status = 'ACTIVE'";
         Long activeChildrenCount = jdbcTemplate.queryForObject(countChildrenSql, Long.class, orgId);
         long childrenCount = activeChildrenCount != null ? activeChildrenCount : 0;
 
@@ -341,7 +341,7 @@ public class AdminOrganizationService {
     public OrganizationMemberPage listMembersByOrganization(
             UUID orgId, UUID tenantId, int page, int size, Boolean isActive) {
         // Validate organization belongs to tenant
-        String checkOrgSql = "SELECT COUNT(*) FROM organization WHERE id = ? AND tenant_id = ?";
+        String checkOrgSql = "SELECT COUNT(*) FROM organizations WHERE id = ? AND tenant_id = ?";
         Long orgCount = jdbcTemplate.queryForObject(checkOrgSql, Long.class, orgId, tenantId);
         if (orgCount == null || orgCount == 0) {
             throw new DomainException("ORGANIZATION_NOT_FOUND", "Organization not found in this tenant");
@@ -544,7 +544,7 @@ public class AdminOrganizationService {
         // Validate that pattern IDs exist and belong to the same tenant
         if (fiscalYearPatternId != null) {
             Long count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM fiscal_year_pattern WHERE id = ? AND tenant_id = ?",
+                    "SELECT COUNT(*) FROM fiscal_year_rules WHERE id = ? AND tenant_id = ?",
                     Long.class,
                     fiscalYearPatternId,
                     tenantId);
@@ -554,7 +554,7 @@ public class AdminOrganizationService {
         }
         if (monthlyPeriodPatternId != null) {
             Long count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM monthly_period_pattern WHERE id = ? AND tenant_id = ?",
+                    "SELECT COUNT(*) FROM monthly_period_rules WHERE id = ? AND tenant_id = ?",
                     Long.class,
                     monthlyPeriodPatternId,
                     tenantId);

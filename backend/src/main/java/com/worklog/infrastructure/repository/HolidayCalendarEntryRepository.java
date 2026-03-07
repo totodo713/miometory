@@ -19,8 +19,8 @@ public class HolidayCalendarEntryRepository {
                 """
                 SELECT e.name, e.name_ja, e.entry_type, e.month, e.day,
                        e.nth_occurrence, e.day_of_week, e.specific_year
-                FROM holiday_calendar_entry e
-                JOIN holiday_calendar c ON e.holiday_calendar_id = c.id
+                FROM holiday_calendar_rules e
+                JOIN holiday_calendars c ON e.holiday_calendar_id = c.id
                 WHERE c.tenant_id = ? AND c.is_active = true
                 ORDER BY e.month, e.day NULLS LAST, e.name
                 """,

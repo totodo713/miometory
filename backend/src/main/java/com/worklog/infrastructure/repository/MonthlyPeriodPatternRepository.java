@@ -83,7 +83,7 @@ public class MonthlyPeriodPatternRepository {
      */
     public List<MonthlyPeriodPattern> findByTenantId(UUID tenantId) {
         List<UUID> patternIds = jdbcTemplate.query(
-                "SELECT id FROM monthly_period_pattern WHERE tenant_id = ? ORDER BY name",
+                "SELECT id FROM monthly_period_rules WHERE tenant_id = ? ORDER BY name",
                 (rs, rowNum) -> UUID.fromString(rs.getString("id")),
                 tenantId);
 
@@ -106,7 +106,7 @@ public class MonthlyPeriodPatternRepository {
      */
     private void updateProjection(MonthlyPeriodPattern pattern) {
         jdbcTemplate.update(
-                "INSERT INTO monthly_period_pattern (id, tenant_id, organization_id, name, start_day, created_at) "
+                "INSERT INTO monthly_period_rules (id, tenant_id, organization_id, name, start_day, created_at) "
                         + "VALUES (?, ?, ?, ?, ?, NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "

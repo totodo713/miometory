@@ -88,7 +88,7 @@ public class TenantRepository {
      */
     private void updateProjection(Tenant tenant) {
         jdbcTemplate.update(
-                "INSERT INTO tenant (id, code, name, status, version, "
+                "INSERT INTO tenants (id, code, name, status, version, "
                         + "default_fiscal_year_pattern_id, default_monthly_period_pattern_id, "
                         + "standard_daily_hours, created_at, updated_at) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
@@ -166,7 +166,7 @@ public class TenantRepository {
         }
 
         String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
-        String sql = "SELECT id, name FROM tenant WHERE id IN (" + placeholders + ")";
+        String sql = "SELECT id, name FROM tenants WHERE id IN (" + placeholders + ")";
         Object[] params = ids.stream().map(id -> id.value()).toArray();
 
         Map<TenantId, String> result = new HashMap<>();

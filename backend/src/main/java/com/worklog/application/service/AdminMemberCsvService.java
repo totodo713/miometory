@@ -140,7 +140,7 @@ public class AdminMemberCsvService {
 
     private boolean organizationExistsInProjection(UUID organizationId, UUID tenantId) {
         Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM organization WHERE id = ? AND tenant_id = ? AND status = 'ACTIVE'",
+                "SELECT COUNT(*) FROM organizations WHERE id = ? AND tenant_id = ? AND status = 'ACTIVE'",
                 Long.class,
                 organizationId,
                 tenantId);

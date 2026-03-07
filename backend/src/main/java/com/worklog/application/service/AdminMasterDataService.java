@@ -40,8 +40,8 @@ public class AdminMasterDataService {
     @Transactional(readOnly = true)
     public PresetPage<FiscalYearPresetRow> listFiscalYearPresets(String search, Boolean isActive, int page, int size) {
         var sb = new StringBuilder(
-                "SELECT id, name, description, start_month, start_day, is_active FROM fiscal_year_pattern_preset WHERE 1=1");
-        var countSb = new StringBuilder("SELECT COUNT(*) FROM fiscal_year_pattern_preset WHERE 1=1");
+                "SELECT id, name, description, start_month, start_day, is_active FROM fiscal_year_rule_presets WHERE 1=1");
+        var countSb = new StringBuilder("SELECT COUNT(*) FROM fiscal_year_rule_presets WHERE 1=1");
         var params = new java.util.ArrayList<Object>();
         var countParams = new java.util.ArrayList<Object>();
 
@@ -91,7 +91,7 @@ public class AdminMasterDataService {
         try {
             jdbcTemplate.update(
                     """
-                    INSERT INTO fiscal_year_pattern_preset (id, name, description, start_month, start_day, is_active, created_at, updated_at)
+                    INSERT INTO fiscal_year_rule_presets (id, name, description, start_month, start_day, is_active, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, true, ?, ?)
                     """, id, name, description, startMonth, startDay, Timestamp.from(now), Timestamp.from(now));
         } catch (DataIntegrityViolationException ex) {
@@ -104,7 +104,7 @@ public class AdminMasterDataService {
         try {
             int rows = jdbcTemplate.update(
                     """
-                    UPDATE fiscal_year_pattern_preset SET name = ?, description = ?, start_month = ?, start_day = ?, updated_at = ?
+                    UPDATE fiscal_year_rule_presets SET name = ?, description = ?, start_month = ?, start_day = ?, updated_at = ?
                     WHERE id = ?
                     """, name, description, startMonth, startDay, Timestamp.from(Instant.now()), id);
             if (rows == 0) {
@@ -117,7 +117,7 @@ public class AdminMasterDataService {
 
     public void deactivateFiscalYearPreset(UUID id) {
         int rows = jdbcTemplate.update(
-                "UPDATE fiscal_year_pattern_preset SET is_active = false, updated_at = ? WHERE id = ?",
+                "UPDATE fiscal_year_rule_presets SET is_active = false, updated_at = ? WHERE id = ?",
                 Timestamp.from(Instant.now()),
                 id);
         if (rows == 0) {
@@ -127,7 +127,7 @@ public class AdminMasterDataService {
 
     public void activateFiscalYearPreset(UUID id) {
         int rows = jdbcTemplate.update(
-                "UPDATE fiscal_year_pattern_preset SET is_active = true, updated_at = ? WHERE id = ?",
+                "UPDATE fiscal_year_rule_presets SET is_active = true, updated_at = ? WHERE id = ?",
                 Timestamp.from(Instant.now()),
                 id);
         if (rows == 0) {
@@ -143,8 +143,8 @@ public class AdminMasterDataService {
     public PresetPage<MonthlyPeriodPresetRow> listMonthlyPeriodPresets(
             String search, Boolean isActive, int page, int size) {
         var sb = new StringBuilder(
-                "SELECT id, name, description, start_day, is_active FROM monthly_period_pattern_preset WHERE 1=1");
-        var countSb = new StringBuilder("SELECT COUNT(*) FROM monthly_period_pattern_preset WHERE 1=1");
+                "SELECT id, name, description, start_day, is_active FROM monthly_period_rule_presets WHERE 1=1");
+        var countSb = new StringBuilder("SELECT COUNT(*) FROM monthly_period_rule_presets WHERE 1=1");
         var params = new java.util.ArrayList<Object>();
         var countParams = new java.util.ArrayList<Object>();
 
@@ -192,7 +192,7 @@ public class AdminMasterDataService {
         Instant now = Instant.now();
         try {
             jdbcTemplate.update("""
-                    INSERT INTO monthly_period_pattern_preset (id, name, description, start_day, is_active, created_at, updated_at)
+                    INSERT INTO monthly_period_rule_presets (id, name, description, start_day, is_active, created_at, updated_at)
                     VALUES (?, ?, ?, ?, true, ?, ?)
                     """, id, name, description, startDay, Timestamp.from(now), Timestamp.from(now));
         } catch (DataIntegrityViolationException ex) {
@@ -204,7 +204,7 @@ public class AdminMasterDataService {
     public void updateMonthlyPeriodPreset(UUID id, String name, String description, int startDay) {
         try {
             int rows = jdbcTemplate.update("""
-                    UPDATE monthly_period_pattern_preset SET name = ?, description = ?, start_day = ?, updated_at = ?
+                    UPDATE monthly_period_rule_presets SET name = ?, description = ?, start_day = ?, updated_at = ?
                     WHERE id = ?
                     """, name, description, startDay, Timestamp.from(Instant.now()), id);
             if (rows == 0) {
@@ -217,7 +217,7 @@ public class AdminMasterDataService {
 
     public void deactivateMonthlyPeriodPreset(UUID id) {
         int rows = jdbcTemplate.update(
-                "UPDATE monthly_period_pattern_preset SET is_active = false, updated_at = ? WHERE id = ?",
+                "UPDATE monthly_period_rule_presets SET is_active = false, updated_at = ? WHERE id = ?",
                 Timestamp.from(Instant.now()),
                 id);
         if (rows == 0) {
@@ -227,7 +227,7 @@ public class AdminMasterDataService {
 
     public void activateMonthlyPeriodPreset(UUID id) {
         int rows = jdbcTemplate.update(
-                "UPDATE monthly_period_pattern_preset SET is_active = true, updated_at = ? WHERE id = ?",
+                "UPDATE monthly_period_rule_presets SET is_active = true, updated_at = ? WHERE id = ?",
                 Timestamp.from(Instant.now()),
                 id);
         if (rows == 0) {
@@ -245,15 +245,15 @@ public class AdminMasterDataService {
         var sb = new StringBuilder("""
             SELECT h.id, h.name, h.description, h.country, h.is_active,
                    COALESCE(ec.cnt, 0) AS entry_count
-            FROM holiday_calendar_preset h
+            FROM holiday_calendar_presets h
             LEFT JOIN (
                 SELECT holiday_calendar_id, COUNT(*) AS cnt
-                FROM holiday_calendar_entry_preset
+                FROM holiday_calendar_rule_presets
                 GROUP BY holiday_calendar_id
             ) ec ON ec.holiday_calendar_id = h.id
             WHERE 1=1
             """);
-        var countSb = new StringBuilder("SELECT COUNT(*) FROM holiday_calendar_preset h WHERE 1=1");
+        var countSb = new StringBuilder("SELECT COUNT(*) FROM holiday_calendar_presets h WHERE 1=1");
         var params = new java.util.ArrayList<Object>();
         var countParams = new java.util.ArrayList<Object>();
 
@@ -302,7 +302,7 @@ public class AdminMasterDataService {
         Instant now = Instant.now();
         try {
             jdbcTemplate.update("""
-                    INSERT INTO holiday_calendar_preset (id, name, description, country, is_active, created_at, updated_at)
+                    INSERT INTO holiday_calendar_presets (id, name, description, country, is_active, created_at, updated_at)
                     VALUES (?, ?, ?, ?, true, ?, ?)
                     """, id, name, description, country, Timestamp.from(now), Timestamp.from(now));
         } catch (DataIntegrityViolationException ex) {
@@ -314,7 +314,7 @@ public class AdminMasterDataService {
     public void updateHolidayCalendarPreset(UUID id, String name, String description, String country) {
         try {
             int rows = jdbcTemplate.update("""
-                    UPDATE holiday_calendar_preset SET name = ?, description = ?, country = ?, updated_at = ?
+                    UPDATE holiday_calendar_presets SET name = ?, description = ?, country = ?, updated_at = ?
                     WHERE id = ?
                     """, name, description, country, Timestamp.from(Instant.now()), id);
             if (rows == 0) {
@@ -327,7 +327,7 @@ public class AdminMasterDataService {
 
     public void deactivateHolidayCalendarPreset(UUID id) {
         int rows = jdbcTemplate.update(
-                "UPDATE holiday_calendar_preset SET is_active = false, updated_at = ? WHERE id = ?",
+                "UPDATE holiday_calendar_presets SET is_active = false, updated_at = ? WHERE id = ?",
                 Timestamp.from(Instant.now()),
                 id);
         if (rows == 0) {
@@ -337,7 +337,7 @@ public class AdminMasterDataService {
 
     public void activateHolidayCalendarPreset(UUID id) {
         int rows = jdbcTemplate.update(
-                "UPDATE holiday_calendar_preset SET is_active = true, updated_at = ? WHERE id = ?",
+                "UPDATE holiday_calendar_presets SET is_active = true, updated_at = ? WHERE id = ?",
                 Timestamp.from(Instant.now()),
                 id);
         if (rows == 0) {
@@ -353,7 +353,7 @@ public class AdminMasterDataService {
     public List<HolidayEntryRow> listHolidayEntries(UUID calendarId) {
         // Verify calendar exists
         Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM holiday_calendar_preset WHERE id = ?", Long.class, calendarId);
+                "SELECT COUNT(*) FROM holiday_calendar_presets WHERE id = ?", Long.class, calendarId);
         if (count == null || count == 0) {
             throw new DomainException("PRESET_NOT_FOUND", "Holiday calendar not found");
         }
@@ -361,7 +361,7 @@ public class AdminMasterDataService {
         return jdbcTemplate.query(
                 """
                 SELECT id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year
-                FROM holiday_calendar_entry_preset
+                FROM holiday_calendar_rule_presets
                 WHERE holiday_calendar_id = ?
                 ORDER BY month, day NULLS LAST, name
                 """,
@@ -392,7 +392,7 @@ public class AdminMasterDataService {
 
         // Verify calendar exists
         Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM holiday_calendar_preset WHERE id = ?", Long.class, calendarId);
+                "SELECT COUNT(*) FROM holiday_calendar_presets WHERE id = ?", Long.class, calendarId);
         if (count == null || count == 0) {
             throw new DomainException("PRESET_NOT_FOUND", "Holiday calendar not found");
         }
@@ -400,7 +400,7 @@ public class AdminMasterDataService {
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(
                 """
-                INSERT INTO holiday_calendar_entry_preset (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
+                INSERT INTO holiday_calendar_rule_presets (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, id, calendarId, name, nameJa, entryType, month, day, nthOccurrence, dayOfWeek, specificYear);
         return id;
@@ -421,7 +421,7 @@ public class AdminMasterDataService {
 
         int rows = jdbcTemplate.update(
                 """
-                UPDATE holiday_calendar_entry_preset
+                UPDATE holiday_calendar_rule_presets
                 SET name = ?, name_ja = ?, entry_type = ?, month = ?, day = ?, nth_occurrence = ?, day_of_week = ?, specific_year = ?
                 WHERE id = ? AND holiday_calendar_id = ?
                 """, name, nameJa, entryType, month, day, nthOccurrence, dayOfWeek, specificYear, entryId, calendarId);
@@ -432,7 +432,7 @@ public class AdminMasterDataService {
 
     public void removeHolidayEntry(UUID calendarId, UUID entryId) {
         int rows = jdbcTemplate.update(
-                "DELETE FROM holiday_calendar_entry_preset WHERE id = ? AND holiday_calendar_id = ?",
+                "DELETE FROM holiday_calendar_rule_presets WHERE id = ? AND holiday_calendar_id = ?",
                 entryId,
                 calendarId);
         if (rows == 0) {
@@ -456,10 +456,10 @@ public class AdminMasterDataService {
     public CopiedPresets copyPresetsToTenant(UUID tenantId) {
         TenantId tid = TenantId.of(tenantId);
 
-        // 1. Copy active fiscal year presets → fiscal_year_pattern (event-sourced)
+        // 1. Copy active fiscal year presets → fiscal_year_rules (event-sourced)
         List<CopiedPattern> fyPatterns = new ArrayList<>();
         jdbcTemplate.query(
-                "SELECT id, name, start_month, start_day FROM fiscal_year_pattern_preset WHERE is_active = true ORDER BY name",
+                "SELECT id, name, start_month, start_day FROM fiscal_year_rule_presets WHERE is_active = true ORDER BY name",
                 (rs) -> {
                     UUID presetId = rs.getObject("id", UUID.class);
                     String name = rs.getString("name");
@@ -471,10 +471,10 @@ public class AdminMasterDataService {
                     fyPatterns.add(new CopiedPattern(presetId, pattern.getId().value(), name));
                 });
 
-        // 2. Copy active monthly period presets → monthly_period_pattern (event-sourced)
+        // 2. Copy active monthly period presets → monthly_period_rules (event-sourced)
         List<CopiedPattern> mpPatterns = new ArrayList<>();
         jdbcTemplate.query(
-                "SELECT id, name, start_day FROM monthly_period_pattern_preset WHERE is_active = true ORDER BY name",
+                "SELECT id, name, start_day FROM monthly_period_rule_presets WHERE is_active = true ORDER BY name",
                 (rs) -> {
                     UUID presetId = rs.getObject("id", UUID.class);
                     String name = rs.getString("name");
@@ -485,10 +485,10 @@ public class AdminMasterDataService {
                     mpPatterns.add(new CopiedPattern(presetId, pattern.getId().value(), name));
                 });
 
-        // 3. Copy active holiday calendars + entries → holiday_calendar + holiday_calendar_entry (direct JDBC)
+        // 3. Copy active holiday calendars + entries → holiday_calendars + holiday_calendar_rules (direct JDBC)
         List<CopiedCalendar> hcCalendars = new ArrayList<>();
         jdbcTemplate.query(
-                "SELECT id, name, description, country FROM holiday_calendar_preset WHERE is_active = true ORDER BY name",
+                "SELECT id, name, description, country FROM holiday_calendar_presets WHERE is_active = true ORDER BY name",
                 (rs) -> {
                     UUID presetCalendarId = rs.getObject("id", UUID.class);
                     String name = rs.getString("name");
@@ -499,7 +499,7 @@ public class AdminMasterDataService {
                     Instant now = Instant.now();
                     jdbcTemplate.update(
                             """
-                            INSERT INTO holiday_calendar (id, tenant_id, name, description, country, is_active, created_at, updated_at)
+                            INSERT INTO holiday_calendars (id, tenant_id, name, description, country, is_active, created_at, updated_at)
                             VALUES (?, ?, ?, ?, ?, true, ?, ?)
                             """,
                             tenantCalendarId,
@@ -513,12 +513,12 @@ public class AdminMasterDataService {
                     // Copy all entries from the preset calendar
                     jdbcTemplate.query(
                             "SELECT name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year "
-                                    + "FROM holiday_calendar_entry_preset WHERE holiday_calendar_id = ?",
+                                    + "FROM holiday_calendar_rule_presets WHERE holiday_calendar_id = ?",
                             (entryRs) -> {
                                 UUID entryId = UUID.randomUUID();
                                 jdbcTemplate.update(
                                         """
-                                        INSERT INTO holiday_calendar_entry (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
+                                        INSERT INTO holiday_calendar_rules (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
                                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                         """,
                                         entryId,

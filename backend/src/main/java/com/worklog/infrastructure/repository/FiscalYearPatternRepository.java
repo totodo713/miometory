@@ -83,7 +83,7 @@ public class FiscalYearPatternRepository {
      */
     public List<FiscalYearPattern> findByTenantId(UUID tenantId) {
         List<UUID> patternIds = jdbcTemplate.query(
-                "SELECT id FROM fiscal_year_pattern WHERE tenant_id = ? ORDER BY name",
+                "SELECT id FROM fiscal_year_rules WHERE tenant_id = ? ORDER BY name",
                 (rs, rowNum) -> UUID.fromString(rs.getString("id")),
                 tenantId);
 
@@ -106,7 +106,7 @@ public class FiscalYearPatternRepository {
      */
     private void updateProjection(FiscalYearPattern pattern) {
         jdbcTemplate.update(
-                "INSERT INTO fiscal_year_pattern (id, tenant_id, organization_id, name, start_month, start_day, created_at) "
+                "INSERT INTO fiscal_year_rules (id, tenant_id, organization_id, name, start_month, start_day, created_at) "
                         + "VALUES (?, ?, ?, ?, ?, ?, NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "
