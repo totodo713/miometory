@@ -77,6 +77,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 ## E2E Tests (Playwright)
 
+- **Shared E2E fixtures**: `frontend/tests/e2e/fixtures/auth.ts` contains mock helpers (`mockProjectsApi`, `mockCalendarApi`, etc.) — when renaming API response fields, update fixtures too (not just spec files)
 - Devcontainer: `npx playwright test --project=chromium` — only the `chromium` Playwright project is configured and run in CI
 - Playwright strict mode: locators matching multiple elements fail; use `.first()` or `{ exact: true }`
 - Verifying modal open: use `getByRole("heading", { name })` not `getByText()` — button text and modal title often match, causing strict-mode violation
@@ -120,6 +121,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 - **CRUD entity (非Event Sourced)**: `DailyAttendance` は event sourcing を使わない単純CRUD — `JdbcDailyAttendanceRepository` が UPSERT + 楽観ロック（version カラム）を直接管理
 - **SecurityConfig httpBasic**: dev/test profile では `httpBasic(Customizer.withDefaults())` + `permitAll()` で、Controller の `Authentication` パラメータが任意受信可能（認証なしリクエストも通る）
+- **OpenAPI spec is manually maintained**: `backend/src/main/resources/static/api-docs/openapi.yaml` は自動生成ではない — DTO フィールド名・型・エンドポイント変更時は手動で同期が必要
 
 ## Troubleshooting
 
