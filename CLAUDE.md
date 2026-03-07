@@ -69,6 +69,8 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **Stop**: `docker compose -f .devcontainer/docker-compose.yml down`
 - **Port forwarding** (on-demand): `docker compose -f .devcontainer/docker-compose.yml -f .devcontainer/docker-compose.ports.yml up -d app` — exposes FE:3000, BE:8080 to host
 - **Start servers**: `exec -d app bash -c "cd /workspaces/miometory/backend && ./gradlew bootRun > /tmp/backend.log 2>&1"` / `exec -d app bash -c "cd /workspaces/miometory/frontend && npm run dev > /tmp/frontend.log 2>&1"`
+- **Frontend npm ci**: コンテナ再作成後は `exec app bash -c "cd /workspaces/miometory/frontend && npm ci"` を `npm run dev` の前に実行すること — `node_modules` はボリューム外のため永続化されない
+- **Zombie processes**: `exec -d` で起動したプロセスがクラッシュするとゾンビ化する → `docker compose ... restart app` で解消
 - **Path conversion**: Host `$PROJECT_ROOT/...` → Container `/workspaces/miometory/...` (automatic)
 - **Fallback**: If the container is not running, hooks execute commands locally (same as before)
 - **Worktree gotcha**: git worktree ではdevcontainerが起動していないことが多い。手動で `devcontainer-exec.sh` を呼ぶ場合、`--workdir` にコンテナパス (`/workspaces/...`) を使わず、ホストの絶対パスを使うか、直接 `cd` + コマンド実行する
