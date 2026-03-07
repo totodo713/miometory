@@ -126,6 +126,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 
 ## Backend Architecture Patterns
 
+- **4階層設定パターン (standard_daily_hours 雛形)**: System(`system_default_settings` JSONB) → Tenant(イベントソーシング集約) → Organization(イベントソーシング集約) → Member(CRUDカラム) の解決チェーン。新しい階層設定を追加する際は `StandardWorkingHoursService.java` + `StandardHoursResolution.java` + V31マイグレーションを雛形にする
 - **CRUD entity (非Event Sourced)**: `DailyAttendance` は event sourcing を使わない単純CRUD — `JdbcDailyAttendanceRepository` が UPSERT + 楽観ロック（version カラム）を直接管理
 - **SecurityConfig httpBasic**: dev/test profile では `httpBasic(Customizer.withDefaults())` + `permitAll()` で、Controller の `Authentication` パラメータが任意受信可能（認証なしリクエストも通る）
 - **OpenAPI spec is manually maintained**: `backend/src/main/resources/static/api-docs/openapi.yaml` は自動生成ではない — DTO フィールド名・型・エンドポイント変更時は手動で同期が必要
