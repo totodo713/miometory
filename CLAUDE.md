@@ -73,6 +73,7 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **Frontend npm ci**: コンテナ再作成後は `exec app bash -c "cd /workspaces/miometory/frontend && npm ci"` を `npm run dev` の前に実行すること — `node_modules` はボリューム外のため永続化されない
 - **Tailwind CSS v4 resolve**: Turbopack が `@import "tailwindcss"` をgitルートから解決しようとして失敗する場合、`next.config.ts` の `turbopack.resolveAlias` で `tailwindcss` を絶対パスにマッピング済み — シンボリックリンク等の回避策は不要
 - **Zombie processes**: `exec -d` で起動したプロセスがクラッシュするとゾンビ化する → `docker compose ... restart app` で解消
+- **DB direct access**: `docker compose -f .devcontainer/docker-compose.yml exec db psql -U worklog -d worklog` — `psql` は `db` コンテナ上にあり、ユーザーは `worklog`（`postgres` ではない）
 - **Path conversion**: Host `$PROJECT_ROOT/...` → Container `/workspaces/miometory/...` (automatic)
 - **Fallback**: If the container is not running, hooks execute commands locally (same as before)
 - **Worktree gotcha**: git worktree ではdevcontainerが起動していないことが多い。手動で `devcontainer-exec.sh` を呼ぶ場合、`--workdir` にコンテナパス (`/workspaces/...`) を使わず、ホストの絶対パスを使うか、直接 `cd` + コマンド実行する
@@ -128,6 +129,8 @@ Claude Code hooks automatically delegate build/test/lint commands to the devcont
 - **CRUD entity (非Event Sourced)**: `DailyAttendance` は event sourcing を使わない単純CRUD — `JdbcDailyAttendanceRepository` が UPSERT + 楽観ロック（version カラム）を直接管理
 - **SecurityConfig httpBasic**: dev/test profile では `httpBasic(Customizer.withDefaults())` + `permitAll()` で、Controller の `Authentication` パラメータが任意受信可能（認証なしリクエストも通る）
 - **OpenAPI spec is manually maintained**: `backend/src/main/resources/static/api-docs/openapi.yaml` は自動生成ではない — DTO フィールド名・型・エンドポイント変更時は手動で同期が必要
+- **Event-sourced aggregate seed data**: `Tenant` 等のイベントソーシング対象は `data-dev.sql` でプロジェクションテーブル（`tenant`）と EventStore（`event_store`）の**両方**にデータが必要 — プロジェクションのみだと `Repository.findById` が `Optional.empty()` を返す
+- **Dev seed password**: 全ユーザー共通 `Password1`（`data-dev.sql` L1449 参照）
 
 ## Troubleshooting
 
