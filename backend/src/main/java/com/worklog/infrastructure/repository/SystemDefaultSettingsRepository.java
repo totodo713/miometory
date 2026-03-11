@@ -2,8 +2,8 @@ package com.worklog.infrastructure.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.worklog.domain.settings.SystemDefaultFiscalYearPattern;
-import com.worklog.domain.settings.SystemDefaultMonthlyPeriodPattern;
+import com.worklog.domain.settings.SystemDefaultFiscalYearRule;
+import com.worklog.domain.settings.SystemDefaultMonthlyPeriodRule;
 import java.math.BigDecimal;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,25 +30,25 @@ public class SystemDefaultSettingsRepository {
     }
 
     @Transactional(readOnly = true)
-    public SystemDefaultFiscalYearPattern getDefaultFiscalYearPattern() {
+    public SystemDefaultFiscalYearRule getDefaultFiscalYearRule() {
         String json = jdbcTemplate.queryForObject(
                 "SELECT setting_value::text FROM system_default_settings WHERE setting_key = ?",
                 String.class,
                 KEY_FISCAL_YEAR);
-        return parseFiscalYearPattern(json);
+        return parseFiscalYearRule(json);
     }
 
     @Transactional(readOnly = true)
-    public SystemDefaultMonthlyPeriodPattern getDefaultMonthlyPeriodPattern() {
+    public SystemDefaultMonthlyPeriodRule getDefaultMonthlyPeriodRule() {
         String json = jdbcTemplate.queryForObject(
                 "SELECT setting_value::text FROM system_default_settings WHERE setting_key = ?",
                 String.class,
                 KEY_MONTHLY_PERIOD);
-        return parseMonthlyPeriodPattern(json);
+        return parseMonthlyPeriodRule(json);
     }
 
     @Transactional
-    public void updateDefaultFiscalYearPattern(SystemDefaultFiscalYearPattern pattern, UUID updatedBy) {
+    public void updateDefaultFiscalYearRule(SystemDefaultFiscalYearRule pattern, UUID updatedBy) {
         String json = String.format("{\"startMonth\": %d, \"startDay\": %d}", pattern.startMonth(), pattern.startDay());
         jdbcTemplate.update(
                 "INSERT INTO system_default_settings (setting_key, setting_value, updated_by, updated_at) "
@@ -63,7 +63,7 @@ public class SystemDefaultSettingsRepository {
     }
 
     @Transactional
-    public void updateDefaultMonthlyPeriodPattern(SystemDefaultMonthlyPeriodPattern pattern, UUID updatedBy) {
+    public void updateDefaultMonthlyPeriodRule(SystemDefaultMonthlyPeriodRule pattern, UUID updatedBy) {
         String json = String.format("{\"startDay\": %d}", pattern.startDay());
         jdbcTemplate.update(
                 "INSERT INTO system_default_settings (setting_key, setting_value, updated_by, updated_at) "
@@ -95,20 +95,20 @@ public class SystemDefaultSettingsRepository {
         }
     }
 
-    private SystemDefaultFiscalYearPattern parseFiscalYearPattern(String json) {
+    private SystemDefaultFiscalYearRule parseFiscalYearRule(String json) {
         try {
             JsonNode node = objectMapper.readTree(json);
-            return new SystemDefaultFiscalYearPattern(
+            return new SystemDefaultFiscalYearRule(
                     node.get("startMonth").asInt(), node.get("startDay").asInt());
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse default fiscal year pattern", e);
         }
     }
 
-    private SystemDefaultMonthlyPeriodPattern parseMonthlyPeriodPattern(String json) {
+    private SystemDefaultMonthlyPeriodRule parseMonthlyPeriodRule(String json) {
         try {
             JsonNode node = objectMapper.readTree(json);
-            return new SystemDefaultMonthlyPeriodPattern(node.get("startDay").asInt());
+            return new SystemDefaultMonthlyPeriodRule(node.get("startDay").asInt());
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse default monthly period pattern", e);
         }

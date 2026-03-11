@@ -1,10 +1,10 @@
 package com.worklog.api;
 
 import com.worklog.application.service.TenantAccessValidator;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.fiscalyear.FiscalYearRule;
+import com.worklog.domain.fiscalyear.FiscalYearRuleId;
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
+import com.worklog.infrastructure.repository.FiscalYearRuleRepository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,48 +17,47 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * REST controller for MonthlyPeriodPattern operations.
+ * REST controller for FiscalYearRule operations.
  *
- * Provides endpoints for monthly period pattern management.
+ * Provides endpoints for fiscal year pattern management.
  */
 @RestController
-@RequestMapping("/api/v1/tenants/{tenantId}/monthly-period-patterns")
-public class MonthlyPeriodPatternController {
+@RequestMapping("/api/v1/tenants/{tenantId}/fiscal-year-rules")
+public class FiscalYearRuleController {
 
-    private final MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private final FiscalYearRuleRepository fiscalYearRuleRepository;
     private final TenantAccessValidator tenantAccessValidator;
 
-    public MonthlyPeriodPatternController(
-            MonthlyPeriodPatternRepository monthlyPeriodPatternRepository,
-            TenantAccessValidator tenantAccessValidator) {
-        this.monthlyPeriodPatternRepository = monthlyPeriodPatternRepository;
+    public FiscalYearRuleController(
+            FiscalYearRuleRepository fiscalYearRuleRepository, TenantAccessValidator tenantAccessValidator) {
+        this.fiscalYearRuleRepository = fiscalYearRuleRepository;
         this.tenantAccessValidator = tenantAccessValidator;
     }
 
     /**
-     * Creates a new monthly period pattern.
+     * Creates a new fiscal year pattern.
      *
-     * POST /api/v1/tenants/{tenantId}/monthly-period-patterns
+     * POST /api/v1/tenants/{tenantId}/fiscal-year-rules
      */
     @PostMapping
     @PreAuthorize("hasPermission(null, 'tenant.update') or hasPermission(null, 'tenant_settings.manage')")
     public ResponseEntity<Map<String, Object>> createPattern(
-            @PathVariable UUID tenantId, @RequestBody CreateMonthlyPeriodPatternRequest request, Authentication auth) {
+            @PathVariable UUID tenantId, @RequestBody CreateFiscalYearRuleRequest request, Authentication auth) {
         tenantAccessValidator.validateAccess(auth, tenantId);
 
-        MonthlyPeriodPattern pattern =
-                MonthlyPeriodPattern.create(TenantId.of(tenantId), request.name(), request.startDay());
+        FiscalYearRule pattern =
+                FiscalYearRule.create(TenantId.of(tenantId), request.name(), request.startMonth(), request.startDay());
 
-        monthlyPeriodPatternRepository.save(pattern);
+        fiscalYearRuleRepository.save(pattern);
 
         Map<String, Object> response = toMap(pattern);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
-     * Gets a monthly period pattern by ID.
+     * Gets a fiscal year pattern by ID.
      *
-     * GET /api/v1/tenants/{tenantId}/monthly-period-patterns/{id}
+     * GET /api/v1/tenants/{tenantId}/fiscal-year-rules/{id}
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasPermission(null, 'tenant.view') or hasPermission(null, 'tenant_settings.view')")
@@ -66,23 +65,23 @@ public class MonthlyPeriodPatternController {
             @PathVariable UUID tenantId, @PathVariable UUID id, Authentication auth) {
         tenantAccessValidator.validateAccess(auth, tenantId);
 
-        return monthlyPeriodPatternRepository
-                .findById(MonthlyPeriodPatternId.of(id))
+        return fiscalYearRuleRepository
+                .findById(FiscalYearRuleId.of(id))
                 .map(pattern -> ResponseEntity.ok(toMap(pattern)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
     /**
-     * Lists all monthly period patterns for a tenant.
+     * Lists all fiscal year patterns for a tenant.
      *
-     * GET /api/v1/tenants/{tenantId}/monthly-period-patterns
+     * GET /api/v1/tenants/{tenantId}/fiscal-year-rules
      */
     @GetMapping
     @PreAuthorize("hasPermission(null, 'tenant.view') or hasPermission(null, 'tenant_settings.view')")
     public ResponseEntity<List<Map<String, Object>>> listPatterns(@PathVariable UUID tenantId, Authentication auth) {
         tenantAccessValidator.validateAccess(auth, tenantId);
 
-        List<Map<String, Object>> patterns = monthlyPeriodPatternRepository.findByTenantId(tenantId).stream()
+        List<Map<String, Object>> patterns = fiscalYearRuleRepository.findByTenantId(tenantId).stream()
                 .map(this::toMap)
                 .collect(Collectors.toList());
 
@@ -90,19 +89,20 @@ public class MonthlyPeriodPatternController {
     }
 
     /**
-     * Converts a MonthlyPeriodPattern to a Map response.
+     * Converts a FiscalYearRule to a Map response.
      */
-    private Map<String, Object> toMap(MonthlyPeriodPattern pattern) {
+    private Map<String, Object> toMap(FiscalYearRule pattern) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", pattern.getId().value().toString());
         map.put("tenantId", pattern.getTenantId().toString());
         map.put("name", pattern.getName());
+        map.put("startMonth", pattern.getStartMonth());
         map.put("startDay", pattern.getStartDay());
         return map;
     }
 
     /**
-     * Request DTO for creating monthly period patterns.
+     * Request DTO for creating fiscal year patterns.
      */
-    public record CreateMonthlyPeriodPatternRequest(String name, int startDay) {}
+    public record CreateFiscalYearRuleRequest(String name, int startMonth, int startDay) {}
 }

@@ -30,8 +30,8 @@ public class Tenant extends AggregateRoot<TenantId> {
     private Code code;
     private String name;
     private Status status;
-    private UUID defaultFiscalYearPatternId;
-    private UUID defaultMonthlyPeriodPatternId;
+    private UUID defaultFiscalYearRuleId;
+    private UUID defaultMonthlyPeriodRuleId;
     private BigDecimal standardDailyHours;
 
     // Private constructor for factory method
@@ -110,16 +110,16 @@ public class Tenant extends AggregateRoot<TenantId> {
     }
 
     /**
-     * Assigns default patterns for this tenant.
+     * Assigns default rules for this tenant.
      * Either or both may be null (clearing the tenant-level default).
      */
-    public void assignDefaultPatterns(UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {
+    public void assignDefaultRules(UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {
         if (this.status == Status.INACTIVE) {
             throw new DomainException("TENANT_INACTIVE", "Cannot update an inactive tenant");
         }
 
-        TenantDefaultPatternsAssigned event =
-                TenantDefaultPatternsAssigned.create(this.id.value(), fiscalYearPatternId, monthlyPeriodPatternId);
+        TenantDefaultRulesAssigned event =
+                TenantDefaultRulesAssigned.create(this.id.value(), fiscalYearRuleId, monthlyPeriodRuleId);
         raiseEvent(event);
     }
 
@@ -168,9 +168,9 @@ public class Tenant extends AggregateRoot<TenantId> {
             case TenantActivated e -> {
                 this.status = Status.ACTIVE;
             }
-            case TenantDefaultPatternsAssigned e -> {
-                this.defaultFiscalYearPatternId = e.defaultFiscalYearPatternId();
-                this.defaultMonthlyPeriodPatternId = e.defaultMonthlyPeriodPatternId();
+            case TenantDefaultRulesAssigned e -> {
+                this.defaultFiscalYearRuleId = e.defaultFiscalYearRuleId();
+                this.defaultMonthlyPeriodRuleId = e.defaultMonthlyPeriodRuleId();
             }
             case TenantStandardDailyHoursAssigned e -> {
                 this.standardDailyHours = e.standardDailyHours();
@@ -218,12 +218,12 @@ public class Tenant extends AggregateRoot<TenantId> {
         return status == Status.ACTIVE;
     }
 
-    public UUID getDefaultFiscalYearPatternId() {
-        return defaultFiscalYearPatternId;
+    public UUID getDefaultFiscalYearRuleId() {
+        return defaultFiscalYearRuleId;
     }
 
-    public UUID getDefaultMonthlyPeriodPatternId() {
-        return defaultMonthlyPeriodPatternId;
+    public UUID getDefaultMonthlyPeriodRuleId() {
+        return defaultMonthlyPeriodRuleId;
     }
 
     public BigDecimal getStandardDailyHours() {

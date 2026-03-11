@@ -10,19 +10,18 @@ import java.util.UUID;
  * This event captures the initial state of a monthly period pattern,
  * including the pattern definition (start day) and tenant ownership.
  */
-public record MonthlyPeriodPatternCreated(
+public record MonthlyPeriodRuleCreated(
         UUID eventId, Instant occurredAt, UUID aggregateId, UUID tenantId, String name, int startDay)
         implements DomainEvent {
 
-    public static MonthlyPeriodPatternCreated create(
-            UUID monthlyPeriodPatternId, UUID tenantId, String name, int startDay) {
-        return new MonthlyPeriodPatternCreated(
-                UUID.randomUUID(), Instant.now(), monthlyPeriodPatternId, tenantId, name, startDay);
+    public static MonthlyPeriodRuleCreated create(UUID monthlyPeriodRuleId, UUID tenantId, String name, int startDay) {
+        return new MonthlyPeriodRuleCreated(
+                UUID.randomUUID(), Instant.now(), monthlyPeriodRuleId, tenantId, name, startDay);
     }
 
     @Override
     public String eventType() {
-        return "MonthlyPeriodPatternCreated";
+        return "MonthlyPeriodRuleCreated";
     }
 
     @Override

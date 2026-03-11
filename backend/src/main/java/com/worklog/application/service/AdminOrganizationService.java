@@ -59,12 +59,12 @@ public class AdminOrganizationService {
                    o.fiscal_year_pattern_id, o.monthly_period_pattern_id,
                    o.created_at, o.updated_at,
                    COALESCE((SELECT COUNT(*) FROM members m WHERE m.organization_id = o.id), 0) AS member_count
-            FROM organization o
-            LEFT JOIN organization parent ON parent.id = o.parent_id
+            FROM organizations o
+            LEFT JOIN organizations parent ON parent.id = o.parent_id
             WHERE o.tenant_id = ?
             """);
 
-        var countSb = new StringBuilder("SELECT COUNT(*) FROM organization o WHERE o.tenant_id = ?");
+        var countSb = new StringBuilder("SELECT COUNT(*) FROM organizations o WHERE o.tenant_id = ?");
         var params = new ArrayList<Object>();
         params.add(tenantId);
         var countParams = new ArrayList<Object>();
@@ -139,7 +139,7 @@ public class AdminOrganizationService {
         var sb = new StringBuilder("""
             SELECT o.id, o.code, o.name, o.level, o.status, o.parent_id,
                    COALESCE((SELECT COUNT(*) FROM members m WHERE m.organization_id = o.id), 0) AS member_count
-            FROM organization o
+            FROM organizations o
             WHERE o.tenant_id = ?
             """);
 
@@ -226,7 +226,7 @@ public class AdminOrganizationService {
         }
 
         // Check code uniqueness within tenant (case-insensitive)
-        String checkCodeSql = "SELECT COUNT(*) FROM organization WHERE tenant_id = ? AND LOWER(code) = LOWER(?)";
+        String checkCodeSql = "SELECT COUNT(*) FROM organizations WHERE tenant_id = ? AND LOWER(code) = LOWER(?)";
         Long existingCount = jdbcTemplate.queryForObject(checkCodeSql, Long.class, command.tenantId(), command.code());
         if (existingCount != null && existingCount > 0) {
             throw new DomainException("DUPLICATE_CODE", "An organization with this code already exists in this tenant");
@@ -239,8 +239,8 @@ public class AdminOrganizationService {
                 Organization.create(newId, TenantId.of(command.tenantId()), parentOrgId, code, command.name(), level);
 
         // Assign patterns if provided
-        if (command.fiscalYearPatternId() != null || command.monthlyPeriodPatternId() != null) {
-            organization.assignPatterns(command.fiscalYearPatternId(), command.monthlyPeriodPatternId());
+        if (command.fiscalYearRuleId() != null || command.monthlyPeriodRuleId() != null) {
+            organization.assignRules(command.fiscalYearRuleId(), command.monthlyPeriodRuleId());
         }
 
         organizationRepository.save(organization);
@@ -287,7 +287,7 @@ public class AdminOrganizationService {
         }
 
         // Count active children
-        String countChildrenSql = "SELECT COUNT(*) FROM organization WHERE parent_id = ? AND status = 'ACTIVE'";
+        String countChildrenSql = "SELECT COUNT(*) FROM organizations WHERE parent_id = ? AND status = 'ACTIVE'";
         Long activeChildrenCount = jdbcTemplate.queryForObject(countChildrenSql, Long.class, orgId);
         long childrenCount = activeChildrenCount != null ? activeChildrenCount : 0;
 
@@ -341,7 +341,7 @@ public class AdminOrganizationService {
     public OrganizationMemberPage listMembersByOrganization(
             UUID orgId, UUID tenantId, int page, int size, Boolean isActive) {
         // Validate organization belongs to tenant
-        String checkOrgSql = "SELECT COUNT(*) FROM organization WHERE id = ? AND tenant_id = ?";
+        String checkOrgSql = "SELECT COUNT(*) FROM organizations WHERE id = ? AND tenant_id = ?";
         Long orgCount = jdbcTemplate.queryForObject(checkOrgSql, Long.class, orgId, tenantId);
         if (orgCount == null || orgCount == 0) {
             throw new DomainException("ORGANIZATION_NOT_FOUND", "Organization not found in this tenant");
@@ -520,15 +520,15 @@ public class AdminOrganizationService {
     }
 
     /**
-     * Assigns fiscal year and monthly period patterns to an organization.
+     * Assigns fiscal year and monthly period rules to an organization.
      * Validates tenant ownership and that the organization is active.
      *
      * @param orgId                  the organization ID
      * @param tenantId               the tenant ID (for tenant scoping)
-     * @param fiscalYearPatternId    the fiscal year pattern ID to assign
-     * @param monthlyPeriodPatternId the monthly period pattern ID to assign
+     * @param fiscalYearRuleId    the fiscal year rule ID to assign
+     * @param monthlyPeriodRuleId the monthly period rule ID to assign
      */
-    public void assignPatterns(UUID orgId, UUID tenantId, UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {
+    public void assignRules(UUID orgId, UUID tenantId, UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {
         Organization organization = organizationRepository
                 .findById(OrganizationId.of(orgId))
                 .orElseThrow(() -> new DomainException("ORGANIZATION_NOT_FOUND", "Organization not found"));
@@ -542,35 +542,35 @@ public class AdminOrganizationService {
         }
 
         // Validate that pattern IDs exist and belong to the same tenant
-        if (fiscalYearPatternId != null) {
+        if (fiscalYearRuleId != null) {
             Long count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM fiscal_year_pattern WHERE id = ? AND tenant_id = ?",
+                    "SELECT COUNT(*) FROM fiscal_year_rules WHERE id = ? AND tenant_id = ?",
                     Long.class,
-                    fiscalYearPatternId,
+                    fiscalYearRuleId,
                     tenantId);
             if (count == null || count == 0) {
                 throw new DomainException("PATTERN_NOT_FOUND", "Fiscal year pattern not found in this tenant");
             }
         }
-        if (monthlyPeriodPatternId != null) {
+        if (monthlyPeriodRuleId != null) {
             Long count = jdbcTemplate.queryForObject(
-                    "SELECT COUNT(*) FROM monthly_period_pattern WHERE id = ? AND tenant_id = ?",
+                    "SELECT COUNT(*) FROM monthly_period_rules WHERE id = ? AND tenant_id = ?",
                     Long.class,
-                    monthlyPeriodPatternId,
+                    monthlyPeriodRuleId,
                     tenantId);
             if (count == null || count == 0) {
                 throw new DomainException("PATTERN_NOT_FOUND", "Monthly period pattern not found in this tenant");
             }
         }
 
-        organization.assignPatterns(fiscalYearPatternId, monthlyPeriodPatternId);
+        organization.assignRules(fiscalYearRuleId, monthlyPeriodRuleId);
         organizationRepository.save(organization);
 
         log.info(
                 "Assigned patterns to organization {} (fiscalYear: {}, monthlyPeriod: {})",
                 orgId,
-                fiscalYearPatternId,
-                monthlyPeriodPatternId);
+                fiscalYearRuleId,
+                monthlyPeriodRuleId);
     }
 
     private static OrganizationTreeNode makeUnmodifiable(OrganizationTreeNode node) {
@@ -603,8 +603,8 @@ public class AdminOrganizationService {
             int level,
             String status,
             long memberCount,
-            UUID fiscalYearPatternId,
-            UUID monthlyPeriodPatternId,
+            UUID fiscalYearRuleId,
+            UUID monthlyPeriodRuleId,
             Instant createdAt,
             Instant updatedAt) {}
 

@@ -29,11 +29,11 @@ export interface HolidayCalendarPresetRow {
   entryCount: number;
 }
 
-export interface HolidayEntryRow {
+export interface HolidayRuleRow {
   id: string;
   name: string;
   nameJa: string | null;
-  entryType: "FIXED" | "NTH_WEEKDAY";
+  ruleType: "FIXED" | "NTH_WEEKDAY";
   month: number;
   day: number | null;
   nthOccurrence: number | null;

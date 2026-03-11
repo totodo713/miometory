@@ -49,8 +49,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_ROOT_001",
                 "name" to "Root Organization",
                 "parentId" to null,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
 
         // Act
@@ -80,8 +80,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_PARENT_001",
                 "name" to "Parent Organization",
                 "parentId" to null,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val parentResponse =
             restTemplate.postForEntity(
@@ -97,8 +97,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_CHILD_001",
                 "name" to "Child Organization",
                 "parentId" to parentId,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val response =
             restTemplate.postForEntity(
@@ -122,8 +122,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_GET_001",
                 "name" to "Test Organization",
                 "parentId" to null,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val createResponse =
             restTemplate.postForEntity(
@@ -173,8 +173,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_UPDATE_001",
                 "name" to "Original Name",
                 "parentId" to null,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val createResponse =
             restTemplate.postForEntity(
@@ -215,8 +215,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_DEACT_001",
                 "name" to "Test Organization",
                 "parentId" to null,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val createResponse =
             restTemplate.postForEntity(
@@ -255,8 +255,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_ACT_001",
                 "name" to "Test Organization",
                 "parentId" to null,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val createResponse =
             restTemplate.postForEntity(
@@ -304,8 +304,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                     "code" to "ORG_LVL_$i",
                     "name" to "Level $i Organization",
                     "parentId" to currentParentId,
-                    "fiscalYearPatternId" to null,
-                    "monthlyPeriodPatternId" to null,
+                    "fiscalYearRuleId" to null,
+                    "monthlyPeriodRuleId" to null,
                 )
             val createResponse =
                 restTemplate.postForEntity(
@@ -323,8 +323,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_LVL_7",
                 "name" to "Level 7 Organization",
                 "parentId" to currentParentId,
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val response =
             restTemplate.postForEntity(
@@ -345,8 +345,8 @@ class OrganizationControllerTest : IntegrationTestBase() {
                 "code" to "ORG_INVALID_002",
                 "name" to "Invalid Organization",
                 "parentId" to "00000000-0000-0000-0000-000000000000",
-                "fiscalYearPatternId" to null,
-                "monthlyPeriodPatternId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
             )
         val response =
             restTemplate.postForEntity(

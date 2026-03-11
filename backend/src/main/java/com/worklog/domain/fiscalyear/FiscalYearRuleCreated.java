@@ -10,19 +10,19 @@ import java.util.UUID;
  * This event captures the initial state of a fiscal year pattern,
  * including the pattern definition (start month/day) and tenant ownership.
  */
-public record FiscalYearPatternCreated(
+public record FiscalYearRuleCreated(
         UUID eventId, Instant occurredAt, UUID aggregateId, UUID tenantId, String name, int startMonth, int startDay)
         implements DomainEvent {
 
-    public static FiscalYearPatternCreated create(
-            UUID fiscalYearPatternId, UUID tenantId, String name, int startMonth, int startDay) {
-        return new FiscalYearPatternCreated(
-                UUID.randomUUID(), Instant.now(), fiscalYearPatternId, tenantId, name, startMonth, startDay);
+    public static FiscalYearRuleCreated create(
+            UUID fiscalYearRuleId, UUID tenantId, String name, int startMonth, int startDay) {
+        return new FiscalYearRuleCreated(
+                UUID.randomUUID(), Instant.now(), fiscalYearRuleId, tenantId, name, startMonth, startDay);
     }
 
     @Override
     public String eventType() {
-        return "FiscalYearPatternCreated";
+        return "FiscalYearRuleCreated";
     }
 
     @Override

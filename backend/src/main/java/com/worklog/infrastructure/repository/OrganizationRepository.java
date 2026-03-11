@@ -89,7 +89,7 @@ public class OrganizationRepository {
      */
     private void updateProjection(Organization organization) {
         jdbcTemplate.update(
-                "INSERT INTO organization "
+                "INSERT INTO organizations "
                         + "(id, tenant_id, parent_id, code, name, level, status, version, "
                         + "fiscal_year_pattern_id, monthly_period_pattern_id, standard_daily_hours, "
                         + "created_at, updated_at) "
@@ -110,8 +110,8 @@ public class OrganizationRepository {
                 organization.getLevel(),
                 organization.getStatus().name(),
                 organization.getVersion(),
-                organization.getFiscalYearPatternId(),
-                organization.getMonthlyPeriodPatternId(),
+                organization.getFiscalYearRuleId(),
+                organization.getMonthlyPeriodRuleId(),
                 organization.getStandardDailyHours());
     }
 
@@ -127,8 +127,8 @@ public class OrganizationRepository {
                     objectMapper.readValue(storedEvent.payload(), OrganizationDeactivated.class);
                 case "OrganizationActivated" ->
                     objectMapper.readValue(storedEvent.payload(), OrganizationActivated.class);
-                case "OrganizationPatternAssigned" ->
-                    objectMapper.readValue(storedEvent.payload(), OrganizationPatternAssigned.class);
+                case "OrganizationRulesAssigned" ->
+                    objectMapper.readValue(storedEvent.payload(), OrganizationRulesAssigned.class);
                 case "OrganizationStandardDailyHoursAssigned" ->
                     objectMapper.readValue(storedEvent.payload(), OrganizationStandardDailyHoursAssigned.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
@@ -173,7 +173,7 @@ public class OrganizationRepository {
         }
 
         String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
-        String sql = "SELECT id, name FROM organization WHERE id IN (" + placeholders + ")";
+        String sql = "SELECT id, name FROM organizations WHERE id IN (" + placeholders + ")";
         Object[] params = ids.stream().map(id -> id.value()).toArray();
 
         Map<OrganizationId, String> result = new HashMap<>();

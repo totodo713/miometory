@@ -88,7 +88,7 @@ public class TenantRepository {
      */
     private void updateProjection(Tenant tenant) {
         jdbcTemplate.update(
-                "INSERT INTO tenant (id, code, name, status, version, "
+                "INSERT INTO tenants (id, code, name, status, version, "
                         + "default_fiscal_year_pattern_id, default_monthly_period_pattern_id, "
                         + "standard_daily_hours, created_at, updated_at) "
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
@@ -105,8 +105,8 @@ public class TenantRepository {
                 tenant.getName(),
                 tenant.getStatus().name(),
                 tenant.getVersion(),
-                tenant.getDefaultFiscalYearPatternId(),
-                tenant.getDefaultMonthlyPeriodPatternId(),
+                tenant.getDefaultFiscalYearRuleId(),
+                tenant.getDefaultMonthlyPeriodRuleId(),
                 tenant.getStandardDailyHours());
     }
 
@@ -120,8 +120,8 @@ public class TenantRepository {
                 case "TenantUpdated" -> objectMapper.readValue(storedEvent.payload(), TenantUpdated.class);
                 case "TenantDeactivated" -> objectMapper.readValue(storedEvent.payload(), TenantDeactivated.class);
                 case "TenantActivated" -> objectMapper.readValue(storedEvent.payload(), TenantActivated.class);
-                case "TenantDefaultPatternsAssigned" ->
-                    objectMapper.readValue(storedEvent.payload(), TenantDefaultPatternsAssigned.class);
+                case "TenantDefaultRulesAssigned" ->
+                    objectMapper.readValue(storedEvent.payload(), TenantDefaultRulesAssigned.class);
                 case "TenantStandardDailyHoursAssigned" ->
                     objectMapper.readValue(storedEvent.payload(), TenantStandardDailyHoursAssigned.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
@@ -166,7 +166,7 @@ public class TenantRepository {
         }
 
         String placeholders = ids.stream().map(id -> "?").collect(Collectors.joining(", "));
-        String sql = "SELECT id, name FROM tenant WHERE id IN (" + placeholders + ")";
+        String sql = "SELECT id, name FROM tenants WHERE id IN (" + placeholders + ")";
         Object[] params = ids.stream().map(id -> id.value()).toArray();
 
         Map<TenantId, String> result = new HashMap<>();

@@ -2,9 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
+import { FiscalYearRuleForm } from "@/components/admin/FiscalYearRuleForm";
 import { MemberManagerForm } from "@/components/admin/MemberManagerForm";
-import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
+import { MonthlyPeriodRuleForm } from "@/components/admin/MonthlyPeriodRuleForm";
 import { OrganizationForm } from "@/components/admin/OrganizationForm";
 import { OrganizationList } from "@/components/admin/OrganizationList";
 import { OrganizationTree } from "@/components/admin/OrganizationTree";
@@ -14,9 +14,9 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { useAdminContext } from "@/providers/AdminProvider";
 import type {
-  EffectivePatterns,
-  FiscalYearPatternOption,
-  MonthlyPeriodPatternOption,
+  EffectiveRules,
+  FiscalYearRuleOption,
+  MonthlyPeriodRuleOption,
   OrganizationMemberRow,
   OrganizationRow,
   OrganizationTreeNode,
@@ -55,8 +55,8 @@ export default function AdminOrganizationsPage() {
   const [targetMember, setTargetMember] = useState<OrganizationMemberRow | undefined>(undefined);
 
   // Pattern assignment state
-  const [fiscalYearPatterns, setFiscalYearPatterns] = useState<FiscalYearPatternOption[]>([]);
-  const [monthlyPeriodPatterns, setMonthlyPeriodPatterns] = useState<MonthlyPeriodPatternOption[]>([]);
+  const [fiscalYearPatterns, setFiscalYearPatterns] = useState<FiscalYearRuleOption[]>([]);
+  const [monthlyPeriodPatterns, setMonthlyPeriodPatterns] = useState<MonthlyPeriodRuleOption[]>([]);
   const [selectedFiscalYearPatternId, setSelectedFiscalYearPatternId] = useState<string>("");
   const [selectedMonthlyPeriodPatternId, setSelectedMonthlyPeriodPatternId] = useState<string>("");
   const [currentFiscalYearPatternId, setCurrentFiscalYearPatternId] = useState<string | null>(null);
@@ -68,9 +68,9 @@ export default function AdminOrganizationsPage() {
   const [showFiscalYearForm, setShowFiscalYearForm] = useState(false);
   const [showMonthlyPeriodForm, setShowMonthlyPeriodForm] = useState(false);
 
-  // Effective patterns state
-  const [effectivePatterns, setEffectivePatterns] = useState<EffectivePatterns | null>(null);
-  const [isEffectivePatternsLoading, setIsEffectivePatternsLoading] = useState(false);
+  // Effective rules state
+  const [effectiveRules, setEffectiveRules] = useState<EffectiveRules | null>(null);
+  const [isEffectiveRulesLoading, setIsEffectiveRulesLoading] = useState(false);
 
   const refresh = useCallback(() => {
     setRefreshKey((k) => k + 1);
@@ -117,8 +117,8 @@ export default function AdminOrganizationsPage() {
       setPatternSuccess(null);
       try {
         const [fyPatterns, mpPatterns] = await Promise.all([
-          api.admin.patterns.listFiscalYearPatterns(tenantId),
-          api.admin.patterns.listMonthlyPeriodPatterns(tenantId),
+          api.admin.rules.listFiscalYearRules(tenantId),
+          api.admin.rules.listMonthlyPeriodRules(tenantId),
         ]);
         if (cancelled) return;
         setFiscalYearPatterns(fyPatterns);
@@ -143,20 +143,20 @@ export default function AdminOrganizationsPage() {
   // Load effective patterns when org is selected
   useEffect(() => {
     if (!selectedOrg) {
-      setEffectivePatterns(null);
+      setEffectiveRules(null);
       return;
     }
     let cancelled = false;
 
     const loadEffective = async () => {
-      setIsEffectivePatternsLoading(true);
+      setIsEffectiveRulesLoading(true);
       try {
-        const result = await api.admin.organizations.getEffectivePatterns(selectedOrg.id);
-        if (!cancelled) setEffectivePatterns(result);
+        const result = await api.admin.organizations.getEffectiveRules(selectedOrg.id);
+        if (!cancelled) setEffectiveRules(result);
       } catch {
-        if (!cancelled) setEffectivePatterns(null);
+        if (!cancelled) setEffectiveRules(null);
       } finally {
-        if (!cancelled) setIsEffectivePatternsLoading(false);
+        if (!cancelled) setIsEffectiveRulesLoading(false);
       }
     };
 
@@ -184,7 +184,7 @@ export default function AdminOrganizationsPage() {
     setPatternSuccess(null);
     setIsPatternSaving(true);
     try {
-      await api.admin.organizations.assignPatterns(
+      await api.admin.organizations.assignRules(
         selectedOrg.id,
         selectedFiscalYearPatternId || null,
         selectedMonthlyPeriodPatternId || null,
@@ -257,7 +257,7 @@ export default function AdminOrganizationsPage() {
       setSelectedOrg({ id: org.id, name: org.name });
       setMemberPage(0);
       setMembers([]);
-      initPatternSelections(org.fiscalYearPatternId, org.monthlyPeriodPatternId);
+      initPatternSelections(org.fiscalYearRuleId, org.monthlyPeriodRuleId);
     },
     [initPatternSelections],
   );
@@ -271,10 +271,10 @@ export default function AdminOrganizationsPage() {
       const result = await api.admin.organizations.list({ search: org.code, size: 1 });
       const fullOrg = result.content.find((o) => o.id === org.id);
       if (fullOrg) {
-        setCurrentFiscalYearPatternId(fullOrg.fiscalYearPatternId ?? null);
-        setCurrentMonthlyPeriodPatternId(fullOrg.monthlyPeriodPatternId ?? null);
-        setSelectedFiscalYearPatternId(fullOrg.fiscalYearPatternId ?? "");
-        setSelectedMonthlyPeriodPatternId(fullOrg.monthlyPeriodPatternId ?? "");
+        setCurrentFiscalYearPatternId(fullOrg.fiscalYearRuleId ?? null);
+        setCurrentMonthlyPeriodPatternId(fullOrg.monthlyPeriodRuleId ?? null);
+        setSelectedFiscalYearPatternId(fullOrg.fiscalYearRuleId ?? "");
+        setSelectedMonthlyPeriodPatternId(fullOrg.monthlyPeriodRuleId ?? "");
       } else {
         setCurrentFiscalYearPatternId(null);
         setCurrentMonthlyPeriodPatternId(null);
@@ -460,12 +460,12 @@ export default function AdminOrganizationsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="fiscal-year-pattern" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="fiscal-year-rule" className="block text-sm font-medium text-gray-700 mb-1">
                       {t("fiscalYearPattern")}
                     </label>
                     <div className="flex items-center gap-2">
                       <select
-                        id="fiscal-year-pattern"
+                        id="fiscal-year-rule"
                         value={selectedFiscalYearPatternId}
                         onChange={(e) => {
                           setSelectedFiscalYearPatternId(e.target.value);
@@ -491,12 +491,12 @@ export default function AdminOrganizationsPage() {
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="monthly-period-pattern" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="monthly-period-rule" className="block text-sm font-medium text-gray-700 mb-1">
                       {t("monthlyPeriodPattern")}
                     </label>
                     <div className="flex items-center gap-2">
                       <select
-                        id="monthly-period-pattern"
+                        id="monthly-period-rule"
                         value={selectedMonthlyPeriodPatternId}
                         onChange={(e) => {
                           setSelectedMonthlyPeriodPatternId(e.target.value);
@@ -542,21 +542,21 @@ export default function AdminOrganizationsPage() {
 
           {/* Effective patterns (inheritance display) */}
           <div className="bg-white rounded-lg border border-gray-200 p-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("effectivePatterns")}</h2>
-            {isEffectivePatternsLoading ? (
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("effectiveRules")}</h2>
+            {isEffectiveRulesLoading ? (
               <div className="text-sm text-gray-500">{tc("loading")}</div>
-            ) : effectivePatterns ? (
+            ) : effectiveRules ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-gray-700">{t("fiscalYearPattern")}</p>
                   <p className="text-sm text-gray-500 mt-1">
                     {t("inheritedFrom")}:{" "}
-                    {effectivePatterns.fiscalYearSource === "system"
+                    {effectiveRules.fiscalYearSource === "system"
                       ? t("source.system")
-                      : effectivePatterns.fiscalYearSource === "tenant"
+                      : effectiveRules.fiscalYearSource === "tenant"
                         ? t("source.tenant")
                         : t("source.organization", {
-                            name: effectivePatterns.fiscalYearSourceName ?? effectivePatterns.fiscalYearSource,
+                            name: effectiveRules.fiscalYearSourceName ?? effectiveRules.fiscalYearSource,
                           })}
                   </p>
                 </div>
@@ -564,12 +564,12 @@ export default function AdminOrganizationsPage() {
                   <p className="text-sm font-medium text-gray-700">{t("monthlyPeriodPattern")}</p>
                   <p className="text-sm text-gray-500 mt-1">
                     {t("inheritedFrom")}:{" "}
-                    {effectivePatterns.monthlyPeriodSource === "system"
+                    {effectiveRules.monthlyPeriodSource === "system"
                       ? t("source.system")
-                      : effectivePatterns.monthlyPeriodSource === "tenant"
+                      : effectiveRules.monthlyPeriodSource === "tenant"
                         ? t("source.tenant")
                         : t("source.organization", {
-                            name: effectivePatterns.monthlyPeriodSourceName ?? effectivePatterns.monthlyPeriodSource,
+                            name: effectiveRules.monthlyPeriodSourceName ?? effectiveRules.monthlyPeriodSource,
                           })}
                   </p>
                 </div>
@@ -713,7 +713,7 @@ export default function AdminOrganizationsPage() {
       )}
 
       {showFiscalYearForm && adminContext?.tenantId && (
-        <FiscalYearPatternForm
+        <FiscalYearRuleForm
           tenantId={adminContext.tenantId}
           open={showFiscalYearForm}
           onClose={() => setShowFiscalYearForm(false)}
@@ -726,7 +726,7 @@ export default function AdminOrganizationsPage() {
       )}
 
       {showMonthlyPeriodForm && adminContext?.tenantId && (
-        <MonthlyPeriodPatternForm
+        <MonthlyPeriodRuleForm
           tenantId={adminContext.tenantId}
           open={showMonthlyPeriodForm}
           onClose={() => setShowMonthlyPeriodForm(false)}

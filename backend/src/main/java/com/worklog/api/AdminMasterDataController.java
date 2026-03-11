@@ -31,7 +31,7 @@ public class AdminMasterDataController {
     // Fiscal Year Pattern Presets
     // ========================================================================
 
-    @GetMapping("/fiscal-year-patterns")
+    @GetMapping("/fiscal-year-rules")
     @PreAuthorize("hasPermission(null, 'master_data.view')")
     public AdminMasterDataService.PresetPage<AdminMasterDataService.FiscalYearPresetRow> listFiscalYearPresets(
             @RequestParam(required = false) String search,
@@ -43,7 +43,7 @@ public class AdminMasterDataController {
         return adminMasterDataService.listFiscalYearPresets(search, isActive, effectivePage, effectiveSize);
     }
 
-    @PostMapping("/fiscal-year-patterns")
+    @PostMapping("/fiscal-year-rules")
     @PreAuthorize("hasPermission(null, 'master_data.create')")
     @ResponseStatus(HttpStatus.CREATED)
     public CreateResponse createFiscalYearPreset(@RequestBody @Valid CreateFiscalYearPresetRequest request) {
@@ -52,7 +52,7 @@ public class AdminMasterDataController {
         return new CreateResponse(id.toString());
     }
 
-    @PutMapping("/fiscal-year-patterns/{id}")
+    @PutMapping("/fiscal-year-rules/{id}")
     @PreAuthorize("hasPermission(null, 'master_data.update')")
     public ResponseEntity<Void> updateFiscalYearPreset(
             @PathVariable UUID id, @RequestBody @Valid CreateFiscalYearPresetRequest request) {
@@ -61,7 +61,7 @@ public class AdminMasterDataController {
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/fiscal-year-patterns/{id}/deactivate")
+    @PatchMapping("/fiscal-year-rules/{id}/deactivate")
     @PreAuthorize("hasPermission(null, 'master_data.deactivate')")
     public ResponseEntity<Void> deactivateFiscalYearPreset(@PathVariable UUID id) {
         adminMasterDataService.deactivateFiscalYearPreset(id);
@@ -69,7 +69,7 @@ public class AdminMasterDataController {
     }
 
     // Intentionally reuses *.deactivate permission for both activate/deactivate
-    @PatchMapping("/fiscal-year-patterns/{id}/activate")
+    @PatchMapping("/fiscal-year-rules/{id}/activate")
     @PreAuthorize("hasPermission(null, 'master_data.deactivate')")
     public ResponseEntity<Void> activateFiscalYearPreset(@PathVariable UUID id) {
         adminMasterDataService.activateFiscalYearPreset(id);
@@ -80,7 +80,7 @@ public class AdminMasterDataController {
     // Monthly Period Pattern Presets
     // ========================================================================
 
-    @GetMapping("/monthly-period-patterns")
+    @GetMapping("/monthly-period-rules")
     @PreAuthorize("hasPermission(null, 'master_data.view')")
     public AdminMasterDataService.PresetPage<AdminMasterDataService.MonthlyPeriodPresetRow> listMonthlyPeriodPresets(
             @RequestParam(required = false) String search,
@@ -92,7 +92,7 @@ public class AdminMasterDataController {
         return adminMasterDataService.listMonthlyPeriodPresets(search, isActive, effectivePage, effectiveSize);
     }
 
-    @PostMapping("/monthly-period-patterns")
+    @PostMapping("/monthly-period-rules")
     @PreAuthorize("hasPermission(null, 'master_data.create')")
     @ResponseStatus(HttpStatus.CREATED)
     public CreateResponse createMonthlyPeriodPreset(@RequestBody @Valid CreateMonthlyPeriodPresetRequest request) {
@@ -101,7 +101,7 @@ public class AdminMasterDataController {
         return new CreateResponse(id.toString());
     }
 
-    @PutMapping("/monthly-period-patterns/{id}")
+    @PutMapping("/monthly-period-rules/{id}")
     @PreAuthorize("hasPermission(null, 'master_data.update')")
     public ResponseEntity<Void> updateMonthlyPeriodPreset(
             @PathVariable UUID id, @RequestBody @Valid CreateMonthlyPeriodPresetRequest request) {
@@ -109,7 +109,7 @@ public class AdminMasterDataController {
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/monthly-period-patterns/{id}/deactivate")
+    @PatchMapping("/monthly-period-rules/{id}/deactivate")
     @PreAuthorize("hasPermission(null, 'master_data.deactivate')")
     public ResponseEntity<Void> deactivateMonthlyPeriodPreset(@PathVariable UUID id) {
         adminMasterDataService.deactivateMonthlyPeriodPreset(id);
@@ -117,7 +117,7 @@ public class AdminMasterDataController {
     }
 
     // Intentionally reuses *.deactivate permission for both activate/deactivate
-    @PatchMapping("/monthly-period-patterns/{id}/activate")
+    @PatchMapping("/monthly-period-rules/{id}/activate")
     @PreAuthorize("hasPermission(null, 'master_data.deactivate')")
     public ResponseEntity<Void> activateMonthlyPeriodPreset(@PathVariable UUID id) {
         adminMasterDataService.activateMonthlyPeriodPreset(id);
@@ -178,13 +178,13 @@ public class AdminMasterDataController {
     // Holiday Calendar Entries
     // ========================================================================
 
-    @GetMapping("/holiday-calendars/{id}/entries")
+    @GetMapping("/holiday-calendars/{id}/rules")
     @PreAuthorize("hasPermission(null, 'master_data.view')")
     public List<AdminMasterDataService.HolidayEntryRow> listHolidayEntries(@PathVariable UUID id) {
         return adminMasterDataService.listHolidayEntries(id);
     }
 
-    @PostMapping("/holiday-calendars/{id}/entries")
+    @PostMapping("/holiday-calendars/{id}/rules")
     @PreAuthorize("hasPermission(null, 'master_data.create')")
     @ResponseStatus(HttpStatus.CREATED)
     public CreateResponse addHolidayEntry(
@@ -202,7 +202,7 @@ public class AdminMasterDataController {
         return new CreateResponse(entryId.toString());
     }
 
-    @PutMapping("/holiday-calendars/{id}/entries/{entryId}")
+    @PutMapping("/holiday-calendars/{id}/rules/{entryId}")
     @PreAuthorize("hasPermission(null, 'master_data.update')")
     public ResponseEntity<Void> updateHolidayEntry(
             @PathVariable UUID id, @PathVariable UUID entryId, @RequestBody @Valid CreateHolidayEntryRequest request) {
@@ -220,7 +220,7 @@ public class AdminMasterDataController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/holiday-calendars/{id}/entries/{entryId}")
+    @DeleteMapping("/holiday-calendars/{id}/rules/{entryId}")
     @PreAuthorize("hasPermission(null, 'master_data.update')")
     public ResponseEntity<Void> removeHolidayEntry(@PathVariable UUID id, @PathVariable UUID entryId) {
         adminMasterDataService.removeHolidayEntry(id, entryId);

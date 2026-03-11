@@ -52,8 +52,8 @@ public class OrganizationService {
                 Organization.create(organizationId, tenantId, parentId, code, command.name(), level);
 
         // Assign patterns if provided
-        if (command.fiscalYearPatternId() != null || command.monthlyPeriodPatternId() != null) {
-            organization.assignPatterns(command.fiscalYearPatternId(), command.monthlyPeriodPatternId());
+        if (command.fiscalYearRuleId() != null || command.monthlyPeriodRuleId() != null) {
+            organization.assignRules(command.fiscalYearRuleId(), command.monthlyPeriodRuleId());
         }
 
         organizationRepository.save(organization);
@@ -107,19 +107,19 @@ public class OrganizationService {
     }
 
     /**
-     * Assigns fiscal year and monthly period patterns to an organization.
+     * Assigns fiscal year and monthly period rules to an organization.
      *
      * @param organizationId ID of the organization
-     * @param fiscalYearPatternId Fiscal year pattern ID (can be null)
-     * @param monthlyPeriodPatternId Monthly period pattern ID (can be null)
+     * @param fiscalYearRuleId Fiscal year rule ID (can be null)
+     * @param monthlyPeriodRuleId Monthly period rule ID (can be null)
      */
     @Transactional
-    public void assignPatterns(UUID organizationId, UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {
+    public void assignRules(UUID organizationId, UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {
         Organization organization = organizationRepository
                 .findById(new OrganizationId(organizationId))
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found: " + organizationId));
 
-        organization.assignPatterns(fiscalYearPatternId, monthlyPeriodPatternId);
+        organization.assignRules(fiscalYearRuleId, monthlyPeriodRuleId);
         organizationRepository.save(organization);
     }
 

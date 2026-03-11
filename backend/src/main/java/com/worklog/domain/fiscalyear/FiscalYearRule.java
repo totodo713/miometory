@@ -8,7 +8,7 @@ import java.time.DateTimeException;
 import java.time.LocalDate;
 
 /**
- * FiscalYearPattern aggregate root that defines how fiscal years are calculated.
+ * FiscalYearRule aggregate root that defines how fiscal years are calculated.
  *
  * Business Rules:
  * - startMonth must be 1-12 (January to December)
@@ -17,58 +17,58 @@ import java.time.LocalDate;
  *
  * This is an event-sourced aggregate that tracks changes via domain events.
  */
-public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
+public class FiscalYearRule extends AggregateRoot<FiscalYearRuleId> {
 
-    private FiscalYearPatternId id;
+    private FiscalYearRuleId id;
     private TenantId tenantId;
     private String name;
     private int startMonth;
     private int startDay;
 
     // Package-private constructor for factory methods (accessible from Kotlin in same package)
-    FiscalYearPattern() {}
+    FiscalYearRule() {}
 
     /**
-     * Creates a new FiscalYearPattern.
+     * Creates a new FiscalYearRule.
      *
      * @param tenantId The tenant ID
      * @param name The pattern name
      * @param startMonth The starting month (1-12)
      * @param startDay The starting day (1-31, must be valid for the month)
-     * @return A new FiscalYearPattern with FiscalYearPatternCreated event
+     * @return A new FiscalYearRule with FiscalYearRuleCreated event
      * @throws DomainException if validation fails
      */
-    public static FiscalYearPattern create(TenantId tenantId, String name, int startMonth, int startDay) {
+    public static FiscalYearRule create(TenantId tenantId, String name, int startMonth, int startDay) {
         validateName(name);
         validateStartMonth(startMonth);
         validateStartDay(startDay);
         validateDate(startMonth, startDay);
 
-        FiscalYearPattern pattern = new FiscalYearPattern();
-        FiscalYearPatternId patternId = FiscalYearPatternId.generate();
+        FiscalYearRule pattern = new FiscalYearRule();
+        FiscalYearRuleId patternId = FiscalYearRuleId.generate();
 
-        FiscalYearPatternCreated event =
-                FiscalYearPatternCreated.create(patternId.value(), tenantId.value(), name.trim(), startMonth, startDay);
+        FiscalYearRuleCreated event =
+                FiscalYearRuleCreated.create(patternId.value(), tenantId.value(), name.trim(), startMonth, startDay);
         pattern.raiseEvent(event);
 
         return pattern;
     }
 
     /**
-     * Creates a new FiscalYearPattern with a specific ID.
+     * Creates a new FiscalYearRule with a specific ID.
      * Used for reconstitution from event store.
      */
-    public static FiscalYearPattern createWithId(
-            FiscalYearPatternId id, TenantId tenantId, String name, int startMonth, int startDay) {
+    public static FiscalYearRule createWithId(
+            FiscalYearRuleId id, TenantId tenantId, String name, int startMonth, int startDay) {
         validateName(name);
         validateStartMonth(startMonth);
         validateStartDay(startDay);
         validateDate(startMonth, startDay);
 
-        FiscalYearPattern pattern = new FiscalYearPattern();
+        FiscalYearRule pattern = new FiscalYearRule();
 
-        FiscalYearPatternCreated event =
-                FiscalYearPatternCreated.create(id.value(), tenantId.value(), name.trim(), startMonth, startDay);
+        FiscalYearRuleCreated event =
+                FiscalYearRuleCreated.create(id.value(), tenantId.value(), name.trim(), startMonth, startDay);
         pattern.raiseEvent(event);
 
         return pattern;
@@ -115,8 +115,8 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
 
     @Override
     protected void apply(DomainEvent event) {
-        if (event instanceof FiscalYearPatternCreated e) {
-            this.id = FiscalYearPatternId.of(e.aggregateId());
+        if (event instanceof FiscalYearRuleCreated e) {
+            this.id = FiscalYearRuleId.of(e.aggregateId());
             this.tenantId = TenantId.of(e.tenantId());
             this.name = e.name();
             this.startMonth = e.startMonth();
@@ -162,13 +162,13 @@ public class FiscalYearPattern extends AggregateRoot<FiscalYearPatternId> {
     // Getters
 
     @Override
-    public FiscalYearPatternId getId() {
+    public FiscalYearRuleId getId() {
         return id;
     }
 
     @Override
     public String getAggregateType() {
-        return "FiscalYearPattern";
+        return "FiscalYearRule";
     }
 
     public TenantId getTenantId() {

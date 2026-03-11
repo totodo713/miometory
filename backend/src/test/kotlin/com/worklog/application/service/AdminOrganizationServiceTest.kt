@@ -61,7 +61,7 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
         assertNotNull(orgId)
         // Verify in projection table
         val count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM organization WHERE id = ?",
+            "SELECT COUNT(*) FROM organizations WHERE id = ?",
             Long::class.java,
             orgId,
         )
@@ -179,7 +179,7 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
         service.updateOrganization(orgId, tenantId, "Updated Name")
 
         val name = jdbcTemplate.queryForObject(
-            "SELECT name FROM organization WHERE id = ?",
+            "SELECT name FROM organizations WHERE id = ?",
             String::class.java,
             orgId,
         )
@@ -271,7 +271,7 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
 
         // Verify it's inactive
         val statusBefore = jdbcTemplate.queryForObject(
-            "SELECT status FROM organization WHERE id = ?",
+            "SELECT status FROM organizations WHERE id = ?",
             String::class.java,
             orgId,
         )
@@ -280,7 +280,7 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
         service.activateOrganization(orgId, tenantId)
 
         val statusAfter = jdbcTemplate.queryForObject(
-            "SELECT status FROM organization WHERE id = ?",
+            "SELECT status FROM organizations WHERE id = ?",
             String::class.java,
             orgId,
         )

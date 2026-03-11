@@ -1,9 +1,9 @@
 package com.worklog.infrastructure.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.worklog.domain.fiscalyear.FiscalYearPattern;
-import com.worklog.domain.fiscalyear.FiscalYearPatternCreated;
-import com.worklog.domain.fiscalyear.FiscalYearPatternId;
+import com.worklog.domain.fiscalyear.FiscalYearRule;
+import com.worklog.domain.fiscalyear.FiscalYearRuleCreated;
+import com.worklog.domain.fiscalyear.FiscalYearRuleId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
@@ -16,19 +16,19 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Repository for FiscalYearPattern aggregates.
+ * Repository for FiscalYearRule aggregates.
  *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
 @Repository
-public class FiscalYearPatternRepository {
+public class FiscalYearRuleRepository {
 
     private final EventStore eventStore;
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
 
-    public FiscalYearPatternRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
+    public FiscalYearRuleRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
@@ -38,7 +38,7 @@ public class FiscalYearPatternRepository {
      * Save a fiscal year pattern aggregate by appending its uncommitted events.
      */
     @Transactional
-    public void save(FiscalYearPattern pattern) {
+    public void save(FiscalYearRule pattern) {
         List<DomainEvent> events = pattern.getUncommittedEvents();
         if (events.isEmpty()) {
             return;
@@ -58,14 +58,14 @@ public class FiscalYearPatternRepository {
      *
      * Reconstructs the aggregate from events in the event store.
      */
-    public Optional<FiscalYearPattern> findById(FiscalYearPatternId id) {
+    public Optional<FiscalYearRule> findById(FiscalYearRuleId id) {
         List<StoredEvent> storedEvents = eventStore.load(id.value());
         if (storedEvents.isEmpty()) {
             return Optional.empty();
         }
 
         // Create empty aggregate using reflection
-        FiscalYearPattern pattern = createEmptyPattern();
+        FiscalYearRule pattern = createEmptyPattern();
 
         // Replay all events to rebuild state
         for (StoredEvent storedEvent : storedEvents) {
@@ -81,14 +81,14 @@ public class FiscalYearPatternRepository {
      * Find all fiscal year patterns for a tenant.
      * Uses the projection table for performance.
      */
-    public List<FiscalYearPattern> findByTenantId(UUID tenantId) {
+    public List<FiscalYearRule> findByTenantId(UUID tenantId) {
         List<UUID> patternIds = jdbcTemplate.query(
-                "SELECT id FROM fiscal_year_pattern WHERE tenant_id = ? ORDER BY name",
+                "SELECT id FROM fiscal_year_rules WHERE tenant_id = ? ORDER BY name",
                 (rs, rowNum) -> UUID.fromString(rs.getString("id")),
                 tenantId);
 
         return patternIds.stream()
-                .map(id -> findById(FiscalYearPatternId.of(id)))
+                .map(id -> findById(FiscalYearRuleId.of(id)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
@@ -97,16 +97,16 @@ public class FiscalYearPatternRepository {
     /**
      * Check if a pattern exists by ID.
      */
-    public boolean existsById(FiscalYearPatternId id) {
+    public boolean existsById(FiscalYearRuleId id) {
         return eventStore.getCurrentVersion(id.value()) > 0;
     }
 
     /**
      * Updates the projection table for query performance.
      */
-    private void updateProjection(FiscalYearPattern pattern) {
+    private void updateProjection(FiscalYearRule pattern) {
         jdbcTemplate.update(
-                "INSERT INTO fiscal_year_pattern (id, tenant_id, organization_id, name, start_month, start_day, created_at) "
+                "INSERT INTO fiscal_year_rules (id, tenant_id, organization_id, name, start_month, start_day, created_at) "
                         + "VALUES (?, ?, ?, ?, ?, ?, NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "
@@ -126,8 +126,8 @@ public class FiscalYearPatternRepository {
     private DomainEvent deserializeEvent(StoredEvent storedEvent) {
         try {
             return switch (storedEvent.eventType()) {
-                case "FiscalYearPatternCreated" ->
-                    objectMapper.readValue(storedEvent.payload(), FiscalYearPatternCreated.class);
+                case "FiscalYearRuleCreated" ->
+                    objectMapper.readValue(storedEvent.payload(), FiscalYearRuleCreated.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {
@@ -136,16 +136,16 @@ public class FiscalYearPatternRepository {
     }
 
     /**
-     * Creates an empty FiscalYearPattern instance using reflection.
+     * Creates an empty FiscalYearRule instance using reflection.
      * This is needed because the constructor is private.
      */
-    private FiscalYearPattern createEmptyPattern() {
+    private FiscalYearRule createEmptyPattern() {
         try {
-            Constructor<FiscalYearPattern> constructor = FiscalYearPattern.class.getDeclaredConstructor();
+            Constructor<FiscalYearRule> constructor = FiscalYearRule.class.getDeclaredConstructor();
             constructor.setAccessible(true);
             return constructor.newInstance();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create empty FiscalYearPattern instance", e);
+            throw new RuntimeException("Failed to create empty FiscalYearRule instance", e);
         }
     }
 }

@@ -67,7 +67,7 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `GET default patterns returns 200 for tenant admin`() {
         mockMvc.perform(
-            get("/api/v1/tenant-settings/default-patterns")
+            get("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -76,7 +76,7 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `GET default patterns returns 403 for regular user`() {
         mockMvc.perform(
-            get("/api/v1/tenant-settings/default-patterns")
+            get("/api/v1/tenant-settings/default-rules")
                 .with(user(regularEmail)),
         )
             .andExpect(status().isForbidden)
@@ -85,10 +85,10 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `PUT default patterns with nulls returns 204 for tenant admin`() {
         mockMvc.perform(
-            put("/api/v1/tenant-settings/default-patterns")
+            put("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"defaultFiscalYearPatternId":null,"defaultMonthlyPeriodPatternId":null}"""),
+                .content("""{"defaultFiscalYearRuleId":null,"defaultMonthlyPeriodRuleId":null}"""),
         )
             .andExpect(status().isNoContent)
     }
@@ -96,10 +96,10 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
     @Test
     fun `PUT default patterns returns 403 for regular user`() {
         mockMvc.perform(
-            put("/api/v1/tenant-settings/default-patterns")
+            put("/api/v1/tenant-settings/default-rules")
                 .with(user(regularEmail))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"defaultFiscalYearPatternId":null,"defaultMonthlyPeriodPatternId":null}"""),
+                .content("""{"defaultFiscalYearRuleId":null,"defaultMonthlyPeriodRuleId":null}"""),
         )
             .andExpect(status().isForbidden)
     }
@@ -108,7 +108,7 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
     fun `PUT with valid pattern updates default and GET reflects change`() {
         // Create a fiscal year pattern for this tenant
         val patternResult = mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Japan FY","startMonth":4,"startDay":1}"""),
@@ -120,20 +120,20 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Update default pattern
         mockMvc.perform(
-            put("/api/v1/tenant-settings/default-patterns")
+            put("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"defaultFiscalYearPatternId":"$patternId","defaultMonthlyPeriodPatternId":null}"""),
+                .content("""{"defaultFiscalYearRuleId":"$patternId","defaultMonthlyPeriodRuleId":null}"""),
         )
             .andExpect(status().isNoContent)
 
         // Verify change via GET
         mockMvc.perform(
-            get("/api/v1/tenant-settings/default-patterns")
+            get("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail)),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.defaultFiscalYearPatternId").value(patternId))
+            .andExpect(jsonPath("$.defaultFiscalYearRuleId").value(patternId))
     }
 
     @Test
@@ -153,7 +153,7 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Create pattern for the other tenant
         val patternResult = mockMvc.perform(
-            post("/api/v1/tenants/$otherTenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$otherTenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Other FY","startMonth":1,"startDay":1}"""),
@@ -165,10 +165,10 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Try to set other tenant's pattern as default → should fail
         mockMvc.perform(
-            put("/api/v1/tenant-settings/default-patterns")
+            put("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"defaultFiscalYearPatternId":"$otherPatternId","defaultMonthlyPeriodPatternId":null}"""),
+                .content("""{"defaultFiscalYearRuleId":"$otherPatternId","defaultMonthlyPeriodRuleId":null}"""),
         )
             .andExpect(status().isBadRequest)
     }
@@ -177,7 +177,7 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
     fun `PUT with valid monthly period pattern updates default`() {
         // Create a monthly period pattern for this tenant
         val patternResult = mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$tenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"15th Cutoff","startDay":15}"""),
@@ -189,22 +189,22 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Update default monthly period pattern
         mockMvc.perform(
-            put("/api/v1/tenant-settings/default-patterns")
+            put("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    """{"defaultFiscalYearPatternId":null,"defaultMonthlyPeriodPatternId":"$patternId"}""",
+                    """{"defaultFiscalYearRuleId":null,"defaultMonthlyPeriodRuleId":"$patternId"}""",
                 ),
         )
             .andExpect(status().isNoContent)
 
         // Verify change via GET
         mockMvc.perform(
-            get("/api/v1/tenant-settings/default-patterns")
+            get("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail)),
         )
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.defaultMonthlyPeriodPatternId").value(patternId))
+            .andExpect(jsonPath("$.defaultMonthlyPeriodRuleId").value(patternId))
     }
 
     @Test
@@ -224,7 +224,7 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Create monthly period pattern for the other tenant
         val patternResult = mockMvc.perform(
-            post("/api/v1/tenants/$otherTenantId/monthly-period-patterns")
+            post("/api/v1/tenants/$otherTenantId/monthly-period-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Other MP","startDay":1}"""),
@@ -236,11 +236,11 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
 
         // Try to set other tenant's monthly pattern as default → should fail
         mockMvc.perform(
-            put("/api/v1/tenant-settings/default-patterns")
+            put("/api/v1/tenant-settings/default-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    """{"defaultFiscalYearPatternId":null,"defaultMonthlyPeriodPatternId":"$otherPatternId"}""",
+                    """{"defaultFiscalYearRuleId":null,"defaultMonthlyPeriodRuleId":"$otherPatternId"}""",
                 ),
         )
             .andExpect(status().isBadRequest)

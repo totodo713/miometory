@@ -11,14 +11,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.util.UUID
 
 /**
- * Authorization tests for FiscalYearPatternController.
+ * Authorization tests for FiscalYearRuleController.
  *
  * Verifies @PreAuthorize + TenantAccessValidator enforcement:
  * - SYSTEM_ADMIN can access any tenant's patterns
  * - TENANT_ADMIN can access own tenant's patterns only
  * - Regular users are denied access
  */
-class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
+class FiscalYearRuleControllerAuthTest : AdminIntegrationTestBase() {
 
     private lateinit var systemAdminEmail: String
     private lateinit var tenantAdminEmail: String
@@ -43,7 +43,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 200 for system admin`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-patterns")
+            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -53,7 +53,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 200 for tenant admin accessing own tenant`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-patterns")
+            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-rules")
                 .with(user(tenantAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -62,7 +62,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 403 for tenant admin accessing other tenant`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$otherTenantId/fiscal-year-patterns")
+            get("/api/v1/tenants/$otherTenantId/fiscal-year-rules")
                 .with(user(tenantAdminEmail)),
         )
             .andExpect(status().isForbidden)
@@ -71,7 +71,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `GET list returns 403 for regular user`() {
         mockMvc.perform(
-            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-patterns")
+            get("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-rules")
                 .with(user(regularEmail)),
         )
             .andExpect(status().isForbidden)
@@ -80,7 +80,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `POST returns 201 for tenant admin creating in own tenant`() {
         mockMvc.perform(
-            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-patterns")
+            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
@@ -93,7 +93,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `POST returns 403 for tenant admin creating in other tenant`() {
         mockMvc.perform(
-            post("/api/v1/tenants/$otherTenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$otherTenantId/fiscal-year-rules")
                 .with(user(tenantAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Other Tenant FY","startMonth":1,"startDay":1}"""),
@@ -104,7 +104,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
     @Test
     fun `POST returns 403 for regular user`() {
         mockMvc.perform(
-            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-patterns")
+            post("/api/v1/tenants/$ADM_TEST_TENANT_ID/fiscal-year-rules")
                 .with(user(regularEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Unauthorized FY","startMonth":1,"startDay":1}"""),
@@ -117,7 +117,7 @@ class FiscalYearPatternControllerAuthTest : AdminIntegrationTestBase() {
         // System admin can create pattern for any tenant (even non-existent)
         // because validateAccess passes for tenant.view permission
         mockMvc.perform(
-            get("/api/v1/tenants/$otherTenantId/fiscal-year-patterns")
+            get("/api/v1/tenants/$otherTenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)

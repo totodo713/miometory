@@ -14,11 +14,11 @@ import java.util.UUID
 import kotlin.test.assertEquals
 
 /**
- * Integration tests for FiscalYearPatternController CRUD operations.
+ * Integration tests for FiscalYearRuleController CRUD operations.
  *
  * Uses system admin auth (required by @PreAuthorize + TenantAccessValidator).
  */
-class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
+class FiscalYearRuleControllerTest : AdminIntegrationTestBase() {
 
     @Autowired
     private lateinit var objectMapper: ObjectMapper
@@ -37,7 +37,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         val result = mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Japan Standard","startMonth":4,"startDay":1}"""),
@@ -59,7 +59,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Invalid Pattern","startMonth":13,"startDay":1}"""),
@@ -72,7 +72,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Invalid Date","startMonth":2,"startDay":30}"""),
@@ -86,7 +86,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create pattern
         val createResult = mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"US Standard","startMonth":10,"startDay":1}"""),
@@ -98,7 +98,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Get pattern by ID
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/fiscal-year-patterns/$patternId")
+            get("/api/v1/tenants/$tenantId/fiscal-year-rules/$patternId")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -114,7 +114,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
         val nonExistentId = UUID.randomUUID()
 
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/fiscal-year-patterns/$nonExistentId")
+            get("/api/v1/tenants/$tenantId/fiscal-year-rules/$nonExistentId")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isNotFound)
@@ -125,7 +125,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
         val tenantId = createTenantViaApi()
 
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            get("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -139,14 +139,14 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create two patterns
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Japan Standard","startMonth":4,"startDay":1}"""),
         ).andExpect(status().isCreated)
 
         mockMvc.perform(
-            post("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"UK Standard","startMonth":4,"startDay":6}"""),
@@ -154,7 +154,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Get list
         mockMvc.perform(
-            get("/api/v1/tenants/$tenantId/fiscal-year-patterns")
+            get("/api/v1/tenants/$tenantId/fiscal-year-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -168,7 +168,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create pattern for tenant1
         mockMvc.perform(
-            post("/api/v1/tenants/$tenant1Id/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenant1Id/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Tenant1 Pattern","startMonth":4,"startDay":1}"""),
@@ -176,7 +176,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create pattern for tenant2
         mockMvc.perform(
-            post("/api/v1/tenants/$tenant2Id/fiscal-year-patterns")
+            post("/api/v1/tenants/$tenant2Id/fiscal-year-rules")
                 .with(user(systemAdminEmail))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"name":"Tenant2 Pattern","startMonth":1,"startDay":1}"""),
@@ -184,7 +184,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Get list for tenant1
         mockMvc.perform(
-            get("/api/v1/tenants/$tenant1Id/fiscal-year-patterns")
+            get("/api/v1/tenants/$tenant1Id/fiscal-year-rules")
                 .with(user(systemAdminEmail)),
         )
             .andExpect(status().isOk)
@@ -206,7 +206,7 @@ class FiscalYearPatternControllerTest : AdminIntegrationTestBase() {
 
         // Create tenant projection (event store → projection gap)
         baseJdbcTemplate.update(
-            """INSERT INTO tenant (id, code, name, status, created_at)
+            """INSERT INTO tenants (id, code, name, status, created_at)
                VALUES (?, ?, ?, 'ACTIVE', NOW()) ON CONFLICT (id) DO NOTHING""",
             tenantId,
             shortCode,

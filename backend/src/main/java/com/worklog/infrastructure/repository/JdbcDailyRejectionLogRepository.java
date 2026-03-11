@@ -16,7 +16,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Repository for the daily_rejection_log projection table.
+ * Repository for the daily_rejection_logs projection table.
  *
  * This is a read/write projection (not event-sourced) used to track
  * individual daily rejections separately from monthly approval rejections.
@@ -41,7 +41,7 @@ public class JdbcDailyRejectionLogRepository {
         UUID[] entryIdsArray = affectedEntryIds.toArray(new UUID[0]);
 
         String sql = """
-                INSERT INTO daily_rejection_log (member_id, work_date, rejected_by, rejection_reason, affected_entry_ids, created_at)
+                INSERT INTO daily_rejection_logs (member_id, work_date, rejected_by, rejection_reason, affected_entry_ids, created_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT (member_id, work_date)
                 DO UPDATE SET rejected_by = EXCLUDED.rejected_by,
@@ -61,7 +61,7 @@ public class JdbcDailyRejectionLogRepository {
     public boolean existsByMemberIdAndDate(UUID memberId, LocalDate workDate) {
         String sql = """
                 SELECT COUNT(*) > 0
-                FROM daily_rejection_log
+                FROM daily_rejection_logs
                 WHERE member_id = ?
                 AND work_date = ?
                 """;
@@ -77,7 +77,7 @@ public class JdbcDailyRejectionLogRepository {
             UUID memberId, LocalDate startDate, LocalDate endDate) {
         String sql = """
                 SELECT id, member_id, work_date, rejected_by, rejection_reason, affected_entry_ids, created_at
-                FROM daily_rejection_log
+                FROM daily_rejection_logs
                 WHERE member_id = ?
                 AND work_date BETWEEN ? AND ?
                 ORDER BY work_date

@@ -1,9 +1,9 @@
 package com.worklog.infrastructure.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternCreated;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRule;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRuleCreated;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRuleId;
 import com.worklog.domain.shared.DomainEvent;
 import com.worklog.eventsourcing.EventStore;
 import com.worklog.eventsourcing.StoredEvent;
@@ -16,19 +16,19 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Repository for MonthlyPeriodPattern aggregates.
+ * Repository for MonthlyPeriodRule aggregates.
  *
  * Provides persistence operations using event sourcing.
  * Reconstructs aggregates by replaying events from the event store.
  */
 @Repository
-public class MonthlyPeriodPatternRepository {
+public class MonthlyPeriodRuleRepository {
 
     private final EventStore eventStore;
     private final ObjectMapper objectMapper;
     private final JdbcTemplate jdbcTemplate;
 
-    public MonthlyPeriodPatternRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
+    public MonthlyPeriodRuleRepository(EventStore eventStore, ObjectMapper objectMapper, JdbcTemplate jdbcTemplate) {
         this.eventStore = eventStore;
         this.objectMapper = objectMapper;
         this.jdbcTemplate = jdbcTemplate;
@@ -38,7 +38,7 @@ public class MonthlyPeriodPatternRepository {
      * Save a monthly period pattern aggregate by appending its uncommitted events.
      */
     @Transactional
-    public void save(MonthlyPeriodPattern pattern) {
+    public void save(MonthlyPeriodRule pattern) {
         List<DomainEvent> events = pattern.getUncommittedEvents();
         if (events.isEmpty()) {
             return;
@@ -58,14 +58,14 @@ public class MonthlyPeriodPatternRepository {
      *
      * Reconstructs the aggregate from events in the event store.
      */
-    public Optional<MonthlyPeriodPattern> findById(MonthlyPeriodPatternId id) {
+    public Optional<MonthlyPeriodRule> findById(MonthlyPeriodRuleId id) {
         List<StoredEvent> storedEvents = eventStore.load(id.value());
         if (storedEvents.isEmpty()) {
             return Optional.empty();
         }
 
         // Create empty aggregate using reflection
-        MonthlyPeriodPattern pattern = createEmptyPattern();
+        MonthlyPeriodRule pattern = createEmptyPattern();
 
         // Replay all events to rebuild state
         for (StoredEvent storedEvent : storedEvents) {
@@ -81,14 +81,14 @@ public class MonthlyPeriodPatternRepository {
      * Find all monthly period patterns for a tenant.
      * Uses the projection table for performance.
      */
-    public List<MonthlyPeriodPattern> findByTenantId(UUID tenantId) {
+    public List<MonthlyPeriodRule> findByTenantId(UUID tenantId) {
         List<UUID> patternIds = jdbcTemplate.query(
-                "SELECT id FROM monthly_period_pattern WHERE tenant_id = ? ORDER BY name",
+                "SELECT id FROM monthly_period_rules WHERE tenant_id = ? ORDER BY name",
                 (rs, rowNum) -> UUID.fromString(rs.getString("id")),
                 tenantId);
 
         return patternIds.stream()
-                .map(id -> findById(MonthlyPeriodPatternId.of(id)))
+                .map(id -> findById(MonthlyPeriodRuleId.of(id)))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .toList();
@@ -97,16 +97,16 @@ public class MonthlyPeriodPatternRepository {
     /**
      * Check if a pattern exists by ID.
      */
-    public boolean existsById(MonthlyPeriodPatternId id) {
+    public boolean existsById(MonthlyPeriodRuleId id) {
         return eventStore.getCurrentVersion(id.value()) > 0;
     }
 
     /**
      * Updates the projection table for query performance.
      */
-    private void updateProjection(MonthlyPeriodPattern pattern) {
+    private void updateProjection(MonthlyPeriodRule pattern) {
         jdbcTemplate.update(
-                "INSERT INTO monthly_period_pattern (id, tenant_id, organization_id, name, start_day, created_at) "
+                "INSERT INTO monthly_period_rules (id, tenant_id, organization_id, name, start_day, created_at) "
                         + "VALUES (?, ?, ?, ?, ?, NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "
@@ -124,8 +124,8 @@ public class MonthlyPeriodPatternRepository {
     private DomainEvent deserializeEvent(StoredEvent storedEvent) {
         try {
             return switch (storedEvent.eventType()) {
-                case "MonthlyPeriodPatternCreated" ->
-                    objectMapper.readValue(storedEvent.payload(), MonthlyPeriodPatternCreated.class);
+                case "MonthlyPeriodRuleCreated" ->
+                    objectMapper.readValue(storedEvent.payload(), MonthlyPeriodRuleCreated.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {
@@ -134,16 +134,16 @@ public class MonthlyPeriodPatternRepository {
     }
 
     /**
-     * Creates an empty MonthlyPeriodPattern instance using reflection.
+     * Creates an empty MonthlyPeriodRule instance using reflection.
      * This is needed because the constructor is private.
      */
-    private MonthlyPeriodPattern createEmptyPattern() {
+    private MonthlyPeriodRule createEmptyPattern() {
         try {
-            Constructor<MonthlyPeriodPattern> constructor = MonthlyPeriodPattern.class.getDeclaredConstructor();
+            Constructor<MonthlyPeriodRule> constructor = MonthlyPeriodRule.class.getDeclaredConstructor();
             constructor.setAccessible(true);
             return constructor.newInstance();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create empty MonthlyPeriodPattern instance", e);
+            throw new RuntimeException("Failed to create empty MonthlyPeriodRule instance", e);
         }
     }
 }

@@ -81,7 +81,7 @@ class AdminOrganizationControllerTest : AdminIntegrationTestBase() {
         tenantId: String = ADM_TEST_TENANT_ID,
     ): UUID {
         baseJdbcTemplate.update(
-            """INSERT INTO organization (id, tenant_id, parent_id, code, name, level, status, version, created_at, updated_at)
+            """INSERT INTO organizations (id, tenant_id, parent_id, code, name, level, status, version, created_at, updated_at)
                VALUES (?, ?::UUID, ?, ?, ?, ?, ?, 0, NOW(), NOW())
                ON CONFLICT (id) DO NOTHING""",
             organizationId,

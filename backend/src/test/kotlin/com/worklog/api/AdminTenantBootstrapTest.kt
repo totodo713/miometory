@@ -187,9 +187,9 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
         val email = "preset-${UUID.randomUUID().toString().take(6)}@test.com"
 
         // Count active presets before bootstrap
-        val activeFyPresets = countActivePresets("fiscal_year_pattern_preset")
-        val activeMpPresets = countActivePresets("monthly_period_pattern_preset")
-        val activeHcPresets = countActivePresets("holiday_calendar_preset")
+        val activeFyPresets = countActivePresets("fiscal_year_rule_presets")
+        val activeMpPresets = countActivePresets("monthly_period_rule_presets")
+        val activeHcPresets = countActivePresets("holiday_calendar_presets")
 
         // Bootstrap the tenant
         bootstrapTenantWithMinimalData(tenantId, email)
@@ -229,15 +229,15 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
     }
 
     private fun assertTenantPatternsCopied(tenantId: String, expectedFy: Long, expectedMp: Long, expectedHc: Long) {
-        val fyCount = countTenantRecords("fiscal_year_pattern", tenantId)
+        val fyCount = countTenantRecords("fiscal_year_rules", tenantId)
         assertEquals(expectedFy, fyCount, "Fiscal year patterns count mismatch")
         assertTrue(fyCount >= 2, "Expected at least 2 fiscal year patterns")
 
-        val mpCount = countTenantRecords("monthly_period_pattern", tenantId)
+        val mpCount = countTenantRecords("monthly_period_rules", tenantId)
         assertEquals(expectedMp, mpCount, "Monthly period patterns count mismatch")
         assertTrue(mpCount >= 4, "Expected at least 4 monthly period patterns")
 
-        val hcCount = countTenantRecords("holiday_calendar", tenantId)
+        val hcCount = countTenantRecords("holiday_calendars", tenantId)
         assertEquals(expectedHc, hcCount, "Holiday calendars count mismatch")
         assertTrue(hcCount >= 1, "Expected at least 1 holiday calendar")
     }
@@ -250,8 +250,8 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
 
     private fun assertHolidayEntriesCopied(tenantId: String) {
         val entryCount = baseJdbcTemplate.queryForObject(
-            """SELECT COUNT(*) FROM holiday_calendar_entry hce
-               JOIN holiday_calendar hc ON hc.id = hce.holiday_calendar_id
+            """SELECT COUNT(*) FROM holiday_calendar_rules hce
+               JOIN holiday_calendars hc ON hc.id = hce.holiday_calendar_id
                WHERE hc.tenant_id = ?::UUID""",
             Long::class.java,
             tenantId,
@@ -261,12 +261,12 @@ class AdminTenantBootstrapTest : AdminIntegrationTestBase() {
 
     private fun assertFiscalYearNamesCopied(tenantId: String) {
         val tenantNames = baseJdbcTemplate.queryForList(
-            "SELECT name FROM fiscal_year_pattern WHERE tenant_id = ?::UUID ORDER BY name",
+            "SELECT name FROM fiscal_year_rules WHERE tenant_id = ?::UUID ORDER BY name",
             String::class.java,
             tenantId,
         )
         val presetNames = baseJdbcTemplate.queryForList(
-            "SELECT name FROM fiscal_year_pattern_preset WHERE is_active = true ORDER BY name",
+            "SELECT name FROM fiscal_year_rule_presets WHERE is_active = true ORDER BY name",
             String::class.java,
         )
         assertEquals(presetNames, tenantNames, "FY pattern names should match presets")

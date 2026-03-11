@@ -6,25 +6,25 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class HolidayCalendarEntryRepository {
+public class HolidayCalendarRuleRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public HolidayCalendarEntryRepository(JdbcTemplate jdbcTemplate) {
+    public HolidayCalendarRuleRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<HolidayCalendarEntryRow> findActiveEntriesByTenantId(UUID tenantId) {
+    public List<HolidayCalendarRuleRow> findActiveEntriesByTenantId(UUID tenantId) {
         return jdbcTemplate.query(
                 """
                 SELECT e.name, e.name_ja, e.entry_type, e.month, e.day,
                        e.nth_occurrence, e.day_of_week, e.specific_year
-                FROM holiday_calendar_entry e
-                JOIN holiday_calendar c ON e.holiday_calendar_id = c.id
+                FROM holiday_calendar_rules e
+                JOIN holiday_calendars c ON e.holiday_calendar_id = c.id
                 WHERE c.tenant_id = ? AND c.is_active = true
                 ORDER BY e.month, e.day NULLS LAST, e.name
                 """,
-                (rs, rowNum) -> new HolidayCalendarEntryRow(
+                (rs, rowNum) -> new HolidayCalendarRuleRow(
                         rs.getString("name"),
                         rs.getString("name_ja"),
                         rs.getString("entry_type"),
@@ -36,7 +36,7 @@ public class HolidayCalendarEntryRepository {
                 tenantId);
     }
 
-    public record HolidayCalendarEntryRow(
+    public record HolidayCalendarRuleRow(
             String name,
             String nameJa,
             String entryType,

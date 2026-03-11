@@ -27,12 +27,12 @@ public class AdminUserService {
                 + " FROM users u"
                 + " JOIN roles r ON r.id = u.role_id"
                 + " LEFT JOIN members m ON LOWER(m.email) = LOWER(u.email)"
-                + " LEFT JOIN tenant t ON t.id = m.tenant_id"
+                + " LEFT JOIN tenants t ON t.id = m.tenant_id"
                 + " WHERE 1=1");
         var countSb = new StringBuilder("SELECT COUNT(*) FROM users u"
                 + " JOIN roles r ON r.id = u.role_id"
                 + " LEFT JOIN members m ON LOWER(m.email) = LOWER(u.email)"
-                + " LEFT JOIN tenant t ON t.id = m.tenant_id"
+                + " LEFT JOIN tenants t ON t.id = m.tenant_id"
                 + " WHERE 1=1");
         var params = new java.util.ArrayList<Object>();
         var countParams = new java.util.ArrayList<Object>();
