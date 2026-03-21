@@ -14,6 +14,8 @@ vi.mock("@/services/api", () => ({
       tenantSettings: {
         getDefaultRules: vi.fn(),
         updateDefaultRules: vi.fn(),
+        getAttendanceTimes: vi.fn(),
+        updateAttendanceTimes: vi.fn(),
       },
     },
   },
@@ -61,6 +63,10 @@ describe("TenantSettingsSection", () => {
     (api.admin.tenantSettings.getDefaultRules as ReturnType<typeof vi.fn>).mockResolvedValue({
       defaultFiscalYearRuleId: "fy1",
       defaultMonthlyPeriodRuleId: null,
+    });
+    (api.admin.tenantSettings.getAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue({
+      startTime: null,
+      endTime: null,
     });
   });
 
@@ -131,7 +137,7 @@ describe("TenantSettingsSection", () => {
     const mpSelect = screen.getByLabelText("デフォルト月次期間ルール");
     await user.selectOptions(mpSelect, "mp1");
 
-    const saveButton = screen.getByRole("button", { name: "保存" });
+    const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -159,7 +165,7 @@ describe("TenantSettingsSection", () => {
       expect(screen.getByText("テナント設定")).toBeInTheDocument();
     });
 
-    const saveButton = screen.getByRole("button", { name: "保存" });
+    const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -187,7 +193,7 @@ describe("TenantSettingsSection", () => {
       expect(screen.getByText("テナント設定")).toBeInTheDocument();
     });
 
-    const saveButton = screen.getByRole("button", { name: "保存" });
+    const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -197,7 +203,7 @@ describe("TenantSettingsSection", () => {
     resolveUpdate();
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "保存" })).not.toBeDisabled();
+      expect(screen.getAllByRole("button", { name: "保存" })[0]).not.toBeDisabled();
     });
   });
 

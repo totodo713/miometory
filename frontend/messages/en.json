@@ -789,6 +789,11 @@
         "title": "Default Monthly Period Rule",
         "startDay": "Start Day"
       },
+      "attendanceTimes": {
+        "title": "Default Attendance Times",
+        "startTime": "Start Time",
+        "endTime": "End Time"
+      },
       "saving": "Saving...",
       "saved": "Settings saved",
       "saveError": "Failed to save settings",
@@ -816,6 +821,16 @@
         "noPattern": "None (use system default)",
         "saved": "Default rules saved",
         "saveError": "Failed to save default rules"
+      },
+      "attendanceTimes": {
+        "title": "Default Attendance Times",
+        "description": "Set default start/end times for your tenant. Clear to inherit from system defaults.",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "clear": "Clear (inherit system)",
+        "clearHint": "Leave empty to inherit from system default (09:00 / 18:00)",
+        "saved": "Attendance times saved",
+        "saveError": "Failed to save attendance times"
       },
       "patterns": {
         "fiscalYear": {

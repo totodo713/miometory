@@ -8,6 +8,8 @@ vi.mock("@/services/api", () => ({
       system: {
         getRules: vi.fn(),
         updateRules: vi.fn(),
+        getAttendanceTimes: vi.fn(),
+        updateAttendanceTimes: vi.fn(),
       },
       rules: {
         listFiscalYearRules: vi.fn(),
@@ -16,6 +18,8 @@ vi.mock("@/services/api", () => ({
       tenantSettings: {
         getDefaultRules: vi.fn(),
         updateDefaultRules: vi.fn(),
+        getAttendanceTimes: vi.fn(),
+        updateAttendanceTimes: vi.fn(),
       },
     },
   },
@@ -56,6 +60,15 @@ describe("SettingsPage", () => {
       fiscalYearStartMonth: 4,
       fiscalYearStartDay: 1,
       monthlyPeriodStartDay: 1,
+    });
+    (api.admin.system.getAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue({
+      startTime: "09:00",
+      endTime: "18:00",
+    });
+    (api.admin.system.updateAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    (api.admin.tenantSettings.getAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue({
+      startTime: null,
+      endTime: null,
     });
   });
 

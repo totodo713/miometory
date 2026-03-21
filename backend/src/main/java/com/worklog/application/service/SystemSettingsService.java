@@ -35,5 +35,19 @@ public class SystemSettingsService {
         repository.updateDefaultMonthlyPeriodRule(mpRule, updatedBy);
     }
 
+    @Transactional(readOnly = true)
+    public SystemDefaultAttendanceTimes getDefaultAttendanceTimes() {
+        java.time.LocalTime[] times = repository.getDefaultAttendanceTimes();
+        return new SystemDefaultAttendanceTimes(times[0].toString(), times[1].toString());
+    }
+
+    @Transactional
+    public void updateDefaultAttendanceTimes(
+            java.time.LocalTime startTime, java.time.LocalTime endTime, UUID updatedBy) {
+        repository.updateDefaultAttendanceTimes(startTime, endTime, updatedBy);
+    }
+
     public record SystemDefaultRules(int fiscalYearStartMonth, int fiscalYearStartDay, int monthlyPeriodStartDay) {}
+
+    public record SystemDefaultAttendanceTimes(String startTime, String endTime) {}
 }

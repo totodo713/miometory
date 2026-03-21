@@ -20,6 +20,7 @@ public class SystemDefaultSettingsRepository {
     private static final String KEY_FISCAL_YEAR = "default_fiscal_year_pattern";
     private static final String KEY_MONTHLY_PERIOD = "default_monthly_period_pattern";
     private static final String KEY_STANDARD_DAILY_HOURS = "standard_daily_hours";
+    private static final String KEY_DEFAULT_ATTENDANCE_TIMES = "default_attendance_times";
 
     private final JdbcTemplate jdbcTemplate;
     private final ObjectMapper objectMapper;
@@ -84,6 +85,44 @@ public class SystemDefaultSettingsRepository {
                 String.class,
                 KEY_STANDARD_DAILY_HOURS);
         return parseStandardDailyHours(json);
+    }
+
+    @Transactional(readOnly = true)
+    public java.time.LocalTime[] getDefaultAttendanceTimes() {
+        String json = jdbcTemplate.queryForObject(
+                "SELECT setting_value::text FROM system_default_settings WHERE setting_key = ?",
+                String.class,
+                KEY_DEFAULT_ATTENDANCE_TIMES);
+        return parseAttendanceTimes(json);
+    }
+
+    @Transactional
+    public void updateDefaultAttendanceTimes(
+            java.time.LocalTime startTime, java.time.LocalTime endTime, UUID updatedBy) {
+        String json = String.format("{\"startTime\": \"%s\", \"endTime\": \"%s\"}", startTime, endTime);
+        jdbcTemplate.update(
+                "INSERT INTO system_default_settings (setting_key, setting_value, updated_by, updated_at) "
+                        + "VALUES (?, ?::jsonb, ?, NOW()) "
+                        + "ON CONFLICT (setting_key) DO UPDATE SET "
+                        + "setting_value = EXCLUDED.setting_value, "
+                        + "updated_by = EXCLUDED.updated_by, "
+                        + "updated_at = NOW()",
+                KEY_DEFAULT_ATTENDANCE_TIMES,
+                json,
+                updatedBy);
+    }
+
+    private java.time.LocalTime[] parseAttendanceTimes(String json) {
+        try {
+            JsonNode node = objectMapper.readTree(json);
+            java.time.LocalTime startTime =
+                    java.time.LocalTime.parse(node.get("startTime").asText());
+            java.time.LocalTime endTime =
+                    java.time.LocalTime.parse(node.get("endTime").asText());
+            return new java.time.LocalTime[] {startTime, endTime};
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse default attendance times", e);
+        }
     }
 
     private BigDecimal parseStandardDailyHours(String json) {

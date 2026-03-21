@@ -81,7 +81,43 @@ public class TenantSettingsController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/attendance-times")
+    @PreAuthorize("hasPermission(null, 'tenant_settings.view')")
+    public ResponseEntity<TenantAttendanceTimesResponse> getAttendanceTimes(Authentication auth) {
+        UUID tenantId = tenantAccessValidator.resolveUserTenantId(auth);
+        Tenant tenant = tenantRepository
+                .findById(TenantId.of(tenantId))
+                .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
+        return ResponseEntity.ok(new TenantAttendanceTimesResponse(
+                tenant.getDefaultStartTime() != null
+                        ? tenant.getDefaultStartTime().toString()
+                        : null,
+                tenant.getDefaultEndTime() != null ? tenant.getDefaultEndTime().toString() : null));
+    }
+
+    @PutMapping("/attendance-times")
+    @PreAuthorize("hasPermission(null, 'tenant_settings.manage')")
+    public ResponseEntity<Void> updateAttendanceTimes(
+            Authentication auth, @RequestBody UpdateAttendanceTimesRequest request) {
+        UUID tenantId = tenantAccessValidator.resolveUserTenantId(auth);
+        Tenant tenant = tenantRepository
+                .findById(TenantId.of(tenantId))
+                .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
+
+        java.time.LocalTime startTime =
+                request.startTime() != null ? java.time.LocalTime.parse(request.startTime()) : null;
+        java.time.LocalTime endTime = request.endTime() != null ? java.time.LocalTime.parse(request.endTime()) : null;
+
+        tenant.assignDefaultAttendanceTimes(startTime, endTime);
+        tenantRepository.save(tenant);
+        return ResponseEntity.noContent().build();
+    }
+
     public record DefaultRulesResponse(UUID defaultFiscalYearRuleId, UUID defaultMonthlyPeriodRuleId) {}
 
     public record UpdateDefaultRulesRequest(UUID defaultFiscalYearRuleId, UUID defaultMonthlyPeriodRuleId) {}
+
+    public record TenantAttendanceTimesResponse(String startTime, String endTime) {}
+
+    public record UpdateAttendanceTimesRequest(String startTime, String endTime) {}
 }

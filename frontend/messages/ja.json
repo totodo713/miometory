@@ -789,6 +789,11 @@
         "title": "デフォルト月次期間ルール",
         "startDay": "開始日"
       },
+      "attendanceTimes": {
+        "title": "デフォルト出退勤時間",
+        "startTime": "開始時刻",
+        "endTime": "終了時刻"
+      },
       "saving": "保存中...",
       "saved": "設定を保存しました",
       "saveError": "設定の保存に失敗しました",
@@ -816,6 +821,16 @@
         "noPattern": "なし（システムデフォルトを使用）",
         "saved": "デフォルトルールを保存しました",
         "saveError": "デフォルトルールの保存に失敗しました"
+      },
+      "attendanceTimes": {
+        "title": "デフォルト出退勤時間",
+        "description": "テナントのデフォルト出退勤時間を設定します。クリアするとシステムデフォルトを継承します。",
+        "startTime": "開始時刻",
+        "endTime": "終了時刻",
+        "clear": "クリア（システムから継承）",
+        "clearHint": "未設定の場合、システムデフォルト（09:00 / 18:00）を継承します",
+        "saved": "出退勤時間を保存しました",
+        "saveError": "出退勤時間の保存に失敗しました"
       },
       "patterns": {
         "fiscalYear": {

@@ -25,6 +25,9 @@ export function TenantSettingsSection() {
   const [monthlyPeriodPatterns, setMonthlyPeriodPatterns] = useState<MonthlyPeriodRuleOption[]>([]);
   const [showFyForm, setShowFyForm] = useState(false);
   const [showMpForm, setShowMpForm] = useState(false);
+  const [defaultStartTime, setDefaultStartTime] = useState("");
+  const [defaultEndTime, setDefaultEndTime] = useState("");
+  const [savingTimes, setSavingTimes] = useState(false);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: toast.error is stable via useMemo but excluded defensively (see #131)
   useEffect(() => {
@@ -34,16 +37,19 @@ export function TenantSettingsSection() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [fyPatterns, mpPatterns, defaults] = await Promise.all([
+        const [fyPatterns, mpPatterns, defaults, times] = await Promise.all([
           api.admin.rules.listFiscalYearRules(tenantId),
           api.admin.rules.listMonthlyPeriodRules(tenantId),
           api.admin.tenantSettings.getDefaultRules(),
+          api.admin.tenantSettings.getAttendanceTimes(),
         ]);
         if (cancelled) return;
         setFiscalYearPatterns(fyPatterns);
         setMonthlyPeriodPatterns(mpPatterns);
         setDefaultFyPatternId(defaults.defaultFiscalYearRuleId ?? "");
         setDefaultMpPatternId(defaults.defaultMonthlyPeriodRuleId ?? "");
+        setDefaultStartTime(times.startTime ?? "");
+        setDefaultEndTime(times.endTime ?? "");
       } catch (err: unknown) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 403) {
@@ -159,6 +165,83 @@ export function TenantSettingsSection() {
               className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {saving ? tc("saving") : tc("save")}
+            </button>
+          </div>
+        </div>
+
+        {/* Default attendance times card */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">{t("attendanceTimes.title")}</h2>
+          <p className="text-sm text-gray-600 mb-4">{t("attendanceTimes.description")}</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="ts-start-time" className="block text-sm font-medium text-gray-700 mb-1">
+                {t("attendanceTimes.startTime")}
+              </label>
+              <input
+                type="time"
+                id="ts-start-time"
+                value={defaultStartTime}
+                onChange={(e) => setDefaultStartTime(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label htmlFor="ts-end-time" className="block text-sm font-medium text-gray-700 mb-1">
+                {t("attendanceTimes.endTime")}
+              </label>
+              <input
+                type="time"
+                id="ts-end-time"
+                value={defaultEndTime}
+                onChange={(e) => setDefaultEndTime(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">{t("attendanceTimes.clearHint")}</p>
+          <div className="flex justify-end gap-2 mt-4">
+            <button
+              type="button"
+              onClick={async () => {
+                setDefaultStartTime("");
+                setDefaultEndTime("");
+                setSavingTimes(true);
+                try {
+                  await api.admin.tenantSettings.updateAttendanceTimes({ startTime: null, endTime: null });
+                  toast.success(t("attendanceTimes.saved"));
+                } catch (err: unknown) {
+                  toast.error(err instanceof ApiError ? err.message : t("attendanceTimes.saveError"));
+                } finally {
+                  setSavingTimes(false);
+                }
+              }}
+              disabled={savingTimes || (!defaultStartTime && !defaultEndTime)}
+              className="px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            >
+              {t("attendanceTimes.clear")}
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!defaultStartTime || !defaultEndTime) return;
+                setSavingTimes(true);
+                try {
+                  await api.admin.tenantSettings.updateAttendanceTimes({
+                    startTime: defaultStartTime,
+                    endTime: defaultEndTime,
+                  });
+                  toast.success(t("attendanceTimes.saved"));
+                } catch (err: unknown) {
+                  toast.error(err instanceof ApiError ? err.message : t("attendanceTimes.saveError"));
+                } finally {
+                  setSavingTimes(false);
+                }
+              }}
+              disabled={savingTimes || !defaultStartTime || !defaultEndTime}
+              className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingTimes ? tc("saving") : tc("save")}
             </button>
           </div>
         </div>

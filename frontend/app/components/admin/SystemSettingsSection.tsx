@@ -17,15 +17,19 @@ export function SystemSettingsSection() {
   const [fyStartMonth, setFyStartMonth] = useState(4);
   const [fyStartDay, setFyStartDay] = useState(1);
   const [mpStartDay, setMpStartDay] = useState(1);
+  const [defaultStartTime, setDefaultStartTime] = useState("09:00");
+  const [defaultEndTime, setDefaultEndTime] = useState("18:00");
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: load once on mount
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.admin.system.getRules();
+      const [data, times] = await Promise.all([api.admin.system.getRules(), api.admin.system.getAttendanceTimes()]);
       setFyStartMonth(data.fiscalYearStartMonth);
       setFyStartDay(data.fiscalYearStartDay);
       setMpStartDay(data.monthlyPeriodStartDay);
+      setDefaultStartTime(times.startTime);
+      setDefaultEndTime(times.endTime);
     } catch (err: unknown) {
       toast.error(err instanceof ApiError ? err.message : t("loadError"));
     } finally {
@@ -40,11 +44,17 @@ export function SystemSettingsSection() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await api.admin.system.updateRules({
-        fiscalYearStartMonth: fyStartMonth,
-        fiscalYearStartDay: fyStartDay,
-        monthlyPeriodStartDay: mpStartDay,
-      });
+      await Promise.all([
+        api.admin.system.updateRules({
+          fiscalYearStartMonth: fyStartMonth,
+          fiscalYearStartDay: fyStartDay,
+          monthlyPeriodStartDay: mpStartDay,
+        }),
+        api.admin.system.updateAttendanceTimes({
+          startTime: defaultStartTime,
+          endTime: defaultEndTime,
+        }),
+      ]);
       toast.success(t("saved"));
     } catch (err: unknown) {
       toast.error(err instanceof ApiError ? err.message : t("saveError"));
@@ -124,6 +134,36 @@ export function SystemSettingsSection() {
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{t("attendanceTimes.title")}</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="defaultStartTime" className="block text-sm font-medium text-gray-700 mb-1">
+                {t("attendanceTimes.startTime")}
+              </label>
+              <input
+                type="time"
+                id="defaultStartTime"
+                value={defaultStartTime}
+                onChange={(e) => setDefaultStartTime(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label htmlFor="defaultEndTime" className="block text-sm font-medium text-gray-700 mb-1">
+                {t("attendanceTimes.endTime")}
+              </label>
+              <input
+                type="time"
+                id="defaultEndTime"
+                value={defaultEndTime}
+                onChange={(e) => setDefaultEndTime(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+              />
+            </div>
           </div>
         </div>
 

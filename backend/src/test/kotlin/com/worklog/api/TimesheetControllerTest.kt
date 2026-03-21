@@ -262,10 +262,10 @@ class TimesheetControllerTest : IntegrationTestBase() {
 
         @Suppress("UNCHECKED_CAST")
         val rows = body["rows"] as List<Map<String, Any?>>
-        // defaultStartTime/defaultEndTime should be null when no assignment
+        // defaultStartTime/defaultEndTime should fall back to system defaults (09:00/18:00)
         val firstRow = rows.first()
-        assertNull(firstRow["defaultStartTime"])
-        assertNull(firstRow["defaultEndTime"])
+        assertEquals("09:00", firstRow["defaultStartTime"])
+        assertEquals("18:00", firstRow["defaultEndTime"])
     }
 
     @Test
