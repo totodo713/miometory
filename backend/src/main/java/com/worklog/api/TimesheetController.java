@@ -132,11 +132,15 @@ public class TimesheetController {
 
         java.time.LocalTime effectiveDefaultStart = assignment != null ? assignment.getDefaultStartTime() : null;
         java.time.LocalTime effectiveDefaultEnd = assignment != null ? assignment.getDefaultEndTime() : null;
-        if (effectiveDefaultStart == null && effectiveDefaultEnd == null) {
+        if (effectiveDefaultStart == null || effectiveDefaultEnd == null) {
             AttendanceTimesResolution resolution =
                     defaultAttendanceTimesService.resolveDefaultAttendanceTimes(memberId);
-            effectiveDefaultStart = resolution.startTime();
-            effectiveDefaultEnd = resolution.endTime();
+            if (effectiveDefaultStart == null) {
+                effectiveDefaultStart = resolution.startTime();
+            }
+            if (effectiveDefaultEnd == null) {
+                effectiveDefaultEnd = resolution.endTime();
+            }
         }
 
         // Resolve holidays for this tenant and period (same pattern as CalendarController)

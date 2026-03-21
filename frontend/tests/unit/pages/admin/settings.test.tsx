@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -157,7 +157,8 @@ describe("SettingsPage", () => {
       const monthSelect = screen.getByLabelText("開始月");
       await user.selectOptions(monthSelect, "10");
 
-      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -197,7 +198,8 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -219,7 +221,8 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -247,17 +250,18 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
+        expect(within(rulesCard).getByRole("button", { name: "保存中..." })).toBeDisabled();
       });
 
       resolveUpdate();
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: "保存" })).not.toBeDisabled();
+        expect(within(rulesCard).getByRole("button", { name: "保存" })).not.toBeDisabled();
       });
     });
   });

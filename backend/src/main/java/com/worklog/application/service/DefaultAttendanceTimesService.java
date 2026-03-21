@@ -45,7 +45,7 @@ public class DefaultAttendanceTimesService {
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found: " + memberId));
 
         // Step 1: Check member-level setting
-        if (member.getDefaultStartTime() != null || member.getDefaultEndTime() != null) {
+        if (member.getDefaultStartTime() != null && member.getDefaultEndTime() != null) {
             return new AttendanceTimesResolution(member.getDefaultStartTime(), member.getDefaultEndTime(), "member");
         }
 
@@ -54,7 +54,7 @@ public class DefaultAttendanceTimesService {
             Organization current =
                     organizationRepository.findById(member.getOrganizationId()).orElse(null);
             while (current != null) {
-                if (current.getDefaultStartTime() != null || current.getDefaultEndTime() != null) {
+                if (current.getDefaultStartTime() != null && current.getDefaultEndTime() != null) {
                     return new AttendanceTimesResolution(
                             current.getDefaultStartTime(),
                             current.getDefaultEndTime(),
@@ -72,7 +72,7 @@ public class DefaultAttendanceTimesService {
 
         // Step 3: Check tenant default
         Tenant tenant = tenantRepository.findById(member.getTenantId()).orElse(null);
-        if (tenant != null && (tenant.getDefaultStartTime() != null || tenant.getDefaultEndTime() != null)) {
+        if (tenant != null && (tenant.getDefaultStartTime() != null && tenant.getDefaultEndTime() != null)) {
             return new AttendanceTimesResolution(tenant.getDefaultStartTime(), tenant.getDefaultEndTime(), "tenant");
         }
 

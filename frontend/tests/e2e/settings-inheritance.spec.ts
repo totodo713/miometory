@@ -162,8 +162,9 @@ test.describe("System Settings Page", () => {
       (req) => req.url().includes("/api/v1/admin/system/settings/rules") && req.method() === "PUT",
     );
 
-    // Click save
-    await page.getByRole("button", { name: "Save" }).first().click();
+    // Click the rules card save button (scoped to the monthly period card)
+    const rulesCard = page.locator("div.bg-white", { hasText: "Default Monthly Period Rule" });
+    await rulesCard.getByRole("button", { name: "Save" }).click();
 
     // Verify request was sent with correct data
     const putRequest = await putPromise;

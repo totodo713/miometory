@@ -204,13 +204,17 @@ export function TenantSettingsSection() {
             <button
               type="button"
               onClick={async () => {
-                setDefaultStartTime("");
-                setDefaultEndTime("");
+                const prevStart = defaultStartTime;
+                const prevEnd = defaultEndTime;
                 setSavingTimes(true);
                 try {
                   await api.admin.tenantSettings.updateAttendanceTimes({ startTime: null, endTime: null });
+                  setDefaultStartTime("");
+                  setDefaultEndTime("");
                   toast.success(t("attendanceTimes.saved"));
                 } catch (err: unknown) {
+                  setDefaultStartTime(prevStart);
+                  setDefaultEndTime(prevEnd);
                   toast.error(err instanceof ApiError ? err.message : t("attendanceTimes.saveError"));
                 } finally {
                   setSavingTimes(false);

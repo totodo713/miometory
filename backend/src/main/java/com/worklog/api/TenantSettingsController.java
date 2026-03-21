@@ -104,9 +104,20 @@ public class TenantSettingsController {
                 .findById(TenantId.of(tenantId))
                 .orElseThrow(() -> new DomainException("TENANT_NOT_FOUND", "Tenant not found"));
 
-        java.time.LocalTime startTime =
-                request.startTime() != null ? java.time.LocalTime.parse(request.startTime()) : null;
-        java.time.LocalTime endTime = request.endTime() != null ? java.time.LocalTime.parse(request.endTime()) : null;
+        // Cross-field validation: both null (inherit) or both non-null
+        if ((request.startTime() == null) != (request.endTime() == null)) {
+            throw new DomainException(
+                    "INVALID_ATTENDANCE_TIMES", "Start time and end time must both be set or both be cleared");
+        }
+
+        java.time.LocalTime startTime;
+        java.time.LocalTime endTime;
+        try {
+            startTime = request.startTime() != null ? java.time.LocalTime.parse(request.startTime()) : null;
+            endTime = request.endTime() != null ? java.time.LocalTime.parse(request.endTime()) : null;
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new DomainException("INVALID_TIME_FORMAT", "Invalid time format: " + e.getMessage());
+        }
 
         tenant.assignDefaultAttendanceTimes(startTime, endTime);
         tenantRepository.save(tenant);
@@ -120,6 +131,7 @@ public class TenantSettingsController {
     public record TenantAttendanceTimesResponse(String startTime, String endTime) {}
 
     public record UpdateAttendanceTimesRequest(
-            @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String startTime,
-            @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String endTime) {}
+            @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}") String startTime,
+
+            @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}") String endTime) {}
 }

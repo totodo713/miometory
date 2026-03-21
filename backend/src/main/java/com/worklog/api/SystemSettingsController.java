@@ -64,8 +64,15 @@ public class SystemSettingsController {
                 .findByEmail(authentication.getName())
                 .map(user -> user.getId().value())
                 .orElse(null);
-        systemSettingsService.updateDefaultAttendanceTimes(
-                java.time.LocalTime.parse(request.startTime()), java.time.LocalTime.parse(request.endTime()), userId);
+        try {
+            systemSettingsService.updateDefaultAttendanceTimes(
+                    java.time.LocalTime.parse(request.startTime()),
+                    java.time.LocalTime.parse(request.endTime()),
+                    userId);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new com.worklog.domain.shared.DomainException(
+                    "INVALID_TIME_FORMAT", "Invalid time format: " + e.getMessage());
+        }
         return ResponseEntity.noContent().build();
     }
 
@@ -75,6 +82,7 @@ public class SystemSettingsController {
             @Min(1) @Max(28) int monthlyPeriodStartDay) {}
 
     public record UpdateAttendanceTimesRequest(
-            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String startTime,
-            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String endTime) {}
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}") String startTime,
+
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}") String endTime) {}
 }
