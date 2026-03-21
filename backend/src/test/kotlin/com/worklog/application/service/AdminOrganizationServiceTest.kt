@@ -354,6 +354,90 @@ class AdminOrganizationServiceTest : IntegrationTestBase() {
         )
     }
 
+    // --- Assign rules tests ---
+
+    @Test
+    fun `assign rules to active organization succeeds`() {
+        // Create org
+        val code = "ASRK_${UUID.randomUUID().toString().take(7)}"
+        val command = CreateOrganizationCommand(tenantId, null, code, "Assign Rules Org", null, null)
+        val orgId = service.createOrganization(command)
+
+        // Create fiscal year rule and monthly period rule in projection table
+        val fyRuleId = UUID.randomUUID()
+        val mpRuleId = UUID.randomUUID()
+        jdbcTemplate.update(
+            """INSERT INTO fiscal_year_rules
+               (id, tenant_id, name, start_month, start_day, version, created_at)
+               VALUES (?, ?, 'FY Rule', 4, 1, 0, NOW())""",
+            fyRuleId,
+            tenantId,
+        )
+        jdbcTemplate.update(
+            """INSERT INTO monthly_period_rules
+               (id, tenant_id, name, start_day, version, created_at)
+               VALUES (?, ?, 'MP Rule', 21, 0, NOW())""",
+            mpRuleId,
+            tenantId,
+        )
+
+        service.assignRules(orgId, tenantId, fyRuleId, mpRuleId)
+
+        // Verify persisted (column still uses legacy name fiscal_year_pattern_id)
+        val fyId = jdbcTemplate.queryForObject(
+            "SELECT fiscal_year_pattern_id FROM organizations WHERE id = ?",
+            UUID::class.java,
+            orgId,
+        )
+        assertEquals(fyRuleId, fyId)
+    }
+
+    @Test
+    fun `assign rules to non-existent organization throws ORGANIZATION_NOT_FOUND`() {
+        val nonExistentId = UUID.randomUUID()
+        val ex = assertFailsWith<DomainException> {
+            service.assignRules(nonExistentId, tenantId, null, null)
+        }
+        assertEquals("ORGANIZATION_NOT_FOUND", ex.errorCode)
+    }
+
+    @Test
+    fun `assign rules to inactive organization throws ORGANIZATION_INACTIVE`() {
+        val code = "ASRI_${UUID.randomUUID().toString().take(7)}"
+        val command = CreateOrganizationCommand(tenantId, null, code, "Inactive Assign Org", null, null)
+        val orgId = service.createOrganization(command)
+        service.deactivateOrganization(orgId, tenantId)
+
+        val ex = assertFailsWith<DomainException> {
+            service.assignRules(orgId, tenantId, null, null)
+        }
+        assertEquals("ORGANIZATION_INACTIVE", ex.errorCode)
+    }
+
+    @Test
+    fun `assign rules with non-existent fiscal year rule throws PATTERN_NOT_FOUND`() {
+        val code = "ASNF_${UUID.randomUUID().toString().take(7)}"
+        val command = CreateOrganizationCommand(tenantId, null, code, "No FY Org", null, null)
+        val orgId = service.createOrganization(command)
+
+        val ex = assertFailsWith<DomainException> {
+            service.assignRules(orgId, tenantId, UUID.randomUUID(), null)
+        }
+        assertEquals("PATTERN_NOT_FOUND", ex.errorCode)
+    }
+
+    @Test
+    fun `assign null rules to organization succeeds`() {
+        val code = "ASRN_${UUID.randomUUID().toString().take(7)}"
+        val command = CreateOrganizationCommand(tenantId, null, code, "Null Rules Org", null, null)
+        val orgId = service.createOrganization(command)
+
+        // Should not throw
+        service.assignRules(orgId, tenantId, null, null)
+    }
+
+    // --- List organizations tests ---
+
     @Test
     fun `list organizations with pagination returns correct page`() {
         // Ensure we have enough orgs by creating some

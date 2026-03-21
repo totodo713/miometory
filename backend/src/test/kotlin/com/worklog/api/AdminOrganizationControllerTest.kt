@@ -257,11 +257,97 @@ class AdminOrganizationControllerTest : AdminIntegrationTestBase() {
             .andExpect(jsonPath("$").isArray)
     }
 
+    // --- PUT /api/v1/admin/organizations/{id}/rules ---
+
+    @Test
+    fun `assign rules returns 204`() {
+        // Create fiscal year and monthly period rules in test tenant
+        val fyRuleId = UUID.randomUUID()
+        val mpRuleId = UUID.randomUUID()
+        baseJdbcTemplate.update(
+            """INSERT INTO fiscal_year_rules (id, tenant_id, name, start_month, start_day, version, created_at)
+               VALUES (?, ?::UUID, 'Test FY Rule', 4, 1, 0, NOW())""",
+            fyRuleId,
+            ADM_TEST_TENANT_ID,
+        )
+        baseJdbcTemplate.update(
+            """INSERT INTO monthly_period_rules (id, tenant_id, name, start_day, version, created_at)
+               VALUES (?, ?::UUID, 'Test MP Rule', 21, 0, NOW())""",
+            mpRuleId,
+            ADM_TEST_TENANT_ID,
+        )
+
+        mockMvc.perform(
+            put("/api/v1/admin/organizations/$orgId/rules")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"fiscalYearRuleId":"$fyRuleId","monthlyPeriodRuleId":"$mpRuleId"}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `assign rules to non-existent organization returns 404`() {
+        val nonExistentId = UUID.randomUUID()
+        mockMvc.perform(
+            put("/api/v1/admin/organizations/$nonExistentId/rules")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"fiscalYearRuleId":null,"monthlyPeriodRuleId":null}"""),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.errorCode").value("ORGANIZATION_NOT_FOUND"))
+    }
+
+    @Test
+    fun `assign rules with null values returns 204`() {
+        mockMvc.perform(
+            put("/api/v1/admin/organizations/$orgId/rules")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"fiscalYearRuleId":null,"monthlyPeriodRuleId":null}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    // --- GET /api/v1/admin/organizations/{id}/effective-rules ---
+
+    @Test
+    fun `get effective rules returns 200`() {
+        mockMvc.perform(
+            get("/api/v1/admin/organizations/$orgId/effective-rules")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.fiscalYearSource").exists())
+            .andExpect(jsonPath("$.monthlyPeriodSource").exists())
+    }
+
     // --- Authorization tests ---
 
     @Test
     fun `list organizations returns 403 for user without permission`() {
         mockMvc.perform(get("/api/v1/admin/organizations").with(user(regularEmail)))
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `assign rules returns 403 for user without permission`() {
+        mockMvc.perform(
+            put("/api/v1/admin/organizations/$orgId/rules")
+                .with(user(regularEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"fiscalYearRuleId":null,"monthlyPeriodRuleId":null}"""),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `get effective rules returns 403 for user without permission`() {
+        mockMvc.perform(
+            get("/api/v1/admin/organizations/$orgId/effective-rules")
+                .with(user(regularEmail)),
+        )
             .andExpect(status().isForbidden)
     }
 }

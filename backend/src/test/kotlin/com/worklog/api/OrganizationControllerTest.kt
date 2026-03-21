@@ -337,6 +337,41 @@ class OrganizationControllerTest : IntegrationTestBase() {
         assertTrue(response.statusCode.is4xxClientError || response.statusCode.is5xxServerError)
     }
 
+    // --- POST /api/v1/tenants/{tenantId}/organizations/{id}/assign-rules ---
+
+    @Test
+    fun `POST assign-rules should assign rules and return 204`() {
+        // Create organization first
+        val orgRequest =
+            mapOf(
+                "code" to "ORG_ASR_001",
+                "name" to "Assign Rules Org",
+                "parentId" to null,
+                "fiscalYearRuleId" to null,
+                "monthlyPeriodRuleId" to null,
+            )
+        val orgResponse =
+            restTemplate.postForEntity(
+                "/api/v1/tenants/$tenantId/organizations",
+                orgRequest,
+                Map::class.java,
+            )
+        val organizationId = (orgResponse.body as Map<*, *>)["id"] as String
+
+        // Assign null rules (no validation of rule existence in non-admin endpoint)
+        val assignRequest = mapOf(
+            "fiscalYearRuleId" to null,
+            "monthlyPeriodRuleId" to null,
+        )
+        val response = restTemplate.postForEntity(
+            "/api/v1/tenants/$tenantId/organizations/$organizationId/assign-rules",
+            assignRequest,
+            Void::class.java,
+        )
+
+        assertEquals(HttpStatus.NO_CONTENT, response.statusCode)
+    }
+
     @Test
     fun `POST organization with non-existent parentId should return error`() {
         // Act - Try to create organization with a non-existent parent
