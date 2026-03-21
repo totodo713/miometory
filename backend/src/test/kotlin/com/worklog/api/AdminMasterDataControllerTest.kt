@@ -183,11 +183,11 @@ class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
             mockMvc.perform(
                 post("$basePath/holiday-calendars/$calId/rules").with(user(adminEmail))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"name":"Independence Day","entryType":"FIXED","month":7,"day":4}"""),
+                    .content("""{"name":"Independence Day","ruleType":"FIXED","month":7,"day":4}"""),
             ).andExpect(status().isCreated)
 
             // Add NTH_WEEKDAY entry
-            val nthBody = """{"name":"Thanksgiving","entryType":"NTH_WEEKDAY",""" +
+            val nthBody = """{"name":"Thanksgiving","ruleType":"NTH_WEEKDAY",""" +
                 """"month":11,"nthOccurrence":4,"dayOfWeek":4}"""
             mockMvc.perform(
                 post("$basePath/holiday-calendars/$calId/rules").with(user(adminEmail))
@@ -228,7 +228,7 @@ class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
             val entryResult = mockMvc.perform(
                 post("$basePath/holiday-calendars/$calId/rules").with(user(adminEmail))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"name":"Test Holiday","entryType":"FIXED","month":1,"day":1}"""),
+                    .content("""{"name":"Test Holiday","ruleType":"FIXED","month":1,"day":1}"""),
             ).andExpect(status().isCreated).andReturn()
 
             val entryId = objectMapper.readTree(entryResult.response.contentAsString).get("id").asText()
@@ -252,7 +252,7 @@ class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
             val entryResult = mockMvc.perform(
                 post("$basePath/holiday-calendars/$calId/rules").with(user(adminEmail))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"name":"New Year","entryType":"FIXED","month":1,"day":1}"""),
+                    .content("""{"name":"New Year","ruleType":"FIXED","month":1,"day":1}"""),
             ).andExpect(status().isCreated).andReturn()
 
             val entryId = objectMapper.readTree(entryResult.response.contentAsString).get("id").asText()
@@ -260,7 +260,7 @@ class AdminMasterDataControllerTest : AdminIntegrationTestBase() {
             mockMvc.perform(
                 put("$basePath/holiday-calendars/$calId/rules/$entryId").with(user(adminEmail))
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("""{"name":"New Year Updated","entryType":"FIXED","month":1,"day":2}"""),
+                    .content("""{"name":"New Year Updated","ruleType":"FIXED","month":1,"day":2}"""),
             ).andExpect(status().isOk)
         }
 

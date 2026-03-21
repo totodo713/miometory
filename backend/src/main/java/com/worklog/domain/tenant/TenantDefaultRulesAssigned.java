@@ -5,8 +5,8 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Event raised when default patterns are assigned to a tenant.
- * Either or both pattern IDs may be null (clearing the tenant-level default).
+ * Event raised when default rules are assigned to a tenant.
+ * Either or both rule IDs may be null (clearing the tenant-level default).
  */
 public record TenantDefaultRulesAssigned(
         UUID eventId,

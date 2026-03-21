@@ -175,43 +175,42 @@ public class AdminMasterDataController {
     }
 
     // ========================================================================
-    // Holiday Calendar Entries
+    // Holiday Calendar Rules
     // ========================================================================
 
     @GetMapping("/holiday-calendars/{id}/rules")
     @PreAuthorize("hasPermission(null, 'master_data.view')")
-    public List<AdminMasterDataService.HolidayEntryRow> listHolidayEntries(@PathVariable UUID id) {
-        return adminMasterDataService.listHolidayEntries(id);
+    public List<AdminMasterDataService.HolidayRuleRow> listHolidayRules(@PathVariable UUID id) {
+        return adminMasterDataService.listHolidayRules(id);
     }
 
     @PostMapping("/holiday-calendars/{id}/rules")
     @PreAuthorize("hasPermission(null, 'master_data.create')")
     @ResponseStatus(HttpStatus.CREATED)
-    public CreateResponse addHolidayEntry(
-            @PathVariable UUID id, @RequestBody @Valid CreateHolidayEntryRequest request) {
-        UUID entryId = adminMasterDataService.addHolidayEntry(
+    public CreateResponse addHolidayRule(@PathVariable UUID id, @RequestBody @Valid CreateHolidayRuleRequest request) {
+        UUID ruleId = adminMasterDataService.addHolidayRule(
                 id,
                 request.name(),
                 request.nameJa(),
-                request.entryType(),
+                request.ruleType(),
                 request.month(),
                 request.day(),
                 request.nthOccurrence(),
                 request.dayOfWeek(),
                 request.specificYear());
-        return new CreateResponse(entryId.toString());
+        return new CreateResponse(ruleId.toString());
     }
 
-    @PutMapping("/holiday-calendars/{id}/rules/{entryId}")
+    @PutMapping("/holiday-calendars/{id}/rules/{ruleId}")
     @PreAuthorize("hasPermission(null, 'master_data.update')")
-    public ResponseEntity<Void> updateHolidayEntry(
-            @PathVariable UUID id, @PathVariable UUID entryId, @RequestBody @Valid CreateHolidayEntryRequest request) {
-        adminMasterDataService.updateHolidayEntry(
+    public ResponseEntity<Void> updateHolidayRule(
+            @PathVariable UUID id, @PathVariable UUID ruleId, @RequestBody @Valid CreateHolidayRuleRequest request) {
+        adminMasterDataService.updateHolidayRule(
                 id,
-                entryId,
+                ruleId,
                 request.name(),
                 request.nameJa(),
-                request.entryType(),
+                request.ruleType(),
                 request.month(),
                 request.day(),
                 request.nthOccurrence(),
@@ -220,10 +219,10 @@ public class AdminMasterDataController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/holiday-calendars/{id}/rules/{entryId}")
+    @DeleteMapping("/holiday-calendars/{id}/rules/{ruleId}")
     @PreAuthorize("hasPermission(null, 'master_data.update')")
-    public ResponseEntity<Void> removeHolidayEntry(@PathVariable UUID id, @PathVariable UUID entryId) {
-        adminMasterDataService.removeHolidayEntry(id, entryId);
+    public ResponseEntity<Void> removeHolidayRule(@PathVariable UUID id, @PathVariable UUID ruleId) {
+        adminMasterDataService.removeHolidayRule(id, ruleId);
         return ResponseEntity.ok().build();
     }
 
@@ -247,10 +246,10 @@ public class AdminMasterDataController {
             @Size(max = 512) String description,
             @Size(max = 2) String country) {}
 
-    public record CreateHolidayEntryRequest(
+    public record CreateHolidayRuleRequest(
             @NotBlank @Size(max = 128) String name,
             @Size(max = 128) String nameJa,
-            @NotBlank @Size(max = 16) String entryType,
+            @NotBlank @Size(max = 16) String ruleType,
             @Min(1) @Max(12) int month,
             @Min(1) @Max(31) Integer day,
             @Min(1) @Max(5) Integer nthOccurrence,

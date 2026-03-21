@@ -28,7 +28,7 @@ public class HolidayResolutionService {
     }
 
     /**
-     * Resolves holiday calendar entries for a tenant into actual dates within the given range.
+     * Resolves holiday calendar rules for a tenant into actual dates within the given range.
      *
      * @param tenantId the tenant whose holiday calendar to resolve
      * @param start the start date (inclusive)
@@ -41,7 +41,7 @@ public class HolidayResolutionService {
             condition = "@environment.getProperty('worklog.cache.enabled', 'false') == 'true'")
     @Transactional(readOnly = true)
     public Map<LocalDate, HolidayInfo> resolveHolidays(UUID tenantId, LocalDate start, LocalDate end) {
-        var entries = repository.findActiveEntriesByTenantId(tenantId);
+        var entries = repository.findActiveRulesByTenantId(tenantId);
         Map<LocalDate, HolidayInfo> holidays = new TreeMap<>();
 
         for (var entry : entries) {
@@ -62,13 +62,13 @@ public class HolidayResolutionService {
             }
 
             LocalDate resolved =
-                    switch (entry.entryType()) {
+                    switch (entry.ruleType()) {
                         case "FIXED" -> resolveFixed(year, entry);
                         case "NTH_WEEKDAY" -> resolveNthWeekday(year, entry);
                         default -> {
                             log.warn(
-                                    "Unknown holiday entry_type '{}' for entry '{}', skipping",
-                                    entry.entryType(),
+                                    "Unknown holiday rule_type '{}' for rule '{}', skipping",
+                                    entry.ruleType(),
                                     entry.name());
                             yield null;
                         }

@@ -346,11 +346,11 @@ public class AdminMasterDataService {
     }
 
     // ========================================================================
-    // Holiday Calendar Entries
+    // Holiday Calendar Rules
     // ========================================================================
 
     @Transactional(readOnly = true)
-    public List<HolidayEntryRow> listHolidayEntries(UUID calendarId) {
+    public List<HolidayRuleRow> listHolidayRules(UUID calendarId) {
         // Verify calendar exists
         Long count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM holiday_calendar_presets WHERE id = ?", Long.class, calendarId);
@@ -360,16 +360,16 @@ public class AdminMasterDataService {
 
         return jdbcTemplate.query(
                 """
-                SELECT id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year
+                SELECT id, name, name_ja, rule_type, month, day, nth_occurrence, day_of_week, specific_year
                 FROM holiday_calendar_rule_presets
                 WHERE holiday_calendar_id = ?
                 ORDER BY month, day NULLS LAST, name
                 """,
-                (rs, rowNum) -> new HolidayEntryRow(
+                (rs, rowNum) -> new HolidayRuleRow(
                         rs.getObject("id", UUID.class).toString(),
                         rs.getString("name"),
                         rs.getString("name_ja"),
-                        rs.getString("entry_type"),
+                        rs.getString("rule_type"),
                         rs.getInt("month"),
                         rs.getObject("day") != null ? rs.getInt("day") : null,
                         rs.getObject("nth_occurrence") != null ? rs.getInt("nth_occurrence") : null,
@@ -378,17 +378,17 @@ public class AdminMasterDataService {
                 calendarId);
     }
 
-    public UUID addHolidayEntry(
+    public UUID addHolidayRule(
             UUID calendarId,
             String name,
             String nameJa,
-            String entryType,
+            String ruleType,
             int month,
             Integer day,
             Integer nthOccurrence,
             Integer dayOfWeek,
             Integer specificYear) {
-        validateEntryType(entryType, day, nthOccurrence, dayOfWeek);
+        validateRuleType(ruleType, day, nthOccurrence, dayOfWeek);
 
         // Verify calendar exists
         Long count = jdbcTemplate.queryForObject(
@@ -400,43 +400,43 @@ public class AdminMasterDataService {
         UUID id = UUID.randomUUID();
         jdbcTemplate.update(
                 """
-                INSERT INTO holiday_calendar_rule_presets (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
+                INSERT INTO holiday_calendar_rule_presets (id, holiday_calendar_id, name, name_ja, rule_type, month, day, nth_occurrence, day_of_week, specific_year)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, id, calendarId, name, nameJa, entryType, month, day, nthOccurrence, dayOfWeek, specificYear);
+                """, id, calendarId, name, nameJa, ruleType, month, day, nthOccurrence, dayOfWeek, specificYear);
         return id;
     }
 
-    public void updateHolidayEntry(
+    public void updateHolidayRule(
             UUID calendarId,
-            UUID entryId,
+            UUID ruleId,
             String name,
             String nameJa,
-            String entryType,
+            String ruleType,
             int month,
             Integer day,
             Integer nthOccurrence,
             Integer dayOfWeek,
             Integer specificYear) {
-        validateEntryType(entryType, day, nthOccurrence, dayOfWeek);
+        validateRuleType(ruleType, day, nthOccurrence, dayOfWeek);
 
         int rows = jdbcTemplate.update(
                 """
                 UPDATE holiday_calendar_rule_presets
-                SET name = ?, name_ja = ?, entry_type = ?, month = ?, day = ?, nth_occurrence = ?, day_of_week = ?, specific_year = ?
+                SET name = ?, name_ja = ?, rule_type = ?, month = ?, day = ?, nth_occurrence = ?, day_of_week = ?, specific_year = ?
                 WHERE id = ? AND holiday_calendar_id = ?
-                """, name, nameJa, entryType, month, day, nthOccurrence, dayOfWeek, specificYear, entryId, calendarId);
+                """, name, nameJa, ruleType, month, day, nthOccurrence, dayOfWeek, specificYear, ruleId, calendarId);
         if (rows == 0) {
-            throw new DomainException("ENTRY_NOT_FOUND", "Holiday entry not found");
+            throw new DomainException("RULE_NOT_FOUND", "Holiday rule not found");
         }
     }
 
-    public void removeHolidayEntry(UUID calendarId, UUID entryId) {
+    public void removeHolidayRule(UUID calendarId, UUID ruleId) {
         int rows = jdbcTemplate.update(
                 "DELETE FROM holiday_calendar_rule_presets WHERE id = ? AND holiday_calendar_id = ?",
-                entryId,
+                ruleId,
                 calendarId);
         if (rows == 0) {
-            throw new DomainException("ENTRY_NOT_FOUND", "Holiday entry not found");
+            throw new DomainException("RULE_NOT_FOUND", "Holiday rule not found");
         }
     }
 
@@ -485,7 +485,7 @@ public class AdminMasterDataService {
                     mpPatterns.add(new CopiedPattern(presetId, pattern.getId().value(), name));
                 });
 
-        // 3. Copy active holiday calendars + entries → holiday_calendars + holiday_calendar_rules (direct JDBC)
+        // 3. Copy active holiday calendars + rules → holiday_calendars + holiday_calendar_rules (direct JDBC)
         List<CopiedCalendar> hcCalendars = new ArrayList<>();
         jdbcTemplate.query(
                 "SELECT id, name, description, country FROM holiday_calendar_presets WHERE is_active = true ORDER BY name",
@@ -510,30 +510,30 @@ public class AdminMasterDataService {
                             Timestamp.from(now),
                             Timestamp.from(now));
 
-                    // Copy all entries from the preset calendar
+                    // Copy all rules from the preset calendar
                     jdbcTemplate.query(
-                            "SELECT name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year "
+                            "SELECT name, name_ja, rule_type, month, day, nth_occurrence, day_of_week, specific_year "
                                     + "FROM holiday_calendar_rule_presets WHERE holiday_calendar_id = ?",
-                            (entryRs) -> {
-                                UUID entryId = UUID.randomUUID();
+                            (ruleRs) -> {
+                                UUID ruleId = UUID.randomUUID();
                                 jdbcTemplate.update(
                                         """
-                                        INSERT INTO holiday_calendar_rules (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week, specific_year)
+                                        INSERT INTO holiday_calendar_rules (id, holiday_calendar_id, name, name_ja, rule_type, month, day, nth_occurrence, day_of_week, specific_year)
                                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                         """,
-                                        entryId,
+                                        ruleId,
                                         tenantCalendarId,
-                                        entryRs.getString("name"),
-                                        entryRs.getString("name_ja"),
-                                        entryRs.getString("entry_type"),
-                                        entryRs.getInt("month"),
-                                        entryRs.getObject("day") != null ? entryRs.getInt("day") : null,
-                                        entryRs.getObject("nth_occurrence") != null
-                                                ? entryRs.getInt("nth_occurrence")
+                                        ruleRs.getString("name"),
+                                        ruleRs.getString("name_ja"),
+                                        ruleRs.getString("rule_type"),
+                                        ruleRs.getInt("month"),
+                                        ruleRs.getObject("day") != null ? ruleRs.getInt("day") : null,
+                                        ruleRs.getObject("nth_occurrence") != null
+                                                ? ruleRs.getInt("nth_occurrence")
                                                 : null,
-                                        entryRs.getObject("day_of_week") != null ? entryRs.getInt("day_of_week") : null,
-                                        entryRs.getObject("specific_year") != null
-                                                ? entryRs.getInt("specific_year")
+                                        ruleRs.getObject("day_of_week") != null ? ruleRs.getInt("day_of_week") : null,
+                                        ruleRs.getObject("specific_year") != null
+                                                ? ruleRs.getInt("specific_year")
                                                 : null);
                             },
                             presetCalendarId);
@@ -548,16 +548,16 @@ public class AdminMasterDataService {
     // Helper
     // ========================================================================
 
-    private static void validateEntryType(String entryType, Integer day, Integer nthOccurrence, Integer dayOfWeek) {
-        if (!"FIXED".equals(entryType) && !"NTH_WEEKDAY".equals(entryType)) {
-            throw new DomainException("INVALID_ENTRY_TYPE", "Entry type must be FIXED or NTH_WEEKDAY");
+    private static void validateRuleType(String ruleType, Integer day, Integer nthOccurrence, Integer dayOfWeek) {
+        if (!"FIXED".equals(ruleType) && !"NTH_WEEKDAY".equals(ruleType)) {
+            throw new DomainException("INVALID_RULE_TYPE", "Rule type must be FIXED or NTH_WEEKDAY");
         }
-        if ("FIXED".equals(entryType) && day == null) {
-            throw new DomainException("VALIDATION_ERROR", "Day is required for FIXED entries");
+        if ("FIXED".equals(ruleType) && day == null) {
+            throw new DomainException("VALIDATION_ERROR", "Day is required for FIXED rules");
         }
-        if ("NTH_WEEKDAY".equals(entryType) && (nthOccurrence == null || dayOfWeek == null)) {
+        if ("NTH_WEEKDAY".equals(ruleType) && (nthOccurrence == null || dayOfWeek == null)) {
             throw new DomainException(
-                    "VALIDATION_ERROR", "nthOccurrence and dayOfWeek are required for NTH_WEEKDAY entries");
+                    "VALIDATION_ERROR", "nthOccurrence and dayOfWeek are required for NTH_WEEKDAY rules");
         }
     }
 
@@ -579,11 +579,11 @@ public class AdminMasterDataService {
     public record HolidayCalendarPresetRow(
             String id, String name, String description, String country, boolean isActive, int entryCount) {}
 
-    public record HolidayEntryRow(
+    public record HolidayRuleRow(
             String id,
             String name,
             String nameJa,
-            String entryType,
+            String ruleType,
             int month,
             Integer day,
             Integer nthOccurrence,

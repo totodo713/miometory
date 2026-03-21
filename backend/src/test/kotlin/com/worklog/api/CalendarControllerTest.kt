@@ -168,7 +168,7 @@ class CalendarControllerTest : IntegrationTestBase() {
             calendarId = calendarId,
             name = "New Year's Day",
             nameJa = "元日",
-            entryType = "FIXED",
+            ruleType = "FIXED",
             month = 1,
             day = 1,
         )
@@ -335,7 +335,7 @@ class CalendarControllerTest : IntegrationTestBase() {
         calendarId: UUID,
         name: String,
         nameJa: String,
-        entryType: String,
+        ruleType: String,
         month: Int,
         day: Int? = null,
         nthOccurrence: Int? = null,
@@ -344,13 +344,13 @@ class CalendarControllerTest : IntegrationTestBase() {
         executeInNewTransaction {
             baseJdbcTemplate.update(
                 """INSERT INTO holiday_calendar_rules
-                   (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week)
+                   (id, holiday_calendar_id, name, name_ja, rule_type, month, day, nth_occurrence, day_of_week)
                    VALUES (?::UUID, ?::UUID, ?, ?, ?, ?, ?, ?, ?)""",
                 UUID.randomUUID().toString(),
                 calendarId.toString(),
                 name,
                 nameJa,
-                entryType,
+                ruleType,
                 month,
                 day,
                 nthOccurrence,

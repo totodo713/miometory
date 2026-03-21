@@ -64,7 +64,7 @@ class AuditLoggerTest : IntegrationTestBase() {
         assertEquals(testUserId.toString(), entries[0]["user_id"].toString())
         assertEquals("UPDATE", entries[0]["event_type"])
         assertNotNull(entries[0]["timestamp"])
-        assertEquals(365, entries[0]["retention_days"])
+        assertEquals(90, entries[0]["retention_days"]) // Uses DB default (V11)
 
         // tenant_id, resource_type, resource_id are now merged into details JSONB
         val detailsJson = entries[0]["details"].toString()

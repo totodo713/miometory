@@ -42,7 +42,7 @@ class HolidayResolutionServiceTest {
         @DisplayName("should resolve FIXED holiday to exact date")
         void shouldResolveFixedHoliday() {
             var entry = new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
@@ -58,7 +58,7 @@ class HolidayResolutionServiceTest {
         @DisplayName("should exclude FIXED holiday before date range")
         void shouldExcludeFixedHolidayBeforeRange() {
             var entry = new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 2, 28));
@@ -71,7 +71,7 @@ class HolidayResolutionServiceTest {
         void shouldExcludeFixedHolidayAfterRange() {
             var entry = new HolidayCalendarRuleRow(
                     "Christmas", "\u30af\u30ea\u30b9\u30de\u30b9", "FIXED", 12, 25, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30));
@@ -85,7 +85,7 @@ class HolidayResolutionServiceTest {
             // \u6210\u4eba\u306e\u65e5: 1\u6708\u7b2c2\u6708\u66dc\u65e5 \u2192 2026\u5e74\u306f1\u670812\u65e5
             var entry = new HolidayCalendarRuleRow(
                     "Coming of Age Day", "\u6210\u4eba\u306e\u65e5", "NTH_WEEKDAY", 1, null, 2, 1, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
@@ -102,7 +102,7 @@ class HolidayResolutionServiceTest {
         void shouldSkipNthWeekdayOutsideMonth() {
             var entry = new HolidayCalendarRuleRow(
                     "Fifth Monday", "\u7b2c5\u6708\u66dc", "NTH_WEEKDAY", 2, null, 5, 1, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 2, 1), LocalDate.of(2026, 2, 28));
@@ -116,7 +116,7 @@ class HolidayResolutionServiceTest {
             var newYear = new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
             var foundationDay = new HolidayCalendarRuleRow(
                     "Foundation Day", "\u5efa\u56fd\u8a18\u5ff5\u306e\u65e5", "FIXED", 2, 11, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(newYear, foundationDay));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(newYear, foundationDay));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31));
@@ -130,7 +130,7 @@ class HolidayResolutionServiceTest {
         @DisplayName("should resolve holidays spanning multiple years")
         void shouldResolveHolidaysSpanningMultipleYears() {
             var newYear = new HolidayCalendarRuleRow("New Year's Day", "\u5143\u65e5", "FIXED", 1, 1, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(newYear));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(newYear));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2025, 12, 1), LocalDate.of(2026, 2, 28));
@@ -152,7 +152,7 @@ class HolidayResolutionServiceTest {
                     null,
                     null,
                     2020);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result2020 =
                     service.resolveHolidays(tenantId, LocalDate.of(2020, 1, 1), LocalDate.of(2020, 12, 31));
@@ -166,7 +166,7 @@ class HolidayResolutionServiceTest {
         @Test
         @DisplayName("should return empty map when no entries exist")
         void shouldReturnEmptyMapWhenNoEntries() {
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of());
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of());
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
@@ -175,10 +175,10 @@ class HolidayResolutionServiceTest {
         }
 
         @Test
-        @DisplayName("should skip entry with unknown entry_type")
+        @DisplayName("should skip entry with unknown rule_type")
         void shouldSkipUnknownEntryType() {
             var entry = new HolidayCalendarRuleRow("Unknown", "不明", "CUSTOM", 1, 1, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
@@ -190,7 +190,7 @@ class HolidayResolutionServiceTest {
         @DisplayName("should skip FIXED entry with invalid date (e.g. Feb 30)")
         void shouldSkipFixedEntryWithInvalidDate() {
             var entry = new HolidayCalendarRuleRow("Invalid", "無効", "FIXED", 2, 30, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 12, 31));
@@ -203,7 +203,7 @@ class HolidayResolutionServiceTest {
         void shouldKeepLastEntryWhenDuplicateHolidays() {
             var entry1 = new HolidayCalendarRuleRow("Holiday A", "祝日A", "FIXED", 1, 1, null, null, null);
             var entry2 = new HolidayCalendarRuleRow("Holiday B", "祝日B", "FIXED", 1, 1, null, null, null);
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(entry1, entry2));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(entry1, entry2));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31));
@@ -220,7 +220,7 @@ class HolidayResolutionServiceTest {
             var feb = new HolidayCalendarRuleRow("Foundation Day", "建国記念の日", "FIXED", 2, 11, null, null, null);
             var jan = new HolidayCalendarRuleRow("New Year's Day", "元日", "FIXED", 1, 1, null, null, null);
             // Entries ordered: Feb first, Jan second (reversed chronological order)
-            when(repository.findActiveEntriesByTenantId(tenantId)).thenReturn(List.of(feb, jan));
+            when(repository.findActiveRulesByTenantId(tenantId)).thenReturn(List.of(feb, jan));
 
             Map<LocalDate, HolidayInfo> result =
                     service.resolveHolidays(tenantId, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 3, 31));

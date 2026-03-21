@@ -14,20 +14,20 @@ public class HolidayCalendarRuleRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<HolidayCalendarRuleRow> findActiveEntriesByTenantId(UUID tenantId) {
+    public List<HolidayCalendarRuleRow> findActiveRulesByTenantId(UUID tenantId) {
         return jdbcTemplate.query(
                 """
-                SELECT e.name, e.name_ja, e.entry_type, e.month, e.day,
-                       e.nth_occurrence, e.day_of_week, e.specific_year
-                FROM holiday_calendar_rules e
-                JOIN holiday_calendars c ON e.holiday_calendar_id = c.id
+                SELECT r.name, r.name_ja, r.rule_type, r.month, r.day,
+                       r.nth_occurrence, r.day_of_week, r.specific_year
+                FROM holiday_calendar_rules r
+                JOIN holiday_calendars c ON r.holiday_calendar_id = c.id
                 WHERE c.tenant_id = ? AND c.is_active = true
-                ORDER BY e.month, e.day NULLS LAST, e.name
+                ORDER BY r.month, r.day NULLS LAST, r.name
                 """,
                 (rs, rowNum) -> new HolidayCalendarRuleRow(
                         rs.getString("name"),
                         rs.getString("name_ja"),
-                        rs.getString("entry_type"),
+                        rs.getString("rule_type"),
                         rs.getInt("month"),
                         rs.getObject("day") != null ? rs.getInt("day") : null,
                         rs.getObject("nth_occurrence") != null ? rs.getInt("nth_occurrence") : null,
@@ -39,7 +39,7 @@ public class HolidayCalendarRuleRepository {
     public record HolidayCalendarRuleRow(
             String name,
             String nameJa,
-            String entryType,
+            String ruleType,
             int month,
             Integer day,
             Integer nthOccurrence,

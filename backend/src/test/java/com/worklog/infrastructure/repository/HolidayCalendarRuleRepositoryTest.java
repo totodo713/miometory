@@ -43,11 +43,11 @@ class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
     @DisplayName("should return FIXED entry with all fields mapped correctly")
     void shouldReturnFixedEntry() {
         baseJdbcTemplate.update("""
-                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, entry_type, month, day)
+                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, rule_type, month, day)
                 VALUES (?, 'New Year''s Day', '元日', 'FIXED', 1, 1)
                 """, calendarId);
 
-        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveRulesByTenantId(tenantId);
 
         assertFalse(result.isEmpty());
         HolidayCalendarRuleRow entry = result.stream()
@@ -55,7 +55,7 @@ class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
                 .findFirst()
                 .orElseThrow();
         assertEquals("元日", entry.nameJa());
-        assertEquals("FIXED", entry.entryType());
+        assertEquals("FIXED", entry.ruleType());
         assertEquals(1, entry.month());
         assertEquals(1, entry.day());
         assertNull(entry.nthOccurrence());
@@ -67,17 +67,17 @@ class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
     @DisplayName("should return NTH_WEEKDAY entry with nullable fields mapped correctly")
     void shouldReturnNthWeekdayEntry() {
         baseJdbcTemplate.update("""
-                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, entry_type, month, nth_occurrence, day_of_week)
+                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, rule_type, month, nth_occurrence, day_of_week)
                 VALUES (?, 'Coming of Age Day', '成人の日', 'NTH_WEEKDAY', 1, 2, 1)
                 """, calendarId);
 
-        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveRulesByTenantId(tenantId);
 
         HolidayCalendarRuleRow entry = result.stream()
                 .filter(e -> e.name().equals("Coming of Age Day"))
                 .findFirst()
                 .orElseThrow();
-        assertEquals("NTH_WEEKDAY", entry.entryType());
+        assertEquals("NTH_WEEKDAY", entry.ruleType());
         assertEquals(1, entry.month());
         assertNull(entry.day());
         assertEquals(2, entry.nthOccurrence());
@@ -93,11 +93,11 @@ class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
                 VALUES (?, ?, 'Inactive Calendar', 'JP', false)
                 """, inactiveCalendarId, tenantId);
         baseJdbcTemplate.update("""
-                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, entry_type, month, day)
+                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, rule_type, month, day)
                 VALUES (?, 'Hidden Holiday', '非表示', 'FIXED', 3, 15)
                 """, inactiveCalendarId);
 
-        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveRulesByTenantId(tenantId);
 
         assertTrue(result.stream().noneMatch(e -> e.name().equals("Hidden Holiday")));
     }
@@ -107,7 +107,7 @@ class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
     void shouldReturnEmptyForUnknownTenant() {
         UUID unknownTenantId = UUID.randomUUID();
 
-        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(unknownTenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveRulesByTenantId(unknownTenantId);
 
         assertTrue(result.isEmpty());
     }
@@ -116,15 +116,15 @@ class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
     @DisplayName("should return entries ordered by month, day, name")
     void shouldReturnEntriesOrdered() {
         baseJdbcTemplate.update("""
-                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, entry_type, month, day)
+                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, rule_type, month, day)
                 VALUES (?, 'Foundation Day', '建国記念の日', 'FIXED', 2, 11)
                 """, calendarId);
         baseJdbcTemplate.update("""
-                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, entry_type, month, day)
+                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, rule_type, month, day)
                 VALUES (?, 'New Year''s Day', '元日', 'FIXED', 1, 1)
                 """, calendarId);
 
-        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveRulesByTenantId(tenantId);
 
         List<HolidayCalendarRuleRow> testEntries = result.stream()
                 .filter(e -> e.name().equals("New Year's Day") || e.name().equals("Foundation Day"))
@@ -138,11 +138,11 @@ class HolidayCalendarRuleRepositoryTest extends IntegrationTestBase {
     @DisplayName("should map specific_year when present")
     void shouldMapSpecificYear() {
         baseJdbcTemplate.update("""
-                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, entry_type, month, day, specific_year)
+                INSERT INTO holiday_calendar_rules (holiday_calendar_id, name, name_ja, rule_type, month, day, specific_year)
                 VALUES (?, 'Olympic Day', 'オリンピック記念日', 'FIXED', 7, 24, 2020)
                 """, calendarId);
 
-        List<HolidayCalendarRuleRow> result = repository.findActiveEntriesByTenantId(tenantId);
+        List<HolidayCalendarRuleRow> result = repository.findActiveRulesByTenantId(tenantId);
 
         HolidayCalendarRuleRow entry = result.stream()
                 .filter(e -> e.name().equals("Olympic Day"))
