@@ -116,6 +116,19 @@ test.describe("System Settings Page", () => {
         await route.fulfill({ status: 204 });
       }
     });
+
+    // Mock GET/PUT system settings attendance times
+    await page.route("**/api/v1/admin/system/settings/attendance-times", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ startTime: "09:00", endTime: "18:00" }),
+        });
+      } else if (route.request().method() === "PUT") {
+        await route.fulfill({ status: 204 });
+      }
+    });
   });
 
   test("should display current system default patterns", async ({ page }) => {
@@ -150,7 +163,7 @@ test.describe("System Settings Page", () => {
     );
 
     // Click save
-    await page.getByRole("button", { name: "Save" }).click();
+    await page.getByRole("button", { name: "Save" }).first().click();
 
     // Verify request was sent with correct data
     const putRequest = await putPromise;
