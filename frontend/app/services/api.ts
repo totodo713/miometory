@@ -15,7 +15,7 @@
 import type {
   FiscalYearPresetRow,
   HolidayCalendarPresetRow,
-  HolidayEntryRow,
+  HolidayRuleRow,
   MonthlyPeriodPresetRow,
   PresetPage,
 } from "@/types/masterData";
@@ -37,8 +37,8 @@ interface OrganizationRow {
   level: number;
   status: "ACTIVE" | "INACTIVE";
   memberCount: number;
-  fiscalYearPatternId: string | null;
-  monthlyPeriodPatternId: string | null;
+  fiscalYearRuleId: string | null;
+  monthlyPeriodRuleId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -71,9 +71,9 @@ interface MemberPage {
 }
 
 /**
- * Pattern option types for fiscal year and monthly period patterns
+ * Rule option types for fiscal year and monthly period rules
  */
-interface FiscalYearPatternOption {
+interface FiscalYearRuleOption {
   id: string;
   tenantId: string;
   name: string;
@@ -81,7 +81,7 @@ interface FiscalYearPatternOption {
   startDay: number;
 }
 
-interface MonthlyPeriodPatternOption {
+interface MonthlyPeriodRuleOption {
   id: string;
   tenantId: string;
   name: string;
@@ -1049,15 +1049,15 @@ export const api = {
       update: (id: string, data: { name: string }) => apiClient.put<void>(`/api/v1/admin/tenants/${id}`, data),
       deactivate: (id: string) => apiClient.patch<void>(`/api/v1/admin/tenants/${id}/deactivate`, {}),
       activate: (id: string) => apiClient.patch<void>(`/api/v1/admin/tenants/${id}/activate`, {}),
-      getDefaultPatterns: (id: string) =>
+      getDefaultRules: (id: string) =>
         apiClient.get<{
-          defaultFiscalYearPatternId: string | null;
-          defaultMonthlyPeriodPatternId: string | null;
-        }>(`/api/v1/admin/tenants/${id}/default-patterns`),
-      updateDefaultPatterns: (
+          defaultFiscalYearRuleId: string | null;
+          defaultMonthlyPeriodRuleId: string | null;
+        }>(`/api/v1/admin/tenants/${id}/default-rules`),
+      updateDefaultRules: (
         id: string,
-        data: { defaultFiscalYearPatternId: string | null; defaultMonthlyPeriodPatternId: string | null },
-      ) => apiClient.put<void>(`/api/v1/admin/tenants/${id}/default-patterns`, data),
+        data: { defaultFiscalYearRuleId: string | null; defaultMonthlyPeriodRuleId: string | null },
+      ) => apiClient.put<void>(`/api/v1/admin/tenants/${id}/default-rules`, data),
     },
 
     users: {
@@ -1133,10 +1133,10 @@ export const api = {
         const qs = query.toString();
         return apiClient.get<OrganizationTreeNode[]>(`/api/v1/admin/organizations/tree${qs ? `?${qs}` : ""}`);
       },
-      assignPatterns: (orgId: string, fiscalYearPatternId: string | null, monthlyPeriodPatternId: string | null) =>
-        apiClient.put<void>(`/api/v1/admin/organizations/${orgId}/patterns`, {
-          fiscalYearPatternId,
-          monthlyPeriodPatternId,
+      assignRules: (orgId: string, fiscalYearRuleId: string | null, monthlyPeriodRuleId: string | null) =>
+        apiClient.put<void>(`/api/v1/admin/organizations/${orgId}/rules`, {
+          fiscalYearRuleId,
+          monthlyPeriodRuleId,
         }),
       getDateInfo: (tenantId: string, orgId: string, date: string) =>
         apiClient.post<{
@@ -1145,40 +1145,39 @@ export const api = {
           monthlyPeriodStart: string;
           monthlyPeriodEnd: string;
         }>(`/api/v1/tenants/${tenantId}/organizations/${orgId}/date-info`, { date }),
-      getEffectivePatterns: (orgId: string) =>
-        apiClient.get<EffectivePatterns>(`/api/v1/admin/organizations/${orgId}/effective-patterns`),
+      getEffectiveRules: (orgId: string) =>
+        apiClient.get<EffectiveRules>(`/api/v1/admin/organizations/${orgId}/effective-rules`),
     },
 
     system: {
-      getPatterns: () => apiClient.get<SystemDefaultPatterns>("/api/v1/admin/system/settings/patterns"),
-      updatePatterns: (data: SystemDefaultPatterns) =>
-        apiClient.put<void>("/api/v1/admin/system/settings/patterns", data),
+      getRules: () => apiClient.get<SystemDefaultRules>("/api/v1/admin/system/settings/rules"),
+      updateRules: (data: SystemDefaultRules) => apiClient.put<void>("/api/v1/admin/system/settings/rules", data),
     },
 
     tenantSettings: {
-      getDefaultPatterns: () =>
+      getDefaultRules: () =>
         apiClient.get<{
-          defaultFiscalYearPatternId: string | null;
-          defaultMonthlyPeriodPatternId: string | null;
-        }>("/api/v1/tenant-settings/default-patterns"),
-      updateDefaultPatterns: (data: {
-        defaultFiscalYearPatternId: string | null;
-        defaultMonthlyPeriodPatternId: string | null;
-      }) => apiClient.put<void>("/api/v1/tenant-settings/default-patterns", data),
+          defaultFiscalYearRuleId: string | null;
+          defaultMonthlyPeriodRuleId: string | null;
+        }>("/api/v1/tenant-settings/default-rules"),
+      updateDefaultRules: (data: {
+        defaultFiscalYearRuleId: string | null;
+        defaultMonthlyPeriodRuleId: string | null;
+      }) => apiClient.put<void>("/api/v1/tenant-settings/default-rules", data),
     },
 
     /**
-     * Pattern list endpoints (tenant-scoped)
+     * Rule list endpoints (tenant-scoped)
      */
-    patterns: {
-      listFiscalYearPatterns: (tenantId: string) =>
-        apiClient.get<FiscalYearPatternOption[]>(`/api/v1/tenants/${tenantId}/fiscal-year-patterns`),
-      listMonthlyPeriodPatterns: (tenantId: string) =>
-        apiClient.get<MonthlyPeriodPatternOption[]>(`/api/v1/tenants/${tenantId}/monthly-period-patterns`),
-      createFiscalYearPattern: (tenantId: string, data: { name: string; startMonth: number; startDay: number }) =>
-        apiClient.post<FiscalYearPatternOption>(`/api/v1/tenants/${tenantId}/fiscal-year-patterns`, data),
-      createMonthlyPeriodPattern: (tenantId: string, data: { name: string; startDay: number }) =>
-        apiClient.post<MonthlyPeriodPatternOption>(`/api/v1/tenants/${tenantId}/monthly-period-patterns`, data),
+    rules: {
+      listFiscalYearRules: (tenantId: string) =>
+        apiClient.get<FiscalYearRuleOption[]>(`/api/v1/tenants/${tenantId}/fiscal-year-rules`),
+      listMonthlyPeriodRules: (tenantId: string) =>
+        apiClient.get<MonthlyPeriodRuleOption[]>(`/api/v1/tenants/${tenantId}/monthly-period-rules`),
+      createFiscalYearRule: (tenantId: string, data: { name: string; startMonth: number; startDay: number }) =>
+        apiClient.post<FiscalYearRuleOption>(`/api/v1/tenants/${tenantId}/fiscal-year-rules`, data),
+      createMonthlyPeriodRule: (tenantId: string, data: { name: string; startDay: number }) =>
+        apiClient.post<MonthlyPeriodRuleOption>(`/api/v1/tenants/${tenantId}/monthly-period-rules`, data),
     },
 
     /**
@@ -1194,17 +1193,17 @@ export const api = {
           if (params?.size !== undefined) query.set("size", params.size.toString());
           const qs = query.toString();
           return apiClient.get<PresetPage<FiscalYearPresetRow>>(
-            `/api/v1/admin/master-data/fiscal-year-patterns${qs ? `?${qs}` : ""}`,
+            `/api/v1/admin/master-data/fiscal-year-rules${qs ? `?${qs}` : ""}`,
           );
         },
         create: (data: { name: string; description?: string; startMonth: number; startDay: number }) =>
-          apiClient.post<{ id: string }>("/api/v1/admin/master-data/fiscal-year-patterns", data),
+          apiClient.post<{ id: string }>("/api/v1/admin/master-data/fiscal-year-rules", data),
         update: (id: string, data: { name: string; description?: string; startMonth: number; startDay: number }) =>
-          apiClient.put<void>(`/api/v1/admin/master-data/fiscal-year-patterns/${id}`, data),
+          apiClient.put<void>(`/api/v1/admin/master-data/fiscal-year-rules/${id}`, data),
         deactivate: (id: string) =>
-          apiClient.patch<void>(`/api/v1/admin/master-data/fiscal-year-patterns/${id}/deactivate`, {}),
+          apiClient.patch<void>(`/api/v1/admin/master-data/fiscal-year-rules/${id}/deactivate`, {}),
         activate: (id: string) =>
-          apiClient.patch<void>(`/api/v1/admin/master-data/fiscal-year-patterns/${id}/activate`, {}),
+          apiClient.patch<void>(`/api/v1/admin/master-data/fiscal-year-rules/${id}/activate`, {}),
       },
 
       monthlyPeriodPresets: {
@@ -1216,17 +1215,17 @@ export const api = {
           if (params?.size !== undefined) query.set("size", params.size.toString());
           const qs = query.toString();
           return apiClient.get<PresetPage<MonthlyPeriodPresetRow>>(
-            `/api/v1/admin/master-data/monthly-period-patterns${qs ? `?${qs}` : ""}`,
+            `/api/v1/admin/master-data/monthly-period-rules${qs ? `?${qs}` : ""}`,
           );
         },
         create: (data: { name: string; description?: string; startDay: number }) =>
-          apiClient.post<{ id: string }>("/api/v1/admin/master-data/monthly-period-patterns", data),
+          apiClient.post<{ id: string }>("/api/v1/admin/master-data/monthly-period-rules", data),
         update: (id: string, data: { name: string; description?: string; startDay: number }) =>
-          apiClient.put<void>(`/api/v1/admin/master-data/monthly-period-patterns/${id}`, data),
+          apiClient.put<void>(`/api/v1/admin/master-data/monthly-period-rules/${id}`, data),
         deactivate: (id: string) =>
-          apiClient.patch<void>(`/api/v1/admin/master-data/monthly-period-patterns/${id}/deactivate`, {}),
+          apiClient.patch<void>(`/api/v1/admin/master-data/monthly-period-rules/${id}/deactivate`, {}),
         activate: (id: string) =>
-          apiClient.patch<void>(`/api/v1/admin/master-data/monthly-period-patterns/${id}/activate`, {}),
+          apiClient.patch<void>(`/api/v1/admin/master-data/monthly-period-rules/${id}/activate`, {}),
       },
 
       holidayCalendars: {
@@ -1249,35 +1248,35 @@ export const api = {
           apiClient.patch<void>(`/api/v1/admin/master-data/holiday-calendars/${id}/deactivate`, {}),
         activate: (id: string) =>
           apiClient.patch<void>(`/api/v1/admin/master-data/holiday-calendars/${id}/activate`, {}),
-        listEntries: (calendarId: string) =>
-          apiClient.get<HolidayEntryRow[]>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries`),
-        addEntry: (
+        listRules: (calendarId: string) =>
+          apiClient.get<HolidayRuleRow[]>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/rules`),
+        addRule: (
           calendarId: string,
           data: {
             name: string;
-            entryType: string;
+            ruleType: string;
             month: number;
             day?: number;
             nthOccurrence?: number;
             dayOfWeek?: number;
             specificYear?: number;
           },
-        ) => apiClient.post<{ id: string }>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries`, data),
-        updateEntry: (
+        ) => apiClient.post<{ id: string }>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/rules`, data),
+        updateRule: (
           calendarId: string,
-          entryId: string,
+          ruleId: string,
           data: {
             name: string;
-            entryType: string;
+            ruleType: string;
             month: number;
             day?: number;
             nthOccurrence?: number;
             dayOfWeek?: number;
             specificYear?: number;
           },
-        ) => apiClient.put<void>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries/${entryId}`, data),
-        deleteEntry: (calendarId: string, entryId: string) =>
-          apiClient.delete<void>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/entries/${entryId}`),
+        ) => apiClient.put<void>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/rules/${ruleId}`, data),
+        deleteRule: (calendarId: string, ruleId: string) =>
+          apiClient.delete<void>(`/api/v1/admin/master-data/holiday-calendars/${calendarId}/rules/${ruleId}`),
       },
     },
   },
@@ -1381,22 +1380,22 @@ export async function checkAuth(): Promise<boolean> {
 }
 
 /**
- * System default pattern settings
+ * System default rule settings
  */
-interface SystemDefaultPatterns {
+interface SystemDefaultRules {
   fiscalYearStartMonth: number;
   fiscalYearStartDay: number;
   monthlyPeriodStartDay: number;
 }
 
 /**
- * Effective patterns for an organization (resolved from inheritance chain)
+ * Effective rules for an organization (resolved from inheritance chain)
  */
-interface EffectivePatterns {
-  fiscalYearPatternId: string | null;
+interface EffectiveRules {
+  fiscalYearRuleId: string | null;
   fiscalYearSource: string;
   fiscalYearSourceName: string | null;
-  monthlyPeriodPatternId: string | null;
+  monthlyPeriodRuleId: string | null;
   monthlyPeriodSource: string;
   monthlyPeriodSourceName: string | null;
 }
@@ -1423,8 +1422,8 @@ export type {
   OrganizationMemberRow,
   MemberPage,
   OrganizationTreeNode,
-  FiscalYearPatternOption,
-  MonthlyPeriodPatternOption,
-  SystemDefaultPatterns,
-  EffectivePatterns,
+  FiscalYearRuleOption,
+  MonthlyPeriodRuleOption,
+  SystemDefaultRules,
+  EffectiveRules,
 };

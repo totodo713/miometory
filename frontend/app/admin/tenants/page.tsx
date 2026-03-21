@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
-import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
+import { FiscalYearRuleForm } from "@/components/admin/FiscalYearRuleForm";
+import { MonthlyPeriodRuleForm } from "@/components/admin/MonthlyPeriodRuleForm";
 import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { TenantForm } from "@/components/admin/TenantForm";
 import type { TenantRow } from "@/components/admin/TenantList";
@@ -11,7 +11,7 @@ import { TenantList } from "@/components/admin/TenantList";
 import { Breadcrumbs } from "@/components/shared/Breadcrumbs";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
-import type { FiscalYearPatternOption, MonthlyPeriodPatternOption } from "@/services/api";
+import type { FiscalYearRuleOption, MonthlyPeriodRuleOption } from "@/services/api";
 import { ApiError, api } from "@/services/api";
 
 export default function AdminTenantsPage() {
@@ -27,8 +27,8 @@ export default function AdminTenantsPage() {
 
   // Default patterns state
   const [selectedTenant, setSelectedTenant] = useState<TenantRow | null>(null);
-  const [fiscalYearPatterns, setFiscalYearPatterns] = useState<FiscalYearPatternOption[]>([]);
-  const [monthlyPeriodPatterns, setMonthlyPeriodPatterns] = useState<MonthlyPeriodPatternOption[]>([]);
+  const [fiscalYearPatterns, setFiscalYearPatterns] = useState<FiscalYearRuleOption[]>([]);
+  const [monthlyPeriodPatterns, setMonthlyPeriodPatterns] = useState<MonthlyPeriodRuleOption[]>([]);
   const [defaultFyPatternId, setDefaultFyPatternId] = useState<string>("");
   const [defaultMpPatternId, setDefaultMpPatternId] = useState<string>("");
   const [isPatternsLoading, setIsPatternsLoading] = useState(false);
@@ -102,15 +102,15 @@ export default function AdminTenantsPage() {
       setIsPatternsLoading(true);
       try {
         const [fyPatterns, mpPatterns, defaults] = await Promise.all([
-          api.admin.patterns.listFiscalYearPatterns(selectedTenant.id),
-          api.admin.patterns.listMonthlyPeriodPatterns(selectedTenant.id),
-          api.admin.tenants.getDefaultPatterns(selectedTenant.id),
+          api.admin.rules.listFiscalYearRules(selectedTenant.id),
+          api.admin.rules.listMonthlyPeriodRules(selectedTenant.id),
+          api.admin.tenants.getDefaultRules(selectedTenant.id),
         ]);
         if (cancelled) return;
         setFiscalYearPatterns(fyPatterns);
         setMonthlyPeriodPatterns(mpPatterns);
-        setDefaultFyPatternId(defaults.defaultFiscalYearPatternId ?? "");
-        setDefaultMpPatternId(defaults.defaultMonthlyPeriodPatternId ?? "");
+        setDefaultFyPatternId(defaults.defaultFiscalYearRuleId ?? "");
+        setDefaultMpPatternId(defaults.defaultMonthlyPeriodRuleId ?? "");
       } catch {
         if (cancelled) return;
         setFiscalYearPatterns([]);
@@ -147,9 +147,9 @@ export default function AdminTenantsPage() {
     if (!selectedTenant) return;
     setIsPatternSaving(true);
     try {
-      await api.admin.tenants.updateDefaultPatterns(selectedTenant.id, {
-        defaultFiscalYearPatternId: defaultFyPatternId || null,
-        defaultMonthlyPeriodPatternId: defaultMpPatternId || null,
+      await api.admin.tenants.updateDefaultRules(selectedTenant.id, {
+        defaultFiscalYearRuleId: defaultFyPatternId || null,
+        defaultMonthlyPeriodRuleId: defaultMpPatternId || null,
       });
       toast.success(td("saved"));
     } catch (err: unknown) {
@@ -323,13 +323,13 @@ export default function AdminTenantsPage() {
 
       {selectedTenant && (
         <>
-          <FiscalYearPatternForm
+          <FiscalYearRuleForm
             tenantId={selectedTenant.id}
             open={showFyForm}
             onClose={() => setShowFyForm(false)}
             onCreated={handleFyPatternCreated}
           />
-          <MonthlyPeriodPatternForm
+          <MonthlyPeriodRuleForm
             tenantId={selectedTenant.id}
             open={showMpForm}
             onClose={() => setShowMpForm(false)}

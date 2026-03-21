@@ -42,7 +42,7 @@ class OrganizationRepositoryTest : IntegrationTestBase() {
 
         // Verify projection table also has the value
         val projectedHours = baseJdbcTemplate.queryForObject(
-            "SELECT standard_daily_hours FROM organization WHERE id = ?",
+            "SELECT standard_daily_hours FROM organizations WHERE id = ?",
             BigDecimal::class.java,
             orgId.value,
         )
@@ -66,7 +66,7 @@ class OrganizationRepositoryTest : IntegrationTestBase() {
 
         // Verify projection also has null
         val projectedHours = baseJdbcTemplate.queryForObject(
-            "SELECT standard_daily_hours FROM organization WHERE id = ?",
+            "SELECT standard_daily_hours FROM organizations WHERE id = ?",
             BigDecimal::class.java,
             orgId.value,
         )
@@ -97,7 +97,7 @@ class OrganizationRepositoryTest : IntegrationTestBase() {
 
         // Verify projection table is also null
         val projectedHours = baseJdbcTemplate.queryForObject(
-            "SELECT standard_daily_hours FROM organization WHERE id = ?",
+            "SELECT standard_daily_hours FROM organizations WHERE id = ?",
             BigDecimal::class.java,
             orgId.value,
         )

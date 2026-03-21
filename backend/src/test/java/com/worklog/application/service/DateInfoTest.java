@@ -16,8 +16,8 @@ class DateInfoTest {
     private static final LocalDate MP_START = LocalDate.of(2026, 2, 1);
     private static final LocalDate MP_END = LocalDate.of(2026, 2, 28);
     private static final UUID ORG_ID = UUID.randomUUID();
-    private static final UUID FY_PATTERN_ID = UUID.randomUUID();
-    private static final UUID MP_PATTERN_ID = UUID.randomUUID();
+    private static final UUID FY_RULE_ID = UUID.randomUUID();
+    private static final UUID MP_RULE_ID = UUID.randomUUID();
 
     private DateInfo validDateInfo() {
         return new DateInfo(
@@ -27,8 +27,8 @@ class DateInfoTest {
                 FY_END,
                 MP_START,
                 MP_END,
-                FY_PATTERN_ID,
-                MP_PATTERN_ID,
+                FY_RULE_ID,
+                MP_RULE_ID,
                 ORG_ID,
                 "organization:" + ORG_ID,
                 "organization:" + ORG_ID);
@@ -40,8 +40,8 @@ class DateInfoTest {
         DateInfo info = validDateInfo();
         assertEquals(DATE, info.date());
         assertEquals(2025, info.fiscalYear());
-        assertEquals(FY_PATTERN_ID, info.fiscalYearPatternId());
-        assertEquals(MP_PATTERN_ID, info.monthlyPeriodPatternId());
+        assertEquals(FY_RULE_ID, info.fiscalYearRuleId());
+        assertEquals(MP_RULE_ID, info.monthlyPeriodRuleId());
         assertEquals("organization:" + ORG_ID, info.fiscalYearSource());
     }
 
@@ -50,8 +50,8 @@ class DateInfoTest {
     void shouldAllowNullPatternIds() {
         DateInfo info =
                 new DateInfo(DATE, 2025, FY_START, FY_END, MP_START, MP_END, null, null, ORG_ID, "system", "system");
-        assertNull(info.fiscalYearPatternId());
-        assertNull(info.monthlyPeriodPatternId());
+        assertNull(info.fiscalYearRuleId());
+        assertNull(info.monthlyPeriodRuleId());
     }
 
     @Test
@@ -66,8 +66,8 @@ class DateInfoTest {
                         FY_END,
                         MP_START,
                         MP_END,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         ORG_ID,
                         "system",
                         "system"));
@@ -85,8 +85,8 @@ class DateInfoTest {
                         FY_END,
                         MP_START,
                         MP_END,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         ORG_ID,
                         "system",
                         "system"));
@@ -104,8 +104,8 @@ class DateInfoTest {
                         null,
                         MP_START,
                         MP_END,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         ORG_ID,
                         "system",
                         "system"));
@@ -123,8 +123,8 @@ class DateInfoTest {
                         FY_END,
                         null,
                         MP_END,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         ORG_ID,
                         "system",
                         "system"));
@@ -142,8 +142,8 @@ class DateInfoTest {
                         FY_END,
                         MP_START,
                         null,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         ORG_ID,
                         "system",
                         "system"));
@@ -161,8 +161,8 @@ class DateInfoTest {
                         FY_END,
                         MP_START,
                         MP_END,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         null,
                         "system",
                         "system"));
@@ -180,8 +180,8 @@ class DateInfoTest {
                         FY_END,
                         MP_START,
                         MP_END,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         ORG_ID,
                         null,
                         "system"));
@@ -199,8 +199,8 @@ class DateInfoTest {
                         FY_END,
                         MP_START,
                         MP_END,
-                        FY_PATTERN_ID,
-                        MP_PATTERN_ID,
+                        FY_RULE_ID,
+                        MP_RULE_ID,
                         ORG_ID,
                         "system",
                         null));

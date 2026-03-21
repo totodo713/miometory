@@ -4,15 +4,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.worklog.application.service.AdminTenantService;
-import com.worklog.domain.fiscalyear.FiscalYearPattern;
-import com.worklog.domain.fiscalyear.FiscalYearPatternId;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern;
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPatternId;
+import com.worklog.domain.fiscalyear.FiscalYearRule;
+import com.worklog.domain.fiscalyear.FiscalYearRuleId;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRule;
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRuleId;
 import com.worklog.domain.shared.DomainException;
 import com.worklog.domain.tenant.Tenant;
 import com.worklog.domain.tenant.TenantId;
-import com.worklog.infrastructure.repository.FiscalYearPatternRepository;
-import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository;
+import com.worklog.infrastructure.repository.FiscalYearRuleRepository;
+import com.worklog.infrastructure.repository.MonthlyPeriodRuleRepository;
 import com.worklog.infrastructure.repository.TenantRepository;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,10 +36,10 @@ class AdminTenantControllerUnitTest {
     private TenantRepository tenantRepository;
 
     @Mock
-    private FiscalYearPatternRepository fiscalYearPatternRepository;
+    private FiscalYearRuleRepository fiscalYearRuleRepository;
 
     @Mock
-    private MonthlyPeriodPatternRepository monthlyPeriodPatternRepository;
+    private MonthlyPeriodRuleRepository monthlyPeriodRuleRepository;
 
     private AdminTenantController controller;
 
@@ -49,12 +49,12 @@ class AdminTenantControllerUnitTest {
     @BeforeEach
     void setUp() {
         controller = new AdminTenantController(
-                adminTenantService, tenantRepository, fiscalYearPatternRepository, monthlyPeriodPatternRepository);
+                adminTenantService, tenantRepository, fiscalYearRuleRepository, monthlyPeriodRuleRepository);
     }
 
     @Nested
-    @DisplayName("GET /{id}/default-patterns")
-    class GetDefaultPatterns {
+    @DisplayName("GET /{id}/default-rules")
+    class GetDefaultRules {
 
         @Test
         @DisplayName("should return default patterns for tenant")
@@ -62,15 +62,15 @@ class AdminTenantControllerUnitTest {
             UUID fyId = UUID.randomUUID();
             UUID mpId = UUID.randomUUID();
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
-            tenant.assignDefaultPatterns(fyId, mpId);
+            tenant.assignDefaultRules(fyId, mpId);
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            var response = controller.getDefaultPatterns(TENANT_UUID);
+            var response = controller.getDefaultRules(TENANT_UUID);
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertEquals(fyId, response.getBody().defaultFiscalYearPatternId());
-            assertEquals(mpId, response.getBody().defaultMonthlyPeriodPatternId());
+            assertEquals(fyId, response.getBody().defaultFiscalYearRuleId());
+            assertEquals(mpId, response.getBody().defaultMonthlyPeriodRuleId());
         }
 
         @Test
@@ -79,12 +79,12 @@ class AdminTenantControllerUnitTest {
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            var response = controller.getDefaultPatterns(TENANT_UUID);
+            var response = controller.getDefaultRules(TENANT_UUID);
 
             assertEquals(HttpStatus.OK, response.getStatusCode());
             assertNotNull(response.getBody());
-            assertNull(response.getBody().defaultFiscalYearPatternId());
-            assertNull(response.getBody().defaultMonthlyPeriodPatternId());
+            assertNull(response.getBody().defaultFiscalYearRuleId());
+            assertNull(response.getBody().defaultMonthlyPeriodRuleId());
         }
 
         @Test
@@ -92,35 +92,35 @@ class AdminTenantControllerUnitTest {
         void shouldThrowWhenTenantNotFound() {
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.empty());
 
-            assertThrows(DomainException.class, () -> controller.getDefaultPatterns(TENANT_UUID));
+            assertThrows(DomainException.class, () -> controller.getDefaultRules(TENANT_UUID));
         }
     }
 
     @Nested
-    @DisplayName("PUT /{id}/default-patterns")
-    class UpdateDefaultPatterns {
+    @DisplayName("PUT /{id}/default-rules")
+    class UpdateDefaultRules {
 
         @Test
         @DisplayName("should update default patterns with valid owned patterns")
         void shouldUpdateWithValidPatterns() {
-            UUID fyPatternId = UUID.randomUUID();
-            UUID mpPatternId = UUID.randomUUID();
+            UUID fyRuleId = UUID.randomUUID();
+            UUID mpRuleId = UUID.randomUUID();
 
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            FiscalYearPattern fyPattern = mock(FiscalYearPattern.class);
-            when(fyPattern.getTenantId()).thenReturn(TENANT_ID);
-            when(fiscalYearPatternRepository.findById(FiscalYearPatternId.of(fyPatternId)))
-                    .thenReturn(Optional.of(fyPattern));
+            FiscalYearRule fyRule = mock(FiscalYearRule.class);
+            when(fyRule.getTenantId()).thenReturn(TENANT_ID);
+            when(fiscalYearRuleRepository.findById(FiscalYearRuleId.of(fyRuleId)))
+                    .thenReturn(Optional.of(fyRule));
 
-            MonthlyPeriodPattern mpPattern = mock(MonthlyPeriodPattern.class);
-            when(mpPattern.getTenantId()).thenReturn(TENANT_ID);
-            when(monthlyPeriodPatternRepository.findById(MonthlyPeriodPatternId.of(mpPatternId)))
-                    .thenReturn(Optional.of(mpPattern));
+            MonthlyPeriodRule mpRule = mock(MonthlyPeriodRule.class);
+            when(mpRule.getTenantId()).thenReturn(TENANT_ID);
+            when(monthlyPeriodRuleRepository.findById(MonthlyPeriodRuleId.of(mpRuleId)))
+                    .thenReturn(Optional.of(mpRule));
 
-            var request = new AdminTenantController.UpdateDefaultPatternsRequest(fyPatternId, mpPatternId);
-            var response = controller.updateDefaultPatterns(TENANT_UUID, request);
+            var request = new AdminTenantController.UpdateDefaultRulesRequest(fyRuleId, mpRuleId);
+            var response = controller.updateDefaultRules(TENANT_UUID, request);
 
             assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
             verify(tenantRepository).save(tenant);
@@ -132,8 +132,8 @@ class AdminTenantControllerUnitTest {
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            var request = new AdminTenantController.UpdateDefaultPatternsRequest(null, null);
-            var response = controller.updateDefaultPatterns(TENANT_UUID, request);
+            var request = new AdminTenantController.UpdateDefaultRulesRequest(null, null);
+            var response = controller.updateDefaultRules(TENANT_UUID, request);
 
             assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
             verify(tenantRepository).save(tenant);
@@ -142,56 +142,56 @@ class AdminTenantControllerUnitTest {
         @Test
         @DisplayName("should reject fiscal year pattern not belonging to tenant")
         void shouldRejectFyPatternNotOwned() {
-            UUID fyPatternId = UUID.randomUUID();
+            UUID fyRuleId = UUID.randomUUID();
             TenantId otherTenantId = TenantId.of(UUID.randomUUID());
 
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            FiscalYearPattern fyPattern = mock(FiscalYearPattern.class);
-            when(fyPattern.getTenantId()).thenReturn(otherTenantId);
-            when(fiscalYearPatternRepository.findById(FiscalYearPatternId.of(fyPatternId)))
-                    .thenReturn(Optional.of(fyPattern));
+            FiscalYearRule fyRule = mock(FiscalYearRule.class);
+            when(fyRule.getTenantId()).thenReturn(otherTenantId);
+            when(fiscalYearRuleRepository.findById(FiscalYearRuleId.of(fyRuleId)))
+                    .thenReturn(Optional.of(fyRule));
 
-            var request = new AdminTenantController.UpdateDefaultPatternsRequest(fyPatternId, null);
+            var request = new AdminTenantController.UpdateDefaultRulesRequest(fyRuleId, null);
 
-            assertThrows(DomainException.class, () -> controller.updateDefaultPatterns(TENANT_UUID, request));
+            assertThrows(DomainException.class, () -> controller.updateDefaultRules(TENANT_UUID, request));
             verify(tenantRepository, never()).save(any());
         }
 
         @Test
         @DisplayName("should reject monthly period pattern not belonging to tenant")
         void shouldRejectMpPatternNotOwned() {
-            UUID mpPatternId = UUID.randomUUID();
+            UUID mpRuleId = UUID.randomUUID();
             TenantId otherTenantId = TenantId.of(UUID.randomUUID());
 
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
 
-            MonthlyPeriodPattern mpPattern = mock(MonthlyPeriodPattern.class);
-            when(mpPattern.getTenantId()).thenReturn(otherTenantId);
-            when(monthlyPeriodPatternRepository.findById(MonthlyPeriodPatternId.of(mpPatternId)))
-                    .thenReturn(Optional.of(mpPattern));
+            MonthlyPeriodRule mpRule = mock(MonthlyPeriodRule.class);
+            when(mpRule.getTenantId()).thenReturn(otherTenantId);
+            when(monthlyPeriodRuleRepository.findById(MonthlyPeriodRuleId.of(mpRuleId)))
+                    .thenReturn(Optional.of(mpRule));
 
-            var request = new AdminTenantController.UpdateDefaultPatternsRequest(null, mpPatternId);
+            var request = new AdminTenantController.UpdateDefaultRulesRequest(null, mpRuleId);
 
-            assertThrows(DomainException.class, () -> controller.updateDefaultPatterns(TENANT_UUID, request));
+            assertThrows(DomainException.class, () -> controller.updateDefaultRules(TENANT_UUID, request));
             verify(tenantRepository, never()).save(any());
         }
 
         @Test
         @DisplayName("should reject non-existent fiscal year pattern")
         void shouldRejectNonExistentFyPattern() {
-            UUID fyPatternId = UUID.randomUUID();
+            UUID fyRuleId = UUID.randomUUID();
 
             Tenant tenant = Tenant.createWithId(TENANT_ID, "T001", "Test Tenant");
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.of(tenant));
-            when(fiscalYearPatternRepository.findById(FiscalYearPatternId.of(fyPatternId)))
+            when(fiscalYearRuleRepository.findById(FiscalYearRuleId.of(fyRuleId)))
                     .thenReturn(Optional.empty());
 
-            var request = new AdminTenantController.UpdateDefaultPatternsRequest(fyPatternId, null);
+            var request = new AdminTenantController.UpdateDefaultRulesRequest(fyRuleId, null);
 
-            assertThrows(DomainException.class, () -> controller.updateDefaultPatterns(TENANT_UUID, request));
+            assertThrows(DomainException.class, () -> controller.updateDefaultRules(TENANT_UUID, request));
         }
 
         @Test
@@ -199,9 +199,9 @@ class AdminTenantControllerUnitTest {
         void shouldThrowWhenTenantNotFound() {
             when(tenantRepository.findById(TENANT_ID)).thenReturn(Optional.empty());
 
-            var request = new AdminTenantController.UpdateDefaultPatternsRequest(null, null);
+            var request = new AdminTenantController.UpdateDefaultRulesRequest(null, null);
 
-            assertThrows(DomainException.class, () -> controller.updateDefaultPatterns(TENANT_UUID, request));
+            assertThrows(DomainException.class, () -> controller.updateDefaultRules(TENANT_UUID, request));
         }
     }
 }

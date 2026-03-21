@@ -224,8 +224,8 @@ test.describe
     let tenantCode: string;
     let tenantName: string;
 
-    let fiscalYearPatternId: string;
-    let monthlyPeriodPatternId: string;
+    let fiscalYearRuleId: string;
+    let monthlyPeriodRuleId: string;
 
     let orgAId: string;
     let orgBId: string;
@@ -345,24 +345,24 @@ test.describe
       expect(tenantId).toBeTruthy();
 
       // Create fiscal year pattern via API (January 1st start = calendar year)
-      const fyResponse = await page.request.post(`${API_BASE_URL}/api/v1/tenants/${tenantId}/fiscal-year-patterns`, {
+      const fyResponse = await page.request.post(`${API_BASE_URL}/api/v1/tenants/${tenantId}/fiscal-year-rules`, {
         data: { name: "Calendar Year", startMonth: 1, startDay: 1 },
       });
       expect(fyResponse.ok()).toBe(true);
       const fyBody = await fyResponse.json();
-      fiscalYearPatternId = fyBody.id;
+      fiscalYearRuleId = fyBody.id;
 
       // Create monthly period pattern via API (21st day start = matches FiscalMonthPeriod hardcoded constraint)
-      const mpResponse = await page.request.post(`${API_BASE_URL}/api/v1/tenants/${tenantId}/monthly-period-patterns`, {
+      const mpResponse = await page.request.post(`${API_BASE_URL}/api/v1/tenants/${tenantId}/monthly-period-rules`, {
         data: { name: "21st Closing", startDay: 21 },
       });
       expect(mpResponse.ok()).toBe(true);
       const mpBody = await mpResponse.json();
-      monthlyPeriodPatternId = mpBody.id;
+      monthlyPeriodRuleId = mpBody.id;
 
       // Verify patterns exist
-      expect(fiscalYearPatternId).toBeTruthy();
-      expect(monthlyPeriodPatternId).toBeTruthy();
+      expect(fiscalYearRuleId).toBeTruthy();
+      expect(monthlyPeriodRuleId).toBeTruthy();
     });
 
     test("Step 3: sys-admin bootstraps orgs and tenant owners", async ({ page }) => {
@@ -376,14 +376,14 @@ test.describe
             {
               code: "ORG_A",
               name: "Organization Alpha",
-              fiscalYearPatternId,
-              monthlyPeriodPatternId,
+              fiscalYearRuleId,
+              monthlyPeriodRuleId,
             },
             {
               code: "ORG_B",
               name: "Organization Beta",
-              fiscalYearPatternId,
-              monthlyPeriodPatternId,
+              fiscalYearRuleId,
+              monthlyPeriodRuleId,
             },
           ],
           members: [
@@ -441,8 +441,8 @@ test.describe
       await page.click("text=Organization Alpha");
 
       // Verify pattern assignment is shown
-      await expect(page.locator("#fiscal-year-pattern")).toBeVisible();
-      await expect(page.locator("#monthly-period-pattern")).toBeVisible();
+      await expect(page.locator("#fiscal-year-rule")).toBeVisible();
+      await expect(page.locator("#monthly-period-rule")).toBeVisible();
     });
 
     test("Step 5: tenant-owner-2 logs in and verifies Org B", async ({ page }) => {
@@ -459,8 +459,8 @@ test.describe
       await page.click("text=Organization Beta");
 
       // Verify pattern assignment is shown
-      await expect(page.locator("#fiscal-year-pattern")).toBeVisible();
-      await expect(page.locator("#monthly-period-pattern")).toBeVisible();
+      await expect(page.locator("#fiscal-year-rule")).toBeVisible();
+      await expect(page.locator("#monthly-period-rule")).toBeVisible();
     });
 
     test("Step 6: tenant-owner-1 invites Org A admins", async ({ page }) => {

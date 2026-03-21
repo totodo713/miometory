@@ -46,8 +46,8 @@ public class OrganizationController {
                 request.parentId(),
                 request.code(),
                 request.name(),
-                request.fiscalYearPatternId(),
-                request.monthlyPeriodPatternId());
+                request.fiscalYearRuleId(),
+                request.monthlyPeriodRuleId());
 
         UUID organizationId = organizationService.createOrganization(command);
 
@@ -95,14 +95,14 @@ public class OrganizationController {
         response.put("name", organization.getName());
         response.put("level", organization.getLevel());
         response.put(
-                "fiscalYearPatternId",
-                organization.getFiscalYearPatternId() != null
-                        ? organization.getFiscalYearPatternId().toString()
+                "fiscalYearRuleId",
+                organization.getFiscalYearRuleId() != null
+                        ? organization.getFiscalYearRuleId().toString()
                         : null);
         response.put(
-                "monthlyPeriodPatternId",
-                organization.getMonthlyPeriodPatternId() != null
-                        ? organization.getMonthlyPeriodPatternId().toString()
+                "monthlyPeriodRuleId",
+                organization.getMonthlyPeriodRuleId() != null
+                        ? organization.getMonthlyPeriodRuleId().toString()
                         : null);
         response.put("isActive", organization.isActive());
 
@@ -147,15 +147,15 @@ public class OrganizationController {
     }
 
     /**
-     * Assigns fiscal year and monthly period patterns to an organization.
+     * Assigns fiscal year and monthly period rules to an organization.
      *
-     * POST /api/v1/tenants/{tenantId}/organizations/{id}/assign-patterns
+     * POST /api/v1/tenants/{tenantId}/organizations/{id}/assign-rules
      */
-    @PostMapping("/{id}/assign-patterns")
-    public ResponseEntity<Void> assignPatterns(
-            @PathVariable UUID tenantId, @PathVariable UUID id, @RequestBody AssignPatternsRequest request) {
+    @PostMapping("/{id}/assign-rules")
+    public ResponseEntity<Void> assignRules(
+            @PathVariable UUID tenantId, @PathVariable UUID id, @RequestBody AssignRulesRequest request) {
 
-        organizationService.assignPatterns(id, request.fiscalYearPatternId(), request.monthlyPeriodPatternId());
+        organizationService.assignRules(id, request.fiscalYearRuleId(), request.monthlyPeriodRuleId());
         return ResponseEntity.noContent().build();
     }
 
@@ -179,14 +179,14 @@ public class OrganizationController {
             response.put("monthlyPeriodStart", dateInfo.monthlyPeriodStart().toString());
             response.put("monthlyPeriodEnd", dateInfo.monthlyPeriodEnd().toString());
             response.put(
-                    "fiscalYearPatternId",
-                    dateInfo.fiscalYearPatternId() != null
-                            ? dateInfo.fiscalYearPatternId().toString()
+                    "fiscalYearRuleId",
+                    dateInfo.fiscalYearRuleId() != null
+                            ? dateInfo.fiscalYearRuleId().toString()
                             : null);
             response.put(
-                    "monthlyPeriodPatternId",
-                    dateInfo.monthlyPeriodPatternId() != null
-                            ? dateInfo.monthlyPeriodPatternId().toString()
+                    "monthlyPeriodRuleId",
+                    dateInfo.monthlyPeriodRuleId() != null
+                            ? dateInfo.monthlyPeriodRuleId().toString()
                             : null);
             response.put("organizationId", dateInfo.organizationId().toString());
             response.put("fiscalYearSource", dateInfo.fiscalYearSource());
@@ -207,11 +207,11 @@ public class OrganizationController {
     // Request DTOs
 
     public record CreateOrganizationRequest(
-            UUID parentId, String code, String name, UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {}
+            UUID parentId, String code, String name, UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {}
 
     public record UpdateOrganizationRequest(String name) {}
 
-    public record AssignPatternsRequest(UUID fiscalYearPatternId, UUID monthlyPeriodPatternId) {}
+    public record AssignRulesRequest(UUID fiscalYearRuleId, UUID monthlyPeriodRuleId) {}
 
     public record DateInfoRequest(
             @NotNull(message = "Date is required") LocalDate date) {}

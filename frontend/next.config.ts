@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import { createRequire } from "node:module";
+import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const require = createRequire(import.meta.url);

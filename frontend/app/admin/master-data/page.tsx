@@ -6,7 +6,7 @@ import { FiscalYearPresetForm } from "@/components/admin/FiscalYearPresetForm";
 import { FiscalYearPresetList } from "@/components/admin/FiscalYearPresetList";
 import { HolidayCalendarPresetForm } from "@/components/admin/HolidayCalendarPresetForm";
 import { HolidayCalendarPresetList } from "@/components/admin/HolidayCalendarPresetList";
-import { HolidayEntryForm } from "@/components/admin/HolidayEntryForm";
+import { HolidayRuleForm } from "@/components/admin/HolidayRuleForm";
 import type { TabType } from "@/components/admin/MasterDataTabs";
 import { MasterDataTabs } from "@/components/admin/MasterDataTabs";
 import { MonthlyPeriodPresetForm } from "@/components/admin/MonthlyPeriodPresetForm";
@@ -20,7 +20,7 @@ import { ApiError, api } from "@/services/api";
 import type {
   FiscalYearPresetRow,
   HolidayCalendarPresetRow,
-  HolidayEntryRow,
+  HolidayRuleRow,
   MonthlyPeriodPresetRow,
 } from "@/types/masterData";
 
@@ -34,7 +34,7 @@ export default function AdminMasterDataPage() {
 
   const [activeTab, setActiveTab] = useState<TabType>("fiscal-year");
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
-  const [editingEntry, setEditingEntry] = useState<{ calendarId: string; entry: HolidayEntryRow | null } | null>(null);
+  const [editingEntry, setEditingEntry] = useState<{ calendarId: string; entry: HolidayRuleRow | null } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [showEntryForm, setShowEntryForm] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -103,7 +103,7 @@ export default function AdminMasterDataPage() {
     setShowEntryForm(true);
   }, []);
 
-  const handleEditEntry = useCallback((calendarId: string, entry: HolidayEntryRow) => {
+  const handleEditEntry = useCallback((calendarId: string, entry: HolidayRuleRow) => {
     setEditingEntry({ calendarId, entry });
     setShowEntryForm(true);
   }, []);
@@ -116,7 +116,7 @@ export default function AdminMasterDataPage() {
   const executeDeleteEntry = useCallback(
     async (target: { calendarId: string; entryId: string }) => {
       try {
-        await api.admin.masterData.holidayCalendars.deleteEntry(target.calendarId, target.entryId);
+        await api.admin.masterData.holidayCalendars.deleteRule(target.calendarId, target.entryId);
         toast.success(t("deleted"));
         refresh();
       } catch (err: unknown) {
@@ -234,7 +234,7 @@ export default function AdminMasterDataPage() {
 
       {/* Holiday entry form modal */}
       {showEntryForm && editingEntry && (
-        <HolidayEntryForm
+        <HolidayRuleForm
           calendarId={editingEntry.calendarId}
           entry={editingEntry.entry}
           onClose={handleEntryClose}

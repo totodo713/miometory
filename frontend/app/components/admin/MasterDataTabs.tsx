@@ -10,8 +10,8 @@ interface MasterDataTabsProps {
 }
 
 const TABS: { key: TabType; labelKey: string }[] = [
-  { key: "fiscal-year", labelKey: "tabs.fiscalYearPatterns" },
-  { key: "monthly-period", labelKey: "tabs.monthlyPeriodPatterns" },
+  { key: "fiscal-year", labelKey: "tabs.fiscalYearRules" },
+  { key: "monthly-period", labelKey: "tabs.monthlyPeriodRules" },
   { key: "holiday-calendar", labelKey: "tabs.holidayCalendars" },
 ];
 

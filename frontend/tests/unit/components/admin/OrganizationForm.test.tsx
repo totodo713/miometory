@@ -50,8 +50,8 @@ const parentOrg: OrganizationRow = {
   level: 1,
   status: "ACTIVE",
   memberCount: 10,
-  fiscalYearPatternId: null,
-  monthlyPeriodPatternId: null,
+  fiscalYearRuleId: null,
+  monthlyPeriodRuleId: null,
   createdAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-01-01T00:00:00Z",
 };
@@ -66,8 +66,8 @@ const existingOrg: OrganizationRow = {
   level: 2,
   status: "ACTIVE",
   memberCount: 5,
-  fiscalYearPatternId: null,
-  monthlyPeriodPatternId: null,
+  fiscalYearRuleId: null,
+  monthlyPeriodRuleId: null,
   createdAt: "2026-01-01T00:00:00Z",
   updatedAt: "2026-01-01T00:00:00Z",
 };

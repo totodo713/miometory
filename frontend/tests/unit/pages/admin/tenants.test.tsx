@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockListTenants = vi.fn();
 const mockDeactivate = vi.fn();
 const mockActivate = vi.fn();
-const mockGetDefaultPatterns = vi.fn();
-const mockUpdateDefaultPatterns = vi.fn();
-const mockListFiscalYearPatterns = vi.fn();
-const mockListMonthlyPeriodPatterns = vi.fn();
+const mockGetDefaultRules = vi.fn();
+const mockUpdateDefaultRules = vi.fn();
+const mockListFiscalYearRules = vi.fn();
+const mockListMonthlyPeriodRules = vi.fn();
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -17,12 +17,12 @@ vi.mock("@/services/api", () => ({
         list: (...args: unknown[]) => mockListTenants(...args),
         deactivate: (...args: unknown[]) => mockDeactivate(...args),
         activate: (...args: unknown[]) => mockActivate(...args),
-        getDefaultPatterns: (...args: unknown[]) => mockGetDefaultPatterns(...args),
-        updateDefaultPatterns: (...args: unknown[]) => mockUpdateDefaultPatterns(...args),
+        getDefaultRules: (...args: unknown[]) => mockGetDefaultRules(...args),
+        updateDefaultRules: (...args: unknown[]) => mockUpdateDefaultRules(...args),
       },
-      patterns: {
-        listFiscalYearPatterns: (...args: unknown[]) => mockListFiscalYearPatterns(...args),
-        listMonthlyPeriodPatterns: (...args: unknown[]) => mockListMonthlyPeriodPatterns(...args),
+      rules: {
+        listFiscalYearRules: (...args: unknown[]) => mockListFiscalYearRules(...args),
+        listMonthlyPeriodRules: (...args: unknown[]) => mockListMonthlyPeriodRules(...args),
       },
     },
   },
@@ -82,15 +82,15 @@ describe("AdminTenantsPage", () => {
       totalElements: 1,
       number: 0,
     });
-    mockGetDefaultPatterns.mockResolvedValue({
-      defaultFiscalYearPatternId: null,
-      defaultMonthlyPeriodPatternId: null,
+    mockGetDefaultRules.mockResolvedValue({
+      defaultFiscalYearRuleId: null,
+      defaultMonthlyPeriodRuleId: null,
     });
-    mockListFiscalYearPatterns.mockResolvedValue([
+    mockListFiscalYearRules.mockResolvedValue([
       { id: "fy1", name: "April Start", startMonth: 4, startDay: 1, tenantId: "t1" },
     ]);
-    mockListMonthlyPeriodPatterns.mockResolvedValue([{ id: "mp1", name: "1st Start", startDay: 1, tenantId: "t1" }]);
-    mockUpdateDefaultPatterns.mockResolvedValue(undefined);
+    mockListMonthlyPeriodRules.mockResolvedValue([{ id: "mp1", name: "1st Start", startDay: 1, tenantId: "t1" }]);
+    mockUpdateDefaultRules.mockResolvedValue(undefined);
   });
 
   it("renders page title and add tenant button", async () => {
@@ -135,13 +135,13 @@ describe("AdminTenantsPage", () => {
 
     // Should load patterns
     await waitFor(() => {
-      expect(mockGetDefaultPatterns).toHaveBeenCalledWith("t1");
-      expect(mockListFiscalYearPatterns).toHaveBeenCalledWith("t1");
+      expect(mockGetDefaultRules).toHaveBeenCalledWith("t1");
+      expect(mockListFiscalYearRules).toHaveBeenCalledWith("t1");
     });
 
     // Should show default patterns section
     await waitFor(() => {
-      expect(screen.getByText("デフォルトパターン")).toBeInTheDocument();
+      expect(screen.getByText("デフォルトルール")).toBeInTheDocument();
     });
   });
 
@@ -162,16 +162,16 @@ describe("AdminTenantsPage", () => {
     await user.click(screen.getByRole("button", { name: "詳細" }));
 
     await waitFor(() => {
-      expect(screen.getByText("デフォルトパターン")).toBeInTheDocument();
+      expect(screen.getByText("デフォルトルール")).toBeInTheDocument();
     });
 
     // Wait for patterns to load
     await waitFor(() => {
-      expect(screen.getByLabelText("デフォルト会計年度パターン")).toBeInTheDocument();
+      expect(screen.getByLabelText("デフォルト会計年度ルール")).toBeInTheDocument();
     });
 
     // Select a fiscal year pattern
-    const fySelect = screen.getByLabelText("デフォルト会計年度パターン");
+    const fySelect = screen.getByLabelText("デフォルト会計年度ルール");
     await user.selectOptions(fySelect, "fy1");
 
     // Click save
@@ -179,13 +179,13 @@ describe("AdminTenantsPage", () => {
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(mockUpdateDefaultPatterns).toHaveBeenCalledWith("t1", {
-        defaultFiscalYearPatternId: "fy1",
-        defaultMonthlyPeriodPatternId: null,
+      expect(mockUpdateDefaultRules).toHaveBeenCalledWith("t1", {
+        defaultFiscalYearRuleId: "fy1",
+        defaultMonthlyPeriodRuleId: null,
       });
     });
 
-    expect(mockToast.success).toHaveBeenCalledWith("デフォルトパターンを保存しました");
+    expect(mockToast.success).toHaveBeenCalledWith("デフォルトルールを保存しました");
   });
 
   it("shows back button and navigates back to list", async () => {
@@ -205,7 +205,7 @@ describe("AdminTenantsPage", () => {
     await user.click(screen.getByRole("button", { name: "詳細" }));
 
     await waitFor(() => {
-      expect(screen.getByText("デフォルトパターン")).toBeInTheDocument();
+      expect(screen.getByText("デフォルトルール")).toBeInTheDocument();
     });
 
     // Click back
@@ -221,7 +221,7 @@ describe("AdminTenantsPage", () => {
 
   it("handles save error for default patterns", async () => {
     const user = userEvent.setup();
-    mockUpdateDefaultPatterns.mockRejectedValueOnce(new Error("Save failed"));
+    mockUpdateDefaultRules.mockRejectedValueOnce(new Error("Save failed"));
 
     render(
       <IntlWrapper>
@@ -237,15 +237,15 @@ describe("AdminTenantsPage", () => {
     await user.click(screen.getByRole("button", { name: "詳細" }));
 
     await waitFor(() => {
-      expect(screen.getByLabelText("デフォルト会計年度パターン")).toBeInTheDocument();
+      expect(screen.getByLabelText("デフォルト会計年度ルール")).toBeInTheDocument();
     });
 
     // Select a pattern and save
-    await user.selectOptions(screen.getByLabelText("デフォルト会計年度パターン"), "fy1");
+    await user.selectOptions(screen.getByLabelText("デフォルト会計年度ルール"), "fy1");
     await user.click(screen.getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith("デフォルトパターンの保存に失敗しました");
+      expect(mockToast.error).toHaveBeenCalledWith("デフォルトルールの保存に失敗しました");
     });
   });
 
@@ -358,14 +358,14 @@ describe("AdminTenantsPage", () => {
   it("shows loading state while patterns are loading", async () => {
     const user = userEvent.setup();
     // Delay pattern loading
-    mockGetDefaultPatterns.mockImplementation(
+    mockGetDefaultRules.mockImplementation(
       () =>
         new Promise((resolve) =>
           setTimeout(
             () =>
               resolve({
-                defaultFiscalYearPatternId: null,
-                defaultMonthlyPeriodPatternId: null,
+                defaultFiscalYearRuleId: null,
+                defaultMonthlyPeriodRuleId: null,
               }),
             100,
           ),
@@ -391,7 +391,7 @@ describe("AdminTenantsPage", () => {
 
     // Eventually should show patterns
     await waitFor(() => {
-      expect(screen.getByText("デフォルトパターン")).toBeInTheDocument();
+      expect(screen.getByText("デフォルトルール")).toBeInTheDocument();
     });
   });
 
@@ -431,20 +431,20 @@ describe("AdminTenantsPage", () => {
     await user.click(screen.getByRole("button", { name: "詳細" }));
 
     await waitFor(() => {
-      expect(screen.getByLabelText("デフォルト月次期間パターン")).toBeInTheDocument();
+      expect(screen.getByLabelText("デフォルト月次期間ルール")).toBeInTheDocument();
     });
 
     // Select a monthly period pattern
-    const mpSelect = screen.getByLabelText("デフォルト月次期間パターン");
+    const mpSelect = screen.getByLabelText("デフォルト月次期間ルール");
     await user.selectOptions(mpSelect, "mp1");
 
     // Click save
     await user.click(screen.getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
-      expect(mockUpdateDefaultPatterns).toHaveBeenCalledWith("t1", {
-        defaultFiscalYearPatternId: null,
-        defaultMonthlyPeriodPatternId: "mp1",
+      expect(mockUpdateDefaultRules).toHaveBeenCalledWith("t1", {
+        defaultFiscalYearRuleId: null,
+        defaultMonthlyPeriodRuleId: "mp1",
       });
     });
   });

@@ -30,9 +30,9 @@ class CalendarControllerTest : IntegrationTestBase() {
 
     private fun cleanupTestHolidayData() {
         executeInNewTransaction {
-            // CASCADE on holiday_calendar_entry handles child row cleanup
+            // CASCADE on holiday_calendar_rules handles child row cleanup
             baseJdbcTemplate.update(
-                "DELETE FROM holiday_calendar WHERE tenant_id = ?::UUID",
+                "DELETE FROM holiday_calendars WHERE tenant_id = ?::UUID",
                 TEST_TENANT_ID,
             )
         }
@@ -164,11 +164,11 @@ class CalendarControllerTest : IntegrationTestBase() {
         // Arrange - Create holiday calendar for test tenant
         val calendarId = UUID.randomUUID()
         createHolidayCalendar(calendarId)
-        createHolidayCalendarEntry(
+        createHolidayCalendarRule(
             calendarId = calendarId,
             name = "New Year's Day",
             nameJa = "元日",
-            entryType = "FIXED",
+            ruleType = "FIXED",
             month = 1,
             day = 1,
         )
@@ -321,7 +321,7 @@ class CalendarControllerTest : IntegrationTestBase() {
     private fun createHolidayCalendar(calendarId: UUID) {
         executeInNewTransaction {
             baseJdbcTemplate.update(
-                """INSERT INTO holiday_calendar
+                """INSERT INTO holiday_calendars
                    (id, tenant_id, name, description, country, is_active)
                    VALUES (?::UUID, ?::UUID,
                    'Test Holidays', 'Test', 'JP', true)""",
@@ -331,11 +331,11 @@ class CalendarControllerTest : IntegrationTestBase() {
         }
     }
 
-    private fun createHolidayCalendarEntry(
+    private fun createHolidayCalendarRule(
         calendarId: UUID,
         name: String,
         nameJa: String,
-        entryType: String,
+        ruleType: String,
         month: Int,
         day: Int? = null,
         nthOccurrence: Int? = null,
@@ -343,14 +343,14 @@ class CalendarControllerTest : IntegrationTestBase() {
     ) {
         executeInNewTransaction {
             baseJdbcTemplate.update(
-                """INSERT INTO holiday_calendar_entry
-                   (id, holiday_calendar_id, name, name_ja, entry_type, month, day, nth_occurrence, day_of_week)
+                """INSERT INTO holiday_calendar_rules
+                   (id, holiday_calendar_id, name, name_ja, rule_type, month, day, nth_occurrence, day_of_week)
                    VALUES (?::UUID, ?::UUID, ?, ?, ?, ?, ?, ?, ?)""",
                 UUID.randomUUID().toString(),
                 calendarId.toString(),
                 name,
                 nameJa,
-                entryType,
+                ruleType,
                 month,
                 day,
                 nthOccurrence,

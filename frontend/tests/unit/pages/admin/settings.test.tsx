@@ -6,16 +6,16 @@ vi.mock("@/services/api", () => ({
   api: {
     admin: {
       system: {
-        getPatterns: vi.fn(),
-        updatePatterns: vi.fn(),
+        getRules: vi.fn(),
+        updateRules: vi.fn(),
       },
-      patterns: {
-        listFiscalYearPatterns: vi.fn(),
-        listMonthlyPeriodPatterns: vi.fn(),
+      rules: {
+        listFiscalYearRules: vi.fn(),
+        listMonthlyPeriodRules: vi.fn(),
       },
       tenantSettings: {
-        getDefaultPatterns: vi.fn(),
-        updateDefaultPatterns: vi.fn(),
+        getDefaultRules: vi.fn(),
+        updateDefaultRules: vi.fn(),
       },
     },
   },
@@ -52,7 +52,7 @@ describe("SettingsPage", () => {
     vi.clearAllMocks();
     mockIsLoading = false;
     mockHasPermission = vi.fn().mockReturnValue(true);
-    (api.admin.system.getPatterns as ReturnType<typeof vi.fn>).mockResolvedValue({
+    (api.admin.system.getRules as ReturnType<typeof vi.fn>).mockResolvedValue({
       fiscalYearStartMonth: 4,
       fiscalYearStartDay: 1,
       monthlyPeriodStartDay: 1,
@@ -76,11 +76,11 @@ describe("SettingsPage", () => {
 
     it("should show Tenant Settings for tenant admin", async () => {
       mockHasPermission = vi.fn().mockReturnValue(false);
-      (api.admin.patterns.listFiscalYearPatterns as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-      (api.admin.patterns.listMonthlyPeriodPatterns as ReturnType<typeof vi.fn>).mockResolvedValue([]);
-      (api.admin.tenantSettings.getDefaultPatterns as ReturnType<typeof vi.fn>).mockResolvedValue({
-        defaultFiscalYearPatternId: null,
-        defaultMonthlyPeriodPatternId: null,
+      (api.admin.rules.listFiscalYearRules as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+      (api.admin.rules.listMonthlyPeriodRules as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+      (api.admin.tenantSettings.getDefaultRules as ReturnType<typeof vi.fn>).mockResolvedValue({
+        defaultFiscalYearRuleId: null,
+        defaultMonthlyPeriodRuleId: null,
       });
 
       render(
@@ -129,7 +129,7 @@ describe("SettingsPage", () => {
 
     it("should save updated settings", async () => {
       const user = userEvent.setup();
-      (api.admin.system.updatePatterns as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+      (api.admin.system.updateRules as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(
         <IntlWrapper>
@@ -148,7 +148,7 @@ describe("SettingsPage", () => {
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(api.admin.system.updatePatterns).toHaveBeenCalledWith({
+        expect(api.admin.system.updateRules).toHaveBeenCalledWith({
           fiscalYearStartMonth: 10,
           fiscalYearStartDay: 1,
           monthlyPeriodStartDay: 1,
@@ -157,7 +157,7 @@ describe("SettingsPage", () => {
     });
 
     it("should show error toast when loading fails", async () => {
-      (api.admin.system.getPatterns as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Network error"));
+      (api.admin.system.getRules as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Network error"));
 
       render(
         <IntlWrapper>
@@ -172,7 +172,7 @@ describe("SettingsPage", () => {
 
     it("should show error toast when save fails", async () => {
       const user = userEvent.setup();
-      (api.admin.system.updatePatterns as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Save failed"));
+      (api.admin.system.updateRules as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("Save failed"));
 
       render(
         <IntlWrapper>
@@ -194,7 +194,7 @@ describe("SettingsPage", () => {
 
     it("should show success toast when save succeeds", async () => {
       const user = userEvent.setup();
-      (api.admin.system.updatePatterns as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+      (api.admin.system.updateRules as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
       render(
         <IntlWrapper>
@@ -217,7 +217,7 @@ describe("SettingsPage", () => {
     it("should disable save button while saving", async () => {
       const user = userEvent.setup();
       let resolveUpdate: () => void = () => {};
-      (api.admin.system.updatePatterns as ReturnType<typeof vi.fn>).mockImplementation(
+      (api.admin.system.updateRules as ReturnType<typeof vi.fn>).mockImplementation(
         () =>
           new Promise<void>((resolve) => {
             resolveUpdate = resolve;

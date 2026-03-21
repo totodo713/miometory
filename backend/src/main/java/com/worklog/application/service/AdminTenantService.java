@@ -46,8 +46,8 @@ public class AdminTenantService {
 
     @Transactional(readOnly = true)
     public TenantPage listTenants(String status, int page, int size) {
-        var sb = new StringBuilder("SELECT id, code, name, status, created_at FROM tenant WHERE 1=1");
-        var countSb = new StringBuilder("SELECT COUNT(*) FROM tenant WHERE 1=1");
+        var sb = new StringBuilder("SELECT id, code, name, status, created_at FROM tenants WHERE 1=1");
+        var countSb = new StringBuilder("SELECT COUNT(*) FROM tenants WHERE 1=1");
         var params = new java.util.ArrayList<Object>();
         var countParams = new java.util.ArrayList<Object>();
 
@@ -82,7 +82,7 @@ public class AdminTenantService {
     public UUID createTenant(String code, String name) {
         // Check for duplicate code
         Boolean exists = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) > 0 FROM tenant WHERE LOWER(code) = LOWER(?)", Boolean.class, code);
+                "SELECT COUNT(*) > 0 FROM tenants WHERE LOWER(code) = LOWER(?)", Boolean.class, code);
         if (Boolean.TRUE.equals(exists)) {
             throw new DomainException("DUPLICATE_CODE", "A tenant with this code already exists");
         }
@@ -93,7 +93,7 @@ public class AdminTenantService {
         // Insert into tenant projection table (event sourced aggregate, projection needs manual insert)
         // @Transactional on the class ensures atomicity between event store and projection writes
         jdbcTemplate.update(
-                "INSERT INTO tenant (id, code, name, status, created_at, updated_at) VALUES (?, ?, ?, 'ACTIVE', NOW(), NOW())"
+                "INSERT INTO tenants (id, code, name, status, created_at, updated_at) VALUES (?, ?, ?, 'ACTIVE', NOW(), NOW())"
                         + " ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status, updated_at = EXCLUDED.updated_at",
                 tenant.getId().value(),
                 code,
@@ -111,7 +111,7 @@ public class AdminTenantService {
         tenantRepository.save(tenant);
 
         // Update projection
-        jdbcTemplate.update("UPDATE tenant SET name = ?, updated_at = NOW() WHERE id = ?", name, id);
+        jdbcTemplate.update("UPDATE tenants SET name = ?, updated_at = NOW() WHERE id = ?", name, id);
     }
 
     public void deactivateTenant(UUID id) {
@@ -123,7 +123,7 @@ public class AdminTenantService {
         tenantRepository.save(tenant);
 
         // Update projection
-        jdbcTemplate.update("UPDATE tenant SET status = 'INACTIVE', updated_at = NOW() WHERE id = ?", id);
+        jdbcTemplate.update("UPDATE tenants SET status = 'INACTIVE', updated_at = NOW() WHERE id = ?", id);
     }
 
     public void activateTenant(UUID id) {
@@ -135,13 +135,13 @@ public class AdminTenantService {
         tenantRepository.save(tenant);
 
         // Update projection
-        jdbcTemplate.update("UPDATE tenant SET status = 'ACTIVE', updated_at = NOW() WHERE id = ?", id);
+        jdbcTemplate.update("UPDATE tenants SET status = 'ACTIVE', updated_at = NOW() WHERE id = ?", id);
     }
 
     public BootstrapResult bootstrapTenant(UUID tenantId, BootstrapTenantRequest request) {
         // Verify tenant exists and is ACTIVE
         List<String> statuses =
-                jdbcTemplate.queryForList("SELECT status FROM tenant WHERE id = ?", String.class, tenantId);
+                jdbcTemplate.queryForList("SELECT status FROM tenants WHERE id = ?", String.class, tenantId);
         if (statuses.isEmpty()) {
             throw new DomainException("TENANT_NOT_FOUND", "Tenant not found");
         }
@@ -151,7 +151,7 @@ public class AdminTenantService {
 
         // Prevent double bootstrap: check no organizations exist yet
         Long orgCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM organization WHERE tenant_id = ?", Long.class, tenantId);
+                "SELECT COUNT(*) FROM organizations WHERE tenant_id = ?", Long.class, tenantId);
         if (orgCount != null && orgCount > 0) {
             throw new DomainException(
                     "ALREADY_BOOTSTRAPPED", "Tenant already has organizations; bootstrap can only run once");
@@ -170,8 +170,8 @@ public class AdminTenantService {
                     org.parentId(),
                     org.code(),
                     org.name(),
-                    org.fiscalYearPatternId(),
-                    org.monthlyPeriodPatternId()));
+                    org.fiscalYearRuleId(),
+                    org.monthlyPeriodRuleId()));
             orgCodeToId.put(org.code(), orgId);
             createdOrgs.add(new CreatedOrganization(orgId, org.code()));
         }

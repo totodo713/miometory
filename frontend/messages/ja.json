@@ -662,9 +662,9 @@
         "namePlaceholder": "テナント名を入力",
         "code": "テナントコード",
         "codePlaceholder": "テナントコードを入力",
-        "fiscalYearPattern": "年度パターン",
-        "monthlyPeriodPattern": "月度パターン",
-        "selectPattern": "パターンを選択"
+        "fiscalYearPattern": "年度ルール",
+        "monthlyPeriodPattern": "月度ルール",
+        "selectPattern": "ルールを選択"
       },
       "filterByStatus": "ステータスで絞り込み",
       "allStatuses": "すべてのステータス",
@@ -739,15 +739,15 @@
       "createMember": "メンバー作成",
       "listView": "リスト表示",
       "treeView": "ツリー表示",
-      "patternSettings": "パターン設定",
-      "noPatternsRegistered": "パターンが登録されていません",
-      "currentFiscalYearPatternId": "現在の会計年度パターンID: {id}",
-      "currentMonthlyPeriodPatternId": "現在の月次期間パターンID: {id}",
-      "fiscalYearPattern": "会計年度パターン",
-      "monthlyPeriodPattern": "月次期間パターン",
+      "patternSettings": "ルール設定",
+      "noPatternsRegistered": "ルールが登録されていません",
+      "currentFiscalYearPatternId": "現在の会計年度ルールID: {id}",
+      "currentMonthlyPeriodPatternId": "現在の月次期間ルールID: {id}",
+      "fiscalYearPattern": "会計年度ルール",
+      "monthlyPeriodPattern": "月次期間ルール",
       "unset": "未設定",
       "createNew": "+ 新規作成",
-      "patternSaved": "パターンを保存しました",
+      "patternSaved": "ルールを保存しました",
       "membersFetchError": "メンバーの取得に失敗しました",
       "memberTable": {
         "name": "名前",
@@ -769,7 +769,7 @@
       "createError": "組織の作成に失敗しました",
       "updateError": "組織の更新に失敗しました",
       "noOrganizations": "組織が登録されていません",
-      "effectivePatterns": "有効なパターン",
+      "effectivePatterns": "有効なルール",
       "inheritedFrom": "継承元",
       "source": {
         "system": "システムデフォルト",
@@ -779,14 +779,14 @@
     },
     "systemSettings": {
       "title": "システム設定",
-      "description": "システム全体のデフォルトパターンを設定します。テナントや組織でオーバーライドされていない場合にこの値が適用されます。",
+      "description": "システム全体のデフォルトルールを設定します。テナントや組織でオーバーライドされていない場合にこの値が適用されます。",
       "fiscalYear": {
-        "title": "デフォルト会計年度パターン",
+        "title": "デフォルト会計年度ルール",
         "startMonth": "開始月",
         "startDay": "開始日"
       },
       "monthlyPeriod": {
-        "title": "デフォルト月次期間パターン",
+        "title": "デフォルト月次期間ルール",
         "startDay": "開始日"
       },
       "saving": "保存中...",
@@ -795,42 +795,42 @@
       "loadError": "設定の読み込みに失敗しました"
     },
     "tenantDefaultPatterns": {
-      "title": "デフォルトパターン",
-      "description": "このテナントのデフォルトパターンを設定します。パターンが未設定の組織はこの設定を継承します。",
-      "fiscalYearPattern": "デフォルト会計年度パターン",
-      "monthlyPeriodPattern": "デフォルト月次期間パターン",
+      "title": "デフォルトルール",
+      "description": "このテナントのデフォルトルールを設定します。ルールが未設定の組織はこの設定を継承します。",
+      "fiscalYearPattern": "デフォルト会計年度ルール",
+      "monthlyPeriodPattern": "デフォルト月次期間ルール",
       "noPattern": "なし（システムデフォルトを使用）",
-      "saved": "デフォルトパターンを保存しました",
-      "saveError": "デフォルトパターンの保存に失敗しました"
+      "saved": "デフォルトルールを保存しました",
+      "saveError": "デフォルトルールの保存に失敗しました"
     },
     "tenantSettings": {
       "title": "テナント設定",
-      "description": "自テナントのデフォルトパターンの管理やカスタムパターンの作成ができます。",
+      "description": "自テナントのデフォルトルールの管理やカスタムルールの作成ができます。",
       "loadError": "テナント設定の読み込みに失敗しました",
       "loadForbidden": "テナント設定へのアクセス権限がありません",
       "defaultPatterns": {
-        "title": "デフォルトパターン",
-        "description": "テナントのデフォルトパターンを設定します。パターンが未設定の組織はこの設定を継承します。",
-        "fiscalYearPattern": "デフォルト会計年度パターン",
-        "monthlyPeriodPattern": "デフォルト月次期間パターン",
+        "title": "デフォルトルール",
+        "description": "テナントのデフォルトルールを設定します。ルールが未設定の組織はこの設定を継承します。",
+        "fiscalYearPattern": "デフォルト会計年度ルール",
+        "monthlyPeriodPattern": "デフォルト月次期間ルール",
         "noPattern": "なし（システムデフォルトを使用）",
-        "saved": "デフォルトパターンを保存しました",
-        "saveError": "デフォルトパターンの保存に失敗しました"
+        "saved": "デフォルトルールを保存しました",
+        "saveError": "デフォルトルールの保存に失敗しました"
       },
       "patterns": {
         "fiscalYear": {
-          "title": "会計年度パターン",
-          "empty": "会計年度パターンがありません",
+          "title": "会計年度ルール",
+          "empty": "会計年度ルールがありません",
           "createNew": "新規作成",
-          "created": "会計年度パターンを作成しました",
-          "createError": "会計年度パターンの作成に失敗しました"
+          "created": "会計年度ルールを作成しました",
+          "createError": "会計年度ルールの作成に失敗しました"
         },
         "monthlyPeriod": {
-          "title": "月次期間パターン",
-          "empty": "月次期間パターンがありません",
+          "title": "月次期間ルール",
+          "empty": "月次期間ルールがありません",
           "createNew": "新規作成",
-          "created": "月次期間パターンを作成しました",
-          "createError": "月次期間パターンの作成に失敗しました"
+          "created": "月次期間ルールを作成しました",
+          "createError": "月次期間ルールの作成に失敗しました"
         }
       }
     },
@@ -1032,7 +1032,7 @@
       }
     },
     "fiscalYearPattern": {
-      "title": "会計年度パターン作成",
+      "title": "会計年度ルール作成",
       "form": {
         "name": "名前",
         "nameRequired": "名前は必須です",
@@ -1045,7 +1045,7 @@
       }
     },
     "monthlyPeriodPattern": {
-      "title": "月次期間パターン作成",
+      "title": "月次期間ルール作成",
       "form": {
         "name": "名前",
         "nameRequired": "名前は必須です",
@@ -1080,8 +1080,8 @@
     "masterData": {
       "title": "マスタデータ管理",
       "tabs": {
-        "fiscalYearPatterns": "会計年度パターン",
-        "monthlyPeriodPatterns": "締め日パターン",
+        "fiscalYearRules": "会計年度ルール",
+        "monthlyPeriodRules": "締め日ルール",
         "holidayCalendars": "祝日カレンダー"
       },
       "searchPlaceholder": "名前で検索...",
@@ -1102,7 +1102,7 @@
       "created": "作成しました",
       "updated": "更新しました",
       "deleted": "削除しました",
-      "confirmDeleteEntry": "この祝日エントリを削除しますか？",
+      "confirmDeleteEntry": "この祝日ルールを削除しますか？",
       "fiscalYear": {
         "name": "名前",
         "description": "説明",
@@ -1112,8 +1112,8 @@
         "actions": "操作",
         "active": "有効",
         "inactive": "無効",
-        "createTitle": "会計年度パターンの作成",
-        "editTitle": "会計年度パターンの編集",
+        "createTitle": "会計年度ルールの作成",
+        "editTitle": "会計年度ルールの編集",
         "nameRequired": "名前は必須です",
         "startDayRange": "開始日は1から31の間で指定してください",
         "months": {
@@ -1139,8 +1139,8 @@
         "actions": "操作",
         "active": "有効",
         "inactive": "無効",
-        "createTitle": "締め日パターンの作成",
-        "editTitle": "締め日パターンの編集",
+        "createTitle": "締め日ルールの作成",
+        "editTitle": "締め日ルールの編集",
         "nameRequired": "名前は必須です",
         "startDayRange": "開始日は1から28の間で指定してください"
       },
@@ -1148,7 +1148,7 @@
         "name": "名前",
         "description": "説明",
         "country": "国",
-        "entryCount": "エントリ数",
+        "entryCount": "ルール数",
         "status": "ステータス",
         "actions": "操作",
         "active": "有効",
@@ -1156,7 +1156,7 @@
         "createTitle": "祝日カレンダーの作成",
         "editTitle": "祝日カレンダーの編集",
         "nameRequired": "名前は必須です",
-        "entries": "祝日エントリ",
+        "entries": "祝日ルール",
         "addEntry": "祝日を追加",
         "entryName": "祝日名",
         "entryNameJa": "祝日名（日本語）",
@@ -1168,8 +1168,8 @@
         "nthOccurrence": "第N",
         "dayOfWeek": "曜日",
         "specificYear": "特定年（任意）",
-        "editEntry": "祝日エントリの編集",
-        "createEntry": "祝日エントリの追加",
+        "editEntry": "祝日ルールの編集",
+        "createEntry": "祝日ルールの追加",
         "weekdays": {
           "1": "月曜日",
           "2": "火曜日",
@@ -1186,8 +1186,8 @@
           "4": "第4",
           "5": "第5"
         },
-        "expandEntries": "エントリを表示",
-        "collapseEntries": "エントリを非表示",
+        "expandEntries": "ルールを表示",
+        "collapseEntries": "ルールを非表示",
         "nthWeekdayFormat": "{month} {nth}{weekday}"
       }
     },

@@ -36,7 +36,7 @@ class TenantRepositoryTest : IntegrationTestBase() {
 
         // Verify projection table
         val projectedHours = baseJdbcTemplate.queryForObject(
-            "SELECT standard_daily_hours FROM tenant WHERE id = ?",
+            "SELECT standard_daily_hours FROM tenants WHERE id = ?",
             BigDecimal::class.java,
             tenant.id.value,
         )
@@ -80,7 +80,7 @@ class TenantRepositoryTest : IntegrationTestBase() {
 
         // Verify projection table is also null
         val projectedHours = baseJdbcTemplate.queryForObject(
-            "SELECT standard_daily_hours FROM tenant WHERE id = ?",
+            "SELECT standard_daily_hours FROM tenants WHERE id = ?",
             BigDecimal::class.java,
             tenant.id.value,
         )

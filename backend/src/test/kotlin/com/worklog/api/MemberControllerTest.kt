@@ -50,7 +50,7 @@ class MemberControllerTest : IntegrationTestBase() {
     private fun insertTenant() {
         jdbcTemplate.update(
             """
-            INSERT INTO tenant (id, name, code, status, version)
+            INSERT INTO tenants (id, name, code, status, version)
             VALUES (?, ?, ?, 'ACTIVE', 0)
             ON CONFLICT (id) DO NOTHING
             """,
@@ -63,7 +63,7 @@ class MemberControllerTest : IntegrationTestBase() {
     private fun insertOrganization() {
         jdbcTemplate.update(
             """
-            INSERT INTO organization (id, tenant_id, name, code, level, status, version)
+            INSERT INTO organizations (id, tenant_id, name, code, level, status, version)
             VALUES (?, ?, ?, ?, 1, 'ACTIVE', 0)
             ON CONFLICT (id) DO NOTHING
             """,

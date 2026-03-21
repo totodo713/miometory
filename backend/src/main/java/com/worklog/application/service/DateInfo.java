@@ -9,7 +9,7 @@ import java.util.UUID;
  * This is returned by DateInfoService when calculating fiscal year and monthly period
  * for a given date and organization.
  *
- * Pattern IDs are nullable when the system default is used (no actual pattern entity exists).
+ * Rule IDs are nullable when the system default is used (no actual rule entity exists).
  * The source fields indicate where the pattern was resolved from:
  * - "organization:&lt;id&gt;" — from a specific organization in the hierarchy
  * - "tenant" — from the tenant's default pattern
@@ -22,8 +22,8 @@ public record DateInfo(
         LocalDate fiscalYearEnd,
         LocalDate monthlyPeriodStart,
         LocalDate monthlyPeriodEnd,
-        UUID fiscalYearPatternId,
-        UUID monthlyPeriodPatternId,
+        UUID fiscalYearRuleId,
+        UUID monthlyPeriodRuleId,
         UUID organizationId,
         String fiscalYearSource,
         String monthlyPeriodSource) {

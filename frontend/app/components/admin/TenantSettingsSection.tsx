@@ -2,12 +2,12 @@
 
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { FiscalYearPatternForm } from "@/components/admin/FiscalYearPatternForm";
-import { MonthlyPeriodPatternForm } from "@/components/admin/MonthlyPeriodPatternForm";
+import { FiscalYearRuleForm } from "@/components/admin/FiscalYearRuleForm";
+import { MonthlyPeriodRuleForm } from "@/components/admin/MonthlyPeriodRuleForm";
 import { PermissionBadge } from "@/components/admin/PermissionBadge";
 import { useToast } from "@/hooks/useToast";
 import { useAdminContext } from "@/providers/AdminProvider";
-import type { FiscalYearPatternOption, MonthlyPeriodPatternOption } from "@/services/api";
+import type { FiscalYearRuleOption, MonthlyPeriodRuleOption } from "@/services/api";
 import { ApiError, api } from "@/services/api";
 
 export function TenantSettingsSection() {
@@ -21,8 +21,8 @@ export function TenantSettingsSection() {
   const [saving, setSaving] = useState(false);
   const [defaultFyPatternId, setDefaultFyPatternId] = useState<string>("");
   const [defaultMpPatternId, setDefaultMpPatternId] = useState<string>("");
-  const [fiscalYearPatterns, setFiscalYearPatterns] = useState<FiscalYearPatternOption[]>([]);
-  const [monthlyPeriodPatterns, setMonthlyPeriodPatterns] = useState<MonthlyPeriodPatternOption[]>([]);
+  const [fiscalYearPatterns, setFiscalYearPatterns] = useState<FiscalYearRuleOption[]>([]);
+  const [monthlyPeriodPatterns, setMonthlyPeriodPatterns] = useState<MonthlyPeriodRuleOption[]>([]);
   const [showFyForm, setShowFyForm] = useState(false);
   const [showMpForm, setShowMpForm] = useState(false);
 
@@ -35,15 +35,15 @@ export function TenantSettingsSection() {
       setLoading(true);
       try {
         const [fyPatterns, mpPatterns, defaults] = await Promise.all([
-          api.admin.patterns.listFiscalYearPatterns(tenantId),
-          api.admin.patterns.listMonthlyPeriodPatterns(tenantId),
-          api.admin.tenantSettings.getDefaultPatterns(),
+          api.admin.rules.listFiscalYearRules(tenantId),
+          api.admin.rules.listMonthlyPeriodRules(tenantId),
+          api.admin.tenantSettings.getDefaultRules(),
         ]);
         if (cancelled) return;
         setFiscalYearPatterns(fyPatterns);
         setMonthlyPeriodPatterns(mpPatterns);
-        setDefaultFyPatternId(defaults.defaultFiscalYearPatternId ?? "");
-        setDefaultMpPatternId(defaults.defaultMonthlyPeriodPatternId ?? "");
+        setDefaultFyPatternId(defaults.defaultFiscalYearRuleId ?? "");
+        setDefaultMpPatternId(defaults.defaultMonthlyPeriodRuleId ?? "");
       } catch (err: unknown) {
         if (cancelled) return;
         if (err instanceof ApiError && err.status === 403) {
@@ -66,9 +66,9 @@ export function TenantSettingsSection() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await api.admin.tenantSettings.updateDefaultPatterns({
-        defaultFiscalYearPatternId: defaultFyPatternId || null,
-        defaultMonthlyPeriodPatternId: defaultMpPatternId || null,
+      await api.admin.tenantSettings.updateDefaultRules({
+        defaultFiscalYearRuleId: defaultFyPatternId || null,
+        defaultMonthlyPeriodRuleId: defaultMpPatternId || null,
       });
       toast.success(t("defaultPatterns.saved"));
     } catch (err: unknown) {
@@ -217,13 +217,13 @@ export function TenantSettingsSection() {
 
       {tenantId && (
         <>
-          <FiscalYearPatternForm
+          <FiscalYearRuleForm
             tenantId={tenantId}
             open={showFyForm}
             onClose={() => setShowFyForm(false)}
             onCreated={handleFyPatternCreated}
           />
-          <MonthlyPeriodPatternForm
+          <MonthlyPeriodRuleForm
             tenantId={tenantId}
             open={showMpForm}
             onClose={() => setShowMpForm(false)}

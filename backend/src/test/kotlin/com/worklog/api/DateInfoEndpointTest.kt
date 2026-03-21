@@ -1,11 +1,11 @@
 package com.worklog.api
 
 import com.worklog.IntegrationTestBase
-import com.worklog.domain.fiscalyear.FiscalYearPattern
-import com.worklog.domain.monthlyperiod.MonthlyPeriodPattern
+import com.worklog.domain.fiscalyear.FiscalYearRule
+import com.worklog.domain.monthlyperiod.MonthlyPeriodRule
 import com.worklog.domain.tenant.TenantId
-import com.worklog.infrastructure.repository.FiscalYearPatternRepository
-import com.worklog.infrastructure.repository.MonthlyPeriodPatternRepository
+import com.worklog.infrastructure.repository.FiscalYearRuleRepository
+import com.worklog.infrastructure.repository.MonthlyPeriodRuleRepository
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.web.client.TestRestTemplate
@@ -26,10 +26,10 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     private lateinit var jdbcTemplate: JdbcTemplate
 
     @Autowired
-    private lateinit var fiscalYearPatternRepository: FiscalYearPatternRepository
+    private lateinit var fiscalYearRuleRepository: FiscalYearRuleRepository
 
     @Autowired
-    private lateinit var monthlyPeriodPatternRepository: MonthlyPeriodPatternRepository
+    private lateinit var monthlyPeriodRuleRepository: MonthlyPeriodRuleRepository
 
     // ========== Basic Calculation Tests ==========
 
@@ -37,9 +37,9 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should calculate date info for organization with patterns`() {
         // Given: tenant, patterns, and organization
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 4, 1) // April 1
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 21) // 21st
-        val orgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 4, 1) // April 1
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 21) // 21st
+        val orgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
 
         // When: request date info for January 25, 2024
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -66,9 +66,9 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should calculate date info for date in different fiscal year`() {
         // Given: tenant with patterns and organization
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 7, 1) // July 1
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 1) // 1st
-        val orgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 7, 1) // July 1
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 1) // 1st
+        val orgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
 
         // When: request date info for June 15, 2024 (end of FY2023)
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -93,9 +93,9 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should calculate date info for year boundary dates`() {
         // Given: tenant with patterns and organization
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 1, 1) // Jan 1 (calendar year)
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 1) // 1st
-        val orgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 1, 1) // Jan 1 (calendar year)
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 1) // 1st
+        val orgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
 
         // When: request date info for December 31, 2023
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -122,11 +122,11 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should inherit fiscal year pattern from parent organization`() {
         // Given: parent org with fiscal year pattern, child org with only monthly period pattern
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 4, 1)
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 21)
-        val childMonthlyPatternId = createMonthlyPeriodPattern(tenantId, 15)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 4, 1)
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 21)
+        val childMonthlyPatternId = createMonthlyPeriodRule(tenantId, 15)
 
-        val parentOrgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val parentOrgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
         val childOrgId = createOrganization(tenantId, parentOrgId, null, childMonthlyPatternId, level = 2)
 
         // When: request date info for child org
@@ -151,11 +151,11 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should inherit monthly period pattern from grandparent`() {
         // Given: grandparent with both patterns, parent with fiscal year only, child with neither
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 4, 1)
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 21)
-        val parentFiscalPatternId = createFiscalYearPattern(tenantId, 7, 1)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 4, 1)
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 21)
+        val parentFiscalPatternId = createFiscalYearRule(tenantId, 7, 1)
 
-        val grandparentOrgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val grandparentOrgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
         val parentOrgId = createOrganization(tenantId, grandparentOrgId, parentFiscalPatternId, null, level = 2)
         val childOrgId = createOrganization(tenantId, parentOrgId, null, null, level = 3)
 
@@ -181,10 +181,10 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should use child's patterns when explicitly set`() {
         // Given: parent and child both with patterns
         val tenantId = createTenantWithProjection()
-        val parentFiscalPatternId = createFiscalYearPattern(tenantId, 4, 1)
-        val parentMonthlyPatternId = createMonthlyPeriodPattern(tenantId, 21)
-        val childFiscalPatternId = createFiscalYearPattern(tenantId, 7, 1)
-        val childMonthlyPatternId = createMonthlyPeriodPattern(tenantId, 15)
+        val parentFiscalPatternId = createFiscalYearRule(tenantId, 4, 1)
+        val parentMonthlyPatternId = createMonthlyPeriodRule(tenantId, 21)
+        val childFiscalPatternId = createFiscalYearRule(tenantId, 7, 1)
+        val childMonthlyPatternId = createMonthlyPeriodRule(tenantId, 15)
 
         val parentOrgId = createOrganization(tenantId, null, parentFiscalPatternId, parentMonthlyPatternId)
         val childOrgId =
@@ -234,9 +234,9 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should return 400 when date is missing`() {
         // Given: tenant and organization exist
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 4, 1)
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 21)
-        val orgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 4, 1)
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 21)
+        val orgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
 
         // When: request date info without date
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -278,9 +278,9 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should handle leap year dates correctly`() {
         // Given: tenant with patterns and organization
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 3, 1) // March 1
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 1)
-        val orgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 3, 1) // March 1
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 1)
+        val orgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
 
         // When: request date info for Feb 29, 2024 (leap year)
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -304,9 +304,9 @@ class DateInfoEndpointTest : IntegrationTestBase() {
     fun `should handle fiscal year spanning calendar year boundary`() {
         // Given: fiscal year starts Oct 1 (spans two calendar years)
         val tenantId = createTenantWithProjection()
-        val fiscalYearPatternId = createFiscalYearPattern(tenantId, 10, 1) // Oct 1
-        val monthlyPeriodPatternId = createMonthlyPeriodPattern(tenantId, 1)
-        val orgId = createOrganization(tenantId, null, fiscalYearPatternId, monthlyPeriodPatternId)
+        val fiscalYearRuleId = createFiscalYearRule(tenantId, 10, 1) // Oct 1
+        val monthlyPeriodRuleId = createMonthlyPeriodRule(tenantId, 1)
+        val orgId = createOrganization(tenantId, null, fiscalYearRuleId, monthlyPeriodRuleId)
 
         // When: request date info for December 15, 2024
         val headers = HttpHeaders().apply { contentType = MediaType.APPLICATION_JSON }
@@ -357,7 +357,7 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         // (until proper event projections are implemented)
         jdbcTemplate.update(
             """
-            INSERT INTO tenant (id, code, name, status, created_at)
+            INSERT INTO tenants (id, code, name, status, created_at)
             VALUES (?, ?, ?, 'ACTIVE', NOW())
             ON CONFLICT (id) DO NOTHING
             """,
@@ -369,30 +369,30 @@ class DateInfoEndpointTest : IntegrationTestBase() {
         return tenantId
     }
 
-    private fun createFiscalYearPattern(tenantId: UUID, startMonth: Int, startDay: Int): UUID {
-        val pattern = FiscalYearPattern.create(
+    private fun createFiscalYearRule(tenantId: UUID, startMonth: Int, startDay: Int): UUID {
+        val pattern = FiscalYearRule.create(
             TenantId.of(tenantId),
             "FY-$startMonth-$startDay-${System.nanoTime()}",
             startMonth,
             startDay,
         )
         // Save using repository to persist in event store
-        fiscalYearPatternRepository.save(pattern)
+        fiscalYearRuleRepository.save(pattern)
         return pattern.id.value()
     }
 
-    private fun createMonthlyPeriodPattern(tenantId: UUID, startDay: Int): UUID {
-        val pattern = MonthlyPeriodPattern.create(TenantId.of(tenantId), "MP-$startDay-${System.nanoTime()}", startDay)
+    private fun createMonthlyPeriodRule(tenantId: UUID, startDay: Int): UUID {
+        val pattern = MonthlyPeriodRule.create(TenantId.of(tenantId), "MP-$startDay-${System.nanoTime()}", startDay)
         // Save using repository to persist in event store
-        monthlyPeriodPatternRepository.save(pattern)
+        monthlyPeriodRuleRepository.save(pattern)
         return pattern.id.value()
     }
 
     private fun createOrganization(
         tenantId: UUID,
         parentId: UUID?,
-        fiscalYearPatternId: UUID?,
-        monthlyPeriodPatternId: UUID?,
+        fiscalYearRuleId: UUID?,
+        monthlyPeriodRuleId: UUID?,
         level: Int = if (parentId == null) 1 else 2,
     ): UUID {
         // Create organization using REST API to trigger event sourcing
@@ -402,8 +402,8 @@ class DateInfoEndpointTest : IntegrationTestBase() {
                 "name" to "Test Organization",
                 "level" to level,
                 "parentId" to parentId?.toString(),
-                "fiscalYearPatternId" to fiscalYearPatternId?.toString(),
-                "monthlyPeriodPatternId" to monthlyPeriodPatternId?.toString(),
+                "fiscalYearRuleId" to fiscalYearRuleId?.toString(),
+                "monthlyPeriodRuleId" to monthlyPeriodRuleId?.toString(),
             )
 
         val response =

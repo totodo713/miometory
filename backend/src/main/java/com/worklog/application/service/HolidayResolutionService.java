@@ -1,8 +1,8 @@
 package com.worklog.application.service;
 
 import com.worklog.domain.model.HolidayInfo;
-import com.worklog.infrastructure.repository.HolidayCalendarEntryRepository;
-import com.worklog.infrastructure.repository.HolidayCalendarEntryRepository.HolidayCalendarEntryRow;
+import com.worklog.infrastructure.repository.HolidayCalendarRuleRepository;
+import com.worklog.infrastructure.repository.HolidayCalendarRuleRepository.HolidayCalendarRuleRow;
 import java.time.DateTimeException;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -21,14 +21,14 @@ public class HolidayResolutionService {
 
     private static final Logger log = LoggerFactory.getLogger(HolidayResolutionService.class);
 
-    private final HolidayCalendarEntryRepository repository;
+    private final HolidayCalendarRuleRepository repository;
 
-    public HolidayResolutionService(HolidayCalendarEntryRepository repository) {
+    public HolidayResolutionService(HolidayCalendarRuleRepository repository) {
         this.repository = repository;
     }
 
     /**
-     * Resolves holiday calendar entries for a tenant into actual dates within the given range.
+     * Resolves holiday calendar rules for a tenant into actual dates within the given range.
      *
      * @param tenantId the tenant whose holiday calendar to resolve
      * @param start the start date (inclusive)
@@ -41,7 +41,7 @@ public class HolidayResolutionService {
             condition = "@environment.getProperty('worklog.cache.enabled', 'false') == 'true'")
     @Transactional(readOnly = true)
     public Map<LocalDate, HolidayInfo> resolveHolidays(UUID tenantId, LocalDate start, LocalDate end) {
-        var entries = repository.findActiveEntriesByTenantId(tenantId);
+        var entries = repository.findActiveRulesByTenantId(tenantId);
         Map<LocalDate, HolidayInfo> holidays = new TreeMap<>();
 
         for (var entry : entries) {
@@ -52,7 +52,7 @@ public class HolidayResolutionService {
     }
 
     private void resolveEntry(
-            HolidayCalendarEntryRow entry, LocalDate start, LocalDate end, Map<LocalDate, HolidayInfo> holidays) {
+            HolidayCalendarRuleRow entry, LocalDate start, LocalDate end, Map<LocalDate, HolidayInfo> holidays) {
         int startYear = start.getYear();
         int endYear = end.getYear();
 
@@ -62,13 +62,13 @@ public class HolidayResolutionService {
             }
 
             LocalDate resolved =
-                    switch (entry.entryType()) {
+                    switch (entry.ruleType()) {
                         case "FIXED" -> resolveFixed(year, entry);
                         case "NTH_WEEKDAY" -> resolveNthWeekday(year, entry);
                         default -> {
                             log.warn(
-                                    "Unknown holiday entry_type '{}' for entry '{}', skipping",
-                                    entry.entryType(),
+                                    "Unknown holiday rule_type '{}' for rule '{}', skipping",
+                                    entry.ruleType(),
                                     entry.name());
                             yield null;
                         }
@@ -88,7 +88,7 @@ public class HolidayResolutionService {
         }
     }
 
-    private LocalDate resolveFixed(int year, HolidayCalendarEntryRow entry) {
+    private LocalDate resolveFixed(int year, HolidayCalendarRuleRow entry) {
         try {
             return LocalDate.of(year, entry.month(), entry.day());
         } catch (DateTimeException e) {
@@ -102,7 +102,7 @@ public class HolidayResolutionService {
         }
     }
 
-    private LocalDate resolveNthWeekday(int year, HolidayCalendarEntryRow entry) {
+    private LocalDate resolveNthWeekday(int year, HolidayCalendarRuleRow entry) {
         DayOfWeek dayOfWeek = DayOfWeek.of(entry.dayOfWeek());
         LocalDate firstOfMonth = LocalDate.of(year, entry.month(), 1);
         LocalDate firstOccurrence = firstOfMonth.with(TemporalAdjusters.firstInMonth(dayOfWeek));
