@@ -157,7 +157,7 @@ describe("SettingsPage", () => {
       const monthSelect = screen.getByLabelText("開始月");
       await user.selectOptions(monthSelect, "10");
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -197,7 +197,7 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -219,7 +219,7 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -247,7 +247,7 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const saveButton = screen.getAllByRole("button", { name: "保存" })[0];
       await user.click(saveButton);
 
       await waitFor(() => {

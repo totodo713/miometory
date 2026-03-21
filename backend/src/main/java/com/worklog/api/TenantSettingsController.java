@@ -98,7 +98,7 @@ public class TenantSettingsController {
     @PutMapping("/attendance-times")
     @PreAuthorize("hasPermission(null, 'tenant_settings.manage')")
     public ResponseEntity<Void> updateAttendanceTimes(
-            Authentication auth, @RequestBody UpdateAttendanceTimesRequest request) {
+            Authentication auth, @jakarta.validation.Valid @RequestBody UpdateAttendanceTimesRequest request) {
         UUID tenantId = tenantAccessValidator.resolveUserTenantId(auth);
         Tenant tenant = tenantRepository
                 .findById(TenantId.of(tenantId))
@@ -119,5 +119,7 @@ public class TenantSettingsController {
 
     public record TenantAttendanceTimesResponse(String startTime, String endTime) {}
 
-    public record UpdateAttendanceTimesRequest(String startTime, String endTime) {}
+    public record UpdateAttendanceTimesRequest(
+            @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String startTime,
+            @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String endTime) {}
 }

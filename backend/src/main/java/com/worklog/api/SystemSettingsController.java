@@ -75,6 +75,6 @@ public class SystemSettingsController {
             @Min(1) @Max(28) int monthlyPeriodStartDay) {}
 
     public record UpdateAttendanceTimesRequest(
-            @jakarta.validation.constraints.NotBlank String startTime,
-            @jakarta.validation.constraints.NotBlank String endTime) {}
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String startTime,
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}(:\\d{2})?") String endTime) {}
 }

@@ -828,7 +828,7 @@
         "startTime": "Start Time",
         "endTime": "End Time",
         "clear": "Clear (inherit system)",
-        "clearHint": "Leave empty to inherit from system default (09:00 / 18:00)",
+        "clearHint": "Leave empty to inherit from system default",
         "saved": "Attendance times saved",
         "saveError": "Failed to save attendance times"
       },

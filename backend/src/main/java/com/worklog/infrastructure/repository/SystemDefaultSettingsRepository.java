@@ -99,7 +99,15 @@ public class SystemDefaultSettingsRepository {
     @Transactional
     public void updateDefaultAttendanceTimes(
             java.time.LocalTime startTime, java.time.LocalTime endTime, UUID updatedBy) {
-        String json = String.format("{\"startTime\": \"%s\", \"endTime\": \"%s\"}", startTime, endTime);
+        String json;
+        try {
+            var node = objectMapper.createObjectNode();
+            node.put("startTime", startTime.toString());
+            node.put("endTime", endTime.toString());
+            json = objectMapper.writeValueAsString(node);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize attendance times", e);
+        }
         jdbcTemplate.update(
                 "INSERT INTO system_default_settings (setting_key, setting_value, updated_by, updated_at) "
                         + "VALUES (?, ?::jsonb, ?, NOW()) "
