@@ -245,4 +245,79 @@ class TenantSettingsControllerTest : AdminIntegrationTestBase() {
         )
             .andExpect(status().isBadRequest)
     }
+
+    // --- Attendance times endpoints ---
+
+    @Test
+    fun `GET attendance times returns 200 for tenant admin`() {
+        mockMvc.perform(
+            get("/api/v1/tenant-settings/attendance-times")
+                .with(user(tenantAdminEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.startTime").doesNotExist())
+            .andExpect(jsonPath("$.endTime").doesNotExist())
+    }
+
+    @Test
+    fun `GET attendance times returns 403 for regular user`() {
+        mockMvc.perform(
+            get("/api/v1/tenant-settings/attendance-times")
+                .with(user(regularEmail)),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `PUT attendance times with values returns 204`() {
+        mockMvc.perform(
+            put("/api/v1/tenant-settings/attendance-times")
+                .with(user(tenantAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":"08:30","endTime":"17:30"}"""),
+        )
+            .andExpect(status().isNoContent)
+
+        // Verify persisted
+        mockMvc.perform(
+            get("/api/v1/tenant-settings/attendance-times")
+                .with(user(tenantAdminEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.startTime").value("08:30"))
+            .andExpect(jsonPath("$.endTime").value("17:30"))
+    }
+
+    @Test
+    fun `PUT attendance times with nulls clears and returns 204`() {
+        mockMvc.perform(
+            put("/api/v1/tenant-settings/attendance-times")
+                .with(user(tenantAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":null,"endTime":null}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `PUT attendance times with partial values returns 400`() {
+        mockMvc.perform(
+            put("/api/v1/tenant-settings/attendance-times")
+                .with(user(tenantAdminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":"09:00","endTime":null}"""),
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `PUT attendance times returns 403 for regular user`() {
+        mockMvc.perform(
+            put("/api/v1/tenant-settings/attendance-times")
+                .with(user(regularEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":"09:00","endTime":"18:00"}"""),
+        )
+            .andExpect(status().isForbidden)
+    }
 }

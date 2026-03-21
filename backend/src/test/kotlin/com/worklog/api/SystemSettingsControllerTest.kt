@@ -114,4 +114,77 @@ class SystemSettingsControllerTest : AdminIntegrationTestBase() {
         )
             .andExpect(status().isBadRequest)
     }
+
+    // --- Attendance times endpoints ---
+
+    @Test
+    fun `get attendance times returns 200 with defaults`() {
+        mockMvc.perform(
+            get("/api/v1/admin/system/settings/attendance-times")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.startTime").value("09:00"))
+            .andExpect(jsonPath("$.endTime").value("18:00"))
+    }
+
+    @Test
+    fun `get attendance times returns 403 for non-admin`() {
+        mockMvc.perform(
+            get("/api/v1/admin/system/settings/attendance-times")
+                .with(user(regularEmail)),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `update attendance times returns 204`() {
+        mockMvc.perform(
+            put("/api/v1/admin/system/settings/attendance-times")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":"08:30","endTime":"17:30"}"""),
+        )
+            .andExpect(status().isNoContent)
+
+        // Verify the update was persisted
+        mockMvc.perform(
+            get("/api/v1/admin/system/settings/attendance-times")
+                .with(user(adminEmail)),
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.startTime").value("08:30"))
+            .andExpect(jsonPath("$.endTime").value("17:30"))
+
+        // Restore defaults for other tests
+        mockMvc.perform(
+            put("/api/v1/admin/system/settings/attendance-times")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":"09:00","endTime":"18:00"}"""),
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    @Test
+    fun `update attendance times returns 403 for non-admin`() {
+        mockMvc.perform(
+            put("/api/v1/admin/system/settings/attendance-times")
+                .with(user(regularEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":"08:30","endTime":"17:30"}"""),
+        )
+            .andExpect(status().isForbidden)
+    }
+
+    @Test
+    fun `update attendance times with invalid format returns 400`() {
+        mockMvc.perform(
+            put("/api/v1/admin/system/settings/attendance-times")
+                .with(user(adminEmail))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"startTime":"invalid","endTime":"18:00"}"""),
+        )
+            .andExpect(status().isBadRequest)
+    }
 }

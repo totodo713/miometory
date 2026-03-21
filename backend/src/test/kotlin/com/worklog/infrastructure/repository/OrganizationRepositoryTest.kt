@@ -103,4 +103,45 @@ class OrganizationRepositoryTest : IntegrationTestBase() {
         )
         assertNull(projectedHours)
     }
+
+    @Test
+    @DisplayName("should persist defaultAttendanceTimes through event sourcing")
+    fun shouldPersistDefaultAttendanceTimes() {
+        val orgId = OrganizationId.generate()
+        val code = Code.of("ORG_${orgId.value.toString().substring(0, 8).replace("-", "")}")
+        val org = Organization.create(orgId, tenantId, null, code, "Test Org Att Times", 1)
+        org.assignDefaultAttendanceTimes(java.time.LocalTime.of(8, 30), java.time.LocalTime.of(17, 30))
+
+        executeInNewTransaction { repository.save(org) }
+
+        val reloaded = repository.findById(orgId)
+        assertTrue(reloaded.isPresent)
+        assertEquals(java.time.LocalTime.of(8, 30), reloaded.get().defaultStartTime)
+        assertEquals(java.time.LocalTime.of(17, 30), reloaded.get().defaultEndTime)
+
+        val projectedStart = baseJdbcTemplate.queryForObject(
+            "SELECT default_start_time FROM organizations WHERE id = ?",
+            java.sql.Time::class.java,
+            orgId.value,
+        )
+        assertEquals(java.time.LocalTime.of(8, 30), projectedStart?.toLocalTime())
+    }
+
+    @Test
+    @DisplayName("should clear defaultAttendanceTimes to null")
+    fun shouldClearDefaultAttendanceTimes() {
+        val orgId = OrganizationId.generate()
+        val code = Code.of("ORG_${orgId.value.toString().substring(0, 8).replace("-", "")}")
+        val org = Organization.create(orgId, tenantId, null, code, "Test Org Clear Att", 1)
+        org.assignDefaultAttendanceTimes(java.time.LocalTime.of(9, 0), java.time.LocalTime.of(18, 0))
+        executeInNewTransaction { repository.save(org) }
+
+        val reloaded = repository.findById(orgId).get()
+        reloaded.assignDefaultAttendanceTimes(null, null)
+        executeInNewTransaction { repository.save(reloaded) }
+
+        val reloaded2 = repository.findById(orgId).get()
+        assertNull(reloaded2.defaultStartTime)
+        assertNull(reloaded2.defaultEndTime)
+    }
 }

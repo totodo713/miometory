@@ -341,4 +341,40 @@ class OrganizationTest {
         val event = organization.uncommittedEvents[0] as OrganizationStandardDailyHoursAssigned
         assertNull(event.standardDailyHours())
     }
+
+    @Test
+    fun `assignDefaultAttendanceTimes should raise event and update fields`() {
+        val organization = createOrganization()
+        organization.clearUncommittedEvents()
+        val start = java.time.LocalTime.of(8, 30)
+        val end = java.time.LocalTime.of(17, 30)
+
+        organization.assignDefaultAttendanceTimes(start, end)
+
+        assertEquals(start, organization.defaultStartTime)
+        assertEquals(end, organization.defaultEndTime)
+        assertEquals(1, organization.uncommittedEvents.size)
+        assertTrue(organization.uncommittedEvents[0] is OrganizationDefaultAttendanceTimesAssigned)
+
+        val event = organization.uncommittedEvents[0] as OrganizationDefaultAttendanceTimesAssigned
+        assertEquals(organization.id.value, event.aggregateId())
+        assertEquals(start, event.defaultStartTime())
+        assertEquals(end, event.defaultEndTime())
+    }
+
+    @Test
+    fun `assignDefaultAttendanceTimes should accept null for inheritance`() {
+        val organization = createOrganization()
+        organization.assignDefaultAttendanceTimes(java.time.LocalTime.of(9, 0), java.time.LocalTime.of(18, 0))
+        organization.clearUncommittedEvents()
+
+        organization.assignDefaultAttendanceTimes(null, null)
+
+        assertNull(organization.defaultStartTime)
+        assertNull(organization.defaultEndTime)
+        assertEquals(1, organization.uncommittedEvents.size)
+        val event = organization.uncommittedEvents[0] as OrganizationDefaultAttendanceTimesAssigned
+        assertNull(event.defaultStartTime())
+        assertNull(event.defaultEndTime())
+    }
 }
