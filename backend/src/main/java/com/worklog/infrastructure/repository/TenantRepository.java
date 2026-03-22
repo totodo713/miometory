@@ -90,8 +90,9 @@ public class TenantRepository {
         jdbcTemplate.update(
                 "INSERT INTO tenants (id, code, name, status, version, "
                         + "default_fiscal_year_pattern_id, default_monthly_period_pattern_id, "
-                        + "standard_daily_hours, created_at, updated_at) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
+                        + "standard_daily_hours, default_start_time, default_end_time, "
+                        + "created_at, updated_at) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "
                         + "status = EXCLUDED.status, "
@@ -99,6 +100,8 @@ public class TenantRepository {
                         + "default_fiscal_year_pattern_id = EXCLUDED.default_fiscal_year_pattern_id, "
                         + "default_monthly_period_pattern_id = EXCLUDED.default_monthly_period_pattern_id, "
                         + "standard_daily_hours = EXCLUDED.standard_daily_hours, "
+                        + "default_start_time = EXCLUDED.default_start_time, "
+                        + "default_end_time = EXCLUDED.default_end_time, "
                         + "updated_at = NOW()",
                 tenant.getId().value(),
                 tenant.getCode().value(),
@@ -107,7 +110,9 @@ public class TenantRepository {
                 tenant.getVersion(),
                 tenant.getDefaultFiscalYearRuleId(),
                 tenant.getDefaultMonthlyPeriodRuleId(),
-                tenant.getStandardDailyHours());
+                tenant.getStandardDailyHours(),
+                tenant.getDefaultStartTime(),
+                tenant.getDefaultEndTime());
     }
 
     /**
@@ -124,6 +129,8 @@ public class TenantRepository {
                     objectMapper.readValue(storedEvent.payload(), TenantDefaultRulesAssigned.class);
                 case "TenantStandardDailyHoursAssigned" ->
                     objectMapper.readValue(storedEvent.payload(), TenantStandardDailyHoursAssigned.class);
+                case "TenantDefaultAttendanceTimesAssigned" ->
+                    objectMapper.readValue(storedEvent.payload(), TenantDefaultAttendanceTimesAssigned.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {

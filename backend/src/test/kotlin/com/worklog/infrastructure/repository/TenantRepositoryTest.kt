@@ -86,4 +86,43 @@ class TenantRepositoryTest : IntegrationTestBase() {
         )
         assertNull(projectedHours)
     }
+
+    @Test
+    @DisplayName("should persist defaultAttendanceTimes through event sourcing")
+    fun shouldPersistDefaultAttendanceTimes() {
+        val code = "T_${UUID.randomUUID().toString().substring(0, 8).replace("-", "")}"
+        val tenant = Tenant.create(code, "Test Tenant Att Times")
+        tenant.assignDefaultAttendanceTimes(java.time.LocalTime.of(9, 0), java.time.LocalTime.of(18, 0))
+
+        executeInNewTransaction { repository.save(tenant) }
+
+        val reloaded = repository.findById(tenant.id)
+        assertTrue(reloaded.isPresent)
+        assertEquals(java.time.LocalTime.of(9, 0), reloaded.get().defaultStartTime)
+        assertEquals(java.time.LocalTime.of(18, 0), reloaded.get().defaultEndTime)
+
+        val projectedStart = baseJdbcTemplate.queryForObject(
+            "SELECT default_start_time FROM tenants WHERE id = ?",
+            java.sql.Time::class.java,
+            tenant.id.value,
+        )
+        assertEquals(java.time.LocalTime.of(9, 0), projectedStart?.toLocalTime())
+    }
+
+    @Test
+    @DisplayName("should clear defaultAttendanceTimes to null")
+    fun shouldClearDefaultAttendanceTimes() {
+        val code = "T_${UUID.randomUUID().toString().substring(0, 8).replace("-", "")}"
+        val tenant = Tenant.create(code, "Test Tenant Clear Att")
+        tenant.assignDefaultAttendanceTimes(java.time.LocalTime.of(10, 0), java.time.LocalTime.of(19, 0))
+        executeInNewTransaction { repository.save(tenant) }
+
+        val reloaded = repository.findById(tenant.id).get()
+        reloaded.assignDefaultAttendanceTimes(null, null)
+        executeInNewTransaction { repository.save(reloaded) }
+
+        val reloaded2 = repository.findById(tenant.id).get()
+        assertNull(reloaded2.defaultStartTime)
+        assertNull(reloaded2.defaultEndTime)
+    }
 }

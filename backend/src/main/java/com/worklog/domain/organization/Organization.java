@@ -41,6 +41,8 @@ public class Organization extends AggregateRoot<OrganizationId> {
     private UUID fiscalYearRuleId;
     private UUID monthlyPeriodRuleId;
     private BigDecimal standardDailyHours;
+    private java.time.LocalTime defaultStartTime;
+    private java.time.LocalTime defaultEndTime;
     private Status status;
 
     // Private constructor for factory method
@@ -155,6 +157,16 @@ public class Organization extends AggregateRoot<OrganizationId> {
         raiseEvent(event);
     }
 
+    /**
+     * Assigns default attendance times to this organization.
+     * NULL means "inherit from parent level" in the resolution chain.
+     */
+    public void assignDefaultAttendanceTimes(java.time.LocalTime defaultStartTime, java.time.LocalTime defaultEndTime) {
+        OrganizationDefaultAttendanceTimesAssigned event =
+                OrganizationDefaultAttendanceTimesAssigned.create(this.id.value(), defaultStartTime, defaultEndTime);
+        raiseEvent(event);
+    }
+
     @Override
     protected void apply(DomainEvent event) {
         switch (event) {
@@ -182,6 +194,10 @@ public class Organization extends AggregateRoot<OrganizationId> {
             }
             case OrganizationStandardDailyHoursAssigned e -> {
                 this.standardDailyHours = e.standardDailyHours();
+            }
+            case OrganizationDefaultAttendanceTimesAssigned e -> {
+                this.defaultStartTime = e.defaultStartTime();
+                this.defaultEndTime = e.defaultEndTime();
             }
             default ->
                 throw new IllegalArgumentException(
@@ -258,6 +274,14 @@ public class Organization extends AggregateRoot<OrganizationId> {
 
     public BigDecimal getStandardDailyHours() {
         return standardDailyHours;
+    }
+
+    public java.time.LocalTime getDefaultStartTime() {
+        return defaultStartTime;
+    }
+
+    public java.time.LocalTime getDefaultEndTime() {
+        return defaultEndTime;
     }
 
     public Status getStatus() {

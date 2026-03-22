@@ -33,6 +33,8 @@ public class Tenant extends AggregateRoot<TenantId> {
     private UUID defaultFiscalYearRuleId;
     private UUID defaultMonthlyPeriodRuleId;
     private BigDecimal standardDailyHours;
+    private java.time.LocalTime defaultStartTime;
+    private java.time.LocalTime defaultEndTime;
 
     // Private constructor for factory method
     private Tenant() {}
@@ -139,6 +141,19 @@ public class Tenant extends AggregateRoot<TenantId> {
     }
 
     /**
+     * Assigns default attendance times to this tenant.
+     * NULL means "inherit from system default" in the resolution chain.
+     */
+    public void assignDefaultAttendanceTimes(java.time.LocalTime defaultStartTime, java.time.LocalTime defaultEndTime) {
+        if (this.status == Status.INACTIVE) {
+            throw new DomainException("TENANT_INACTIVE", "Cannot update an inactive tenant");
+        }
+        TenantDefaultAttendanceTimesAssigned event =
+                TenantDefaultAttendanceTimesAssigned.create(this.id.value(), defaultStartTime, defaultEndTime);
+        raiseEvent(event);
+    }
+
+    /**
      * Reactivates an inactive tenant.
      */
     public void activate() {
@@ -174,6 +189,10 @@ public class Tenant extends AggregateRoot<TenantId> {
             }
             case TenantStandardDailyHoursAssigned e -> {
                 this.standardDailyHours = e.standardDailyHours();
+            }
+            case TenantDefaultAttendanceTimesAssigned e -> {
+                this.defaultStartTime = e.defaultStartTime();
+                this.defaultEndTime = e.defaultEndTime();
             }
             default ->
                 throw new IllegalArgumentException(
@@ -228,5 +247,13 @@ public class Tenant extends AggregateRoot<TenantId> {
 
     public BigDecimal getStandardDailyHours() {
         return standardDailyHours;
+    }
+
+    public java.time.LocalTime getDefaultStartTime() {
+        return defaultStartTime;
+    }
+
+    public java.time.LocalTime getDefaultEndTime() {
+        return defaultEndTime;
     }
 }

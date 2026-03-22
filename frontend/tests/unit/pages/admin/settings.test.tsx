@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,6 +8,8 @@ vi.mock("@/services/api", () => ({
       system: {
         getRules: vi.fn(),
         updateRules: vi.fn(),
+        getAttendanceTimes: vi.fn(),
+        updateAttendanceTimes: vi.fn(),
       },
       rules: {
         listFiscalYearRules: vi.fn(),
@@ -16,6 +18,8 @@ vi.mock("@/services/api", () => ({
       tenantSettings: {
         getDefaultRules: vi.fn(),
         updateDefaultRules: vi.fn(),
+        getAttendanceTimes: vi.fn(),
+        updateAttendanceTimes: vi.fn(),
       },
     },
   },
@@ -56,6 +60,15 @@ describe("SettingsPage", () => {
       fiscalYearStartMonth: 4,
       fiscalYearStartDay: 1,
       monthlyPeriodStartDay: 1,
+    });
+    (api.admin.system.getAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue({
+      startTime: "09:00",
+      endTime: "18:00",
+    });
+    (api.admin.system.updateAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+    (api.admin.tenantSettings.getAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue({
+      startTime: null,
+      endTime: null,
     });
   });
 
@@ -144,7 +157,8 @@ describe("SettingsPage", () => {
       const monthSelect = screen.getByLabelText("開始月");
       await user.selectOptions(monthSelect, "10");
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -184,7 +198,8 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -206,7 +221,8 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -234,17 +250,18 @@ describe("SettingsPage", () => {
         expect(screen.getByLabelText("開始月")).toBeInTheDocument();
       });
 
-      const saveButton = screen.getByRole("button", { name: "保存" });
+      const rulesCard = screen.getByText("デフォルト月次期間ルール").closest("div.bg-white")!;
+      const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
+        expect(within(rulesCard).getByRole("button", { name: "保存中..." })).toBeDisabled();
       });
 
       resolveUpdate();
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: "保存" })).not.toBeDisabled();
+        expect(within(rulesCard).getByRole("button", { name: "保存" })).not.toBeDisabled();
       });
     });
   });

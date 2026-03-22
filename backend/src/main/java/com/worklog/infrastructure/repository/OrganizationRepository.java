@@ -92,8 +92,9 @@ public class OrganizationRepository {
                 "INSERT INTO organizations "
                         + "(id, tenant_id, parent_id, code, name, level, status, version, "
                         + "fiscal_year_pattern_id, monthly_period_pattern_id, standard_daily_hours, "
+                        + "default_start_time, default_end_time, "
                         + "created_at, updated_at) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()) "
                         + "ON CONFLICT (id) DO UPDATE SET "
                         + "name = EXCLUDED.name, "
                         + "status = EXCLUDED.status, "
@@ -101,6 +102,8 @@ public class OrganizationRepository {
                         + "fiscal_year_pattern_id = EXCLUDED.fiscal_year_pattern_id, "
                         + "monthly_period_pattern_id = EXCLUDED.monthly_period_pattern_id, "
                         + "standard_daily_hours = EXCLUDED.standard_daily_hours, "
+                        + "default_start_time = EXCLUDED.default_start_time, "
+                        + "default_end_time = EXCLUDED.default_end_time, "
                         + "updated_at = NOW()",
                 organization.getId().value(),
                 organization.getTenantId().value(),
@@ -112,7 +115,9 @@ public class OrganizationRepository {
                 organization.getVersion(),
                 organization.getFiscalYearRuleId(),
                 organization.getMonthlyPeriodRuleId(),
-                organization.getStandardDailyHours());
+                organization.getStandardDailyHours(),
+                organization.getDefaultStartTime(),
+                organization.getDefaultEndTime());
     }
 
     /**
@@ -131,6 +136,8 @@ public class OrganizationRepository {
                     objectMapper.readValue(storedEvent.payload(), OrganizationRulesAssigned.class);
                 case "OrganizationStandardDailyHoursAssigned" ->
                     objectMapper.readValue(storedEvent.payload(), OrganizationStandardDailyHoursAssigned.class);
+                case "OrganizationDefaultAttendanceTimesAssigned" ->
+                    objectMapper.readValue(storedEvent.payload(), OrganizationDefaultAttendanceTimesAssigned.class);
                 default -> throw new IllegalArgumentException("Unknown event type: " + storedEvent.eventType());
             };
         } catch (Exception e) {

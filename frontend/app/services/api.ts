@@ -1152,6 +1152,10 @@ export const api = {
     system: {
       getRules: () => apiClient.get<SystemDefaultRules>("/api/v1/admin/system/settings/rules"),
       updateRules: (data: SystemDefaultRules) => apiClient.put<void>("/api/v1/admin/system/settings/rules", data),
+      getAttendanceTimes: () =>
+        apiClient.get<{ startTime: string; endTime: string }>("/api/v1/admin/system/settings/attendance-times"),
+      updateAttendanceTimes: (data: { startTime: string; endTime: string }) =>
+        apiClient.put<void>("/api/v1/admin/system/settings/attendance-times", data),
     },
 
     tenantSettings: {
@@ -1164,6 +1168,10 @@ export const api = {
         defaultFiscalYearRuleId: string | null;
         defaultMonthlyPeriodRuleId: string | null;
       }) => apiClient.put<void>("/api/v1/tenant-settings/default-rules", data),
+      getAttendanceTimes: () =>
+        apiClient.get<{ startTime: string | null; endTime: string | null }>("/api/v1/tenant-settings/attendance-times"),
+      updateAttendanceTimes: (data: { startTime: string | null; endTime: string | null }) =>
+        apiClient.put<void>("/api/v1/tenant-settings/attendance-times", data),
     },
 
     /**

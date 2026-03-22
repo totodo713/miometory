@@ -49,8 +49,40 @@ public class SystemSettingsController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/attendance-times")
+    @PreAuthorize("hasPermission(null, 'system_settings.view')")
+    public ResponseEntity<com.worklog.application.service.SystemSettingsService.SystemDefaultAttendanceTimes>
+            getAttendanceTimes() {
+        return ResponseEntity.ok(systemSettingsService.getDefaultAttendanceTimes());
+    }
+
+    @PutMapping("/attendance-times")
+    @PreAuthorize("hasPermission(null, 'system_settings.update')")
+    public ResponseEntity<Void> updateAttendanceTimes(
+            @Valid @RequestBody UpdateAttendanceTimesRequest request, Authentication authentication) {
+        UUID userId = userRepository
+                .findByEmail(authentication.getName())
+                .map(user -> user.getId().value())
+                .orElse(null);
+        try {
+            systemSettingsService.updateDefaultAttendanceTimes(
+                    java.time.LocalTime.parse(request.startTime()),
+                    java.time.LocalTime.parse(request.endTime()),
+                    userId);
+        } catch (java.time.format.DateTimeParseException e) {
+            throw new com.worklog.domain.shared.DomainException(
+                    "INVALID_TIME_FORMAT", "Invalid time format: " + e.getMessage());
+        }
+        return ResponseEntity.noContent().build();
+    }
+
     public record UpdateRulesRequest(
             @Min(1) @Max(12) int fiscalYearStartMonth,
             @Min(1) @Max(31) int fiscalYearStartDay,
             @Min(1) @Max(28) int monthlyPeriodStartDay) {}
+
+    public record UpdateAttendanceTimesRequest(
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}") String startTime,
+
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Pattern(regexp = "\\d{2}:\\d{2}") String endTime) {}
 }

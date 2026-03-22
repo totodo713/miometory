@@ -693,6 +693,62 @@ paths:
                     items:
                       $ref: '#/components/schemas/HolidayResponse'
 
+  /api/v1/admin/system/settings/attendance-times:
+    get:
+      tags: [SystemSettings]
+      summary: Get system default attendance times
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Default attendance times
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DefaultAttendanceTimes'
+    put:
+      tags: [SystemSettings]
+      summary: Update system default attendance times
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DefaultAttendanceTimes'
+      responses:
+        '204':
+          description: Updated
+
+  /api/v1/tenant-settings/attendance-times:
+    get:
+      tags: [TenantSettings]
+      summary: Get tenant default attendance times
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tenant attendance times (null = inherit from system)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantAttendanceTimes'
+    put:
+      tags: [TenantSettings]
+      summary: Update tenant default attendance times
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantAttendanceTimes'
+      responses:
+        '204':
+          description: Updated
+
 components:
   securitySchemes:
     BearerAuth:
@@ -744,6 +800,33 @@ components:
             $ref: '#/components/schemas/ValidationErrorResponse'
             
   schemas:
+    DefaultAttendanceTimes:
+      type: object
+      required: [startTime, endTime]
+      properties:
+        startTime:
+          type: string
+          example: "09:00"
+          description: Default start time (HH:mm)
+        endTime:
+          type: string
+          example: "18:00"
+          description: Default end time (HH:mm)
+
+    TenantAttendanceTimes:
+      type: object
+      properties:
+        startTime:
+          type: string
+          nullable: true
+          example: "09:00"
+          description: Tenant default start time (null = inherit from system)
+        endTime:
+          type: string
+          nullable: true
+          example: "18:00"
+          description: Tenant default end time (null = inherit from system)
+
     HealthResponse:
       type: object
       properties:
@@ -1267,3 +1350,7 @@ tags:
     description: Bulk import/export
   - name: Projects
     description: Project management
+  - name: SystemSettings
+    description: System-wide default settings (attendance times, rules)
+  - name: TenantSettings
+    description: Tenant-level default settings

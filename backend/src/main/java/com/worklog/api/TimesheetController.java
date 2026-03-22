@@ -4,7 +4,9 @@ import com.worklog.api.dto.SaveAttendanceRequest;
 import com.worklog.api.dto.TimesheetResponse;
 import com.worklog.api.dto.TimesheetResponse.TimesheetRow;
 import com.worklog.api.dto.TimesheetResponse.TimesheetSummary;
+import com.worklog.application.service.AttendanceTimesResolution;
 import com.worklog.application.service.DailyAttendanceService;
+import com.worklog.application.service.DefaultAttendanceTimesService;
 import com.worklog.application.service.HolidayResolutionService;
 import com.worklog.application.service.UserContextService;
 import com.worklog.domain.member.Member;
@@ -49,6 +51,7 @@ public class TimesheetController {
     private final JdbcMemberProjectAssignmentRepository assignmentRepository;
     private final HolidayResolutionService holidayResolutionService;
     private final DailyAttendanceService dailyAttendanceService;
+    private final DefaultAttendanceTimesService defaultAttendanceTimesService;
     private final UserContextService userContextService;
     private final JdbcTemplate jdbcTemplate;
 
@@ -58,6 +61,7 @@ public class TimesheetController {
             JdbcMemberProjectAssignmentRepository assignmentRepository,
             HolidayResolutionService holidayResolutionService,
             DailyAttendanceService dailyAttendanceService,
+            DefaultAttendanceTimesService defaultAttendanceTimesService,
             UserContextService userContextService,
             JdbcTemplate jdbcTemplate) {
         this.timesheetProjection = timesheetProjection;
@@ -65,6 +69,7 @@ public class TimesheetController {
         this.assignmentRepository = assignmentRepository;
         this.holidayResolutionService = holidayResolutionService;
         this.dailyAttendanceService = dailyAttendanceService;
+        this.defaultAttendanceTimesService = defaultAttendanceTimesService;
         this.userContextService = userContextService;
         this.jdbcTemplate = jdbcTemplate;
     }
@@ -121,9 +126,22 @@ public class TimesheetController {
             periodEnd = ym.atEndOfMonth();
         }
 
-        // Get default times from assignment
+        // Get default times from assignment, falling back to hierarchical resolution
         MemberProjectAssignment assignment =
                 assignmentRepository.findActiveByMemberAndProject(MemberId.of(memberId), projectId);
+
+        java.time.LocalTime effectiveDefaultStart = assignment != null ? assignment.getDefaultStartTime() : null;
+        java.time.LocalTime effectiveDefaultEnd = assignment != null ? assignment.getDefaultEndTime() : null;
+        if (effectiveDefaultStart == null || effectiveDefaultEnd == null) {
+            AttendanceTimesResolution resolution =
+                    defaultAttendanceTimesService.resolveDefaultAttendanceTimes(memberId);
+            if (effectiveDefaultStart == null) {
+                effectiveDefaultStart = resolution.startTime();
+            }
+            if (effectiveDefaultEnd == null) {
+                effectiveDefaultEnd = resolution.endTime();
+            }
+        }
 
         // Resolve holidays for this tenant and period (same pattern as CalendarController)
         Map<LocalDate, HolidayInfo> holidayMap =
@@ -138,8 +156,8 @@ public class TimesheetController {
                 projectId,
                 periodStart,
                 periodEnd,
-                assignment != null ? assignment.getDefaultStartTime() : null,
-                assignment != null ? assignment.getDefaultEndTime() : null,
+                effectiveDefaultStart,
+                effectiveDefaultEnd,
                 holidayDates,
                 holidayNames);
 

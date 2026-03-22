@@ -274,4 +274,57 @@ class TenantTest {
         val event = events[0] as TenantStandardDailyHoursAssigned
         assertNull(event.standardDailyHours())
     }
+
+    @Test
+    fun `assignDefaultAttendanceTimes should raise event and update fields`() {
+        val tenant = Tenant.create("CODE", "Name")
+        tenant.clearUncommittedEvents()
+        val start = java.time.LocalTime.of(9, 0)
+        val end = java.time.LocalTime.of(18, 0)
+
+        tenant.assignDefaultAttendanceTimes(start, end)
+
+        assertEquals(start, tenant.defaultStartTime)
+        assertEquals(end, tenant.defaultEndTime)
+
+        val events = tenant.uncommittedEvents
+        assertEquals(1, events.size)
+        assertTrue(events[0] is TenantDefaultAttendanceTimesAssigned)
+
+        val event = events[0] as TenantDefaultAttendanceTimesAssigned
+        assertEquals(tenant.id.value(), event.aggregateId())
+        assertEquals(start, event.defaultStartTime())
+        assertEquals(end, event.defaultEndTime())
+    }
+
+    @Test
+    fun `assignDefaultAttendanceTimes should fail when tenant is inactive`() {
+        val tenant = Tenant.create("CODE", "Name")
+        tenant.deactivate()
+        tenant.clearUncommittedEvents()
+
+        val exception =
+            assertFailsWith<DomainException> {
+                tenant.assignDefaultAttendanceTimes(java.time.LocalTime.of(9, 0), java.time.LocalTime.of(18, 0))
+            }
+        assertEquals("TENANT_INACTIVE", exception.errorCode)
+    }
+
+    @Test
+    fun `assignDefaultAttendanceTimes should accept null for inheritance`() {
+        val tenant = Tenant.create("CODE", "Name")
+        tenant.assignDefaultAttendanceTimes(java.time.LocalTime.of(9, 0), java.time.LocalTime.of(18, 0))
+        tenant.clearUncommittedEvents()
+
+        tenant.assignDefaultAttendanceTimes(null, null)
+
+        assertNull(tenant.defaultStartTime)
+        assertNull(tenant.defaultEndTime)
+
+        val events = tenant.uncommittedEvents
+        assertEquals(1, events.size)
+        val event = events[0] as TenantDefaultAttendanceTimesAssigned
+        assertNull(event.defaultStartTime())
+        assertNull(event.defaultEndTime())
+    }
 }

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -14,6 +14,8 @@ vi.mock("@/services/api", () => ({
       tenantSettings: {
         getDefaultRules: vi.fn(),
         updateDefaultRules: vi.fn(),
+        getAttendanceTimes: vi.fn(),
+        updateAttendanceTimes: vi.fn(),
       },
     },
   },
@@ -61,6 +63,10 @@ describe("TenantSettingsSection", () => {
     (api.admin.tenantSettings.getDefaultRules as ReturnType<typeof vi.fn>).mockResolvedValue({
       defaultFiscalYearRuleId: "fy1",
       defaultMonthlyPeriodRuleId: null,
+    });
+    (api.admin.tenantSettings.getAttendanceTimes as ReturnType<typeof vi.fn>).mockResolvedValue({
+      startTime: null,
+      endTime: null,
     });
   });
 
@@ -131,7 +137,8 @@ describe("TenantSettingsSection", () => {
     const mpSelect = screen.getByLabelText("デフォルト月次期間ルール");
     await user.selectOptions(mpSelect, "mp1");
 
-    const saveButton = screen.getByRole("button", { name: "保存" });
+    const rulesCard = screen.getByText("デフォルトルール").closest("div.bg-white")!;
+    const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -159,7 +166,8 @@ describe("TenantSettingsSection", () => {
       expect(screen.getByText("テナント設定")).toBeInTheDocument();
     });
 
-    const saveButton = screen.getByRole("button", { name: "保存" });
+    const rulesCard = screen.getByText("デフォルトルール").closest("div.bg-white")!;
+    const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -187,17 +195,18 @@ describe("TenantSettingsSection", () => {
       expect(screen.getByText("テナント設定")).toBeInTheDocument();
     });
 
-    const saveButton = screen.getByRole("button", { name: "保存" });
+    const rulesCard = screen.getByText("デフォルトルール").closest("div.bg-white")!;
+    const saveButton = within(rulesCard).getByRole("button", { name: "保存" });
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "保存中..." })).toBeDisabled();
+      expect(within(rulesCard).getByRole("button", { name: "保存中..." })).toBeDisabled();
     });
 
     resolveUpdate();
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "保存" })).not.toBeDisabled();
+      expect(within(rulesCard).getByRole("button", { name: "保存" })).not.toBeDisabled();
     });
   });
 

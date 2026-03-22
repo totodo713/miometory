@@ -12,20 +12,25 @@ export function SystemSettingsSection() {
   const toast = useToast();
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingRules, setSavingRules] = useState(false);
+  const [savingTimes, setSavingTimes] = useState(false);
 
   const [fyStartMonth, setFyStartMonth] = useState(4);
   const [fyStartDay, setFyStartDay] = useState(1);
   const [mpStartDay, setMpStartDay] = useState(1);
+  const [defaultStartTime, setDefaultStartTime] = useState("09:00");
+  const [defaultEndTime, setDefaultEndTime] = useState("18:00");
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: load once on mount
   const loadSettings = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.admin.system.getRules();
+      const [data, times] = await Promise.all([api.admin.system.getRules(), api.admin.system.getAttendanceTimes()]);
       setFyStartMonth(data.fiscalYearStartMonth);
       setFyStartDay(data.fiscalYearStartDay);
       setMpStartDay(data.monthlyPeriodStartDay);
+      setDefaultStartTime(times.startTime);
+      setDefaultEndTime(times.endTime);
     } catch (err: unknown) {
       toast.error(err instanceof ApiError ? err.message : t("loadError"));
     } finally {
@@ -37,9 +42,9 @@ export function SystemSettingsSection() {
     loadSettings();
   }, [loadSettings]);
 
-  const handleSave = async () => {
+  const handleSaveRules = async () => {
     try {
-      setSaving(true);
+      setSavingRules(true);
       await api.admin.system.updateRules({
         fiscalYearStartMonth: fyStartMonth,
         fiscalYearStartDay: fyStartDay,
@@ -49,13 +54,32 @@ export function SystemSettingsSection() {
     } catch (err: unknown) {
       toast.error(err instanceof ApiError ? err.message : t("saveError"));
     } finally {
-      setSaving(false);
+      setSavingRules(false);
+    }
+  };
+
+  const handleSaveAttendanceTimes = async () => {
+    if (!defaultStartTime || !defaultEndTime) return;
+    try {
+      setSavingTimes(true);
+      await api.admin.system.updateAttendanceTimes({
+        startTime: defaultStartTime,
+        endTime: defaultEndTime,
+      });
+      toast.success(t("saved"));
+    } catch (err: unknown) {
+      toast.error(err instanceof ApiError ? err.message : t("saveError"));
+    } finally {
+      setSavingTimes(false);
     }
   };
 
   if (loading) {
     return <p className="text-gray-500">{tc("loading")}</p>;
   }
+
+  const inputClass =
+    "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
     <>
@@ -68,7 +92,7 @@ export function SystemSettingsSection() {
       <div className="space-y-6">
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">{t("fiscalYear.title")}</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label htmlFor="fyStartMonth" className="block text-sm font-medium text-gray-700 mb-1">
                 {t("fiscalYear.startMonth")}
@@ -77,7 +101,7 @@ export function SystemSettingsSection() {
                 id="fyStartMonth"
                 value={fyStartMonth}
                 onChange={(e) => setFyStartMonth(Number(e.target.value))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                className={inputClass}
               >
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m}>
@@ -94,7 +118,7 @@ export function SystemSettingsSection() {
                 id="fyStartDay"
                 value={fyStartDay}
                 onChange={(e) => setFyStartDay(Number(e.target.value))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                className={inputClass}
               >
                 {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                   <option key={d} value={d}>
@@ -116,7 +140,7 @@ export function SystemSettingsSection() {
               id="mpStartDay"
               value={mpStartDay}
               onChange={(e) => setMpStartDay(Number(e.target.value))}
-              className="w-full max-w-xs border border-gray-300 rounded-md px-3 py-2 text-sm"
+              className={`max-w-xs ${inputClass}`}
             >
               {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
                 <option key={d} value={d}>
@@ -125,16 +149,57 @@ export function SystemSettingsSection() {
               ))}
             </select>
           </div>
+          <div className="flex justify-end mt-4">
+            <button
+              type="button"
+              onClick={handleSaveRules}
+              disabled={savingRules}
+              className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingRules ? tc("saving") : tc("save")}
+            </button>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? t("saving") : tc("save")}
-        </button>
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{t("attendanceTimes.title")}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="defaultStartTime" className="block text-sm font-medium text-gray-700 mb-1">
+                {t("attendanceTimes.startTime")}
+              </label>
+              <input
+                type="time"
+                id="defaultStartTime"
+                value={defaultStartTime}
+                onChange={(e) => setDefaultStartTime(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="defaultEndTime" className="block text-sm font-medium text-gray-700 mb-1">
+                {t("attendanceTimes.endTime")}
+              </label>
+              <input
+                type="time"
+                id="defaultEndTime"
+                value={defaultEndTime}
+                onChange={(e) => setDefaultEndTime(e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              type="button"
+              onClick={handleSaveAttendanceTimes}
+              disabled={savingTimes || !defaultStartTime || !defaultEndTime}
+              className="px-4 py-2 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingTimes ? tc("saving") : tc("save")}
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );
